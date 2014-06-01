@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: testVideoDevice.cpp 4323 2013-07-18 09:24:01Z fspindle $
+ * $Id: testVideoDevice.cpp 4658 2014-02-09 09:50:14Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -76,6 +76,11 @@ typedef enum {
   vpD3D,
   vpCV 
 } vpDisplayType;
+
+void usage(const char *name, const char *badparam, std::string ipath, vpDisplayType &dtype);
+bool getOptions(int argc, const char **argv,
+                std::string &ipath, vpDisplayType &dtype, bool &list,
+                bool &click_allowed, bool &display );
 
 /*!
 
@@ -161,15 +166,15 @@ bool getOptions(int argc, const char **argv,
                 std::string &ipath, vpDisplayType &dtype, bool &list,
                 bool &click_allowed, bool &display )
 {
-  const char *optarg;
+  const char *optarg_;
   int	c;
   std::string sDisplayType;
-  while ((c = vpParseArgv::parse(argc, argv, GETOPTARGS, &optarg)) > 1) {
+  while ((c = vpParseArgv::parse(argc, argv, GETOPTARGS, &optarg_)) > 1) {
 
     switch (c) {
-    case 'i': ipath = optarg; break;
+    case 'i': ipath = optarg_; break;
     case 'l': list = true; break;
-    case 't': sDisplayType = optarg;
+    case 't': sDisplayType = optarg_;
       // Parse the display type option
       if (sDisplayType.compare("X11") == 0) {
         dtype = vpX11;
@@ -193,7 +198,7 @@ bool getOptions(int argc, const char **argv,
     case 'd': display = false; break;
 
     default:
-      usage(argv[0], optarg, ipath,dtype); return false; break;
+      usage(argv[0], optarg_, ipath,dtype); return false; break;
     }
   }
 
@@ -202,7 +207,7 @@ bool getOptions(int argc, const char **argv,
     // standalone param or error
     usage(argv[0], NULL, ipath, dtype);
     std::cerr << "ERROR: " << std::endl;
-    std::cerr << "  Bad argument " << optarg << std::endl << std::endl;
+    std::cerr << "  Bad argument " << optarg_ << std::endl << std::endl;
     return false;
   }
 

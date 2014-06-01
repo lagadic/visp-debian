@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpKltOpencv.h 4231 2013-04-29 16:26:28Z fspindle $
+ * $Id: vpKltOpencv.h 4632 2014-02-03 17:06:40Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -202,6 +202,7 @@ class VISP_EXPORT vpKltOpencv
   //Detect corners in the image. Initialize the tracker
   void initTracking(const IplImage *I, const IplImage *mask = NULL);
 
+  vpKltOpencv & operator=(const vpKltOpencv& copy);
   //Track !
   void track(const IplImage *I);
 

@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpRobot.h 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpRobot.h 4632 2014-02-03 17:06:40Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -116,13 +116,14 @@ protected:
 
 public:
   vpRobot (void);
+  vpRobot (const vpRobot &robot);
   virtual ~vpRobot() { ; }
 
   //---------- Jacobian -----------------------------
   //! Get the robot Jacobian expressed in the end-effector frame
-  virtual void get_eJe(vpMatrix &_eJe)  = 0 ;
+  virtual void get_eJe(vpMatrix &_eJe) = 0 ;
   //! Get the robot Jacobian expressed in the robot reference (or world) frame.
-  virtual void get_fJe(vpMatrix &_fJe)  = 0 ;
+  virtual void get_fJe(vpMatrix &_fJe) = 0 ;
 
   //! Get a displacement (frame as to ve specified) between two successive position control.
   virtual void getDisplacement(const vpRobot::vpControlFrameType frame,
@@ -136,9 +137,11 @@ public:
 
   // Return the robot position (frame has to be specified).
   vpColVector getPosition (const vpRobot::vpControlFrameType frame);
-  virtual vpRobotStateType getRobotState (void) { return stateRobot ; }
+  virtual vpRobotStateType getRobotState (void) const { return stateRobot ; }
 
   virtual void init() = 0 ;
+
+  vpRobot & operator=(const vpRobot &robot);
 
   static vpColVector saturateVelocities(const vpColVector &v_in, const vpColVector &v_max, bool verbose=false);
 
@@ -156,7 +159,7 @@ public:
 
 protected:
   vpControlFrameType setRobotFrame (vpRobot::vpControlFrameType newFrame);
-  vpControlFrameType getRobotFrame (void) { return frameRobot ; }
+  vpControlFrameType getRobotFrame (void) const { return frameRobot ; }
 } ;
 
 #endif

@@ -3,7 +3,7 @@
  * $Id: vpSimulatorCamera.cpp 2456 2010-01-07 10:33:12Z nmelchio $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -57,7 +57,7 @@
   world frame and camera frame to identity.
 
 */
-vpSimulatorCamera::vpSimulatorCamera()
+vpSimulatorCamera::vpSimulatorCamera() : wMc_()
 {
   init() ;
 }
@@ -104,7 +104,7 @@ vpSimulatorCamera::~vpSimulatorCamera()
 
 */
 void
-vpSimulatorCamera::get_cVe(vpVelocityTwistMatrix &cVe)
+vpSimulatorCamera::get_cVe(vpVelocityTwistMatrix &cVe) const
 {
   vpVelocityTwistMatrix cVe_;
   cVe = cVe_;
@@ -114,13 +114,13 @@ vpSimulatorCamera::get_cVe(vpVelocityTwistMatrix &cVe)
   Get the robot jacobian expressed in the end-effector frame.
   For that simple robot the Jacobian is the identity.
 
-  \param eJe : A 6 by 6 matrix representing the robot jacobian \f$ {^e}{\bf
+  \param eJe_ : A 6 by 6 matrix representing the robot jacobian \f$ {^e}{\bf
   J}_e\f$ expressed in the end-effector frame. Yhis matrix is equal to identity.
 */
 void
-vpSimulatorCamera::get_eJe(vpMatrix &eJe)
+vpSimulatorCamera::get_eJe(vpMatrix &eJe_)
 {
-  eJe = this->eJe ;
+  eJe_ = this->eJe ;
 }
 
 /*!

@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpImageTools.h 4317 2013-07-17 09:40:17Z fspindle $
+ * $Id: vpImageTools.h 4604 2014-01-21 14:15:23Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -249,7 +249,11 @@ public:
   unsigned int nthreads;
   unsigned int threadid;
 public:
-  vpUndistortInternalType() {};
+  vpUndistortInternalType() {
+    src = dst = NULL;
+    width = height = 0;
+    nthreads = threadid = 0;
+  };
   vpUndistortInternalType(const vpUndistortInternalType<Type> &u) {
     src = u.src;
     dst = u.dst;
@@ -548,6 +552,31 @@ void vpImageTools::flip(const vpImage<Type> &I,
   Flip vertically the input image.
 
   \param I : Input image which is flipped and modified in output.
+
+  The following example shows how to use this function:
+  \code
+#include <visp/vpImageTools.h>
+#include <visp/vpImage.h>
+#include <visp/vpImageIo.h>
+
+int main()
+{
+  vpImage<vpRGBa> I;
+#ifdef _WIN32
+  std::string filename("C:/temp/ViSP-images/Klimt/Klimt.ppm");
+#else
+  std::string filename("/local/soft/ViSP/ViSP-images/Klimt/Klimt.ppm");
+#endif
+
+  // Read an image from the disk
+  vpImageIo::read(I, filename);
+
+  // Flip the image
+  vpImageTools::flip(I);
+
+  vpImageIo::write(I, "Klimt-flip.ppm"); // Write the image in a PGM P5 image file format
+}
+  \endcode
 */
 template<class Type>
 void vpImageTools::flip(vpImage<Type> &I)

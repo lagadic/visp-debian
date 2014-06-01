@@ -1,9 +1,9 @@
 /****************************************************************************
 *
-* $Id: vpPose.cpp 4056 2013-01-05 13:04:42Z fspindle $
+* $Id: vpPose.cpp 4649 2014-02-07 14:57:11Z fspindle $
 *
 * This file is part of the ViSP software.
-* Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+* Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
 * 
 * This software is free software; you can redistribute it and/or
 * modify it under the terms of the GNU General Public License
@@ -71,10 +71,9 @@ vpPose::init()
 #endif
   npt = 0 ;
   listP.clear() ;
+  c3d.clear();
 
   lambda = 0.25 ;
-
-  c3d = NULL ;
 
   vvsIterMax = 200 ;
 
@@ -86,13 +85,19 @@ vpPose::init()
   ransacThreshold = 0.0001;
   ransacNbInlierConsensus = 4;
 
+  residual = 0;
 #if (DEBUG_LEVEL1)
   std::cout << "end vpPose::Init() " << std::endl ;
 #endif
 
 }
 
+/*! Defaukt constructor. */
 vpPose::vpPose()
+  : npt(0), listP(), residual(0), lambda(0.25), vvsIterMax(200), c3d(),
+    computeCovariance(false), covarianceMatrix(),
+    ransacNbInlierConsensus(4), ransacMaxTrials(1000), ransacInliers(), ransacThreshold(0.0001),
+    distanceToPlaneForCoplanarityTest(0.001)
 {
 #if (DEBUG_LEVEL1)
   std::cout << "begin vpPose::vpPose() " << std::endl ;
@@ -107,7 +112,7 @@ vpPose::vpPose()
 }
 
 /*!
-\brief destructor delete the array of point (freed the memory)
+  Destructor that deletes the array of point (freed the memory).
 */
 vpPose::~vpPose()
 {
@@ -122,7 +127,7 @@ vpPose::~vpPose()
 #endif
 }
 /*!
-\brief  delete the array of point
+  Delete the array of point
 */
 void
 vpPose::clearPoint()
@@ -338,8 +343,7 @@ the pose matrix 'cMo'.
 double
 vpPose::computeResidual(const vpHomogeneousMatrix &cMo) const
 {
-
-  double residual = 0 ;
+  double residual_ = 0 ;
   vpPoint P ;
   for(std::list<vpPoint>::const_iterator it=listP.begin(); it != listP.end(); ++it)
   {
@@ -349,9 +353,9 @@ vpPose::computeResidual(const vpHomogeneousMatrix &cMo) const
 
     P.track(cMo) ;
 
-    residual += vpMath::sqr(x-P.get_x()) + vpMath::sqr(y-P.get_y())  ;
+    residual_ += vpMath::sqr(x-P.get_x()) + vpMath::sqr(y-P.get_y())  ;
   }
-  return residual ;
+  return residual_ ;
 }
 
 
@@ -672,8 +676,8 @@ vpPose::poseFromRectangle(vpPoint &p1,vpPoint &p2,
                           vpHomogeneousMatrix & cMo)
 {
 
-  double rectx[4] ;
-  double recty[4] ;
+  std::vector<double> rectx(4) ;
+  std::vector<double> recty(4) ;
   rectx[0]= 0 ;
   recty[0]=0 ;
   rectx[1]=1 ;
@@ -682,8 +686,8 @@ vpPose::poseFromRectangle(vpPoint &p1,vpPoint &p2,
   recty[2]=1 ;
   rectx[3]=0 ;
   recty[3]=1 ;
-  double irectx[4] ;
-  double irecty[4] ;
+  std::vector<double>  irectx(4) ;
+  std::vector<double>  irecty(4) ;
   irectx[0]=(p1.get_x()) ;
   irecty[0]=(p1.get_y()) ;
   irectx[1]=(p2.get_x()) ;
@@ -697,8 +701,8 @@ vpPose::poseFromRectangle(vpPoint &p1,vpPoint &p2,
   vpMatrix H(3,3);
   vpHomography hom;
 
-  //  vpHomography::HartleyDLT(4,rectx,recty,irectx,irecty,hom);
-  vpHomography::HLM(4,rectx,recty,irectx,irecty,1,hom);
+  //  vpHomography::HartleyDLT(rectx,recty,irectx,irecty,hom);
+  vpHomography::HLM(rectx,recty,irectx,irecty,1,hom);
   for (unsigned int i=0 ; i < 3 ; i++)
     for(unsigned int j=0 ; j < 3 ; j++)
       H[i][j] = hom[i][j] ;

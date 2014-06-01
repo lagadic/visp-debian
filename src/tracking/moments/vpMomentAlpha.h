@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpMomentAlpha.h 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpMomentAlpha.h 4574 2014-01-09 08:48:51Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -210,11 +210,27 @@ class VISP_EXPORT vpMomentAlpha : public vpMoment {
         /*!
           Retrieve the orientation of the object as a single double value.
           */
-        double get(){ return values[0]; }
+        double get() const { return values[0]; }
         /*!
           Moment name.
           */
-	const char* name(){return "vpMomentAlpha";}
+        const char* name() const {return "vpMomentAlpha";}
+
+        inline bool is_ref() const
+        {
+          if (isRef)
+            return true;
+          else
+            return false;
+        }
+
+        inline bool is_symmetric() const
+        {
+          if (symmetric)
+            return true;
+          else
+            return false;
+        }
 
   friend VISP_EXPORT std::ostream & operator<<(std::ostream & os, const vpMomentAlpha& v);
 	

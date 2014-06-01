@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpMbKltTracker.cpp 4337 2013-07-23 13:57:53Z ayol $
+ * $Id: vpMbKltTracker.cpp 4661 2014-02-10 19:34:58Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -44,14 +44,11 @@
 #ifdef VISP_HAVE_OPENCV
 
 vpMbKltTracker::vpMbKltTracker()
-{
-  
-  cur = NULL;
-  compute_interaction = true;
-  firstInitialisation = true;
-  computeCovariance = false;
-  firstTrack = false;
-  
+  : cur(NULL), c0Mo(), angleAppears(0), angleDisappears(0), compute_interaction(true),
+    firstInitialisation(true), maskBorder(5), lambda(0.8), maxIter(200), threshold_outlier(0.5),
+    percentGood(0.6), useOgre(false), ctTc0(), tracker(), faces(), firstTrack(false),
+    distNearClip(0.01), distFarClip(100), clippingFlag(vpMbtPolygon::NO_CLIPPING)
+{  
   tracker.setTrackerId(1);
   tracker.setUseHarris(1);
   
@@ -65,21 +62,10 @@ vpMbKltTracker::vpMbKltTracker()
   
   angleAppears = vpMath::rad(65);
   angleDisappears = vpMath::rad(75);
-  
-  clippingFlag = vpMbtPolygon::NO_CLIPPING;
-  
-  maskBorder = 5;
-  threshold_outlier = 0.5;
-  percentGood = 0.6;
-  
-  lambda = 0.8;
-  maxIter = 200;
-
+    
 #ifdef VISP_HAVE_OGRE
   faces.getOgreContext()->setWindowName("MBT KLT");
 #endif
-  
-  useOgre = false;
 }
 
 /*!
@@ -134,9 +120,10 @@ vpMbKltTracker::reinit(const vpImage<unsigned char>& I)
   IplImage* mask = cvCreateImage(cvSize((int)I.getWidth(), (int)I.getHeight()), IPL_DEPTH_8U, 1);
   cvZero(mask);
   
+  unsigned char val = 255/* - i*15*/;
   for (unsigned int i = 0; i < faces.size(); i += 1){
     if(faces[i]->isVisible())
-      faces[i]->updateMask(mask, 255/* - i*15*/, maskBorder);
+      faces[i]->updateMask(mask, val, maskBorder);
   }
   
   tracker.initTracking(cur, mask);
@@ -260,15 +247,15 @@ vpMbKltTracker::setKltOpencv(const vpKltOpencv& t){
 /*!
   Set the camera parameters.
 
-  \param cam : the new camera parameters.
+  \param camera : the new camera parameters.
 */
 void
-vpMbKltTracker::setCameraParameters(const vpCameraParameters& cam)
+vpMbKltTracker::setCameraParameters(const vpCameraParameters& camera)
 {
   for (unsigned int i = 0; i < faces.size(); i += 1){
-    faces[i]->setCameraParameters(cam);
+    faces[i]->setCameraParameters(camera);
   }
-  this->cam = cam;
+  this->cam = camera;
 }
    
 /*!
@@ -344,7 +331,7 @@ vpMbKltTracker::setPose(const vpImage<unsigned char> &I, const vpHomogeneousMatr
           double invDc = 1.0 / plan.getD();
           
           //Create the homography
-          vpHomography cdHc;
+          vpMatrix cdHc;
           vpGEMM(cdtc, Nc, -invDc, cdRc, 1.0, cdHc, VP_GEMM_B_T);
           cdHc /= cdHc[2][2];
           
@@ -764,7 +751,6 @@ vpMbKltTracker::loadConfigFile(const char* configFile)
   
   try{
     std::cout << " *********** Parsing XML for MBT KLT Tracker ************ " << std::endl;
-    
     xmlp.parse(configFile);
   }
   catch(...){
@@ -794,7 +780,8 @@ vpMbKltTracker::loadConfigFile(const char* configFile)
     setFarClippingDistance(xmlp.getFarClippingDistance());
   
   if(xmlp.getFovClipping())
-    clippingFlag = clippingFlag | vpMbtPolygon::FOV_CLIPPING;
+    setClipping(clippingFlag = clippingFlag | vpMbtPolygon::FOV_CLIPPING);
+
 #else
   vpTRACE("You need the libXML2 to read the config file %s", configFile);
 #endif
@@ -804,17 +791,17 @@ vpMbKltTracker::loadConfigFile(const char* configFile)
   Display the 3D model at a given position using the given camera parameters
 
   \param I : The image.
-  \param cMo : Pose used to project the 3D model into the image.
-  \param cam : The camera parameters.
+  \param cMo_ : Pose used to project the 3D model into the image.
+  \param camera : The camera parameters.
   \param col : The desired color.
   \param thickness : The thickness of the lines.
   \param displayFullModel : Boolean to say if all the model has to be displayed.
 */
 void
-vpMbKltTracker::display(const vpImage<unsigned char>& I, const vpHomogeneousMatrix &cMo, const vpCameraParameters & cam,
-                        const vpColor& col , const unsigned int thickness, const bool displayFullModel)
+vpMbKltTracker::display(const vpImage<unsigned char>& I, const vpHomogeneousMatrix &cMo_, const vpCameraParameters & camera,
+                        const vpColor& col, const unsigned int thickness, const bool displayFullModel)
 {
-  vpCameraParameters c = cam;
+  vpCameraParameters c = camera;
   
   if(clippingFlag > 3) // Contains at least one FOV constraint
     c.computeFov(I.getWidth(), I.getHeight());
@@ -822,7 +809,7 @@ vpMbKltTracker::display(const vpImage<unsigned char>& I, const vpHomogeneousMatr
   for (unsigned int i = 0; i < faces.size(); i += 1){
     if(displayFullModel || faces[i]->isVisible())
     {
-      faces[i]->changeFrame(cMo);
+      faces[i]->changeFrame(cMo_);
       faces[i]->computeRoiClipped(c);
       std::vector<std::pair<vpImagePoint,unsigned int> > roi;
       faces[i]->getRoiClipped(c, roi);
@@ -850,7 +837,7 @@ vpMbKltTracker::display(const vpImage<unsigned char>& I, const vpHomogeneousMatr
 
 #ifdef VISP_HAVE_OGRE
   if(useOgre)
-    faces.displayOgre(cMo);
+    faces.displayOgre(cMo_);
 #endif
 }
 
@@ -858,17 +845,17 @@ vpMbKltTracker::display(const vpImage<unsigned char>& I, const vpHomogeneousMatr
   Display the 3D model at a given position using the given camera parameters
 
   \param I : The color image.
-  \param cMo : Pose used to project the 3D model into the image.
-  \param cam : The camera parameters.
+  \param cMo_ : Pose used to project the 3D model into the image.
+  \param camera : The camera parameters.
   \param col : The desired color.
   \param thickness : The thickness of the lines.
   \param displayFullModel : Boolean to say if all the model has to be displayed.
 */
 void
-vpMbKltTracker::display(const vpImage<vpRGBa>& I, const vpHomogeneousMatrix &cMo, const vpCameraParameters & cam,
+vpMbKltTracker::display(const vpImage<vpRGBa>& I, const vpHomogeneousMatrix &cMo_, const vpCameraParameters & camera,
                         const vpColor& col , const unsigned int thickness, const bool displayFullModel)
 {
-  vpCameraParameters c = cam;
+  vpCameraParameters c = camera;
   
   if(clippingFlag > 3) // Contains at least one FOV constraint
     c.computeFov(I.getWidth(), I.getHeight());
@@ -876,7 +863,7 @@ vpMbKltTracker::display(const vpImage<vpRGBa>& I, const vpHomogeneousMatrix &cMo
   for (unsigned int i = 0; i < faces.size(); i += 1){
     if(displayFullModel || faces[i]->isVisible())
     {
-      faces[i]->changeFrame(cMo);
+      faces[i]->changeFrame(cMo_);
       faces[i]->computeRoiClipped(c);      
       std::vector<std::pair<vpImagePoint,unsigned int> > roi;
       faces[i]->getRoiClipped(c, roi);
@@ -904,7 +891,7 @@ vpMbKltTracker::display(const vpImage<vpRGBa>& I, const vpHomogeneousMatrix &cMo
 
 #ifdef VISP_HAVE_OGRE
   if(useOgre)
-    faces.displayOgre(cMo);
+    faces.displayOgre(cMo_);
 #endif
 }
 

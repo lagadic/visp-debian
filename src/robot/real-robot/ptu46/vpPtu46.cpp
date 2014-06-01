@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpPtu46.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpPtu46.cpp 4620 2014-01-27 21:28:32Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -55,10 +55,6 @@
 #include <math.h>
 #include <visp/vpMath.h>
 
-
-
-
-
 /* ------------------------------------------------------------------------ */
 /* --- COMPUTE ------------------------------------------------------------ */
 /* ------------------------------------------------------------------------ */
@@ -80,7 +76,7 @@ const float vpPtu46::h    = 0.068f; /*<! Vertical offset from last joint to
 
 */
 void
-vpPtu46::computeMGD (const vpColVector & q, vpHomogeneousMatrix & fMc)
+vpPtu46::computeMGD (const vpColVector & q, vpHomogeneousMatrix & fMc) const
 {
   if (q.getRows() != 2) {
     vpERROR_TRACE("Bad dimension for ptu-46 articular vector");
@@ -131,7 +127,7 @@ vpPtu46::computeMGD (const vpColVector & q, vpHomogeneousMatrix & fMc)
 
 */
 vpHomogeneousMatrix
-vpPtu46::computeMGD (const vpColVector & q)
+vpPtu46::computeMGD (const vpColVector & q) const
 {
   vpHomogeneousMatrix fMc;
 
@@ -150,7 +146,7 @@ vpPtu46::computeMGD (const vpColVector & q)
 
 */
 void
-vpPtu46::computeMGD (const vpColVector & q, vpPoseVector & r)
+vpPtu46::computeMGD (const vpColVector & q, vpPoseVector & r) const
 {
   vpHomogeneousMatrix fMc;
 
@@ -195,10 +191,8 @@ vpPtu46::init ()
 /* --- DISPLAY ----------------------------------------------------------- */
 /* ----------------------------------------------------------------------- */
 
-std::ostream & operator << (std::ostream & os,
-			    const vpPtu46 & /* constant */)
+VISP_EXPORT std::ostream & operator << (std::ostream & os, const vpPtu46 & /* constant */)
 {
-
   os
     << "Geometric parameters: " << std::endl
     << "L: "
@@ -221,7 +215,7 @@ std::ostream & operator << (std::ostream & os,
 
 */
 void
-vpPtu46::get_cVe(vpVelocityTwistMatrix &cVe)
+vpPtu46::get_cVe(vpVelocityTwistMatrix &cVe) const
 {
   vpHomogeneousMatrix cMe ;
   get_cMe(cMe) ;
@@ -239,7 +233,7 @@ vpPtu46::get_cVe(vpVelocityTwistMatrix &cVe)
 
 */
 void
-vpPtu46::get_cMe(vpHomogeneousMatrix &cMe)
+vpPtu46::get_cMe(vpHomogeneousMatrix &cMe) const
 {
   vpHomogeneousMatrix eMc ;
 
@@ -279,7 +273,7 @@ vpPtu46::get_cMe(vpHomogeneousMatrix &cMe)
 
 */
 void
-vpPtu46::get_eJe(const vpColVector &q, vpMatrix &eJe)
+vpPtu46::get_eJe(const vpColVector &q, vpMatrix &eJe) const
 {
 
 
@@ -298,7 +292,6 @@ vpPtu46::get_eJe(const vpColVector &q, vpMatrix &eJe)
   eJe[3][0] = c2;
   eJe[4][1] = 1;
   eJe[5][0] = s2;
-
 }
 
 /*!
@@ -311,7 +304,7 @@ vpPtu46::get_eJe(const vpColVector &q, vpMatrix &eJe)
 
 */
 void
-vpPtu46::get_fJe(const vpColVector &q, vpMatrix &fJe)
+vpPtu46::get_fJe(const vpColVector &q, vpMatrix &fJe) const
 {
 
   if (q.getRows() != 2) {
@@ -330,12 +323,3 @@ vpPtu46::get_fJe(const vpColVector &q, vpMatrix &fJe)
   fJe[4][1] = -c1;
   fJe[5][0] = 1;
 }
-
-
-
-/*
- * Local variables:
- * c-basic-offset: 2
- * End:
- */
-

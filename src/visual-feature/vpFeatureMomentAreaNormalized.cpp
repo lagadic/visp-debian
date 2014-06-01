@@ -3,7 +3,7 @@
  * $Id: vpFeatureMomentImpl.cpp 3317 2011-09-06 14:14:47Z fnovotny $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -68,14 +68,12 @@ void vpFeatureMomentAreaNormalized::compute_interaction(){
     bool found_FeatureMoment_centered;
 
     bool found_featuremoment_basic;
-    vpFeatureMomentBasic& featureMomentBasic= (static_cast<vpFeatureMomentBasic&>(featureMoments->get("vpFeatureMomentBasic",found_featuremoment_basic)));
+    vpFeatureMomentBasic& featureMomentBasic= (static_cast<vpFeatureMomentBasic&>(featureMomentsDataBase->get("vpFeatureMomentBasic",found_featuremoment_basic)));
 
-
-
-    vpMomentCentered& momentCentered = static_cast<vpMomentCentered&>(moments.get("vpMomentCentered",found_moment_centered));
-    vpMomentObject& momentObject = moment->getObject();
-    vpMomentAreaNormalized& momentSurfaceNormalized = static_cast<vpMomentAreaNormalized&>(moments.get("vpMomentAreaNormalized",found_moment_surface_normalized));
-    vpFeatureMomentCentered& featureMomentCentered = (static_cast<vpFeatureMomentCentered&>(featureMoments->get("vpFeatureMomentCentered",found_FeatureMoment_centered)));
+    const vpMomentCentered& momentCentered = static_cast<const vpMomentCentered&>(moments.get("vpMomentCentered",found_moment_centered));
+    const vpMomentObject& momentObject = moment->getObject();
+    const vpMomentAreaNormalized& momentSurfaceNormalized = static_cast<const vpMomentAreaNormalized&>(moments.get("vpMomentAreaNormalized",found_moment_surface_normalized));
+    vpFeatureMomentCentered& featureMomentCentered = (static_cast<vpFeatureMomentCentered&>(featureMomentsDataBase->get("vpFeatureMomentCentered",found_FeatureMoment_centered)));
 
     if(!found_FeatureMoment_centered) throw vpException(vpException::notInitialized, "vpFeatureMomentCentered not found");
     if(!found_moment_surface_normalized) throw vpException(vpException::notInitialized,"vpMomentAreaNormalized not found");
@@ -125,10 +123,10 @@ void vpFeatureMomentAreaNormalized::compute_interaction(){
     bool found_moment_surface_normalized;
     bool found_moment_gravity;
 
-    vpMomentCentered& momentCentered = static_cast<vpMomentCentered&>(moments.get("vpMomentCentered",found_moment_centered));
-    vpMomentGravityCenter& momentGravity = static_cast<vpMomentGravityCenter&>(moments.get("vpMomentGravityCenter",found_moment_gravity));
-    vpMomentObject& momentObject = moment->getObject();
-    vpMomentAreaNormalized& momentSurfaceNormalized = static_cast<vpMomentAreaNormalized&>(moments.get("vpMomentAreaNormalized",found_moment_surface_normalized));
+    const vpMomentCentered& momentCentered = static_cast<const vpMomentCentered&>(moments.get("vpMomentCentered",found_moment_centered));
+    const vpMomentGravityCenter& momentGravity = static_cast<const vpMomentGravityCenter&>(moments.get("vpMomentGravityCenter",found_moment_gravity));
+    const vpMomentObject& momentObject = moment->getObject();
+    const vpMomentAreaNormalized& momentSurfaceNormalized = static_cast<const vpMomentAreaNormalized&>(moments.get("vpMomentAreaNormalized",found_moment_surface_normalized));
 
     if (!found_moment_surface_normalized) throw vpException(vpException::notInitialized,"vpMomentAreaNormalized not found");
     if (!found_moment_centered) throw vpException(vpException::notInitialized,"vpMomentCentered not found");

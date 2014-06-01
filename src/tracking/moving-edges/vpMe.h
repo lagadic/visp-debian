@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpMe.h 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpMe.h 4649 2014-02-07 14:57:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -166,9 +166,9 @@ public:
   /*!
     Set the minimum image contrast allowed to detect a contour.
     
-    \param mu1 : new mu1.
+    \param mu_1 : new mu1.
   */
-  void setMu1(const double &mu1) { this->mu1 = mu1  ; }
+  void setMu1(const double &mu_1) { this->mu1 = mu_1  ; }
   
   /*!
     Get the minimum image contrast allowed to detect a contour.
@@ -180,9 +180,9 @@ public:
   /*!
     Set the maximum image contrast allowed to detect a contour.
     
-    \param mu2 : new mu2.
+    \param mu_2 : new mu2.
   */
-  void setMu2(const double &mu2) { this->mu2 = mu2  ; }
+  void setMu2(const double &mu_2) { this->mu2 = mu_2  ; }
   
   /*!
     Get the maximum image contrast allowed to detect a contour.

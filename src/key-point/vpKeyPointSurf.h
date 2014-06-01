@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpKeyPointSurf.h 4201 2013-04-08 08:20:47Z fspindle $
+ * $Id: vpKeyPointSurf.h 4649 2014-02-07 14:57:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -83,7 +83,7 @@
   The coordinates of the different reference points and matched points
   are given in pixel thanks to the class vpImagePoint. In this
   documentation we do not explain the SURF technics. So if you want to
-  learn more about it you can refere to the following article :
+  learn more about it you can refer to the following article :
   Herbert Bay, Tinne Tuytelaars and Luc Van Gool "SURF: Speeded Up
   Robust Features", Proceedings of the 9th European Conference on
   Computer Vision, Springer LNCS volume 3951, part 1, pp 404--417,
@@ -188,6 +188,8 @@ int main()
 int main() {}
 #endif
   \endcode
+
+  This class is also described in \ref tutorial-matching.
 */
 
 class VISP_EXPORT vpKeyPointSurf : public vpBasicKeyPoint
@@ -239,10 +241,10 @@ class VISP_EXPORT vpKeyPointSurf : public vpBasicKeyPoint
       Computer Vision, Springer LNCS volume 3951, part 1, pp 404--417,
       2006.
 
-      \param hessianThreshold : Desired hessian threshold value.
+      \param hessian_threshold : Desired hessian threshold value.
     */
-    void setHessianThreshold (double hessianThreshold) {
-			this->hessianThreshold = hessianThreshold;
+    void setHessianThreshold (double hessian_threshold) {
+      this->hessianThreshold = hessian_threshold;
 			params = cvSURFParams(this->hessianThreshold, this->descriptorType);
     } ;
 
@@ -250,10 +252,10 @@ class VISP_EXPORT vpKeyPointSurf : public vpBasicKeyPoint
 
       Sets the type of descriptors to use.
 
-      \param descriptorType : Type of descriptor to use.
+      \param descriptor_type : Type of descriptor to use.
     */
-    void setDescriptorType (vpDescriptorType descriptorType) {
-			this->descriptorType = descriptorType;
+    void setDescriptorType (vpDescriptorType descriptor_type) {
+      this->descriptorType = descriptor_type;
 			params = cvSURFParams(this->hessianThreshold, this->descriptorType);
     } ;
 

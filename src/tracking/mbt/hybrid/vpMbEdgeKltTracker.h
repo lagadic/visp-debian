@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpMbEdgeKltTracker.h 4338 2013-07-23 14:29:30Z fspindle $
+ * $Id: vpMbEdgeKltTracker.h 4649 2014-02-07 14:57:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -55,11 +55,11 @@
 #include <visp/vpSubMatrix.h>
 #include <visp/vpSubColVector.h>
 #include <visp/vpExponentialMap.h>
-#include <visp/vpMbtXmlParser.h>
 #include <visp/vpMbTracker.h>
 #include <visp/vpKltOpencv.h>
 #include <visp/vpMbEdgeTracker.h>
 #include <visp/vpPoseVector.h>
+#include <visp/vpMbtEdgeKltXmlParser.h>
 #include <visp/vpMbKltTracker.h>
 
 /*!
@@ -308,7 +308,7 @@ public:
 
             \param a : new angle in radian.
           */
-  virtual inline  void setAngleAppear(const double &a) { vpMbKltTracker::setAngleAppear(a); }
+  virtual inline  void setAngleAppear(const double &a) { vpMbKltTracker::setAngleAppear(a); vpMbEdgeTracker::setAngleAppear(a);}
   
           /*!
             Set the angle used to test polygons disappearance.
@@ -319,7 +319,7 @@ public:
 
             \param a : new angle in radian.
           */
-  virtual inline  void setAngleDisappear(const double &a) { vpMbKltTracker::setAngleDisappear(a); }
+  virtual inline  void setAngleDisappear(const double &a) { vpMbKltTracker::setAngleDisappear(a); vpMbEdgeTracker::setAngleDisappear(a);}
 
   virtual void    setCameraParameters(const vpCameraParameters& cam);
   
@@ -342,9 +342,9 @@ public:
           /*!
             Set the value of the gain used to compute the control law.
 
-            \param lambda : the desired value for the gain.
+            \param gain : the desired value for the gain.
           */
-  virtual inline  void setLambda(const double lambda) {this->lambda = lambda; vpMbEdgeTracker::setLambda(lambda); vpMbKltTracker::setLambda(lambda);}
+  virtual inline  void setLambda(const double gain) {this->lambda = gain; vpMbEdgeTracker::setLambda(lambda); vpMbKltTracker::setLambda(lambda);}
 
           /*!
             Set the maximum iteration of the virtual visual servoing stage.
@@ -379,7 +379,7 @@ protected:
                              vpColVector &w_klt, const unsigned int lvl=0);
 
   virtual void    init(const vpImage<unsigned char>& I);
-  virtual void    initCylinder(const vpPoint& , const vpPoint , const double , const unsigned int );
+  virtual void    initCylinder(const vpPoint& , const vpPoint &, const double , const unsigned int );
   virtual void    initFaceFromCorners(const std::vector<vpPoint>& corners, const unsigned int indexFace = -1);
   unsigned int    initMbtTracking(const unsigned int level=0);
 

@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpMbtPolygon.h 4331 2013-07-22 12:37:11Z ayol $
+ * $Id: vpMbtPolygon.h 4632 2014-02-03 17:06:40Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -81,7 +81,7 @@ public:
     } vpMbtPolygonClippingType;
   
 public:
-  //! Index of the polygon. Cannot be unsigned int because deafult value is -1.
+  //! Index of the polygon. Cannot be unsigned int because default value is -1.
   int index;
   //! Number of points used to define the polygon.
   unsigned int nbpt;
@@ -115,7 +115,8 @@ private:
                                            const vpCameraParameters &cam, const std::vector<vpColVector> &fovNormals);
     
 public: 
-                           vpMbtPolygon() ;
+            vpMbtPolygon() ;
+            vpMbtPolygon(const vpMbtPolygon& mbtp) ;
             virtual       ~vpMbtPolygon() ;
                                     
             void          addPoint(const unsigned int n, const vpPoint &P) ;               
@@ -187,7 +188,9 @@ public:
   inline    bool          isAppearing() const {return isappearing;}
   virtual   bool          isVisible(const vpHomogeneousMatrix &cMo, const double alpha, const bool &modulo = false) ;
             bool          isVisible() const {return isvisible;}
-            
+
+            vpMbtPolygon& operator=(const vpMbtPolygon& mbtp) ;
+
   /*!
     Specify which clipping to use.
     

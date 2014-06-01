@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpServoData.h 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpServoData.h 4632 2014-02-03 17:06:40Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -81,15 +81,17 @@ private:
 public:
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-  vpServoData(const vpServoData &) {
-    throw vpException(vpException::functionNotImplementedError,"Not implemented!");
+  vpServoData(const vpServoData &sd)
+    : velocityFile(), errorFile(), errorNormFile(), sFile(),
+      sStarFile(), vNormFile(), cmDeg(false) {
+    *this = sd;
   }      
-  void operator=(const vpServoData &){
+  vpServoData & operator=(const vpServoData &) {
     throw vpException(vpException::functionNotImplementedError,"Not implemented!");
   }
 #endif
 
-  vpServoData() { ; }
+  vpServoData() : velocityFile(), errorFile(), errorNormFile(), sFile(), sStarFile(), vNormFile(), cmDeg(false) { ; }
   virtual ~vpServoData() { ; }
 
   //! velocity output in cm and deg

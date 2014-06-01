@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpParallelPortException.h 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpParallelPortException.h 4574 2014-01-09 08:48:51Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -78,36 +78,31 @@
  */
 class VISP_EXPORT vpParallelPortException : public vpException
 {
-public:
-  /*!
+  public:
+    /*!
     \brief Lists the possible errors than can be emmited while calling
     vpParallelPort member
    */
-  enum error
+    enum error
     {
       opening, /*!< Cannot access to the parallel port device. */
       closing  /*!< Cannot close the parallel port device. */
     } ;
 
-public:
-  vpParallelPortException (const int code, const char * msg)
-    : vpException(code, msg){ ; }
-  vpParallelPortException (const int code, const std::string & msg)
-    : vpException(code, msg){ ; }
-  vpParallelPortException (const int code)
-    : vpException(code){ ; }
+  public:
+    vpParallelPortException (const int code,  const char* format, ...)
+    {
+      this->code = code;
+      va_list args;
+      va_start(args, format);
+      setMessage(format, args);
+      va_end (args);
+    }
+    vpParallelPortException (const int code, const std::string & msg)
+      : vpException(code, msg){ ; }
+    vpParallelPortException (const int code)
+      : vpException(code){ ; }
 
 };
 
-
-
-
-
-#endif /* #ifndef __vpParallelPortException_H */
-
-
-/*
- * Local variables:
- * c-basic-offset: 2
- * End:
- */
+#endif

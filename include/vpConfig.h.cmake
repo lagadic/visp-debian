@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpConfig.h.cmake 4308 2013-07-08 08:47:09Z fspindle $
+ * $Id: vpConfig.h.cmake 4604 2014-01-21 14:15:23Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -203,9 +203,6 @@
 // Defined if ffmpeg library available.
 #cmakedefine VISP_HAVE_FFMPEG
 
-// Defined if raw1394 and dc1394-1.x libraries available.
-#cmakedefine VISP_HAVE_DC1394_1
-
 // Defined if raw1394 and dc1394-2.x libraries available.
 #cmakedefine VISP_HAVE_DC1394_2
 
@@ -247,19 +244,6 @@
 // Defined if Irisa's Viper S850 robot available.
 #cmakedefine VISP_HAVE_VIPER850
 
-// Defined if Irisa's Cycab car-like mobile robot is found. 
-// If found, either VISP_HAVE_CYCABTK_OLD nor VISP_HAVE_CYCABTK
-// is defined.  
-#cmakedefine VISP_HAVE_CYCAB
-
-// Defined if the old cycabtk library is found. CycabTk is used to
-// communicate with Irisa's Cycab car-like robot (obsolete).  
-#cmakedefine VISP_HAVE_CYCABTK_OLD
-
-// Defined if the last cycabtk library is found. CycabTk is used to
-// communicate with Irisa's Cycab car-like robot (to use).  
-#cmakedefine VISP_HAVE_CYCABTK
-
 // Defined if the Aria library and (pthread, rt, dl libraries under Unix) is found. 
 // These libraries are used to control Pioneer mobile robots.  
 #cmakedefine VISP_HAVE_PIONEER
@@ -298,7 +282,7 @@
 //
 // On Linux, set the visibility accordingly. If C++ symbol visibility
 // is handled by the compiler, see: http://gcc.gnu.org/wiki/Visibility
-# if defined _WIN32 || defined __CYGWIN__
+# if defined(_WIN32) || defined(__CYGWIN__)
 // On Microsoft Windows, use dllimport and dllexport to tag symbols.
 #  define VISP_DLLIMPORT __declspec(dllimport)
 #  define VISP_DLLEXPORT __declspec(dllexport)
@@ -315,7 +299,7 @@
 #   define VISP_DLLEXPORT
 #   define VISP_DLLLOCAL
 #  endif // __GNUC__ >= 4
-# endif // defined _WIN32 || defined __CYGWIN__
+# endif // defined(_WIN32) || defined(__CYGWIN__)
 
 // Under Windows, for shared libraries (DLL) we need to define export on
 // compilation or import on use (like a third party project).
@@ -339,7 +323,7 @@
 
 // Add the material to produce a warning when deprecated functions are used
 #ifndef vp_deprecated
-#  if defined (UNIX)
+#  if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
 #    define vp_deprecated __attribute__((deprecated))
 #  else
 #    define vp_deprecated __declspec(deprecated)

@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: HelloWorldOgreAdvanced.cpp 4111 2013-02-06 17:27:14Z fspindle $
+ * $Id: HelloWorldOgreAdvanced.cpp 4574 2014-01-09 08:48:51Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -70,6 +70,7 @@ public:
                    unsigned int width = 640, unsigned int height = 480)
 		: vpAROgre(cam, width, height)
   {
+    mAnimationState = NULL;
   }
 
 protected:
@@ -79,9 +80,9 @@ protected:
     Ogre::Entity* robot = mSceneMgr->createEntity("Robot", "robot.mesh");
     // Attach robot to scene graph
     Ogre::SceneNode* RobotNode = mSceneMgr->getRootSceneNode()->createChildSceneNode("Robot");
-    RobotNode->setPosition(0.0, 0.05f, 0.5);
+    RobotNode->setPosition((Ogre::Real)-0.3, (Ogre::Real)0.2, (Ogre::Real)0);
     RobotNode->attachObject(robot);
-    RobotNode->scale(0.001f,0.001f,0.001f);
+    RobotNode->scale((Ogre::Real)0.001,(Ogre::Real)0.001,(Ogre::Real)0.001);
     RobotNode->pitch(Ogre::Degree(180));
     RobotNode->yaw(Ogre::Degree(-90));
 
@@ -108,63 +109,76 @@ protected:
 
 int main()
 {
+  try {
 #if defined(VISP_HAVE_OGRE) 
 #if defined(VISP_HAVE_V4L2) || defined(VISP_HAVE_DC1394_2) || defined(VISP_HAVE_DIRECTSHOW) || defined(VISP_HAVE_OPENCV)
 
-  // Now we try to find an available framegrabber
+    // Now we try to find an available framegrabber
 #if defined(VISP_HAVE_V4L2)
-  // Video for linux 2 grabber
-  vpV4l2Grabber grabber;
+    // Video for linux 2 grabber
+    vpV4l2Grabber grabber;
 #elif defined(VISP_HAVE_DC1394_2)
-  // libdc1394-2
-  vp1394TwoGrabber grabber;
+    // libdc1394-2
+    vp1394TwoGrabber grabber;
 #elif defined(VISP_HAVE_DIRECTSHOW)
-  // OpenCV to gather images
-  vpOpenCVGrabber grabber;
+    // OpenCV to gather images
+    vpOpenCVGrabber grabber;
 #elif defined(VISP_HAVE_OPENCV)
-  // OpenCV to gather images
-  vpOpenCVGrabber grabber;
+    // OpenCV to gather images
+    vpOpenCVGrabber grabber;
 #endif
 
-  // Image to store gathered data
-  // Here we acquire a grey level image. The consequence will be that
-  // the background texture used in Ogre renderer will be also in grey
-  // level.
-  vpImage<unsigned char> I; 
-  // Open frame grabber
-  // Here we acquire an image from an available framegrabber to update
-  // the image size
-  grabber.open(I);
-  // Parameters of our camera
-  double px = 565;
-  double py = 565;
-  double u0 = grabber.getWidth() / 2;
-  double v0 = grabber.getHeight() / 2;
-  vpCameraParameters cam(px,py,u0,v0);
-  // The matrix with our pose
-  vpHomogeneousMatrix cMo;
-
-  // Our object
-  vpAROgreAdvanced ogre(cam, (unsigned int)grabber.getWidth(), (unsigned int)grabber.getHeight());
-  // Initialisation
-  ogre.init(I);
-
-  // Rendering loop
-  while(ogre.continueRendering()){
-    // Image Acquisition
+    // Image to store gathered data
+    // Here we acquire a grey level image. The consequence will be that
+    // the background texture used in Ogre renderer will be also in grey
+    // level.
+    vpImage<unsigned char> I;
+    // Open frame grabber
+    // Here we acquire an image from an available framegrabber to update
+    // the image size
+    grabber.open(I);
     grabber.acquire(I);
-    // Pose computation
-    // ...
-    // cMo updated
-    // Display with vpAROgre
-    ogre.display(I, cMo);
+    // Parameters of our camera
+    double px = 565;
+    double py = 565;
+    double u0 = grabber.getWidth() / 2;
+    double v0 = grabber.getHeight() / 2;
+    vpCameraParameters cam(px,py,u0,v0);
+    // The matrix with our pose
+    vpHomogeneousMatrix cMo;
+    cMo[2][3] = 1.; // Z = 1 meter
+
+    // Our object
+    vpAROgreAdvanced ogre(cam, (unsigned int)grabber.getWidth(), (unsigned int)grabber.getHeight());
+    // Initialisation
+    ogre.init(I);
+
+    // Rendering loop
+    while(ogre.continueRendering()){
+      // Image Acquisition
+      grabber.acquire(I);
+      // Pose computation
+      // ...
+      // cMo updated
+      // Display with vpAROgre
+      ogre.display(I, cMo);
+    }
+    // Release video device
+    grabber.close();
+#else
+    std::cout << "You need an available framegrabber to run this example" << std::endl;
+#endif
+#else
+    std::cout << "You need Ogre3D to run this example" << std::endl;
+#endif
+    return 0;
   }
-  // Release video device
-  grabber.close();
-#else
-  std::cout << "You need an available framegrabber to run this example" << std::endl;
-#endif
-#else
-  std::cout << "You Ogre3D to run this example" << std::endl;
-#endif
+  catch(vpException e) {
+    std::cout << "Catch an exception: " << e << std::endl;
+    return 1;
+  }
+  catch(...) {
+    std::cout << "Catch an exception " << std::endl;
+    return 1;
+  }
 }

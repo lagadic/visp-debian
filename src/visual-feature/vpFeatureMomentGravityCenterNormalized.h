@@ -3,7 +3,7 @@
  * $Id: vpFeatureMomentImpl.h 3317 2011-09-06 14:14:47Z fnovotny $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -83,25 +83,25 @@ class VISP_EXPORT vpFeatureMomentGravityCenterNormalized : public vpFeatureMomen
  public:
         /*!
         Initializes the feature with information about the database of moment primitives, the object plane and feature database.
-        \param moments : Moment database. The database of moment primitives (first parameter) is mandatory. It is used to access different moment values later used to compute the final matrix.
-        \param A : Plane coefficient in a \f$ A \times x+B \times y + C = \frac{1}{Z} \f$ plane.
-        \param B : Plane coefficient in a \f$ A \times x+B \times y + C = \frac{1}{Z} \f$ plane.
-        \param C : Plane coefficient in a \f$ A \times x+B \times y + C = \frac{1}{Z} \f$ plane.
+        \param database : Moment database. The database of moment primitives (first parameter) is mandatory. It is used to access different moment values later used to compute the final matrix.
+        \param A_ : Plane coefficient in a \f$ A \times x+B \times y + C = \frac{1}{Z} \f$ plane.
+        \param B_ : Plane coefficient in a \f$ A \times x+B \times y + C = \frac{1}{Z} \f$ plane.
+        \param C_ : Plane coefficient in a \f$ A \times x+B \times y + C = \frac{1}{Z} \f$ plane.
         \param featureMoments : Feature database.
 
         */
-        vpFeatureMomentGravityCenterNormalized(vpMomentDatabase& moments,double A, double B, double C,vpFeatureMomentDatabase* featureMoments=NULL) :
-            vpFeatureMoment(moments,A,B,C,featureMoments,2)
+        vpFeatureMomentGravityCenterNormalized(vpMomentDatabase& database,double A_, double B_, double C_,vpFeatureMomentDatabase* featureMoments=NULL)
+          : vpFeatureMoment(database,A_,B_,C_,featureMoments,2)
         {}
         void compute_interaction();
         /*!
           associated moment name
           */
-        const char* momentName(){ return "vpMomentGravityCenterNormalized";}
+        const char* momentName() const { return "vpMomentGravityCenterNormalized";}
         /*!
             feature name
           */
-        const char* name(){ return "vpFeatureMomentGravityCenterNormalized";}
+        const char* name() const { return "vpFeatureMomentGravityCenterNormalized";}
 
         /*!
           Shortcut selector for \f$x_n\f$.
@@ -219,25 +219,26 @@ class VISP_EXPORT vpFeatureMomentGravityCenterNormalized : public vpFeatureMomen
  public:
         /*!
         Initializes the feature with information about the database of moment primitives, the object plane and feature database.
-        \param moments : Moment database. The database of moment primitives (first parameter) is mandatory. It is used to access different moment values later used to compute the final matrix.
-        \param A : Plane coefficient in a \f$ A \times x+B \times y + C = \frac{1}{Z} \f$ plane.
-        \param B : Plane coefficient in a \f$ A \times x+B \times y + C = \frac{1}{Z} \f$ plane.
-        \param C : Plane coefficient in a \f$ A \times x+B \times y + C = \frac{1}{Z} \f$ plane.
+        \param data_base : Moment database. The database of moment primitives (first parameter) is mandatory. It is used to access different moment values later used to compute the final matrix.
+        \param A_ : Plane coefficient in a \f$ A \times x+B \times y + C = \frac{1}{Z} \f$ plane.
+        \param B_ : Plane coefficient in a \f$ A \times x+B \times y + C = \frac{1}{Z} \f$ plane.
+        \param C_ : Plane coefficient in a \f$ A \times x+B \times y + C = \frac{1}{Z} \f$ plane.
         \param featureMoments : Feature database.
 
         */
-        vpFeatureMomentGravityCenterNormalized(vpMomentDatabase& moments,double A, double B, double C,vpFeatureMomentDatabase* featureMoments=NULL) :
-            vpFeatureMoment(moments,A,B,C,featureMoments,2)
+        vpFeatureMomentGravityCenterNormalized(vpMomentDatabase& data_base,double A_, double B_, double C_,
+                                               vpFeatureMomentDatabase* featureMoments=NULL)
+          : vpFeatureMoment(data_base,A_,B_,C_,featureMoments,2)
         {}
         void compute_interaction();
         /*!
           associated moment name
           */
-        const char* momentName(){ return "vpMomentGravityCenterNormalized";}
+        const char* momentName() const { return "vpMomentGravityCenterNormalized";}
         /*!
             feature name
           */
-        const char* name(){ return "vpFeatureMomentGravityCenterNormalized";}
+        const char* name() const { return "vpFeatureMomentGravityCenterNormalized";}
 
         /*!
           Shortcut selector for \f$x_n\f$.

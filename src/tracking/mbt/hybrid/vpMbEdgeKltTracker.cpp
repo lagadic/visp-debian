@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpMbEdgeKltTracker.cpp 4327 2013-07-19 14:08:01Z fspindle $
+ * $Id: vpMbEdgeKltTracker.cpp 4649 2014-02-07 14:57:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -44,14 +44,10 @@
 #ifdef VISP_HAVE_OPENCV
 
 vpMbEdgeKltTracker::vpMbEdgeKltTracker()
+  : compute_interaction(true), lambda(0.8), thresholdKLT(2.), thresholdMBT(2.), maxIter(200)
 {
-  compute_interaction = true;
   computeCovariance = false;
   
-  lambda = 0.8;
-  thresholdKLT = 2.0;
-  thresholdMBT = 2.0;
-  maxIter = 200;
   vpMbKltTracker::setMaxIter(30);
   
 #ifdef VISP_HAVE_OGRE
@@ -278,8 +274,64 @@ void
 vpMbEdgeKltTracker::loadConfigFile(const char* configFile)
 {
 #ifdef VISP_HAVE_XML2
-  vpMbEdgeTracker::loadConfigFile(configFile);
-  vpMbKltTracker::loadConfigFile(configFile);
+  vpMbtEdgeKltXmlParser xmlp;
+
+  xmlp.setCameraParameters(cam);
+  xmlp.setAngleAppear(vpMath::deg(vpMbKltTracker::angleAppears));
+  xmlp.setAngleDisappear(vpMath::deg(vpMbKltTracker::angleDisappears));
+
+  xmlp.setMovingEdge(me);
+
+  xmlp.setMaxFeatures(10000);
+  xmlp.setWindowSize(5);
+  xmlp.setQuality(0.01);
+  xmlp.setMinDistance(5);
+  xmlp.setHarrisParam(0.01);
+  xmlp.setBlockSize(3);
+  xmlp.setPyramidLevels(3);
+  xmlp.setMaskBorder(maskBorder);
+
+  try{
+    std::cout << " *********** Parsing XML for Mb Edge Tracker ************ " << std::endl;
+    xmlp.parse(configFile);
+  }
+  catch(...){
+    vpERROR_TRACE("Can't open XML file \"%s\"\n ", configFile);
+    throw vpException(vpException::ioError, "problem to parse configuration file.");
+  }
+
+  vpCameraParameters camera;
+  xmlp.getCameraParameters(camera);
+  setCameraParameters(camera);
+
+  vpMbEdgeTracker::angleAppears = vpMath::rad(xmlp.getAngleAppear());
+  vpMbEdgeTracker::angleDisappears = vpMath::rad(xmlp.getAngleDisappear());
+  vpMbKltTracker::angleAppears = vpMath::rad(xmlp.getAngleAppear());
+  vpMbKltTracker::angleDisappears = vpMath::rad(xmlp.getAngleDisappear());
+
+  if(xmlp.hasNearClippingDistance())
+    setNearClippingDistance(xmlp.getNearClippingDistance());
+
+  if(xmlp.hasFarClippingDistance())
+    setFarClippingDistance(xmlp.getFarClippingDistance());
+
+  if(xmlp.getFovClipping()){
+    vpMbEdgeTracker::setClipping(vpMbEdgeTracker::clippingFlag | vpMbtPolygon::FOV_CLIPPING);
+    vpMbKltTracker::setClipping(vpMbKltTracker::clippingFlag | vpMbtPolygon::FOV_CLIPPING);
+  }
+
+  vpMe meParser;
+  xmlp.getMe(meParser);
+  vpMbEdgeTracker::setMovingEdge(meParser);
+
+  tracker.setMaxFeatures((int)xmlp.getMaxFeatures());
+  tracker.setWindowSize((int)xmlp.getWindowSize());
+  tracker.setQuality(xmlp.getQuality());
+  tracker.setMinDistance(xmlp.getMinDistance());
+  tracker.setHarrisFreeParameter(xmlp.getHarrisParam());
+  tracker.setBlockSize((int)xmlp.getBlockSize());
+  tracker.setPyramidLevels((int)xmlp.getPyramidLevels());
+  maskBorder = xmlp.getMaskBorder();
 #else
   vpTRACE("You need the libXML2 to read the config file %s", configFile);
 #endif
@@ -731,8 +783,8 @@ vpMbEdgeKltTracker::trackFirstLoop(const vpImage<unsigned char>& I, vpColVector 
     l->computeInteractionMatrixError(cMo);
     
     double fac = 1;
-    for(std::list<int>::const_iterator it = l->Lindex_polygon.begin(); it!=l->Lindex_polygon.end(); ++it){
-      int index = *it;
+    for(std::list<int>::const_iterator itindex = l->Lindex_polygon.begin(); itindex!=l->Lindex_polygon.end(); ++itindex){
+      int index = *itindex;
       if (l->hiddenface->isAppearing((unsigned int)index)) {
         fac = 0.2;
         break;
@@ -790,7 +842,7 @@ vpMbEdgeKltTracker::trackFirstLoop(const vpImage<unsigned char>& I, vpColVector 
 
 void 
 vpMbEdgeKltTracker::trackSecondLoop(const vpImage<unsigned char>& I,  vpMatrix &L, vpColVector &error,
-                                    vpHomogeneousMatrix& cMo, const unsigned int lvl)
+                                    vpHomogeneousMatrix& cMo_, const unsigned int lvl)
 {
   vpMbtDistanceLine* l;
   vpMbtDistanceCylinder *cy ;
@@ -798,7 +850,7 @@ vpMbEdgeKltTracker::trackSecondLoop(const vpImage<unsigned char>& I,  vpMatrix &
   unsigned int n = 0 ;
   for(std::list<vpMbtDistanceLine*>::const_iterator it=lines[lvl].begin(); it!=lines[lvl].end(); ++it){
     l = *it;
-    l->computeInteractionMatrixError(cMo) ;
+    l->computeInteractionMatrixError(cMo_) ;
     for (unsigned int i=0 ; i < l->nbFeature ; i++){
       for (unsigned int j=0; j < 6 ; j++){
         L[n+i][j] = l->L[i][j];
@@ -810,7 +862,7 @@ vpMbEdgeKltTracker::trackSecondLoop(const vpImage<unsigned char>& I,  vpMatrix &
   
   for(std::list<vpMbtDistanceCylinder*>::const_iterator it=cylinders[lvl].begin(); it!=cylinders[lvl].end(); ++it){
     cy = *it;
-    cy->computeInteractionMatrixError(cMo, I) ;
+    cy->computeInteractionMatrixError(cMo_, I) ;
     for(unsigned int i=0 ; i < cy->nbFeature ; i++){
       for(unsigned int j=0; j < 6 ; j++){
         L[n+i][j] = cy->L[i][j];
@@ -825,12 +877,12 @@ vpMbEdgeKltTracker::trackSecondLoop(const vpImage<unsigned char>& I,  vpMatrix &
 /*!
   Set the camera parameters
 
-  \param cam : the new camera parameters
+  \param camera : the new camera parameters
 */
 void
-vpMbEdgeKltTracker::setCameraParameters(const vpCameraParameters& cam)
+vpMbEdgeKltTracker::setCameraParameters(const vpCameraParameters& camera)
 {
-  this->cam = cam;
+  this->cam = camera;
   
   vpMbEdgeTracker::setCameraParameters(cam);
   vpMbKltTracker::setCameraParameters(cam);
@@ -853,30 +905,30 @@ vpMbEdgeKltTracker::initFaceFromCorners(const std::vector<vpPoint>& corners, con
   Add a cylinder to track from tow points on the axis (defining the length of
   the cylinder) and its radius.
 
-  \param _p1 : First point on the axis.
-  \param _p2 : Second point on the axis.
-  \param _radius : Radius of the cylinder.
-  \param _indexCylinder : Index of the cylinder.
+  \param p1 : First point on the axis.
+  \param p2 : Second point on the axis.
+  \param radius : Radius of the cylinder.
+  \param indexCylinder : Index of the cylinder.
 */
 void    
-vpMbEdgeKltTracker::initCylinder(const vpPoint& _p1, const vpPoint _p2, const double _radius, const unsigned int _indexCylinder)
+vpMbEdgeKltTracker::initCylinder(const vpPoint& p1, const vpPoint &p2, const double radius, const unsigned int indexCylinder)
 {
-  vpMbEdgeTracker::initCylinder(_p1, _p2, _radius, _indexCylinder);
+  vpMbEdgeTracker::initCylinder(p1, p2, radius, indexCylinder);
 }
 
 /*!
   Display the 3D model at a given position using the given camera parameters
 
   \param I : The image.
-  \param cMo : Pose used to project the 3D model into the image.
-  \param cam : The camera parameters.
+  \param cMo_ : Pose used to project the 3D model into the image.
+  \param camera : The camera parameters.
   \param col : The desired color.
   \param thickness : The thickness of the lines.
   \param displayFullModel : boolean to say if all the model has to be displayed.
 */
 void
-vpMbEdgeKltTracker::display(const vpImage<unsigned char>& I, const vpHomogeneousMatrix &cMo, const vpCameraParameters & cam,
-                            const vpColor& col , const unsigned int thickness, const bool displayFullModel)
+vpMbEdgeKltTracker::display(const vpImage<unsigned char>& I, const vpHomogeneousMatrix &cMo_, const vpCameraParameters &camera,
+                            const vpColor& col, const unsigned int thickness, const bool displayFullModel)
 {  
   vpMbtDistanceLine *l ;
   
@@ -884,11 +936,11 @@ vpMbEdgeKltTracker::display(const vpImage<unsigned char>& I, const vpHomogeneous
     if(scales[i]){
       for(std::list<vpMbtDistanceLine*>::const_iterator it=lines[scaleLevel].begin(); it!=lines[scaleLevel].end(); ++it){
         l = *it;
-        l->display(I,cMo, cam, col, thickness, displayFullModel);
+        l->display(I,cMo_, camera, col, thickness, displayFullModel);
       }
 
       for(std::list<vpMbtDistanceCylinder*>::const_iterator it=cylinders[scaleLevel].begin(); it!=cylinders[scaleLevel].end(); ++it){
-        (*it)->display(I, cMo, cam, col, thickness);
+        (*it)->display(I, cMo_, camera, col, thickness);
       }
 
       break ; //displaying model on one scale only
@@ -903,7 +955,7 @@ vpMbEdgeKltTracker::display(const vpImage<unsigned char>& I, const vpHomogeneous
   
 #ifdef VISP_HAVE_OGRE
   if(vpMbKltTracker::useOgre)
-    vpMbKltTracker::faces.displayOgre(cMo);
+    vpMbKltTracker::faces.displayOgre(cMo_);
 #endif
 }
 
@@ -911,14 +963,14 @@ vpMbEdgeKltTracker::display(const vpImage<unsigned char>& I, const vpHomogeneous
   Display the 3D model at a given position using the given camera parameters
 
   \param I : The color image.
-  \param cMo : Pose used to project the 3D model into the image.
-  \param cam : The camera parameters.
+  \param cMo_ : Pose used to project the 3D model into the image.
+  \param camera : The camera parameters.
   \param col : The desired color.
   \param thickness : The thickness of the lines.
   \param displayFullModel : boolean to say if all the model has to be displayed.
 */
 void
-vpMbEdgeKltTracker::display(const vpImage<vpRGBa>& I, const vpHomogeneousMatrix &cMo, const vpCameraParameters & cam,
+vpMbEdgeKltTracker::display(const vpImage<vpRGBa>& I, const vpHomogeneousMatrix &cMo_, const vpCameraParameters &camera,
                             const vpColor& col , const unsigned int thickness, const bool displayFullModel)
 { 
   vpMbtDistanceLine *l ;
@@ -927,11 +979,11 @@ vpMbEdgeKltTracker::display(const vpImage<vpRGBa>& I, const vpHomogeneousMatrix 
     if(scales[i]){
       for(std::list<vpMbtDistanceLine*>::const_iterator it=lines[scaleLevel].begin(); it!=lines[scaleLevel].end(); ++it){
         l = *it;
-        l->display(I,cMo, cam, col, thickness, displayFullModel);
+        l->display(I,cMo_, camera, col, thickness, displayFullModel);
       }
 
       for(std::list<vpMbtDistanceCylinder*>::const_iterator it=cylinders[scaleLevel].begin(); it!=cylinders[scaleLevel].end(); ++it){
-        (*it)->display(I, cMo, cam, col, thickness);
+        (*it)->display(I, cMo_, camera, col, thickness);
       }
 
       break ; //displaying model on one scale only
@@ -946,7 +998,7 @@ vpMbEdgeKltTracker::display(const vpImage<vpRGBa>& I, const vpHomogeneousMatrix 
   
 #ifdef VISP_HAVE_OGRE
   if(vpMbKltTracker::useOgre)
-    vpMbKltTracker::faces.displayOgre(cMo);
+    vpMbKltTracker::faces.displayOgre(cMo_);
 #endif
 }
 

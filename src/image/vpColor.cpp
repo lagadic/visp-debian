@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpColor.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpColor.cpp 4620 2014-01-27 21:28:32Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -121,3 +121,25 @@ vpColor const vpColor::allColors[vpColor::nbColors] = {
 /*!< Predefined none color with R=G=B=0 and identifier vpColor::id_unknown. */
 vpColor const vpColor::none = vpColor(0, 0, 0, id_unknown);
 
+/*!
+  Compare two colors.
+
+  Return true if the R,G,B components are the same.
+
+  \param c1,c2 : Color to compare.
+*/
+VISP_EXPORT bool operator==( const vpColor &c1, const vpColor &c2 ) {
+  return ( ( c1.R == c2.R ) && ( c1.G == c2.G ) && ( c1.B == c2.B) );
+}
+
+/*!
+
+  Compare two colors.
+
+  Return true if the R,G,B components are different.
+
+  \param c1,c2 : Color to compare.
+*/
+VISP_EXPORT bool operator!=( const vpColor &c1, const vpColor &c2 ) {
+  return ( ( c1.R != c2.R ) || ( c1.G != c2.G ) || ( c1.B == c2.B) );
+}

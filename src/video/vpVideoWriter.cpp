@@ -3,7 +3,7 @@
  * $Id: vpImagePoint.h 2359 2009-11-24 15:09:25Z nmelchio $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -52,21 +52,35 @@
   Basic constructor.
 */
 vpVideoWriter::vpVideoWriter()
+  :
+#ifdef VISP_HAVE_FFMPEG
+    ffmpeg(NULL),
+#  if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(54,51,110) // libavcodec 54.51.100
+    codec(CODEC_ID_MPEG1VIDEO),
+#  else
+    codec(AV_CODEC_ID_MPEG1VIDEO),
+#  endif
+    bit_rate(500000),
+    framerate(25),
+#endif
+    formatType(FORMAT_UNKNOWN), initFileName(false), isOpen(false), frameCount(0),
+    firstFrame(0), width(0), height(0)
 {
   initFileName = false;
   firstFrame = 0;
   frameCount = 0;
-  
-  #ifdef VISP_HAVE_FFMPEG
+  isOpen = false;
+  width = height = 0;
+#ifdef VISP_HAVE_FFMPEG
   ffmpeg = NULL;
-#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(54,51,110) // libavcodec 54.51.100
+#  if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(54,51,110) // libavcodec 54.51.100
   codec = CODEC_ID_MPEG1VIDEO;
-#else
+#  else
   codec = AV_CODEC_ID_MPEG1VIDEO;
-#endif
+#  endif
   bit_rate = 500000;
   framerate = 25;
-  #endif
+#endif
 }
 
 
@@ -96,7 +110,12 @@ void vpVideoWriter::setFileName(const char *filename)
     vpERROR_TRACE("filename empty ") ;
     throw (vpImageException(vpImageException::noFileNameError,"filename empty ")) ;
   }
-  
+
+  if (strlen( filename ) >= FILENAME_MAX) {
+    throw(vpException(vpException::memoryAllocationError,
+                      "Not enough memory to intialize the file name"));
+  }
+
   strcpy(this->fileName,filename);
   
   formatType = getFormat(fileName);

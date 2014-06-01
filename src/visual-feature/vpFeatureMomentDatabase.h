@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpFeatureMomentDatabase.h 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpFeatureMomentDatabase.h 4632 2014-02-03 17:06:40Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -162,7 +162,11 @@ class VISP_EXPORT vpFeatureMomentDatabase{
   void add(vpFeatureMoment& featureMoment,char* name);
  public:
   /*!
-    virtual destructor.
+    Default constructor.
+  */
+  vpFeatureMomentDatabase() {}
+  /*!
+    Virtual destructor that does nothing.
   */
   virtual ~vpFeatureMomentDatabase() {}
   virtual void updateAll(double A=0.0, double B=0.0, double C=1.0);

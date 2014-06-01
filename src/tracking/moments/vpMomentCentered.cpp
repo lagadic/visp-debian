@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpMomentCentered.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpMomentCentered.cpp 4620 2014-01-27 21:28:32Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -46,6 +46,19 @@
 #include <cassert>
 
 /*!
+  To set the values of centred moments. Required when normalizing the moment values.
+  @param i : first index of the 2D moment.
+  @param j : second index of the 2D moment.
+  @param value : value of the moment.
+*/
+void vpMomentCentered::set(unsigned int i, unsigned int j, double value){
+    vpMomentObject mobj = getObject();
+    assert(i+j<=mobj.getOrder());
+    if(i+j>mobj.getOrder()) throw vpException(vpException::badValue,"You cannot set that value.");
+    values[j*(mobj.getOrder()+1)+i] = value;
+}
+
+/*!
   Computes centered moments of all available orders. 
   Depends on vpMomentGravityCenter.
 */
@@ -53,8 +66,9 @@ void vpMomentCentered::compute(){
     bool found_moment_gravity;    
     values.resize((getObject().getOrder()+1)*(getObject().getOrder()+1));
 
-    vpMomentGravityCenter& momentGravity = static_cast<vpMomentGravityCenter&>(getMoments().get("vpMomentGravityCenter",found_moment_gravity));
+    const vpMomentGravityCenter& momentGravity = static_cast<const vpMomentGravityCenter&>(getMoments().get("vpMomentGravityCenter",found_moment_gravity));
     if(!found_moment_gravity) throw vpException(vpException::notInitialized,"vpMomentGravityCenter not found");
+
     unsigned int order = getObject().getOrder()+1;
     for(register unsigned int j=0;j<(order);j++){
         for(register unsigned int i=0;i<order-j;i++){
@@ -87,11 +101,12 @@ vpMomentCentered::vpMomentCentered() : vpMoment(){
   \param j : second index of the centered moment.
   \return \f$\mu_{ij}\f$ moment.
 */
-double vpMomentCentered::get(unsigned int i,unsigned int j){
-    assert(i+j<=getObject().getOrder());
-    if(i+j>getObject().getOrder()) throw vpException(vpException::badValue,"The requested value has not been computed, you should specify a higher order.");
+double vpMomentCentered::get(unsigned int i,unsigned int j) const {
+    unsigned int order = getObject().getOrder();
+    assert(i+j<=order);
+    if(i+j>order) throw vpException(vpException::badValue,"The requested value has not been computed, you should specify a higher order.");
 
-    return values[j*(getObject().getOrder()+1)+i];
+    return values[j*(order+1)+i];
 }
 
 /*!
@@ -109,7 +124,7 @@ u30 x    x  x
   \endcode
 
 */
-std::ostream & operator<<(std::ostream & os, vpMomentCentered& m){
+VISP_EXPORT std::ostream & operator<<(std::ostream & os, vpMomentCentered& m){
     for(unsigned int i = 0;i<m.values.size();i++){
         if(i%(m.getObject().getOrder()+1)==0)
           os << std::endl;

@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpPlot.cpp 4151 2013-03-11 06:52:18Z fspindle $
+ * $Id: vpPlot.cpp 4649 2014-02-07 14:57:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -64,13 +64,9 @@
   Needs then a call to init().
 
 */
-vpPlot::vpPlot()
+vpPlot::vpPlot() : I(), display(NULL), graphNbr(1), graphList(NULL), margei(30), margej(40),
+  factori(1.f), factorj(1.)
 {
-  graphList = NULL;
-  display = NULL;
-    
-  margei = 30;
-  margej = 40;
 }
 /*!
   This constructor creates a new window where the curves
@@ -82,23 +78,19 @@ vpPlot::vpPlot()
   default font is set to "-adobe-times-medium-i-normal--10-100-75-75-p-52-iso8859-*". 
   Note that you can chose an other one using "xfontsel".
 
-  \param graphNbr : The number of graph in the window.
+  \param graph_nbr : The number of graph in the window.
   \param height : Height of the window.
   \param width : Width of the window.
   \param x,y : The window is set at position x,y (column index, row index).
   \param title : Window title. 
 */
-vpPlot::vpPlot(const unsigned int graphNbr, 
+vpPlot::vpPlot(const unsigned int graph_nbr,
 	       const unsigned int height, const unsigned int width, 
 	       const int x, const int y, const char *title)
-{
-  graphList = NULL;
-  display = NULL;
-      
-  margei = 30;
-  margej = 40;
-  
-  init(graphNbr, height, width, x, y, title);
+  : I(), display(NULL), graphNbr(1), graphList(NULL), margei(30), margej(40),
+    factori(1.f), factorj(1.)
+{  
+  init(graph_nbr, height, width, x, y, title);
 }
 
 /*!
@@ -107,13 +99,13 @@ vpPlot::vpPlot(const unsigned int graphNbr,
 
   \warning You can modify the default window size, but this is not advised.
 
-  \param graphNbr : The number of graph in the window.
+  \param graph_nbr : The number of graph in the window.
   \param height : Height of the window.
   \param width : Width of the window.
   \param x,y : The window is set at position x,y (column index, row index).
   \param title : Window title. 
 */
-void vpPlot::init(const unsigned int graphNbr, 
+void vpPlot::init(const unsigned int graph_nbr,
 		  const unsigned int height, const unsigned int width, 
 		  const int x, const int y, const char *title)
 {
@@ -138,7 +130,7 @@ void vpPlot::init(const unsigned int graphNbr,
   factori = height/700.0f;
   factorj = width/700.0f;
     
-  initNbGraph(graphNbr);
+  initNbGraph(graph_nbr);
 }
 
 /*!
@@ -203,7 +195,6 @@ vpPlot::initNbGraph (unsigned int nbGraph)
     strcpy(graphList[i].unitx, "");
     strcpy(graphList[i].unity, "");
     strcpy(graphList[i].unitz, "");
-    graphList[i].textdispayed=false;
   }
 }
 
@@ -357,12 +348,11 @@ void vpPlot::plot(const unsigned int graphNum, const double x, const vpColVector
 }
 
 /*!
-  This method unable to move the point of view if you have a 3D graphic.
+  This method allows to change the point of view with the mouse if you have a 3D graphic.
 */
 void
 vpPlot::navigate()
 {
-  vpImagePoint trash;
   vpMouseButton::vpMouseButtonType b = vpMouseButton::button1;
   
   bool blocked = false;
@@ -376,15 +366,15 @@ vpPlot::navigate()
       vpDisplay::getPointerPosition(I,iP);
       for (unsigned int i = 0; i < graphNbr ; i++)
       {
-	if (iP.inRectangle((graphList+i)->graphZone))
-	{
-	  iblocked = i;
-	  break;
-	}
+        if (iP.inRectangle((graphList+i)->graphZone))
+        {
+          iblocked = i;
+          break;
+        }
       }
       if ((graphList+iblocked)->move(I))
       {
-	(graphList+iblocked)->replot3D(I);
+        (graphList+iblocked)->replot3D(I);
       }
       
       blocked = (graphList+iblocked)->blocked;
@@ -393,7 +383,7 @@ vpPlot::navigate()
     {
       if ((graphList+iblocked)->move(I))
       {
-	(graphList+iblocked)->replot3D(I);
+        (graphList+iblocked)->replot3D(I);
       }
       blocked = (graphList+iblocked)->blocked;
     }

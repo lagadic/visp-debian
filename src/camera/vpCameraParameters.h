@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpCameraParameters.h 4317 2013-07-17 09:40:17Z fspindle $
+ * $Id: vpCameraParameters.h 4620 2014-01-27 21:28:32Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -299,8 +299,7 @@ public :
   vpMatrix get_K_inverse() const;
 
   void printParameters() ;
-  friend VISP_EXPORT std::ostream & operator << (std::ostream & os,
-						 const vpCameraParameters &cam);
+  friend VISP_EXPORT std::ostream & operator << (std::ostream & os, const vpCameraParameters &cam);
 
 private:
   static const double DEFAULT_U0_PARAMETER;
@@ -327,7 +326,6 @@ private:
   double inv_px, inv_py; 
    
   vpCameraParametersProjType projModel ; //!< used projection model
-
 } ;
 
 #endif

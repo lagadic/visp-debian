@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpRect.h 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpRect.h 4649 2014-02-07 14:57:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -77,7 +77,10 @@
 
 */
 
+#include <vector>
+#include <visp/vpException.h>
 #include <visp/vpImagePoint.h>
+
 
 class VISP_EXPORT vpRect
 {
@@ -88,6 +91,8 @@ public:
   vpRect(const vpImagePoint &topLeft, double width, double height);
   vpRect(const vpImagePoint &topLeft, const vpImagePoint &bottomRight);
   vpRect(const vpRect& r);
+  vpRect(const std::vector<vpImagePoint> &ip);
+
   
   vpRect &operator=(const vpRect& r);
 
@@ -187,6 +192,10 @@ public:
   */
   inline double getWidth() const { return this->width;  };
 
+  friend VISP_EXPORT bool inRectangle( const vpImagePoint &ip, const vpRect &rect );
+  friend VISP_EXPORT std::ostream& operator<< (std::ostream &os, const vpRect& r);
+  void set(const std::vector<vpImagePoint> &ip);
+
   /*!
 
     Sets the bottom edge position of the rectangle to pos. May change
@@ -230,12 +239,15 @@ public:
     Sets the coordinates of the rectangle's top left corner to
     (left, top), and its size to (width, height).
 
+    \param l,t : (left, top) corner position.
+    \param w,h : (width, height) rectangle size.
+
   */
-  inline void setRect(double left, double top, double width, double height) {
-     this->left   = left; 
-     this->top    = top; 
-     this->width  = width;
-     this->height = height;
+  inline void setRect(double l, double t, double w, double h) {
+     this->left   = l;
+     this->top    = t;
+     this->width  = w;
+     this->height = h;
   };
   /*!
 
@@ -296,21 +308,5 @@ private:
   double width;  // Rectangle width
   double height; // Rectangle height
 };
-
-
-/*!
-
-  Check if an image point belongs to a rectangle.
-  
-  \param ip : the image point.
-  \param rect : the rectangle.
-  
-  \return Returns true if the point belongs to the rectangle.
-
-*/
-VISP_EXPORT inline bool inRectangle( const vpImagePoint &ip, const vpRect &rect ) {
-  return ( ip.get_i() <= rect.getBottom() && ip.get_i() >= rect.getTop() && ip.get_j() <= rect.getRight() && ip.get_j() >= rect.getLeft());
-}
-
 
 #endif

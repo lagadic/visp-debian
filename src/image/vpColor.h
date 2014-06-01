@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpColor.h 4243 2013-05-07 07:58:55Z fspindle $
+ * $Id: vpColor.h 4649 2014-02-07 14:57:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -194,33 +194,35 @@ class VISP_EXPORT vpColor : public vpRGBa
   /*!
     Construct a color from its RGB values.
     
-    \param R : Red component.
-    \param G : Green component.
-    \param B : Blue component.
+    \param r : Red component.
+    \param g : Green component.
+    \param b : Blue component.
 
-    \param id : The color identifier to indicate if this color is or
+    \param cid : The color identifier to indicate if this color is or
     not a predefined one.
   */  
-  inline vpColor(unsigned char R, unsigned char G, unsigned char B, 
-		 vpColor::vpColorIdentifier id=vpColor::id_unknown) 
-    : vpRGBa(R, G, B), id(id)
+  inline vpColor(unsigned char r, unsigned char g, unsigned char b,
+     vpColor::vpColorIdentifier cid=vpColor::id_unknown)
+    : vpRGBa(r, g, b), id(cid)
   {};
 
+  friend VISP_EXPORT bool operator==( const vpColor &c1, const vpColor &c2 );
+  friend VISP_EXPORT bool operator!=( const vpColor &c1, const vpColor &c2 );
   /*!
     Set a color from its RGB values.
     
-    \param R : Red component.
-    \param G : Green component.
-    \param B : Blue component.
+    \param r : Red component.
+    \param g : Green component.
+    \param b : Blue component.
 
     The color identifier is set to vpColor::id_unknown to indicate
     that this color is not a predefined one.
 
   */  
-  inline void setColor(unsigned char R, unsigned char G, unsigned char B) {
-    this->R = R;
-    this->G = G;
-    this->B = B;
+  inline void setColor(unsigned char r, unsigned char g, unsigned char b) {
+    this->R = r;
+    this->G = g;
+    this->B = b;
     this->A = 0;
     id = id_unknown;
   };
@@ -231,37 +233,10 @@ class VISP_EXPORT vpColor : public vpRGBa
 
    \param i : color indice
    */
-  static inline vpColor getColor(const unsigned int &i) {return vpColor::allColors[i % vpColor::nbColors];};
+  static inline vpColor getColor(const unsigned int &i) {
+    return vpColor::allColors[i % vpColor::nbColors];
+  };
 
 };
 
-/*!
-  Compare two colors.
-
-  Return true if the R,G,B components are the same.
-
-  \param c1,c2 : Color to compare.
-*/
-VISP_EXPORT inline bool operator==( const vpColor &c1, const vpColor &c2 ) {
-  return ( ( c1.R == c2.R ) && ( c1.G == c2.G ) && ( c1.B == c2.B) );
-}
- 
-/*!
-
-  Compare two colors.
-
-  Return true if the R,G,B components are different.
-
-  \param c1,c2 : Color to compare.
-*/
-VISP_EXPORT inline bool operator!=( const vpColor &c1, const vpColor &c2 ) {
-  return ( ( c1.R != c2.R ) || ( c1.G != c2.G ) || ( c1.B == c2.B) );
-}
-
 #endif
-
-/*
- * Local variables:
- * c-basic-offset: 2
- * End:
- */

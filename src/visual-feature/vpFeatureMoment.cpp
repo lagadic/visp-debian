@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpFeatureMoment.cpp 4303 2013-07-04 14:14:00Z fspindle $
+ * $Id: vpFeatureMoment.cpp 4649 2014-02-07 14:57:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -142,20 +142,19 @@ void vpFeatureMoment::display (const vpCameraParameters &cam, const vpImage< vpR
 
   \attention The behaviour of this method is not the same as vpMoment::update which only acknowledges the new object. This method also computes the interaction matrices.
 
-  \param A : A coefficient of the plane.
-  \param B : B coefficient of the plane.
-  \param C : C coefficient of the plane.
+  \param A_ : A coefficient of the plane.
+  \param B_ : B coefficient of the plane.
+  \param C_ : C coefficient of the plane.
 */
-void vpFeatureMoment::update (double A, double B, double C){
-    this->A = A;
-    this->B = B;
-    this->C = C;
+void vpFeatureMoment::update (double A_, double B_, double C_){
+    this->A = A_;
+    this->B = B_;
+    this->C = C_;
 
     if(moment==NULL){
         bool found;        
         this->moment = &(moments.get(momentName(),found));
-        if(!found) throw ("Moment not found for feature");
-
+        if(!found) throw vpException(vpException::notInitialized,"Moment not found for feature");
     }
     nbParameters = 1;
     if(this->moment!=NULL){
@@ -235,10 +234,15 @@ vpBasicFeature* vpFeatureMoment::duplicate () const
   
 */
 void vpFeatureMoment::linkTo(vpFeatureMomentDatabase& featureMoments){
-    std::strcpy(_name,name());
-    this->featureMomentsDataBase=&featureMoments;
+  if (strlen( name() ) >= 255) {
+    throw(vpException(vpException::memoryAllocationError,
+                      "Not enough memory to intialize the moment name"));
+  }
 
-    featureMoments.add(*this,_name);
+  std::strcpy(_name,name());
+  this->featureMomentsDataBase=&featureMoments;
+
+  featureMoments.add(*this,_name);
 }
 
 

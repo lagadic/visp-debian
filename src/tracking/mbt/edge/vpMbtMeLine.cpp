@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpMbtMeLine.cpp 4303 2013-07-04 14:14:00Z fspindle $
+ * $Id: vpMbtMeLine.cpp 4649 2014-02-07 14:57:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -66,10 +66,11 @@ normalizeAngle(double &delta)
 /*!
   Basic constructor that calls the constructor of the class vpMeTracker.
 */
-vpMbtMeLine::vpMbtMeLine():vpMeTracker()
+vpMbtMeLine::vpMbtMeLine()
+  : rho(0.), theta(0.), theta_1(M_PI/2), delta(0.), delta_1(0), sign(1),
+    a(0.), b(0.), c(0.), imin(0), imax(0), jmin(0), jmax(0),
+    expecteddensity(0.)
 {
-  sign = 1;
-  theta_1 = M_PI/2;
 }
 
 /*!
@@ -89,11 +90,12 @@ vpMbtMeLine::~vpMbtMeLine()
   \param I : Image in which the line appears.
   \param ip1 : Coordinates of the first point.
   \param ip2 : Coordinates of the second point.
-  \param rho : The \f$\rho\f$ parameter
-  \param theta : The \f$\theta\f$ parameter
+  \param rho_ : The \f$\rho\f$ parameter
+  \param theta_ : The \f$\theta\f$ parameter
 */
 void
-vpMbtMeLine::initTracking(const vpImage<unsigned char> &I, const vpImagePoint &ip1, const vpImagePoint &ip2, double rho, double theta)
+vpMbtMeLine::initTracking(const vpImage<unsigned char> &I, const vpImagePoint &ip1, const vpImagePoint &ip2,
+                          double rho_, double theta_)
 {
   vpCDEBUG(1) <<" begin vpMeLine::initTracking()"<<std::endl ;
 
@@ -106,8 +108,8 @@ vpMbtMeLine::initTracking(const vpImage<unsigned char> &I, const vpImagePoint &i
     PExt[1].ifloat = (float)ip2.get_i() ;
     PExt[1].jfloat = (float)ip2.get_j() ;
      
-    this->rho = rho;
-    this->theta = theta;
+    this->rho = rho_;
+    this->theta = theta_;
       
     a = cos(theta);
     b = sin(theta);
@@ -287,7 +289,7 @@ vpMbtMeLine::seekExtremities(const vpImage<unsigned char> &I)
 
   // number of samples along line_p
   n_sample = length_p/(double)me->getSampleStep();
-  double sample = (double)me->getSampleStep();
+  double sample_step = (double)me->getSampleStep();
 
   vpMeSite P ;
   P.init((int) PExt[0].ifloat, (int)PExt[0].jfloat, delta_1, 0, sign) ;
@@ -298,8 +300,8 @@ vpMbtMeLine::seekExtremities(const vpImage<unsigned char> &I)
 
   for (int i=0 ; i < 3 ; i++)
   {
-    P.ifloat = P.ifloat + di*sample ; P.i = (int)P.ifloat ;
-    P.jfloat = P.jfloat + dj*sample ; P.j = (int)P.jfloat ;
+    P.ifloat = P.ifloat + di*sample_step ; P.i = (int)P.ifloat ;
+    P.jfloat = P.jfloat + dj*sample_step ; P.j = (int)P.jfloat ;
 
 
     if ((P.i < imin) ||(P.i > imax) || (P.j < jmin) || (P.j > jmax) ) 
@@ -325,8 +327,8 @@ vpMbtMeLine::seekExtremities(const vpImage<unsigned char> &I)
   P.setDisplay(selectDisplay) ;
   for (int i=0 ; i < 3 ; i++)
   {
-    P.ifloat = P.ifloat - di*sample ; P.i = (int)P.ifloat ;
-    P.jfloat = P.jfloat - dj*sample ; P.j = (int)P.jfloat ;
+    P.ifloat = P.ifloat - di*sample_step ; P.i = (int)P.ifloat ;
+    P.jfloat = P.jfloat - dj*sample_step ; P.j = (int)P.jfloat ;
 
 
     if ((P.i < imin) ||(P.i > imax) || (P.j < jmin) || (P.j > jmax) ) 
@@ -371,9 +373,9 @@ vpMbtMeLine::reSample(const vpImage<unsigned char> &I)
   double d = sqrt(vpMath::sqr(PExt[0].ifloat-PExt[1].ifloat)+vpMath::sqr(PExt[0].jfloat-PExt[1].jfloat)) ;
 
   unsigned int n = numberOfSignal() ;
-  double expecteddensity = d / (double)me->getSampleStep();
+  double expected_density = d / (double)me->getSampleStep();
 
-  if ((double)n<0.5*expecteddensity && n > 0)
+  if ((double)n<0.5*expected_density && n > 0)
   {
     double delta_new = delta;
     delta = delta_1;
@@ -427,7 +429,7 @@ vpMbtMeLine::reSample(const vpImage<unsigned char> &I, vpImagePoint ip1, vpImage
 void
 vpMbtMeLine::updateDelta()
 {
-  vpMeSite p ;
+  vpMeSite p_me ;
 
   double diff = 0;
 
@@ -447,10 +449,10 @@ vpMbtMeLine::updateDelta()
   normalizeAngle(delta);
 
   for(std::list<vpMeSite>::iterator it=list.begin(); it!=list.end(); ++it){
-    p = *it;
-    p.alpha = delta ;
-    p.mask_sign = sign;
-    *it = p;
+    p_me = *it;
+    p_me.alpha = delta ;
+    p_me.mask_sign = sign;
+    *it = p_me;
   }
   delta_1 = delta;
 }
@@ -483,14 +485,14 @@ vpMbtMeLine::track(const vpImage<unsigned char> &I)
   Update the moving edges parameters after the virtual visual servoing.
   
   \param  I : The image.
-  \param  rho : The \f$\rho\f$ parameter used in the line's polar equation.
-  \param  theta : The \f$\theta\f$ parameter used in the line's polar equation.
+  \param  rho_ : The \f$\rho\f$ parameter used in the line's polar equation.
+  \param  theta_ : The \f$\theta\f$ parameter used in the line's polar equation.
 */
 void
-vpMbtMeLine::updateParameters(const vpImage<unsigned char> &I, double rho, double theta)
+vpMbtMeLine::updateParameters(const vpImage<unsigned char> &I, double rho_, double theta_)
 {
-  this->rho = rho;
-  this->theta = theta;
+  this->rho = rho_;
+  this->theta = theta_;
   a = cos(theta);
   b = sin(theta);
   c = -rho;
@@ -514,14 +516,15 @@ vpMbtMeLine::updateParameters(const vpImage<unsigned char> &I, double rho, doubl
   \param I : The image.
   \param ip1 : The first extremity of the line.
   \param ip2 : The second extremity of the line.
-  \param rho : The \f$\rho\f$ parameter used in the line's polar equation.
-  \param theta : The \f$\theta\f$ parameter used in the line's polar equation.
+  \param rho_ : The \f$\rho\f$ parameter used in the line's polar equation.
+  \param theta_ : The \f$\theta\f$ parameter used in the line's polar equation.
 */
 void
-vpMbtMeLine::updateParameters(const vpImage<unsigned char> &I, vpImagePoint ip1, vpImagePoint ip2, double rho, double theta)
+vpMbtMeLine::updateParameters(const vpImage<unsigned char> &I, vpImagePoint ip1, vpImagePoint ip2,
+                              double rho_, double theta_)
 {
-  this->rho = rho;
-  this->theta = theta;
+  this->rho = rho_;
+  this->theta = theta_;
   a = cos(theta);
   b = sin(theta);
   c = -rho;
@@ -545,58 +548,58 @@ vpMbtMeLine::updateParameters(const vpImage<unsigned char> &I, vpImagePoint ip1,
 void
 vpMbtMeLine::setExtremities()
 {
-  double imin = +1e6 ;
-  double jmin = +1e6;
-  double imax = -1 ;
-  double jmax = -1 ;
+  double i_min = +1e6 ;
+  double j_min = +1e6;
+  double i_max = -1 ;
+  double j_max = -1 ;
 
   // Loop through list of sites to track
   for(std::list<vpMeSite>::const_iterator it=list.begin(); it!=list.end(); ++it){
     vpMeSite s = *it;//current reference pixel
-    if (s.ifloat < imin)
+    if (s.ifloat < i_min)
     {
-      imin = s.ifloat ;
-      jmin = s.jfloat ;
+      i_min = s.ifloat ;
+      j_min = s.jfloat ;
     }
 
-    if (s.ifloat > imax)
+    if (s.ifloat > i_max)
     {
-      imax = s.ifloat ;
-      jmax = s.jfloat ;
+      i_max = s.ifloat ;
+      j_max = s.jfloat ;
     }
   }
 
   if ( ! list.empty() )
   {
-    PExt[0].ifloat = imin ;
-    PExt[0].jfloat = jmin ;
-    PExt[1].ifloat = imax ;
-    PExt[1].jfloat = jmax ;
+    PExt[0].ifloat = i_min ;
+    PExt[0].jfloat = j_min ;
+    PExt[1].ifloat = i_max ;
+    PExt[1].jfloat = j_max ;
   }
 
-  if (fabs(imin-imax) < 25)
+  if (fabs(i_min-i_max) < 25)
   {
     for(std::list<vpMeSite>::const_iterator it=list.begin(); it!=list.end(); ++it){
       vpMeSite s = *it;//current reference pixel
-      if (s.jfloat < jmin)
+      if (s.jfloat < j_min)
       {
-        imin = s.ifloat ;
-        jmin = s.jfloat ;
+        i_min = s.ifloat ;
+        j_min = s.jfloat ;
       }
 
-      if (s.jfloat > jmax)
+      if (s.jfloat > j_max)
       {
-        imax = s.ifloat ;
-        jmax = s.jfloat ;
+        i_max = s.ifloat ;
+        j_max = s.jfloat ;
       }
     }
 
     if (! list.empty())
     {
-      PExt[0].ifloat = imin ;
-      PExt[0].jfloat = jmin ;
-      PExt[1].ifloat = imax ;
-      PExt[1].jfloat = jmax ;
+      PExt[0].ifloat = i_min ;
+      PExt[0].jfloat = j_min ;
+      PExt[1].ifloat = i_max ;
+      PExt[1].jfloat = j_max ;
     }
     bubbleSortJ();
   }
@@ -661,7 +664,7 @@ vpMbtMeLine::bubbleSortJ()
 
 
 void
-vpMbtMeLine::findSignal(const vpImage<unsigned char>& I, const vpMe *me, double *conv)
+vpMbtMeLine::findSignal(const vpImage<unsigned char>& I, const vpMe *p_me, double *conv)
 {
   vpImagePoint itest(PExt[0].ifloat+(PExt[1].ifloat-PExt[0].ifloat)/2, PExt[0].jfloat+(PExt[1].jfloat-PExt[0].jfloat)/2);
   
@@ -670,7 +673,7 @@ vpMbtMeLine::findSignal(const vpImage<unsigned char>& I, const vpMe *me, double 
   
   vpMeSite  *list_query_pixels;
 //  double  convolution = 0;
-  unsigned int range  = me->getRange();
+  unsigned int range  = p_me->getRange();
   
   list_query_pixels = pix.getQueryList(I, (int)range);
   
@@ -680,7 +683,7 @@ vpMbtMeLine::findSignal(const vpImage<unsigned char>& I, const vpMe *me, double 
 
   for(unsigned int n = 0 ; n < 2 * range + 1 ; n++)
   {
-    conv[n] = list_query_pixels[n].convolution(I, me);
+    conv[n] = list_query_pixels[n].convolution(I, p_me);
   }
   delete [] list_query_pixels;
 }

@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpMomentObject.h 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpMomentObject.h 4650 2014-02-07 15:30:36Z mbakthav $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -48,7 +48,8 @@
 #include <visp/vpImage.h>
 #include <visp/vpMoment.h>
 #include <visp/vpPoint.h>
-
+#include <visp/vpMath.h>
+#include <cstdlib>
 #include <utility>
 
 class vpCameraParameters;
@@ -212,6 +213,7 @@ Centered moments (mu03, mu12, mu21, mu30): 0.003375 0.0045625 -0.00228125 -0.000
 */
 class VISP_EXPORT vpMomentObject{
 public:
+
   /*!
     Type of object that will be considered.
   */
@@ -220,32 +222,57 @@ public:
     DENSE_POLYGON = 1, /*!< A set of points (stored in clockwise order) describing a polygon. It will be treated as dense. */
     DISCRETE = 2, /*!< A cloud of points. Treated as discrete. */
   } vpObjectType;
+
+  /*!
+     Type of camera image background.
+   */
+   typedef enum{
+       BLACK = 0, /*! Black background */
+       WHITE = 1, /*! No functionality as of now */
+    } vpCameraImgBckGrndType;
+
+  bool flg_normalize_intensity;                 // To scale the intensity of each individual pixel in the image by the maximum intensity value present in it
+
+  // Constructor helpers
+  void init(unsigned int orderinp);
+  void init(const vpMomentObject& objin);
+  // Constructors
   vpMomentObject(unsigned int order);
-  void fromImage(const vpImage<unsigned char>& image,unsigned char threshold, const vpCameraParameters& cam);
+  vpMomentObject(const vpMomentObject& srcobj);
+
+  void fromImage(const vpImage<unsigned char>& image,unsigned char threshold, const vpCameraParameters& cam); // Binary version
+  void fromImage(const vpImage<unsigned char>& image, const vpCameraParameters& cam, vpCameraImgBckGrndType bg_type, bool normalize_with_pix_size = true); // Photometric version
+
   void fromVector(std::vector<vpPoint>& points);
-  std::vector<double>& get();
+  const std::vector<double>& get() const;
   double get(unsigned int i,unsigned int j) const;
+
   /*!
     \return The type of object that is considered.
   */
   vpObjectType getType() const {return type;}
+
   /*!
     \return The maximal order. The basic moments \f$m_{ij}\f$ that will be computed
     are for  \f$i+j \in [0:\mbox{order}]\f$.
   */
   unsigned int getOrder() const {return order-1;}
+
   /*!
     Specifies the type of the input data.
-    \param type : An input type.
+    \param input_type : An input type.
   */
-  void setType(vpObjectType type){this->type=type;}
+  void setType(vpObjectType input_type){this->type=input_type;}
   friend VISP_EXPORT std::ostream & operator<<(std::ostream & os, const vpMomentObject& v);
 
-private:
+protected:
   unsigned int order;
   vpObjectType type;
   std::vector<double> values;
+  void set(unsigned int i, unsigned int j, const double& value_ij);
   void cacheValues(std::vector<double>& cache,double x, double y);
+private:
+  void cacheValues(std::vector<double>& cache,double x, double y, double IntensityNormalized);
   double calc_mom_polygon(unsigned int p, unsigned int q, const std::vector<vpPoint>& points);
 
 };

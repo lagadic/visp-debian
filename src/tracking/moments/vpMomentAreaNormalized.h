@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpMomentAreaNormalized.h 4276 2013-06-25 12:36:48Z fspindle $
+ * $Id: vpMomentAreaNormalized.h 4574 2014-01-09 08:48:51Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -139,16 +139,16 @@ class VISP_EXPORT vpMomentAreaNormalized : public vpMoment {
         /*!
         Retrieves the desired depth \e Z* as specified in the constructor.
         */
-        double getDesiredDepth(){ return desiredDepth; }
+        double getDesiredDepth() const { return desiredDepth; }
         /*!
         Retrieves the desired surface \e a* as specified in the constructor.
         */
-        double getDesiredSurface(){ return desiredSurface; }
+        double getDesiredSurface() const { return desiredSurface; }
 
         /*!
         Moment name.
         */
-        const char* name(){return "vpMomentAreaNormalized";}
+        const char* name() const {return "vpMomentAreaNormalized";}
         friend VISP_EXPORT std::ostream & operator<<(std::ostream & os, const vpMomentAreaNormalized& v);
 };
 

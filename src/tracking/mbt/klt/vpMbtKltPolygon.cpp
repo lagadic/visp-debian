@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpMbtKltPolygon.cpp 4318 2013-07-17 09:47:51Z fspindle $
+ * $Id: vpMbtKltPolygon.cpp 4661 2014-02-10 19:34:58Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -49,12 +49,9 @@
 
 */
 vpMbtKltPolygon::vpMbtKltPolygon()
+  : H(), N(), N_cur(), invd0(1.), cRc0_0n(), initPoints(), curPoints(), curPointsInd(),
+    nbPointsCur(0), nbPointsInit(0), minNbPoint(4), enoughPoints(false), dt(1.), d0(1.), cam()
 {
-  minNbPoint = 4;
-  enoughPoints = false;
-  
-  nbPointsInit = 0;
-  nbPointsCur = 0;
   initPoints = std::map<int, vpImagePoint>();
   curPoints = std::map<int, vpImagePoint>();
   curPointsInd = std::map<int, int>();
@@ -157,7 +154,7 @@ vpMbtKltPolygon::computeNbDetectedCurrent(const vpKltOpencv& _tracker)
 void
 vpMbtKltPolygon::computeInteractionMatrixAndResidu(vpColVector& _R, vpMatrix& _J)
 {
-  unsigned int index = 0;
+  unsigned int index_ = 0;
   
   std::map<int, vpImagePoint>::const_iterator iter = curPoints.begin();
   for( ; iter != curPoints.end(); iter++){
@@ -176,23 +173,23 @@ vpMbtKltPolygon::computeInteractionMatrixAndResidu(vpColVector& _R, vpMatrix& _J
 
     double invZ = compute_1_over_Z(x_cur, y_cur);
       
-    _J[2*index][0] = - invZ;
-    _J[2*index][1] = 0;
-    _J[2*index][2] = x_cur * invZ;
-    _J[2*index][3] = x_cur * y_cur;
-    _J[2*index][4] = -(1+x_cur*x_cur);
-    _J[2*index][5] = y_cur;
+    _J[2*index_][0] = - invZ;
+    _J[2*index_][1] = 0;
+    _J[2*index_][2] = x_cur * invZ;
+    _J[2*index_][3] = x_cur * y_cur;
+    _J[2*index_][4] = -(1+x_cur*x_cur);
+    _J[2*index_][5] = y_cur;
     
-    _J[2*index+1][0] = 0;
-    _J[2*index+1][1] = - invZ;
-    _J[2*index+1][2] = y_cur * invZ;
-    _J[2*index+1][3] = (1+y_cur*y_cur);
-    _J[2*index+1][4] = - y_cur * x_cur;
-    _J[2*index+1][5] = - x_cur;
+    _J[2*index_+1][0] = 0;
+    _J[2*index_+1][1] = - invZ;
+    _J[2*index_+1][2] = y_cur * invZ;
+    _J[2*index_+1][3] = (1+y_cur*y_cur);
+    _J[2*index_+1][4] = - y_cur * x_cur;
+    _J[2*index_+1][5] = - x_cur;
 
-    _R[2*index] =  (x0_transform - x_cur);
-    _R[2*index+1] = (y0_transform - y_cur);
-    index++;
+    _R[2*index_] =  (x0_transform - x_cur);
+    _R[2*index_+1] = (y0_transform - y_cur);
+    index_++;
   }
 }
 
@@ -251,12 +248,13 @@ vpMbtKltPolygon::computeHomography(const vpHomogeneousMatrix& _cTc0, vpHomograph
 
   _cTc0.extract(cRc0);
   _cTc0.extract(ctransc0);
-  
+  vpMatrix cHc0(_cHc0);
+
 //   vpGEMM(cRc0, 1.0, invd0, cRc0, -1.0, _cHc0, VP_GEMM_A_T);
-  vpGEMM(ctransc0, N, -invd0, cRc0, 1.0, _cHc0, VP_GEMM_B_T);
-  _cHc0 /= _cHc0[2][2];
+  vpGEMM(ctransc0, N, -invd0, cRc0, 1.0, cHc0, VP_GEMM_B_T);
+  cHc0 /= cHc0[2][2];
   
-  H = _cHc0;
+  H = cHc0;
   
 //   vpQuaternionVector NQuat(N[0], N[1], N[2], 0.0);
 //   vpQuaternionVector RotQuat(cRc0);
@@ -315,7 +313,7 @@ vpMbtKltPolygon::isTrackedFeature(const int _id)
   \param _shiftBorder : Optionnal shift for the border in pixel (sort of built-in erosion) to avoid to consider pixels near the limits of the face.
 */
 void
-vpMbtKltPolygon::updateMask(IplImage* _mask, unsigned int _nb, unsigned int _shiftBorder)
+vpMbtKltPolygon::updateMask(IplImage* _mask, unsigned char _nb, unsigned int _shiftBorder)
 {
   int width = _mask->width;
   int i_min, i_max, j_min, j_max;
@@ -340,7 +338,7 @@ vpMbtKltPolygon::updateMask(IplImage* _mask, unsigned int _nb, unsigned int _shi
   }
   
   double shiftBorder_d = (double) _shiftBorder;
-  char* ptrData = _mask->imageData + i_min*width+j_min;
+  unsigned char* ptrData = (unsigned char*)_mask->imageData + i_min*width+j_min;
   for(int i=i_min; i< i_max; i++){
     double i_d = (double) i;
     for(int j=j_min; j< j_max; j++){
@@ -477,7 +475,8 @@ bool vpMbtKltPolygon::intersect(const vpImagePoint& p1, const vpImagePoint& p2, 
 
   double den = dx * ey - dy * ex;
   double t = 0, u = 0;
-  if(den != 0){
+  //if(den != 0){
+  if(std::fabs(den) > std::fabs(den)*std::numeric_limits<double>::epsilon()){
     t = -( ey * ( p1.get_j() - j_test ) + ex * ( -p1.get_i() + i_test ) ) / den;
     u = -( dx * ( -p1.get_i() + i_test ) + dy * ( p1.get_j() - j_test ) ) / den;
   }

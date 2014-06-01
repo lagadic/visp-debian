@@ -3,7 +3,7 @@
  * $Id: vpMatrix_lu.cpp 3530 2012-01-03 10:52:12Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -60,30 +60,27 @@ extern "C" int dpotri_(char *uplo, int *n, double *a, int *lda, int *info);
 
 #ifdef VISP_HAVE_LAPACK
 vpMatrix vpMatrix::inverseByCholeskyLapack() const{
-  int rowNum = (int)this->getRows();
-  int lda = (int)rowNum; //lda is the number of rows because we don't use a submatrix
+  int rowNum_ = (int)this->getRows();
+  int lda = (int)rowNum_; //lda is the number of rows because we don't use a submatrix
   int info;
 
   vpMatrix A = *this;
-  dpotrf_((char*)"L",&rowNum,A.data,&lda,&info);
+  dpotrf_((char*)"L",&rowNum_,A.data,&lda,&info);
 
   if(info!=0)
     std::cout << "cholesky:dpotrf_:error" << std::endl;
 
-  dpotri_((char*)"L",&rowNum,A.data,&lda,&info);
+  dpotri_((char*)"L",&rowNum_,A.data,&lda,&info);
   if(info!=0){
     std::cout << "cholesky:dpotri_:error" << std::endl;
     throw vpMatrixException::badValue;
   }
 
-
   for(unsigned int i=0;i<A.getRows();i++)
     for(unsigned int j=0;j<A.getCols();j++)
       if(i>j) A[i][j] = A[j][i];
 
-
   return A;
-
 }
 #endif
 
@@ -102,9 +99,10 @@ int main()
 {
   vpMatrix A(4,4);
 
-  A[0][0] = 1/1.; A[0][1] = 1/2.; A[0][2] = 1/3.; A[0][3] = 1/4.;
+  // Symmetric matrix
+  A[0][0] = 1/1.; A[0][1] = 1/5.; A[0][2] = 1/6.; A[0][3] = 1/7.;
   A[1][0] = 1/5.; A[1][1] = 1/3.; A[1][2] = 1/3.; A[1][3] = 1/5.;
-  A[2][0] = 1/6.; A[2][1] = 1/4.; A[2][2] = 1/2.; A[2][3] = 1/6.;
+  A[2][0] = 1/6.; A[2][1] = 1/3.; A[2][2] = 1/2.; A[2][3] = 1/6.;
   A[3][0] = 1/7.; A[3][1] = 1/5.; A[3][2] = 1/6.; A[3][3] = 1/7.;
 
   // Compute the inverse

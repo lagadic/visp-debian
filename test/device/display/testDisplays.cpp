@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: testDisplays.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: testDisplays.cpp 4658 2014-02-09 09:50:14Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -70,6 +70,10 @@
 // List of allowed command line options
 #define GETOPTARGS	"hl:dc"
 
+void usage(const char *name, const char *badparam);
+bool getOptions(int argc, const char **argv, bool &list, bool &click_allowed, bool &display);
+void draw(vpImage<vpRGBa> &I);
+
 /*!
 
   Print the program options.
@@ -120,13 +124,12 @@ OPTIONS:                                               Default\n\
   \return false if the program has to be stopped, true otherwise.
 
 */
-bool getOptions(int argc, const char **argv, bool &list,
-                bool &click_allowed, bool &display )
+bool getOptions(int argc, const char **argv, bool &list, bool &click_allowed, bool &display)
 {
-  const char *optarg;
+  const char *optarg_;
   int	c;
   std::string sDisplayType;
-  while ((c = vpParseArgv::parse(argc, argv, GETOPTARGS, &optarg)) > 1) {
+  while ((c = vpParseArgv::parse(argc, argv, GETOPTARGS, &optarg_)) > 1) {
 
     switch (c) {
     case 'l': list = true; break;
@@ -135,16 +138,15 @@ bool getOptions(int argc, const char **argv, bool &list,
     case 'd': display = false; break;
 
     default:
-      usage(argv[0], optarg); return false; break;
+      usage(argv[0], optarg_); return false; break;
     }
   }
-
 
   if ((c == 1) || (c == -1)) {
     // standalone param or error
     usage(argv[0], NULL);
     std::cerr << "ERROR: " << std::endl;
-    std::cerr << "  Bad argument " << optarg << std::endl << std::endl;
+    std::cerr << "  Bad argument " << optarg_ << std::endl << std::endl;
     return false;
   }
 

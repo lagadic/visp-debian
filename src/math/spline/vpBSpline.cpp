@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpBSpline.cpp 4303 2013-07-04 14:14:00Z fspindle $
+ * $Id: vpBSpline.cpp 4632 2014-02-03 17:06:40Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -49,8 +49,9 @@
   compute cubic B-Spline.
 */
 vpBSpline::vpBSpline()
+  : controlPoints(), knots(), p(3), // By default : p=3 for clubic spline
+    crossingPoints()
 {
-  p = 3;  //By default : clubic spline
 }
 
 /*!
@@ -58,6 +59,8 @@ vpBSpline::vpBSpline()
   
 */
 vpBSpline::vpBSpline(const vpBSpline &bspline)
+  : controlPoints(), knots(), p(3), // By default : p=3 for clubic spline
+    crossingPoints()
 {
   controlPoints = bspline.controlPoints;
   knots = bspline.knots;

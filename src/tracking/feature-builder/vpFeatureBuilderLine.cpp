@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpFeatureBuilderLine.cpp 4062 2013-01-09 10:30:06Z fspindle $
+ * $Id: vpFeatureBuilderLine.cpp 4574 2014-01-09 08:48:51Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -184,13 +184,13 @@ void vpFeatureBuilder::create(vpFeatureLine &s,
 
   The code below shows how to initialize a vpFeatureLine visual
   feature. First, we initialize the \f$(\rho,\theta)\f$, and lastly we
-  set the parameters of on equation plan which is generally the result
+  set the parameters of the plane which is generally the result
   of a pose estimation.
 
   \code
   vpImage<unsigned char> I; // Image container
   vpCameraParameters cam;   // Default intrinsic camera parameters
-  vpMeLine line;               // Dot tracker
+  vpMeLine line;            // Moving-edges line tracker
 
   vpFeatureLine s;    // Point feature
   ...
@@ -247,8 +247,8 @@ vpFeatureBuilder::create(vpFeatureLine &s,
     //  vpTRACE("pixel %f %f",rhop, thetap) ;
     vpPixelMeterConversion::convertLine(cam,rhop,thetap, rho,theta) ;
 
-    while (theta > M_PI)  { thetap -= 2*M_PI ; }
-    while (theta < -M_PI) { thetap += 2*M_PI ; }
+    while (theta > M_PI)  { theta -= 2*M_PI ; }
+    while (theta < -M_PI) { theta += 2*M_PI ; }
     //   vpTRACE("meter %f %f",rho, theta) ;
     /*
 

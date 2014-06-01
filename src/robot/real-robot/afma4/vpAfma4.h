@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpAfma4.h 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpAfma4.h 4632 2014-02-03 17:06:40Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -113,28 +113,29 @@ class VISP_EXPORT vpAfma4
 {
  public:
   vpAfma4();
+  /*! Destructor that does nothing. */
+  virtual ~vpAfma4() {};
 
   void init (void);
 
-  vpHomogeneousMatrix getForwardKinematics(const vpColVector & q);
+  vpHomogeneousMatrix getForwardKinematics(const vpColVector & q) const;
 /*   int getInverseKinematics(const vpHomogeneousMatrix & fMc, */
 /* 			   vpColVector & q, const bool &nearest=true); */
-  vpHomogeneousMatrix get_fMc (const vpColVector & q);
-  void get_fMe(const vpColVector & q, vpHomogeneousMatrix & fMe);
-  void get_fMc(const vpColVector & q, vpHomogeneousMatrix & fMc);
+  vpHomogeneousMatrix get_fMc (const vpColVector & q) const;
+  void get_fMe(const vpColVector & q, vpHomogeneousMatrix & fMe) const;
+  void get_fMc(const vpColVector & q, vpHomogeneousMatrix & fMc) const;
 
-  void get_cMe(vpHomogeneousMatrix &cMe) ;
-  void get_cVe(vpVelocityTwistMatrix &cVe) ;
-  void get_cVf(const vpColVector & q, vpVelocityTwistMatrix &cVf);
-  void get_eJe(const vpColVector &q, vpMatrix &eJe)  ;
-  void get_fJe(const vpColVector &q, vpMatrix &fJe)  ;
-  void get_fJe_inverse(const vpColVector &q, vpMatrix &fJe_inverse)  ;
+  void get_cMe(vpHomogeneousMatrix &cMe) const;
+  void get_cVe(vpVelocityTwistMatrix &cVe) const;
+  void get_cVf(const vpColVector & q, vpVelocityTwistMatrix &cVf) const;
+  void get_eJe(const vpColVector &q, vpMatrix &eJe) const;
+  void get_fJe(const vpColVector &q, vpMatrix &fJe) const;
+  void get_fJe_inverse(const vpColVector &q, vpMatrix &fJe_inverse) const;
 
-  friend VISP_EXPORT std::ostream & operator << (std::ostream & os,
-						 const vpAfma4 & afma4);
+  friend VISP_EXPORT std::ostream & operator << (std::ostream & os, const vpAfma4 & afma4);
 
-  vpColVector getJointMin();
-  vpColVector getJointMax();
+  vpColVector getJointMin() const;
+  vpColVector getJointMax() const;
 
  public:
 

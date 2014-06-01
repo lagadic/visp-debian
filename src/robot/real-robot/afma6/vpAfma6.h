@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpAfma6.h 4191 2013-04-01 07:46:05Z fspindle $
+ * $Id: vpAfma6.h 4632 2014-02-03 17:06:40Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -118,6 +118,8 @@ class VISP_EXPORT vpAfma6
 
  public:
   vpAfma6();
+  /*! Destructor that does nothing. */
+  virtual ~vpAfma6() {};
 
   void init (void);
 #ifdef VISP_HAVE_ACCESS_TO_NAS
@@ -127,45 +129,45 @@ class VISP_EXPORT vpAfma6
 	     vpCameraParameters::vpCameraParametersProjType projModel =
 	     vpCameraParameters::perspectiveProjWithoutDistortion);
 
-  vpHomogeneousMatrix getForwardKinematics(const vpColVector & q);
+  vpHomogeneousMatrix getForwardKinematics(const vpColVector & q) const;
   int getInverseKinematics(const vpHomogeneousMatrix & fMc,
-         vpColVector & q, const bool &nearest=true, const bool &verbose=false);
-  vpHomogeneousMatrix get_fMc (const vpColVector & q);
-  void get_fMe(const vpColVector & q, vpHomogeneousMatrix & fMe);
-  void get_fMc(const vpColVector & q, vpHomogeneousMatrix & fMc);
+                           vpColVector & q, const bool &nearest=true,
+                           const bool &verbose=false) const;
+  vpHomogeneousMatrix get_fMc (const vpColVector & q) const;
+  void get_fMe(const vpColVector & q, vpHomogeneousMatrix & fMe) const;
+  void get_fMc(const vpColVector & q, vpHomogeneousMatrix & fMc) const;
 
-  void get_cMe(vpHomogeneousMatrix &cMe) ;
-  void get_cVe(vpVelocityTwistMatrix &cVe) ;
-  void get_eJe(const vpColVector &q, vpMatrix &eJe)  ;
-  void get_fJe(const vpColVector &q, vpMatrix &fJe)  ;
+  void get_cMe(vpHomogeneousMatrix &cMe) const;
+  void get_cVe(vpVelocityTwistMatrix &cVe) const;
+  void get_eJe(const vpColVector &q, vpMatrix &eJe) const;
+  void get_fJe(const vpColVector &q, vpMatrix &fJe) const;
 
 #ifdef VISP_HAVE_ACCESS_TO_NAS
   void parseConfigFile (const char * filename);
 #endif
 
   //! Get the current tool type
-  vpAfma6ToolType getToolType(){
+  vpAfma6ToolType getToolType() const {
     return tool_current;
   };
   //! Get the current camera model projection type
-  vpCameraParameters::vpCameraParametersProjType getCameraParametersProjType(){
+  vpCameraParameters::vpCameraParametersProjType getCameraParametersProjType() const{
     return projModel;
   };
 
   void getCameraParameters(vpCameraParameters &cam,
-			   const unsigned int &image_width,
-			   const unsigned int &image_height);
+                           const unsigned int &image_width,
+                           const unsigned int &image_height) const;
   void getCameraParameters(vpCameraParameters &cam,
-			   const vpImage<unsigned char> &I);
-  void getCameraParameters(vpCameraParameters &cam, const vpImage<vpRGBa> &I);
+                           const vpImage<unsigned char> &I) const;
+  void getCameraParameters(vpCameraParameters &cam, const vpImage<vpRGBa> &I) const;
 
-  friend VISP_EXPORT std::ostream & operator << (std::ostream & os,
-						 const vpAfma6 & afma6);
+  friend VISP_EXPORT std::ostream & operator << (std::ostream & os, const vpAfma6 & afma6);
 
-  vpColVector getJointMin();
-  vpColVector getJointMax();
-  double getCoupl56();
-  double getLong56();
+  vpColVector getJointMin() const;
+  vpColVector getJointMax() const;
+  double getCoupl56() const;
+  double getLong56() const;
 
  protected:
   //! Set the current tool type

@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpCameraParameters.cpp 4317 2013-07-17 09:40:17Z fspindle $
+ * $Id: vpCameraParameters.cpp 4649 2014-02-07 14:57:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -54,6 +54,9 @@
 #include <visp/vpRotationMatrix.h>
 #include <cmath>
 #include <limits>
+#include <iostream>
+#include <sstream>
+#include <iomanip>
 
 const double vpCameraParameters::DEFAULT_PX_PARAMETER = 600.0;
 const double vpCameraParameters::DEFAULT_PY_PARAMETER = 600.0;
@@ -72,12 +75,15 @@ const vpCameraParameters::vpCameraParametersProjType
   \sa init()
 */
 vpCameraParameters::vpCameraParameters()
+  :
+    px(DEFAULT_PX_PARAMETER), py(DEFAULT_PY_PARAMETER),
+    u0(DEFAULT_U0_PARAMETER), v0(DEFAULT_V0_PARAMETER),
+    kud(DEFAULT_KUD_PARAMETER), kdu(DEFAULT_KDU_PARAMETER),
+    width(0), height(0),
+    isFov(false), fovAngleX(0), fovAngleY(0), fovNormals(),
+    inv_px(1./DEFAULT_PX_PARAMETER), inv_py(1./DEFAULT_PY_PARAMETER),
+    projModel(DEFAULT_PROJ_TYPE)
 {
-  isFov = false;
-  fovAngleX = 0;
-  fovAngleY = 0;
-  width = 0;
-  height = 0;
   init() ;
 }
 
@@ -85,6 +91,14 @@ vpCameraParameters::vpCameraParameters()
   Copy constructor
  */
 vpCameraParameters::vpCameraParameters(const vpCameraParameters &c)
+  :
+    px(DEFAULT_PX_PARAMETER), py(DEFAULT_PY_PARAMETER),
+    u0(DEFAULT_U0_PARAMETER), v0(DEFAULT_V0_PARAMETER),
+    kud(DEFAULT_KUD_PARAMETER), kdu(DEFAULT_KDU_PARAMETER),
+    width(0), height(0),
+    isFov(false), fovAngleX(0), fovAngleY(0), fovNormals(),
+    inv_px(1./DEFAULT_PX_PARAMETER), inv_py(1./DEFAULT_PY_PARAMETER),
+    projModel(DEFAULT_PROJ_TYPE)
 {
   init(c) ;
 }
@@ -92,40 +106,46 @@ vpCameraParameters::vpCameraParameters(const vpCameraParameters &c)
 /*!
   Constructor for perspective projection without distortion model
 
-  \param px,py : pixel size
-  \param u0,v0 : principal points
+  \param cam_px,cam_py : pixel size
+  \param cam_u0,cam_v0 : principal points
 
  */
-vpCameraParameters::vpCameraParameters(const double px, const double py,
-                                       const double u0, const double v0)
+vpCameraParameters::vpCameraParameters(const double cam_px, const double cam_py,
+                                       const double cam_u0, const double cam_v0)
+  :
+    px(DEFAULT_PX_PARAMETER), py(DEFAULT_PY_PARAMETER),
+    u0(DEFAULT_U0_PARAMETER), v0(DEFAULT_V0_PARAMETER),
+    kud(DEFAULT_KUD_PARAMETER), kdu(DEFAULT_KDU_PARAMETER),
+    width(0), height(0),
+    isFov(false), fovAngleX(0), fovAngleY(0), fovNormals(),
+    inv_px(1./DEFAULT_PX_PARAMETER), inv_py(1./DEFAULT_PY_PARAMETER),
+    projModel(DEFAULT_PROJ_TYPE)
 {
-  isFov = false;
-  fovAngleX = 0;
-  fovAngleY = 0;
-  width = 0;
-  height = 0;
-  initPersProjWithoutDistortion(px,py,u0,v0) ;
+  initPersProjWithoutDistortion(cam_px,cam_py,cam_u0,cam_v0) ;
 }
 
 /*!
   Constructor for perspective projection with distortion model
 
-  \param px,py : pixel size
-  \param u0,v0 : principal points
-  \param kud : undistorted to distorted radial distortion
-  \param kdu : distorted to undistorted radial distortion
+  \param cam_px,cam_py : pixel size
+  \param cam_u0,cam_v0 : principal points
+  \param cam_kud : undistorted to distorted radial distortion
+  \param cam_kdu : distorted to undistorted radial distortion
 
  */
-vpCameraParameters::vpCameraParameters(const double px, const double py,
-                                       const double u0, const double v0,
-                                       const double kud, const double kdu)
+vpCameraParameters::vpCameraParameters(const double cam_px, const double cam_py,
+                                       const double cam_u0, const double cam_v0,
+                                       const double cam_kud, const double cam_kdu)
+  :
+    px(DEFAULT_PX_PARAMETER), py(DEFAULT_PY_PARAMETER),
+    u0(DEFAULT_U0_PARAMETER), v0(DEFAULT_V0_PARAMETER),
+    kud(DEFAULT_KUD_PARAMETER), kdu(DEFAULT_KDU_PARAMETER),
+    width(0), height(0),
+    isFov(false), fovAngleX(0), fovAngleY(0), fovNormals(),
+    inv_px(1./DEFAULT_PX_PARAMETER), inv_py(1./DEFAULT_PY_PARAMETER),
+    projModel(DEFAULT_PROJ_TYPE)
 {
-  isFov = false;
-  fovAngleX = 0;
-  fovAngleY = 0;
-  width = 0;
-  height = 0;
-  initPersProjWithDistortion(px,py,u0,v0,kud,kdu) ;
+  initPersProjWithDistortion(cam_px,cam_py,cam_u0,cam_v0,cam_kud,cam_kdu) ;
 }
 
 /*!
@@ -133,16 +153,7 @@ vpCameraParameters::vpCameraParameters(const double px, const double py,
 */
 void
 vpCameraParameters::init()
-{
-  this->projModel = DEFAULT_PROJ_TYPE ;
-  
-  this->px    = DEFAULT_PX_PARAMETER ;
-  this->py    = DEFAULT_PY_PARAMETER ;
-  this->u0    = DEFAULT_U0_PARAMETER ;
-  this->v0    = DEFAULT_V0_PARAMETER ;
-  this->kud   = DEFAULT_KUD_PARAMETER ;
-  this->kdu   = DEFAULT_KDU_PARAMETER ;
-  
+{  
   if (fabs(this->px)<1e-6)
   {
     vpERROR_TRACE("Camera parameter px = 0") ;
@@ -162,19 +173,19 @@ vpCameraParameters::init()
 /*!
   Initialization with specific parameters using perpective projection without
   distortion model.
-  \param px,py : pixel size
-  \param u0,v0 : principal point
+  \param cam_px,cam_py : pixel size
+  \param cam_u0,cam_v0 : principal point
  */
 void
-vpCameraParameters::initPersProjWithoutDistortion(const double px,
-    const double py, const double u0, const double v0)
+vpCameraParameters::initPersProjWithoutDistortion(const double cam_px, const double cam_py,
+                                                  const double cam_u0, const double cam_v0)
 {
   this->projModel = vpCameraParameters::perspectiveProjWithoutDistortion ;
   
-  this->px    = px ;
-  this->py    = py ;
-  this->u0    = u0 ;
-  this->v0    = v0 ;
+  this->px    = cam_px ;
+  this->py    = cam_py ;
+  this->u0    = cam_u0 ;
+  this->v0    = cam_v0 ;
   this->kud   = 0 ;
   this->kdu   = 0 ;
   
@@ -197,24 +208,24 @@ vpCameraParameters::initPersProjWithoutDistortion(const double px,
 /*!
   Initialization with specific parameters using perpective projection with
   distortion model.
-  \param px,py : pixel size
-  \param u0,v0 : principal points
-  \param kud : undistorted to distorted radial distortion
-  \param kdu : distorted to undistorted radial distortion
+  \param cam_px,cam_py : pixel size
+  \param cam_u0,cam_v0 : principal points
+  \param cam_kud : undistorted to distorted radial distortion
+  \param cam_kdu : distorted to undistorted radial distortion
 */
 void
-vpCameraParameters::initPersProjWithDistortion(const double px, const double py,
-                            const double u0, const double v0,
-                            const double kud, const double kdu)
+vpCameraParameters::initPersProjWithDistortion(const double cam_px, const double cam_py,
+                                               const double cam_u0, const double cam_v0,
+                                               const double cam_kud, const double cam_kdu)
 {
   this->projModel = vpCameraParameters::perspectiveProjWithDistortion ;
 
-  this->px    = px ;
-  this->py    = py ;
-  this->u0    = u0 ;
-  this->v0    = v0 ;
-  this->kud   = kud ;
-  this->kdu   = kdu ;
+  this->px    = cam_px ;
+  this->py    = cam_py ;
+  this->u0    = cam_u0 ;
+  this->v0    = cam_v0 ;
+  this->kud   = cam_kud ;
+  this->kdu   = cam_kdu ;
   
   if (fabs(px)<1e-6)
   {
@@ -447,6 +458,7 @@ vpCameraParameters::get_K_inverse() const
 void
 vpCameraParameters::printParameters()
 {
+  std::ios::fmtflags original_flags( std::cout.flags() );
   switch(projModel){
     case vpCameraParameters::perspectiveProjWithoutDistortion :
       std::cout.precision(10);
@@ -465,6 +477,8 @@ vpCameraParameters::printParameters()
       std::cout << "  kdu = " << kdu << std::endl ;
       break;
   } 
+  // Restore ostream format
+  std::cout.flags(original_flags);
 }
 /*!
 
@@ -473,37 +487,33 @@ vpCameraParameters::printParameters()
   \param os : Output stream.
   \param cam : Camera parameters.
 */
-std::ostream & operator << (std::ostream & os,
-			    const vpCameraParameters &cam)
+VISP_EXPORT std::ostream & operator << (std::ostream & os, const vpCameraParameters &cam)
 {
   switch(cam.get_projModel()){
-    case vpCameraParameters::perspectiveProjWithoutDistortion :
-      os << "Camera parameters for perspective projection without distortion:"
-	 << std::endl ;
-      os << "  px = " << cam.get_px() <<"\t py = "<< cam.get_py() 
-	 << std::endl ;
-      os << "  u0 = " << cam.get_u0() <<"\t v0 = "<< cam.get_v0() 
-	 << std::endl ;
-      break;
-    case vpCameraParameters::perspectiveProjWithDistortion :
-      os.precision(10);
-      os << "Camera parameters for perspective projection with distortion:"
-                << std::endl ;
-      os << "  px = " << cam.get_px() <<"\t py = "<< cam.get_py() 
-	 << std::endl ;
-      os << "  u0 = " << cam.get_u0() <<"\t v0 = "<< cam.get_v0()
-	 << std::endl ;
-      os << "  kud = " << cam.get_kud() << std::endl ;
-      os << "  kdu = " << cam.get_kdu() << std::endl ;
-      break;
-  } 
+  case vpCameraParameters::perspectiveProjWithoutDistortion :
+    os << "Camera parameters for perspective projection without distortion:"
+       << std::endl ;
+    os << "  px = " << cam.get_px() <<"\t py = "<< cam.get_py()
+       << std::endl ;
+    os << "  u0 = " << cam.get_u0() <<"\t v0 = "<< cam.get_v0()
+       << std::endl ;
+    break;
+  case vpCameraParameters::perspectiveProjWithDistortion :
+    std::ios_base::fmtflags original_flags = os.flags();
+    os.precision(10);
+    os << "Camera parameters for perspective projection with distortion:"
+       << std::endl ;
+    os << "  px = " << cam.get_px() <<"\t py = "<< cam.get_py()
+       << std::endl ;
+    os << "  u0 = " << cam.get_u0() <<"\t v0 = "<< cam.get_v0()
+       << std::endl ;
+    os << "  kud = " << cam.get_kud() << std::endl ;
+    os << "  kdu = " << cam.get_kdu() << std::endl ;
+
+    os.flags(original_flags); // restore os to standard state
+    break;
+  }
   return os;
 }
 
-
-/*
- * Local variables:
- * c-basic-offset: 2
- * End:
- */
 

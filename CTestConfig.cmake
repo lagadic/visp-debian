@@ -3,7 +3,7 @@
 # $Id: CTestConfig.cmake,v 1.9 2008-12-11 13:19:44 fspindle Exp $
 #
 # This file is part of the ViSP software.
-# Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+# Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
 # 
 # This software is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -72,6 +72,8 @@ elseif(MSVC10)
   set(BUILDNAME "${BUILDNAME}-msvc10")
 elseif(MSVC11)
   set(BUILDNAME "${BUILDNAME}-msvc11")
+elseif(MSVC12)
+  set(BUILDNAME "${BUILDNAME}-msvc12")
 elseif(MSVC)
   set(BUILDNAME "${BUILDNAME}-msvc")
 elseif(BORLAND)
@@ -141,10 +143,6 @@ endif()
 IF(VISP_HAVE_DC1394_2)
   SET(BUILDNAME "${BUILDNAME}-dc1394.2")
 ENDIF(VISP_HAVE_DC1394_2)
-# Firewire dc1394-1.x 
-IF(VISP_HAVE_DC1394_1)
-  SET(BUILDNAME "${BUILDNAME}-dc1394.1")
-ENDIF(VISP_HAVE_DC1394_1)
 # Video 4 linux 2 (V4L2)
 IF(VISP_HAVE_V4L2)
   SET(BUILDNAME "${BUILDNAME}-v4l2")

@@ -4,7 +4,7 @@
  * $Id: servoSimuCircle2DCamVelocity.cpp 2457 2010-01-07 10:41:18Z nmelchio $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -73,6 +73,9 @@
 // List of allowed command line options
 #define GETOPTARGS	"h"
 
+void usage(const char *name, const char *badparam);
+bool getOptions(int argc, const char **argv);
+
 /*!
 
 Print the program options.
@@ -113,15 +116,15 @@ Set the program options.
 */
 bool getOptions(int argc, const char **argv)
 {
-  const char *optarg;
+  const char *optarg_;
   int	c;
-  while ((c = vpParseArgv::parse(argc, argv, GETOPTARGS, &optarg)) > 1) {
+  while ((c = vpParseArgv::parse(argc, argv, GETOPTARGS, &optarg_)) > 1) {
 
     switch (c) {
     case 'h': usage(argv[0], NULL); return false; break;
 
     default:
-      usage(argv[0], optarg);
+      usage(argv[0], optarg_);
       return false; break;
     }
   }
@@ -130,7 +133,7 @@ bool getOptions(int argc, const char **argv)
     // standalone param or error
     usage(argv[0], NULL);
     std::cerr << "ERROR: " << std::endl;
-    std::cerr << "  Bad argument " << optarg << std::endl << std::endl;
+    std::cerr << "  Bad argument " << optarg_ << std::endl << std::endl;
     return false;
   }
 
@@ -140,96 +143,103 @@ bool getOptions(int argc, const char **argv)
 int
 main(int argc, const char ** argv)
 {
-  // Read the command line options
-  if (getOptions(argc, argv) == false) {
-    exit (-1);
-  }
+  try {
+    // Read the command line options
+    if (getOptions(argc, argv) == false) {
+      exit (-1);
+    }
 
-  vpServo task ;
-  vpSimulatorCamera robot ;
+    vpServo task ;
+    vpSimulatorCamera robot ;
 
-  std::cout << std::endl ;
-  std::cout << "-------------------------------------------------------" << std::endl ;
-  std::cout << " Test program for vpServo "  <<std::endl ;
-  std::cout << " Simulation " << std::endl ;
-  std::cout << " task : servo a circle " << std::endl ;
-  std::cout << "-------------------------------------------------------" << std::endl ;
-  std::cout << std::endl ;
+    std::cout << std::endl ;
+    std::cout << "-------------------------------------------------------" << std::endl ;
+    std::cout << " Test program for vpServo "  <<std::endl ;
+    std::cout << " Simulation " << std::endl ;
+    std::cout << " task : servo a circle " << std::endl ;
+    std::cout << "-------------------------------------------------------" << std::endl ;
+    std::cout << std::endl ;
 
 
-  // sets the initial camera location
-  vpHomogeneousMatrix cMo ;
-  cMo[0][3] = 0.1 ;
-  cMo[1][3] = 0.2 ;
-  cMo[2][3] = 2 ;
+    // sets the initial camera location
+    vpHomogeneousMatrix cMo ;
+    cMo[0][3] = 0.1 ;
+    cMo[1][3] = 0.2 ;
+    cMo[2][3] = 2 ;
 
-  vpHomogeneousMatrix wMc, wMo;
-  robot.getPosition(wMc) ;
-  wMo = wMc * cMo; // Compute the position of the object in the world frame
-
-  vpHomogeneousMatrix cMod ;
-  cMod[0][3] = 0 ;
-  cMod[1][3] = 0 ;
-  cMod[2][3] = 1 ;
-
-  // sets the circle coordinates in the world frame
-  vpCircle circle ;
-  circle.setWorldCoordinates(0,0,1,0,0,0,0.1) ;
-
-  // sets the desired position of the visual feature
-  vpFeatureEllipse pd ;
-  circle.track(cMod) ;
-  vpFeatureBuilder::create(pd,circle)  ;
-
-  // project : computes  the circle coordinates in the camera frame and its 2D coordinates
-
-  // sets the current position of the visual feature
-  vpFeatureEllipse p ;
-  circle.track(cMo) ;
-  vpFeatureBuilder::create(p,circle)  ;
-
-  // define the task
-  // - we want an eye-in-hand control law
-  // - robot is controlled in the camera frame
-  task.setServo(vpServo::EYEINHAND_CAMERA) ;
-
-  // - we want to see a circle on a circle
-  std::cout << std::endl ;
-  task.addFeature(p,pd) ;
-
-  // - set the gain
-  task.setLambda(1) ;
-
-  // Display task information
-  task.print() ;
-
-  unsigned int iter=0 ;
-  // loop
-  while(iter++ < 500)
-  {
-    std::cout << "---------------------------------------------" << iter <<std::endl ;
-    vpColVector v ;
-
-    // get the robot position
+    vpHomogeneousMatrix wMc, wMo;
     robot.getPosition(wMc) ;
-    // Compute the position of the camera wrt the object frame
-    cMo = wMc.inverse() * wMo;
+    wMo = wMc * cMo; // Compute the position of the object in the world frame
 
-    // new circle position: retrieve x,y and Z of the vpCircle structure
+    vpHomogeneousMatrix cMod ;
+    cMod[0][3] = 0 ;
+    cMod[1][3] = 0 ;
+    cMod[2][3] = 1 ;
+
+    // sets the circle coordinates in the world frame
+    vpCircle circle ;
+    circle.setWorldCoordinates(0,0,1,0,0,0,0.1) ;
+
+    // sets the desired position of the visual feature
+    vpFeatureEllipse pd ;
+    circle.track(cMod) ;
+    vpFeatureBuilder::create(pd,circle)  ;
+
+    // project : computes  the circle coordinates in the camera frame and its 2D coordinates
+
+    // sets the current position of the visual feature
+    vpFeatureEllipse p ;
     circle.track(cMo) ;
-    vpFeatureBuilder::create(p,circle);
+    vpFeatureBuilder::create(p,circle)  ;
 
-    // compute the control law
-    v = task.computeControlLaw() ;
-    std::cout << "task rank: " << task.getTaskRank() <<std::endl ;
-    // send the camera velocity to the controller
-    robot.setVelocity(vpRobot::CAMERA_FRAME, v) ;
+    // define the task
+    // - we want an eye-in-hand control law
+    // - robot is controlled in the camera frame
+    task.setServo(vpServo::EYEINHAND_CAMERA) ;
 
-    std::cout << "|| s - s* || = " << ( task.getError() ).sumSquare() << std::endl ;
+    // - we want to see a circle on a circle
+    std::cout << std::endl ;
+    task.addFeature(p,pd) ;
+
+    // - set the gain
+    task.setLambda(1) ;
+
+    // Display task information
+    task.print() ;
+
+    unsigned int iter=0 ;
+    // loop
+    while(iter++ < 500)
+    {
+      std::cout << "---------------------------------------------" << iter <<std::endl ;
+      vpColVector v ;
+
+      // get the robot position
+      robot.getPosition(wMc) ;
+      // Compute the position of the camera wrt the object frame
+      cMo = wMc.inverse() * wMo;
+
+      // new circle position: retrieve x,y and Z of the vpCircle structure
+      circle.track(cMo) ;
+      vpFeatureBuilder::create(p,circle);
+
+      // compute the control law
+      v = task.computeControlLaw() ;
+      std::cout << "task rank: " << task.getTaskRank() <<std::endl ;
+      // send the camera velocity to the controller
+      robot.setVelocity(vpRobot::CAMERA_FRAME, v) ;
+
+      std::cout << "|| s - s* || = " << ( task.getError() ).sumSquare() << std::endl ;
+    }
+
+    // Display task information
+    task.print() ;
+    task.kill();
+    return 0;
   }
-
-  // Display task information
-  task.print() ;
-  task.kill();
+  catch(vpException e) {
+    std::cout << "Catch a ViSP exception: " << e << std::endl;
+    return 1;
+  }
 }
 

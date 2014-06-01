@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpBasicFeature.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpBasicFeature.cpp 4632 2014-02-03 17:06:40Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -68,21 +68,39 @@ const unsigned int vpBasicFeature::FEATURE_ALL = 0xffff;
 /*!
   \file vpBasicFeature.cpp
   \brief Class that defines what is a visual feature.
-*/
 
+  Default constructor.
+*/
 vpBasicFeature::vpBasicFeature()
+  : s(), dim_s(0), flags(NULL), nbParameters(0), deallocate(vpBasicFeature::user)
 {
-//     featureLine[0] = 0x1 ;
-//     featureLine[1] = 0x2 ;
-//     featureLine[2] = 0x4 ;
-//     featureLine[3] = 0x8 ;
-//     featureLine[4] = 0x10 ;
-//     featureLine[5] = 0x20 ;
-//     featureLine[6] = 0x40 ;
-//     featureLine[7] = 0x80 ;
-    //vpTRACE("0x%x", this);
-    deallocate = vpBasicFeature::user ;
-    flags = NULL;
+}
+
+/*!
+  Copy constructor.
+*/
+vpBasicFeature::vpBasicFeature(const vpBasicFeature &f)
+  : s(), dim_s(0), flags(NULL), nbParameters(0), deallocate(vpBasicFeature::user)
+{
+  *this = f;
+}
+
+/*!
+  Copy operator.
+*/
+vpBasicFeature &vpBasicFeature::operator=(const vpBasicFeature &f)
+{
+  s = f.s;
+  dim_s = f.dim_s;
+  nbParameters = f.nbParameters;
+  deallocate = f.deallocate;
+  if (flags)
+    delete [] flags;
+  flags = new bool [nbParameters];
+  for (unsigned int i = 0; i < nbParameters; i++)
+    flags[i] = f.flags[i];
+
+  return (*this);
 }
 
 //! Get the feature vector dimension.

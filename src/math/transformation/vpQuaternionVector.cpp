@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpQuaternionVector.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpQuaternionVector.cpp 4649 2014-02-07 14:57:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -54,14 +54,13 @@ const double vpQuaternionVector::minimum = 0.0001;
   \file vpQuaternionVector.cpp
   \brief Defines a quaternion and common operations on it.
 */
-vpQuaternionVector::vpQuaternionVector() : vpRotationVector(4) {  }
 
 //! Constructor from doubles.
-vpQuaternionVector::vpQuaternionVector(const double x, const double y, 
-				       const double z,const double w) 
+vpQuaternionVector::vpQuaternionVector(const double x_, const double y_,
+               const double z_,const double w_)
   : vpRotationVector(4) 
 {
-  set(x, y, z, w);
+  set(x_, y_, z_, w_);
 }
 
 /*! 
@@ -74,30 +73,21 @@ vpQuaternionVector::vpQuaternionVector(const vpRotationMatrix &R)
 {	
   buildFrom(R);
 }
-/*! 
-  Copy constructor.
-  \param q : quaternion to construct from.
-*/
-vpQuaternionVector::vpQuaternionVector(const vpQuaternionVector &q) 
-  : vpRotationVector(4) 
-{  
-  for(unsigned int i=0;i<size();i++) (*this)[i]=q.r[i];   
-}
-    
+
 /*! 
   Manually change values of a quaternion.
-  \param x : x quaternion parameter.
-  \param y : y quaternion parameter.
-  \param z : z quaternion parameter.
-  \param w : w quaternion parameter.
+  \param x_ : x quaternion parameter.
+  \param y_ : y quaternion parameter.
+  \param z_ : z quaternion parameter.
+  \param w_ : w quaternion parameter.
 */
-void vpQuaternionVector::set(const double x, const double y, 
-			     const double z,const double w) 
+void vpQuaternionVector::set(const double x_, const double y_,
+           const double z_,const double w_)
 {
-  r[0]=x;
-  r[1]=y;
-  r[2]=z;
-  r[3]=w;
+  r[0]=x_;
+  r[1]=y_;
+  r[2]=z_;
+  r[3]=w_;
 }
 
     
@@ -143,13 +133,6 @@ vpQuaternionVector vpQuaternionVector::operator* ( vpQuaternionVector &rq) {
 			    w() * rq.z() + z() * rq.w() + x() * rq.y() - y() * rq.x(),
 			    w() * rq.w() - x() * rq.x() - y() * rq.y() - z() * rq.z());
 }
-
-//! Copy operator.   Allow operation such as Q = q.
-vpQuaternionVector &vpQuaternionVector::operator=( vpQuaternionVector &q)
-{ 
-  for(unsigned int i=0;i<size();i++) (*this)[i]=q.r[i];
-  return *this;
-} 
 
 /*! 
   Constructs a quaternion from a rotation matrix.

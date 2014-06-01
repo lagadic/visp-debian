@@ -3,7 +3,7 @@
 # $Id: CMakeSourceFileList.cmake,v 1.29 2008-12-17 14:45:01 fspindle Exp $
 #
 # This file is part of the ViSP software.
-# Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+# Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
 # 
 # This software is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -81,9 +81,6 @@ SET (SRC_DEVICE_FRAMEGRABBER
   device/framegrabber/disk/vpDiskGrabber.cpp
   )
 
-IF(VISP_HAVE_DC1394_1)
-  LIST(APPEND SRC_DEVICE_FRAMEGRABBER device/framegrabber/1394/vp1394Grabber.cpp)
-ENDIF()
 IF(VISP_HAVE_DC1394_2)
   LIST(APPEND SRC_DEVICE_FRAMEGRABBER device/framegrabber/1394/vp1394TwoGrabber.cpp)
 ENDIF()
@@ -216,9 +213,6 @@ IF(VISP_HAVE_BICLOPS)
   LIST(APPEND SRC_ROBOT robot/real-robot/biclops/vpRobotBiclopsController.cpp)
   LIST(APPEND SRC_ROBOT robot/real-robot/biclops/vpRobotBiclops.cpp)
 ENDIF()
-IF(VISP_HAVE_CYCAB)
-  LIST(APPEND SRC_ROBOT robot/real-robot/cycab/vpRobotCycab.cpp)
-ENDIF()
 IF(VISP_HAVE_PTU46)
   LIST(APPEND SRC_ROBOT robot/real-robot/ptu46/vpRobotPtu46.cpp)
 ENDIF()
@@ -233,7 +227,6 @@ IF(VISP_HAVE_VIPER850)
 ENDIF()
 
 SET (SRC_SERVO
-  servo/vpAdaptativeGain.cpp
   servo/vpAdaptiveGain.cpp
   servo/vpServo.cpp
   servo/vpServoData.cpp
@@ -343,12 +336,33 @@ SET (SRC_TRACKING
   tracking/moments/vpMomentGravityCenter.cpp
   tracking/moments/vpMomentGravityCenterNormalized.cpp
   tracking/moments/vpMomentObject.cpp
+
+  tracking/template-tracker/vpTemplateTracker.cpp
+  tracking/template-tracker/ssd/vpTemplateTrackerSSD.cpp
+  tracking/template-tracker/ssd/vpTemplateTrackerSSDESM.cpp
+  tracking/template-tracker/ssd/vpTemplateTrackerSSDForwardAdditional.cpp
+  tracking/template-tracker/ssd/vpTemplateTrackerSSDForwardCompositional.cpp
+  tracking/template-tracker/ssd/vpTemplateTrackerSSDInverseCompositional.cpp
+  tracking/template-tracker/zncc/vpTemplateTrackerZNCC.cpp
+  tracking/template-tracker/zncc/vpTemplateTrackerZNCCForwardAdditional.cpp
+  tracking/template-tracker/zncc/vpTemplateTrackerZNCCInverseCompositional.cpp
+  tracking/template-tracker/tools/vpTemplateTrackerBSpline.cpp
+  tracking/template-tracker/tools/vpTemplateTrackerZone.cpp
+  tracking/template-tracker/tools/vpTemplateTrackerTriangle.cpp
+  tracking/template-tracker/warp/vpTemplateTrackerWarp.cpp
+  tracking/template-tracker/warp/vpTemplateTrackerWarpAffine.cpp
+  tracking/template-tracker/warp/vpTemplateTrackerWarpHomography.cpp
+  tracking/template-tracker/warp/vpTemplateTrackerWarpHomographySL3.cpp
+  tracking/template-tracker/warp/vpTemplateTrackerWarpSRT.cpp
+  tracking/template-tracker/warp/vpTemplateTrackerWarpTranslation.cpp
   )
 
-IF(VISP_HAVE_XML2)
-  LIST(APPEND SRC_TRACKING tracking/mbt/edge/vpMbtXmlParser.cpp)
-  LIST(APPEND SRC_TRACKING tracking/mbt/klt/vpMbtKltXmlParser.cpp)
-ENDIF()
+if(VISP_HAVE_XML2)
+  list(APPEND SRC_TRACKING tracking/mbt/vpMbXmlParser.cpp)
+  list(APPEND SRC_TRACKING tracking/mbt/edge/vpMbtXmlParser.cpp)
+  list(APPEND SRC_TRACKING tracking/mbt/klt/vpMbtKltXmlParser.cpp)
+  list(APPEND SRC_TRACKING tracking/mbt/hybrid/vpMbtEdgeKltXmlParser.cpp)
+endif()
 
 IF(VISP_HAVE_OPENCV)
   LIST(APPEND SRC_TRACKING tracking/klt/vpKltOpencv.cpp)

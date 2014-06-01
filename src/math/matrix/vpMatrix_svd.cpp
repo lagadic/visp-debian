@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpMatrix_svd.cpp 4210 2013-04-16 08:57:46Z fspindle $
+ * $Id: vpMatrix_svd.cpp 4574 2014-01-09 08:48:51Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -297,8 +297,10 @@ void vpMatrix::svdNr(vpColVector& W, vpMatrix& V)
 	g=c*g;
 	z=pythag(f,h);
 	rv1[j]=z;
-	c=f/z;
-	s=h/z;
+  if ((std::fabs(z) > epsilon) /*|| (fabs(z) > EPS_SVD)*/) {
+    c=f/z;
+    s=h/z;
+  }
 	f=x*c+g*s;
 	g=g*c-x*s;
 	h=y*s;
@@ -593,8 +595,7 @@ void vpMatrix::svdLapack(vpColVector& W, vpMatrix& V){
   dgesdd_( (char*)"S", &m, &n, a, &lda, s, u, &ldu, vt, &ldvt, work, &lwork, iwork, &info );
 
   if( info > 0 ) {
-    std::cout << "The algorithm computing SVD failed to converge." << std::endl;
-
+   vpTRACE("The algorithm computing SVD failed to converge.");
   }
 
   V=V.transpose();

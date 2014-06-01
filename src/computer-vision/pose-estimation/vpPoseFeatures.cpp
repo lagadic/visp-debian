@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpPoseFeatures.cpp 4303 2013-07-04 14:14:00Z fspindle $
+ * $Id: vpPoseFeatures.cpp 4632 2014-02-03 17:06:40Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -44,13 +44,11 @@
   Default constructor.
 */
 vpPoseFeatures::vpPoseFeatures()
+  : maxSize(0), totalSize(0), vvsIterMax(200), lambda(1.0), verbose(false), computeCovariance(false),
+    covarianceMatrix(), featurePoint_Point_list(), featurePoint3D_Point_list(), featureVanishingPoint_Point_list(),
+    featureVanishingPoint_DuoLine_list(), featureEllipse_Sphere_list(), featureEllipse_Circle_list(),
+    featureLine_Line_list(), featureLine_DuoLineInt_List(), featureSegment_DuoPoints_list()
 {
-  lambda = 1.0;
-  vvsIterMax = 200;
-  totalSize = 0;
-  maxSize = 0;
-  
-  verbose = false;
 }
 
 /*!

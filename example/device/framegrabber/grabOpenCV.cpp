@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: grabOpenCV.cpp 4088 2013-02-04 07:59:35Z fspindle $
+ * $Id: grabOpenCV.cpp 4658 2014-02-09 09:50:14Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -62,6 +62,10 @@
 
 // List of allowed command line options
 #define GETOPTARGS	"dhn:o:D:"
+
+void usage(const char *name, const char *badparam, unsigned int &nframes, std::string &opath);
+bool getOptions(int argc, const char **argv, bool &display,
+                unsigned int &nframes, bool &save, std::string &opath, int &deviceType);
 
 /*!
 
@@ -126,33 +130,33 @@ OPTIONS:                                               Default\n\
 bool getOptions(int argc, const char **argv, bool &display,
                 unsigned int &nframes, bool &save, std::string &opath, int &deviceType)
 {
-  const char *optarg;
+  const char *optarg_;
   int	c;
-  while ((c = vpParseArgv::parse(argc, argv, GETOPTARGS, &optarg)) > 1) {
+  while ((c = vpParseArgv::parse(argc, argv, GETOPTARGS, &optarg_)) > 1) {
 
     switch (c) {
     case 'd': display = false; break;
     case 'D':
-      if (strcmp( optarg ,"ANY") == 0 ) {deviceType = CV_CAP_ANY;}
-      else if ( strcmp( optarg ,"MIL") == 0) {deviceType = CV_CAP_MIL;}
-      else if ( strcmp( optarg ,"VFW") == 0) {deviceType = CV_CAP_VFW;}
-      else if ( strcmp( optarg ,"V4L") == 0) {deviceType = CV_CAP_V4L;}
-      else if ( strcmp( optarg ,"V4L2") == 0) {deviceType = CV_CAP_V4L2;}
-      else if ( strcmp( optarg ,"DC1394") == 0) {deviceType = CV_CAP_DC1394;}
-      else if ( strcmp( optarg ,"CMU1394") == 0) {deviceType = CV_CAP_CMU1394;}
-      else if ( strcmp( optarg ,"DSHOW") == 0) {deviceType = CV_CAP_DSHOW;}
+      if (strcmp( optarg_ ,"ANY") == 0 ) {deviceType = CV_CAP_ANY;}
+      else if ( strcmp( optarg_ ,"MIL") == 0) {deviceType = CV_CAP_MIL;}
+      else if ( strcmp( optarg_ ,"VFW") == 0) {deviceType = CV_CAP_VFW;}
+      else if ( strcmp( optarg_ ,"V4L") == 0) {deviceType = CV_CAP_V4L;}
+      else if ( strcmp( optarg_ ,"V4L2") == 0) {deviceType = CV_CAP_V4L2;}
+      else if ( strcmp( optarg_ ,"DC1394") == 0) {deviceType = CV_CAP_DC1394;}
+      else if ( strcmp( optarg_ ,"CMU1394") == 0) {deviceType = CV_CAP_CMU1394;}
+      else if ( strcmp( optarg_ ,"DSHOW") == 0) {deviceType = CV_CAP_DSHOW;}
       else {std::cout << "Unknown type of device" << std::endl;
 	      deviceType = 0;}
       break;
     case 'n':
-      nframes = (unsigned int)atoi(optarg); break;
+      nframes = (unsigned int)atoi(optarg_); break;
     case 'o':
       save = true;
-      opath = optarg; break;
+      opath = optarg_; break;
     case 'h': usage(argv[0], NULL, nframes, opath); return false; break;
 
     default:
-      usage(argv[0], optarg, nframes, opath);
+      usage(argv[0], optarg_, nframes, opath);
       return false; break;
     }
   }
@@ -161,7 +165,7 @@ bool getOptions(int argc, const char **argv, bool &display,
     // standalone param or error
     usage(argv[0], NULL, nframes, opath);
     std::cerr << "ERROR: " << std::endl;
-    std::cerr << "  Bad argument " << optarg << std::endl << std::endl;
+    std::cerr << "  Bad argument " << optarg_ << std::endl << std::endl;
     return false;
   }
 
@@ -179,71 +183,71 @@ bool getOptions(int argc, const char **argv, bool &display,
 int
 main(int argc, const char ** argv)
 {
-  bool opt_display = true;
-  unsigned nframes = 50;
-  bool save = false;
-  int deviceType = CV_CAP_ANY;
+  try {
+    bool opt_display = true;
+    unsigned nframes = 50;
+    bool save = false;
+    int deviceType = CV_CAP_ANY;
 
-  // Declare an image. It size is not defined yet. It will be defined when the
-  // image will acquired the first time.
+    // Declare an image. It size is not defined yet. It will be defined when the
+    // image will acquired the first time.
 #ifdef GRAB_COLOR
-  vpImage<vpRGBa> I; // This is a color image (in RGBa format)
+    vpImage<vpRGBa> I; // This is a color image (in RGBa format)
 #else
-  vpImage<unsigned char> I; // This is a B&W image
+    vpImage<unsigned char> I; // This is a B&W image
 #endif
 
-  // Set default output image name for saving
+    // Set default output image name for saving
 #ifdef GRAB_COLOR
-  // Color images will be saved in PGM P6 format
-#  if defined(UNIX)
-  std::string opath = "/tmp/I%04d.ppm";
-#  elif defined(WIN32)
-  std::string opath = "C:/temp/I%04d.ppm";
+    // Color images will be saved in PGM P6 format
+#  if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
+    std::string opath = "/tmp/I%04d.ppm";
+#  elif defined(_WIN32)
+    std::string opath = "C:/temp/I%04d.ppm";
 #  endif
 #else
-  // B&W images will be saved in PGM P5 format
-#  if defined(UNIX)
-  std::string opath = "/tmp/I%04d.pgm";
-#  elif defined(WIN32)
-  std::string opath = "C:/temp/I%04d.pgm";
+    // B&W images will be saved in PGM P5 format
+#  if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
+    std::string opath = "/tmp/I%04d.pgm";
+#  elif defined(_WIN32)
+    std::string opath = "C:/temp/I%04d.pgm";
 #  endif
 #endif
 
-  // Read the command line options
-  if (getOptions(argc, argv, opt_display, nframes, save, opath, deviceType) == false) {
-    exit (-1);
-  }
-  // Create the grabber
-  vpOpenCVGrabber grabber ;
-  try {
-    // Set the type of device to detect. Here for example we expect to find a firewire camera.
-    grabber.setDeviceType(deviceType);
+    // Read the command line options
+    if (getOptions(argc, argv, opt_display, nframes, save, opath, deviceType) == false) {
+      exit (-1);
+    }
+    // Create the grabber
+    vpOpenCVGrabber grabber ;
+    try {
+      // Set the type of device to detect. Here for example we expect to find a firewire camera.
+      grabber.setDeviceType(deviceType);
 
-    // Initialize the grabber
-    grabber.open(I);
+      // Initialize the grabber
+      grabber.open(I);
 
-    // Acquire an image
-    grabber.acquire(I);
-  }
-  catch(...)
-  {
-    vpCTRACE << "Cannot acquire an image... " 
-             << "Check if a camera is connected to your computer."
-             << std::endl ;
-    return 0;
-  }
+      // Acquire an image
+      grabber.acquire(I);
+    }
+    catch(...)
+    {
+      vpCTRACE << "Cannot acquire an image... "
+               << "Check if a camera is connected to your computer."
+               << std::endl ;
+      return 0;
+    }
 
-  std::cout << "Image size: width : " << I.getWidth() <<  " height: "
-            << I.getHeight() << std::endl;
+    std::cout << "Image size: width : " << I.getWidth() <<  " height: "
+              << I.getHeight() << std::endl;
 
-  // Creates a display
-  vpDisplayOpenCV display;
+    // Creates a display
+    vpDisplayOpenCV display;
 
-  if (opt_display) {
-    display.init(I,100,100,"OpenCV framegrabber");
-  }
+    if (opt_display) {
+      display.init(I,100,100,"OpenCV framegrabber");
+    }
 
-  try {
     double tbegin=0, tend=0, tloop=0, ttotal=0;
 
     ttotal = 0;
@@ -275,11 +279,11 @@ main(int argc, const char ** argv)
     std::cout << "Mean loop time: " << ttotal / nframes << " ms" << std::endl;
     std::cout << "Mean frequency: " << 1000./(ttotal / nframes) << " fps" << std::endl;
 
+    return 0;
   }
-  catch(...)
-  {
-    vpCERROR << "Failure: exit" << std::endl;
-    return(-1);
+  catch(vpException e) {
+    std::cout << "Catch an exception: " << e << std::endl;
+    return 1;
   }
 }
 #else // defined (VISP_HAVE_OPENCV) 

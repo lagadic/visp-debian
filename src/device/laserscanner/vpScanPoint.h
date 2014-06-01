@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpScanPoint.h 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpScanPoint.h 4649 2014-02-07 14:57:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -44,6 +44,7 @@
 #include <visp/vpMath.h>
 
 #include <ostream>
+#include <sstream>
 #include <cmath>    // std::fabs
 #include <limits>   // numeric_limits
 #include <math.h>
@@ -75,40 +76,38 @@ class /* VISP_EXPORT */ vpScanPoint // Note that here VISP_EXPORT should not be 
 {
  public:
   /*! Default constructor. */
-  inline vpScanPoint() {
-    this->rDist = 0;
-    this->hAngle = 0;
-    this->vAngle = 0;
-  }
+    inline vpScanPoint() : rDist(0), hAngle(0), vAngle(0) {}
   /*! Copy constructor. */
-  inline vpScanPoint(const vpScanPoint &scanpoint) {
+  inline vpScanPoint(const vpScanPoint &scanpoint) : rDist(0), hAngle(0), vAngle(0) {
     this->rDist = scanpoint.rDist;
     this->hAngle = scanpoint.hAngle;
     this->vAngle = scanpoint.vAngle;
   }
   /*! 
     Set the polar point coordinates. 
-    \param rDist : Radial distance in meter.
-    \param hAngle : Horizontal angle in radian.
-    \param vAngle : Vertical angle in radian.   
+    \param r_dist : Radial distance in meter.
+    \param h_angle : Horizontal angle in radian.
+    \param v_angle : Vertical angle in radian.
   */
-  inline vpScanPoint(double rDist, double hAngle, double vAngle) {
-    this->rDist = rDist;
-    this->hAngle = hAngle;
-    this->vAngle = vAngle;
+  inline vpScanPoint(double r_dist, double h_angle, double v_angle)
+    : rDist(r_dist), hAngle(h_angle), vAngle(v_angle)
+  {
+    this->rDist = r_dist;
+    this->hAngle = h_angle;
+    this->vAngle = v_angle;
   }
   /*! Destructor that does nothing. */
   inline virtual ~vpScanPoint() {};
   /*! 
     Set the polar point coordinates. 
-    \param rDist : Radial distance in meter.
-    \param hAngle : Horizontal angle in radian.
-    \param vAngle : Vertical angle in radian.   
+    \param r_dist : Radial distance in meter.
+    \param h_angle : Horizontal angle in radian.
+    \param v_angle : Vertical angle in radian.
   */
-  inline void setPolar(double rDist, double hAngle, double vAngle) {
-    this->rDist = rDist;
-    this->hAngle = hAngle;
-    this->vAngle = vAngle;
+  inline void setPolar(double r_dist, double h_angle, double v_angle) {
+    this->rDist = r_dist;
+    this->hAngle = h_angle;
+    this->vAngle = v_angle;
   }
   /*! 
     Return the radial distance in meter.
@@ -250,13 +249,18 @@ std::cout << p << std::endl;
 
  */
 inline std::ostream &operator << (std::ostream &s, const vpScanPoint &p) {
-   s.precision(10);
-   s << p.getRadialDist() << " "
-     << p.getHAngle() << " "
-     << p.getVAngle() << " "
-     << p.getX() << " "
-     << p.getY() << " " << p.getZ();
-   return s;
- }
+  std::ios_base::fmtflags original_flags = s.flags();
+
+  s.precision(10);
+  s << p.getRadialDist() << " "
+    << p.getHAngle() << " "
+    << p.getVAngle() << " "
+    << p.getX() << " "
+    << p.getY() << " " << p.getZ();
+
+  s.setf(original_flags); // restore s to standard state
+
+  return s;
+}
 
 #endif

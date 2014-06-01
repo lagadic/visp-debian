@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpSimulatorViper850.cpp 4317 2013-07-17 09:40:17Z fspindle $
+ * $Id: vpSimulatorViper850.cpp 4649 2014-02-07 14:57:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -50,21 +50,24 @@
 #include <cmath>    // std::fabs
 #include <limits>   // numeric_limits
 #include <string>
-#if defined(WIN32) || defined(VISP_HAVE_PTHREAD)
+#if defined(_WIN32) || defined(VISP_HAVE_PTHREAD)
 
 const double vpSimulatorViper850::defaultPositioningVelocity = 25.0;
 
 /*!
   Basic constructor
 */
-vpSimulatorViper850::vpSimulatorViper850():vpRobotWireFrameSimulator(), vpViper850()
+vpSimulatorViper850::vpSimulatorViper850()
+  : vpRobotWireFrameSimulator(), vpViper850(),
+    q_prev_getdis(), first_time_getdis(true), positioningVelocity(defaultPositioningVelocity),
+    zeroPos(), reposPos(), toolCustom(false), arm_dir()
 {
   init();
   initDisplay();
   
   tcur = vpTime::measureTimeMs();
 
-  #if defined(WIN32)
+  #if defined(_WIN32)
   mutex_fMi = CreateMutex(NULL,FALSE,NULL);
   mutex_artVel = CreateMutex(NULL,FALSE,NULL);
   mutex_artCoord = CreateMutex(NULL,FALSE,NULL);
@@ -99,17 +102,20 @@ vpSimulatorViper850::vpSimulatorViper850():vpRobotWireFrameSimulator(), vpViper8
 /*!
   Constructor used to enable or disable the external view of the robot.
 
-  \param display : When true, enables the display of the external view.
+  \param do_display : When true, enables the display of the external view.
 
 */
-vpSimulatorViper850::vpSimulatorViper850(bool display):vpRobotWireFrameSimulator(display)
+vpSimulatorViper850::vpSimulatorViper850(bool do_display)
+  : vpRobotWireFrameSimulator(do_display),
+    q_prev_getdis(), first_time_getdis(true), positioningVelocity(defaultPositioningVelocity),
+    zeroPos(), reposPos(), toolCustom(false), arm_dir()
 {
   init();
   initDisplay();
     
   tcur = vpTime::measureTimeMs();
   
-    #if defined(WIN32)
+    #if defined(_WIN32)
   mutex_fMi = CreateMutex(NULL,FALSE,NULL);
   mutex_artVel = CreateMutex(NULL,FALSE,NULL);
   mutex_artCoord = CreateMutex(NULL,FALSE,NULL);
@@ -148,7 +154,7 @@ vpSimulatorViper850::~vpSimulatorViper850()
 {
   robotStop = true;
   
-  #if defined(WIN32)
+  #if defined(_WIN32)
   WaitForSingleObject(hThread,INFINITE);
   CloseHandle(hThread);
   CloseHandle(mutex_fMi);
@@ -276,15 +282,15 @@ vpSimulatorViper850::initDisplay()
 
   \param tool : Tool to use.
 
-  \param projModel : Projection model associated to the camera.
+  \param proj_model : Projection model associated to the camera.
 
   \sa vpCameraParameters, init()
 */
 void
 vpSimulatorViper850::init (vpViper850::vpToolType tool,
-		       vpCameraParameters::vpCameraParametersProjType projModel)
+           vpCameraParameters::vpCameraParametersProjType proj_model)
 {
-  this->projModel = projModel;
+  this->projModel = proj_model;
   
   // Use here default values of the robot constant parameters.
   switch (tool) {
@@ -383,30 +389,30 @@ vpSimulatorViper850::getCameraParameters (vpCameraParameters &cam,
   Get the current intrinsic camera parameters obtained by calibration.
 
   \param cam : In output, camera parameters to fill.
-  \param I : A B&W image send by the current camera in use.
+  \param I_ : A B&W image send by the current camera in use.
 
   \warning The image size must be : 640x480 !
 */
 void
 vpSimulatorViper850::getCameraParameters (vpCameraParameters &cam,
-			      const vpImage<unsigned char> &I)
+                                          const vpImage<unsigned char> &I_)
 {
-  getCameraParameters(cam,I.getWidth(),I.getHeight());
+  getCameraParameters(cam,I_.getWidth(),I_.getHeight());
 }
 
 /*!
   Get the current intrinsic camera parameters obtained by calibration.
 
   \param cam : In output, camera parameters to fill.
-  \param I : A B&W image send by the current camera in use.
+  \param I_ : A B&W image send by the current camera in use.
 
   \warning The image size must be : 640x480 !
 */
 void
 vpSimulatorViper850::getCameraParameters (vpCameraParameters &cam,
-				 const vpImage<vpRGBa> &I)
+                                          const vpImage<vpRGBa> &I_)
 {
-  getCameraParameters(cam,I.getWidth(),I.getHeight());
+  getCameraParameters(cam,I_.getWidth(),I_.getHeight());
 }
 
 
@@ -689,7 +695,7 @@ vpSimulatorViper850::compute_fMi()
 //   fMit[7] = fMit[6] * cMe;
   vpViper::get_fMc(q,fMit[7]);
   
-  #if defined(WIN32)
+  #if defined(_WIN32)
   WaitForSingleObject(mutex_fMi,INFINITE);
   for (int i = 0; i < 8; i++)
     fMi[i] = fMit[i];
@@ -937,24 +943,24 @@ vpSimulatorViper850::computeArticularVelocity()
   {
     case vpRobot::CAMERA_FRAME :
     {
-      vpMatrix eJe;
+      vpMatrix eJe_;
       vpVelocityTwistMatrix eVc(eMc);
-      vpViper850::get_eJe(articularCoordinates,eJe);
-      eJe = eJe.pseudoInverse();
+      vpViper850::get_eJe(articularCoordinates,eJe_);
+      eJe_ = eJe_.pseudoInverse();
       if (singularityManagement)
-        singularityTest(articularCoordinates,eJe);
-      articularVelocity = eJe*eVc*velocityframe;
+        singularityTest(articularCoordinates,eJe_);
+      articularVelocity = eJe_*eVc*velocityframe;
       set_artVel (articularVelocity);
       break;
     }
     case vpRobot::REFERENCE_FRAME :
     {
-      vpMatrix fJe;
-      vpViper850::get_fJe(articularCoordinates,fJe);
-      fJe = fJe.pseudoInverse();
+      vpMatrix fJe_;
+      vpViper850::get_fJe(articularCoordinates,fJe_);
+      fJe_ = fJe_.pseudoInverse();
       if (singularityManagement)
-        singularityTest(articularCoordinates,fJe);
-      articularVelocity = fJe*velocityframe;
+        singularityTest(articularCoordinates,fJe_);
+      articularVelocity = fJe_*velocityframe;
       set_artVel (articularVelocity);
       break;
     }
@@ -1062,10 +1068,10 @@ vpSimulatorViper850::getVelocity (const vpRobot::vpControlFrameType frame, vpCol
   {
     case vpRobot::CAMERA_FRAME : 
     {
-      vpMatrix eJe;
+      vpMatrix eJe_;
       vpVelocityTwistMatrix cVe(eMc);
-      vpViper850::get_eJe(articularCoordinates,eJe);
-      vel = cVe*eJe*articularVelocity;
+      vpViper850::get_eJe(articularCoordinates,eJe_);
+      vel = cVe*eJe_*articularVelocity;
       break ;
     }
     case vpRobot::ARTICULAR_FRAME : 
@@ -1075,9 +1081,9 @@ vpSimulatorViper850::getVelocity (const vpRobot::vpControlFrameType frame, vpCol
     }
     case vpRobot::REFERENCE_FRAME : 
     {
-      vpMatrix fJe;
-      vpViper850::get_fJe(articularCoordinates,fJe);
-      vel = fJe*articularVelocity;
+      vpMatrix fJe_;
+      vpViper850::get_fJe(articularCoordinates,fJe_);
+      vel = fJe_*articularVelocity;
       break ;
     }
     case vpRobot::MIXT_FRAME : 
@@ -1091,6 +1097,29 @@ vpSimulatorViper850::getVelocity (const vpRobot::vpControlFrameType frame, vpCol
       return;
     }
   }
+}
+
+/*!
+  Get the robot time stamped velocities.
+
+  \param frame : Frame in wich velocities are mesured.
+
+  \param vel : Measured velocities. Translations are expressed in m/s
+  and rotations in rad/s.
+
+  \param timestamp : Unix time in second since January 1st 1970.
+
+  \warning In camera frame, reference frame and mixt frame, the representation
+  of the rotation is ThetaU. In that cases, \f$velocity = [\dot x, \dot y, \dot
+  z, \dot {\theta U}_x, \dot {\theta U}_y, \dot {\theta U}_z]\f$.
+
+  \sa getVelocity(const vpRobot::vpControlFrameType frame, vpColVector & vel)
+*/
+void
+vpSimulatorViper850::getVelocity (const vpRobot::vpControlFrameType frame, vpColVector & vel, double &timestamp)
+{
+  timestamp = vpTime::measureTimeSecond();
+  getVelocity(frame, vel);
 }
 
 /*!
@@ -1138,12 +1167,33 @@ int main()
 vpColVector
 vpSimulatorViper850::getVelocity (vpRobot::vpControlFrameType frame)
 {
-  vpColVector velocity(6);
-  getVelocity (frame, velocity);
+  vpColVector vel(6);
+  getVelocity (frame, vel);
 
-  return velocity;
+  return vel;
 }
 
+/*!
+  Get the time stamped robot velocities.
+
+  \param frame : Frame in wich velocities are mesured.
+
+  \param timestamp : Unix time in second since January 1st 1970.
+
+  \return Measured velocities. Translations are expressed in m/s
+  and rotations in rad/s.
+
+  \sa getVelocity(vpRobot::vpControlFrameType frame)
+*/
+vpColVector
+vpSimulatorViper850::getVelocity (vpRobot::vpControlFrameType frame, double &timestamp)
+{
+  timestamp = vpTime::measureTimeSecond();
+  vpColVector vel(6);
+  getVelocity (frame, vel);
+
+  return vel;
+}
 
 void 
 vpSimulatorViper850::findHighestPositioningSpeed(vpColVector &q)
@@ -1266,10 +1316,10 @@ vpSimulatorViper850::setPosition(const vpRobot::vpControlFrameType frame,const v
       vpRotationMatrix cRc2(rxyz);
       vpHomogeneousMatrix cMc2(txyz, cRc2);
 
-      vpHomogeneousMatrix fMc;
-      vpViper850::get_fMc(articularCoordinates, fMc);
+      vpHomogeneousMatrix fMc_;
+      vpViper850::get_fMc(articularCoordinates, fMc_);
 	
-      vpHomogeneousMatrix fMc2 = fMc * cMc2;
+      vpHomogeneousMatrix fMc2 = fMc_ * cMc2;
 	
       do
       {
@@ -1339,13 +1389,13 @@ vpSimulatorViper850::setPosition(const vpRobot::vpControlFrameType frame,const v
       }
 
       vpRotationMatrix fRc(rxyz);
-      vpHomogeneousMatrix fMc(txyz, fRc);
+      vpHomogeneousMatrix fMc_(txyz, fRc);
 
       do
       {
         articularCoordinates = get_artCoord();
         qdes = articularCoordinates;
-        nbSol = getInverseKinematics(fMc, qdes, verbose_);
+        nbSol = getInverseKinematics(fMc_, qdes, verbose_);
         if (nbSol > 0)
         {
           error = qdes - articularCoordinates;
@@ -1573,8 +1623,8 @@ int main()
 }
   \endcode
 
-  \sa setPosition(const vpRobot::vpControlFrameType frame, const
-  vpColVector & r)
+  \sa getPosition(const vpRobot::vpControlFrameType frame, vpColVector &q, double &timestamp)
+  \sa setPosition(const vpRobot::vpControlFrameType frame, const vpColVector & r)
 
 */
 void 
@@ -1598,15 +1648,15 @@ vpSimulatorViper850::getPosition(const vpRobot::vpControlFrameType frame, vpColV
       
     case vpRobot::REFERENCE_FRAME:
     {
-      vpHomogeneousMatrix fMc;
-      vpViper::get_fMc (get_artCoord(), fMc);
+      vpHomogeneousMatrix fMc_;
+      vpViper::get_fMc (get_artCoord(), fMc_);
       
       vpRotationMatrix fRc;
-      fMc.extract(fRc);
+      fMc_.extract(fRc);
       vpRxyzVector rxyz(fRc);
       
       vpTranslationVector txyz;
-      fMc.extract(txyz);
+      fMc_.extract(txyz);
       
       for (unsigned int i=0; i <3; i++)
       {
@@ -1627,6 +1677,39 @@ vpSimulatorViper850::getPosition(const vpRobot::vpControlFrameType frame, vpColV
   }
 }
 
+/*!
+
+  Get the current time stamped position of the robot.
+
+  \param frame : Control frame type in which to get the position, either :
+  - in the camera cartesien frame,
+  - joint (articular) coordinates of each axes
+  - in a reference or fixed cartesien frame attached to the robot base
+  - in a mixt cartesien frame (translation in reference
+  frame, and rotation in camera frame)
+
+  \param q : Measured position of the robot:
+  - in camera cartesien frame, a 6 dimension vector, set to 0.
+
+  - in articular, a 6 dimension vector corresponding to the joint
+  position of each dof in radians.
+
+  - in reference frame, a 6 dimension vector, the first 3 values correspond to
+  the translation tx, ty, tz in meters (like a vpTranslationVector), and the
+  last 3 values to the rx, ry, rz rotation (like a vpRxyzVector). The code
+  below show how to convert this position into a vpHomogenousMatrix:
+
+  \param timestamp : Unix time in second since January 1st 1970.
+
+  \sa getPosition(const vpRobot::vpControlFrameType frame, vpColVector &q)
+ */
+void
+vpSimulatorViper850::getPosition(const vpRobot::vpControlFrameType frame, vpColVector &q, double &timestamp)
+{
+  timestamp = vpTime::measureTimeSecond();
+  getPosition(frame, q);
+}
+
 
 /*!
   Get the current position of the robot.
@@ -1640,7 +1723,7 @@ vpSimulatorViper850::getPosition(const vpRobot::vpControlFrameType frame, vpColV
 */
 void 
 vpSimulatorViper850::getPosition (const vpRobot::vpControlFrameType frame,   
-                            vpPoseVector &position)
+                                  vpPoseVector &position)
 {
   vpColVector posRxyz;
   //recupere  position en Rxyz
@@ -1655,6 +1738,24 @@ vpSimulatorViper850::getPosition (const vpRobot::vpControlFrameType frame,
     position[j]=posRxyz[j];
     position[j+3]=RtuVect[j];
   }
+}
+
+/*!
+
+  Get the current time stamped position of the robot.
+
+  Similar as getPosition(const vpRobot::vpControlFrameType frame, vpColVector &, double &)
+
+  The difference is here that the position is returned using a ThetaU
+  representation.
+
+ */
+void
+vpSimulatorViper850::getPosition(const vpRobot::vpControlFrameType frame,
+                                 vpPoseVector &position, double &timestamp)
+{
+  timestamp = vpTime::measureTimeSecond();
+  getPosition(frame, position);
 }
 
 /*!
@@ -1954,7 +2055,6 @@ int main()
 bool
 vpSimulatorViper850::readPosFile(const char *filename, vpColVector &q)
 {
-
   FILE * fd ;
   fd = fopen(filename, "r") ;
   if (fd == NULL)
@@ -1969,27 +2069,30 @@ vpSimulatorViper850::readPosFile(const char *filename, vpColVector &q)
     // Saut des lignes commencant par #
     if (fgets (line, FILENAME_MAX, fd) != NULL) {
       if ( strncmp (line, "#", 1) != 0) {
-	// La ligne n'est pas un commentaire
-	if ( strncmp (line, head, sizeof(head)-1) == 0) {
-	  sortie = true; 	// Position robot trouvee.
-	}
-// 	else
-// 	  return (false); // fin fichier sans position robot.
+        // La ligne n'est pas un commentaire
+        if ( strncmp (line, head, sizeof(head)-1) == 0) {
+          sortie = true; 	// Position robot trouvee.
+        }
+        // 	else
+        // 	  return (false); // fin fichier sans position robot.
       }
     }
     else {
+      fclose(fd) ;
       return (false);		/* fin fichier 	*/
     }
-
   }
   while ( sortie != true );
 
   // Lecture des positions
   q.resize(njoint);
-  sscanf(line, "%s %lf %lf %lf %lf %lf %lf",
-	 dummy,
-	 &q[0], &q[1], &q[2],
-	 &q[3], &q[4], &q[5]);
+  int ret = sscanf(line, "%s %lf %lf %lf %lf %lf %lf",
+                   dummy,
+                   &q[0], &q[1], &q[2], &q[3], &q[4], &q[5]);
+  if (ret != 7) {
+    fclose(fd) ;
+    return false;
+  }
 
   // converts rotations from degrees into radians
   q.deg2rad();
@@ -2110,15 +2213,15 @@ vpSimulatorViper850::get_cVe(vpVelocityTwistMatrix &cVe)
   To compute \f$^e{\bf J}_e\f$, we communicate with the low level
   controller to get the joint position of the robot.
 
-  \param eJe : Robot jacobian \f$^e{\bf J}_e\f$ expressed in the
+  \param eJe_ : Robot jacobian \f$^e{\bf J}_e\f$ expressed in the
   end-effector frame.
 */
 void
-vpSimulatorViper850::get_eJe(vpMatrix &eJe)
+vpSimulatorViper850::get_eJe(vpMatrix &eJe_)
 {
   try
   {
-    vpViper850::get_eJe(get_artCoord(), eJe) ;
+    vpViper850::get_eJe(get_artCoord(), eJe_) ;
   }
   catch(...)
   {
@@ -2134,16 +2237,16 @@ vpSimulatorViper850::get_eJe(vpMatrix &eJe)
   To compute \f$^f{\bf J}_e\f$, we communicate with the low level
   controller to get the joint position of the robot.
 
-  \param fJe : Robot jacobian \f$^f{\bf J}_e\f$ expressed in the
+  \param fJe_ : Robot jacobian \f$^f{\bf J}_e\f$ expressed in the
   reference frame.
 */
 void
-vpSimulatorViper850::get_fJe(vpMatrix &fJe)
+vpSimulatorViper850::get_fJe(vpMatrix &fJe_)
 {
   try
   {
     vpColVector articularCoordinates = get_artCoord();
-    vpViper850::get_fJe(articularCoordinates, fJe) ;
+    vpViper850::get_fJe(articularCoordinates, fJe_) ;
   }
   catch(...)
   {
@@ -2187,26 +2290,40 @@ void
 vpSimulatorViper850::initArms()
 {
   // set scene_dir from #define VISP_SCENE_DIR if it exists
-  std::string scene_dir;
+  std::string scene_dir_;
   if (vpIoTools::checkDirectory(VISP_SCENES_DIR) == true) // directory exists
-    scene_dir = VISP_SCENES_DIR;
+    scene_dir_ = VISP_SCENES_DIR;
   else {
     try {
-      scene_dir = vpIoTools::getenv("VISP_SCENES_DIR");
-      std::cout << "The simulator uses data from VISP_SCENES_DIR=" << scene_dir << std::endl;
+      scene_dir_ = vpIoTools::getenv("VISP_SCENES_DIR");
+      std::cout << "The simulator uses data from VISP_SCENES_DIR=" << scene_dir_ << std::endl;
     }
     catch (...) {
       std::cout << "Cannot get VISP_SCENES_DIR environment variable" << std::endl;
     }
   }
 
-  char name_cam[FILENAME_MAX];
+  unsigned int name_length = 30; // the size of this kind of string "/viper850_arm2.bnd"
+  if (scene_dir_.size() > FILENAME_MAX)
+    throw vpException (vpException::dimensionError, "Cannot initialize Viper850 simulator");
 
-  strcpy(name_cam, scene_dir.c_str());
+  unsigned int full_length = (unsigned int)scene_dir_.size() + name_length;
+  if (full_length > FILENAME_MAX)
+    throw vpException (vpException::dimensionError, "Cannot initialize Viper850 simulator");
+
+  char *name_cam = new char [full_length];
+
+  strcpy(name_cam, scene_dir_.c_str());
   strcat(name_cam,"/camera.bnd");
   set_scene(name_cam,&camera,cameraFactor);
   
-  char name_arm[FILENAME_MAX];
+  if (arm_dir.size() > FILENAME_MAX)
+    throw vpException (vpException::dimensionError, "Cannot initialize Viper850 simulator");
+  full_length = (unsigned int)arm_dir.size() + name_length;
+  if (full_length > FILENAME_MAX)
+    throw vpException (vpException::dimensionError, "Cannot initialize Viper850 simulator");
+
+  char *name_arm = new char [full_length];
   strcpy(name_arm, arm_dir.c_str());
   strcat(name_arm,"/viper850_arm1.bnd");
   set_scene(name_arm, robotArms, 1.0);
@@ -2241,14 +2358,17 @@ vpSimulatorViper850::initArms()
 //   sceneInitialized = true;
 //   displayObject = true;
   displayCamera = true;
+
+  delete [] name_cam;
+  delete [] name_arm;
 }
 
 
 void 
-vpSimulatorViper850::getExternalImage(vpImage<vpRGBa> &I)
+vpSimulatorViper850::getExternalImage(vpImage<vpRGBa> &I_)
 {
   bool changed = false;
-  vpHomogeneousMatrix displacement = navigation(I,changed);
+  vpHomogeneousMatrix displacement = navigation(I_,changed);
 
   //if (displacement[2][3] != 0)
   if (std::fabs(displacement[2][3]) > std::numeric_limits<double>::epsilon())
@@ -2265,13 +2385,13 @@ vpSimulatorViper850::getExternalImage(vpImage<vpRGBa> &I)
   if( (std::fabs(px_ext-1.) > vpMath::maximum(px_ext,1.)*std::numeric_limits<double>::epsilon()) 
       && (std::fabs(py_ext-1) > vpMath::maximum(py_ext,1.)*std::numeric_limits<double>::epsilon()))
   {
-    u = (double)I.getWidth()/(2*px_ext);
-    v = (double)I.getHeight()/(2*py_ext);
+    u = (double)I_.getWidth()/(2*px_ext);
+    v = (double)I_.getHeight()/(2*py_ext);
   }
   else
   {
-    u = (double)I.getWidth()/(vpMath::minimum(I.getWidth(),I.getHeight()));
-    v = (double)I.getHeight()/(vpMath::minimum(I.getWidth(),I.getHeight()));
+    u = (double)I_.getWidth()/(vpMath::minimum(I_.getWidth(),I_.getHeight()));
+    v = (double)I_.getHeight()/(vpMath::minimum(I_.getWidth(),I_.getHeight()));
   }
 
   float w44o[4][4],w44cext[4][4],x,y,z;
@@ -2291,22 +2411,22 @@ vpSimulatorViper850::getExternalImage(vpImage<vpRGBa> &I)
   get_fMi(fMit);
   
   vp2jlc_matrix(vpHomogeneousMatrix(0,0,0,0,0,0),w44o);
-  display_scene(w44o,robotArms[0],I, curColor);
+  display_scene(w44o,robotArms[0],I_, curColor);
   
   vp2jlc_matrix(fMit[0],w44o);
-  display_scene(w44o,robotArms[1],I, curColor);
+  display_scene(w44o,robotArms[1],I_, curColor);
   
   vp2jlc_matrix(fMit[1],w44o);
-  display_scene(w44o,robotArms[2],I, curColor);
+  display_scene(w44o,robotArms[2],I_, curColor);
   
   vp2jlc_matrix(fMit[2],w44o);
-  display_scene(w44o,robotArms[3],I, curColor);
+  display_scene(w44o,robotArms[3],I_, curColor);
   
   vp2jlc_matrix(fMit[3],w44o);
-  display_scene(w44o,robotArms[4],I, curColor);
+  display_scene(w44o,robotArms[4],I_, curColor);
   
   vp2jlc_matrix(fMit[6],w44o);
-  display_scene(w44o,robotArms[5],I, curColor);
+  display_scene(w44o,robotArms[5],I_, curColor);
 
   if (displayCamera)
   {
@@ -2315,13 +2435,13 @@ vpSimulatorViper850::getExternalImage(vpImage<vpRGBa> &I)
     cMe = cMe.inverse();
     cMe = fMit[6] * cMe;
     vp2jlc_matrix(cMe,w44o);
-    display_scene(w44o,camera, I, camColor);
+    display_scene(w44o,camera, I_, camColor);
   }
   
   if (displayObject)
   {
     vp2jlc_matrix(fMo,w44o);
-    display_scene(w44o,scene,I, curColor);
+    display_scene(w44o,scene,I_, curColor);
   }
 }
 
@@ -2336,23 +2456,23 @@ vpSimulatorViper850::getExternalImage(vpImage<vpRGBa> &I)
   \f${^f}{\bf M}_c = {^f}{\bf M}_o \; ({^c}{\bf M}{_o})^{-1}\f$, and from the inverse kinematics
   set the joint positions \f${\bf q}\f$ that corresponds to the \f${^f}{\bf M}_c\f$ transformation.
   
-  \param cMo : the desired pose of the camera.
+  \param cMo_ : the desired pose of the camera.
 
   \return false if the robot kinematics is not able to reach the cMo position.
 */
 bool
-vpSimulatorViper850::initialiseCameraRelativeToObject(const vpHomogeneousMatrix &cMo)
+vpSimulatorViper850::initialiseCameraRelativeToObject(const vpHomogeneousMatrix &cMo_)
 {
   vpColVector stop(6);
   bool status = true;
   stop = 0;
   set_artVel(stop);
   set_velocity(stop);
-  vpHomogeneousMatrix fMc;
-  fMc = fMo * cMo.inverse();
+  vpHomogeneousMatrix fMc_;
+  fMc_ = fMo * cMo_.inverse();
   
   vpColVector articularCoordinates = get_artCoord();
-  unsigned int nbSol = getInverseKinematics(fMc, articularCoordinates, verbose_);
+  unsigned int nbSol = getInverseKinematics(fMc_, articularCoordinates, verbose_);
   
   if (nbSol == 0) {
     status = false;
@@ -2379,10 +2499,10 @@ vpSimulatorViper850::initialiseCameraRelativeToObject(const vpHomogeneousMatrix 
   \f${^f}{\bf M}_o = {^f}{\bf M}_c \; {^c}{\bf M}_o\f$ where \f$ {^f}{\bf M}_c = f({\bf q})\f$
   with \f${\bf q}\f$ the robot joint position
   
-  \param cMo : the desired pose of the camera.
+  \param cMo_ : the desired pose of the camera.
 */
 void 
-vpSimulatorViper850::initialiseObjectRelativeToCamera(const vpHomogeneousMatrix &cMo)
+vpSimulatorViper850::initialiseObjectRelativeToCamera(const vpHomogeneousMatrix &cMo_)
 {
   vpColVector stop(6);
   stop = 0;
@@ -2390,7 +2510,7 @@ vpSimulatorViper850::initialiseObjectRelativeToCamera(const vpHomogeneousMatrix 
   set_velocity(stop);
   vpHomogeneousMatrix fMit[8];
   get_fMi(fMit);
-  fMo = fMit[7] * cMo;
+  fMo = fMit[7] * cMo_;
 }
 
 #endif

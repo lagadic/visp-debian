@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpTime.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpTime.cpp 4622 2014-01-28 17:40:36Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -56,10 +56,10 @@
 
 // Unix depend version
 
-#if defined UNIX
+#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
 #  include <sys/time.h>
 #  include <unistd.h>
-#elif defined WIN32
+#elif defined(_WIN32)
 #  include <windows.h>
 #  include <winbase.h>
 #endif
@@ -78,14 +78,14 @@ double vpTime::minTimeForUsleepCall = 4; /*! This time is in
 
 
 /*!
-  Return the time in milliseconds.
+  Return the time in milliseconds since January 1st 1970.
 
   \sa measureTimeMicros(), measureTimeSecond()
 */
 double
 vpTime::measureTimeMs()
 {
-#if defined(WIN32)
+#if defined(_WIN32)
   LARGE_INTEGER time, frequency;
   QueryPerformanceFrequency(&frequency);
   if(frequency.QuadPart == 0){
@@ -95,7 +95,7 @@ vpTime::measureTimeMs()
   QueryPerformanceCounter(&time);
   return (double)(1000.0*time.QuadPart/frequency.QuadPart);
   }
-#elif defined UNIX
+#elif !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
   struct timeval tp;
   gettimeofday(&tp,0);
   return(1000.0*tp.tv_sec + tp.tv_usec/1000.0);
@@ -104,14 +104,14 @@ vpTime::measureTimeMs()
 
 
 /*!
-  Return the time in microseconds.
+  Return the time in microseconds since January 1st 1970.
 
   \sa measureTimeMs(), measureTimeSecond()
 */
 double
 vpTime::measureTimeMicros()
 {
-#if defined(WIN32)
+#if defined(_WIN32)
   LARGE_INTEGER time, frequency;
   QueryPerformanceFrequency(&frequency);
   if(frequency.QuadPart == 0){
@@ -156,11 +156,11 @@ vpTime::wait(double t0, double t)
   if ( timeToWait <= 0. ) // no need to wait
     return(1);
   else {
-#if defined UNIX
+#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
     if (timeToWait > vpTime::minTimeForUsleepCall) {
       usleep((unsigned long )((timeToWait-vpTime::minTimeForUsleepCall)*1000));
     }
-#elif defined WIN32
+#elif defined(_WIN32)
     if (timeToWait > vpTime::minTimeForUsleepCall) {
       Sleep((DWORD)(timeToWait-vpTime::minTimeForUsleepCall));
     }
@@ -196,11 +196,11 @@ void vpTime::wait(double t)
   if ( timeToWait <= 0. ) // no need to wait
     return;
   else {
-#if defined UNIX
+#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
 	if (timeToWait > vpTime::minTimeForUsleepCall) {
       usleep((unsigned long )((timeToWait-vpTime::minTimeForUsleepCall)*1000));
     }
-#elif defined WIN32
+#elif defined(_WIN32)
     if (timeToWait > vpTime::minTimeForUsleepCall) {
       Sleep((DWORD)(timeToWait-vpTime::minTimeForUsleepCall));
     }
@@ -218,7 +218,7 @@ void vpTime::wait(double t)
 
 /*!
 
-  Return the measured time in seconds.
+  Return the measured time in seconds since January 1st 1970.
 
   \sa measureTimeMs()
 */
@@ -235,9 +235,9 @@ double  vpTime::measureTimeSecond()
 */
 void vpTime::sleepMs(double t)
 {
-#if defined UNIX
+#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
    usleep((unsigned long )(t*1000));
-#elif defined WIN32
+#elif defined(_WIN32)
    Sleep((DWORD)(t));
 #endif
 }

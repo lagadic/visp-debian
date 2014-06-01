@@ -3,7 +3,7 @@
  * $Id: vpMomentArea.h 3530 2012-01-03 10:52:12Z mbakthav $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -61,7 +61,7 @@ class VISP_EXPORT vpMomentArea : public vpMoment {
         /*!
         Moment name.
         */
-        const char* name(){return "vpMomentArea";}
+        const char* name() const {return "vpMomentArea";}
         friend VISP_EXPORT std::ostream & operator<<(std::ostream & os, const vpMomentArea& m);
 };
 

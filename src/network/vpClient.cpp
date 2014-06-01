@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpClient.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpClient.cpp 4661 2014-02-10 19:34:58Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -42,8 +42,9 @@
 #include <visp/vpClient.h>
 
 
-vpClient::vpClient() :  vpNetwork()
-{}
+vpClient::vpClient() :  vpNetwork(), numberOfAttempts(0)
+{
+}
 
 /*!
   Disconnect the client from all the servers, and close the sockets.
@@ -82,7 +83,7 @@ bool vpClient::connectToHostname(const std::string &hostname, const unsigned int
   
   serv.socketFileDescriptorReceptor = socket( AF_INET, SOCK_STREAM, 0 );
 
-#ifdef UNIX
+#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
   if ( serv.socketFileDescriptorReceptor < 0){
 #else
   if ( serv.socketFileDescriptorReceptor == INVALID_SOCKET){
@@ -117,7 +118,7 @@ bool vpClient::connectToIP(const std::string &ip, const unsigned int &port_serv)
   
   serv.socketFileDescriptorReceptor = socket( AF_INET, SOCK_STREAM, 0 );
 
-#ifdef UNIX
+#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
   if ( serv.socketFileDescriptorReceptor < 0){
 #else
   if ( serv.socketFileDescriptorReceptor == INVALID_SOCKET){
@@ -144,9 +145,9 @@ void vpClient::deconnect(const unsigned int &index)
 {   
   if(index < receptor_list.size())
   {
-#ifdef UNIX
+#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
     shutdown( receptor_list[index].socketFileDescriptorReceptor, SHUT_RDWR );
-#else // WIN32
+#else // _WIN32
     shutdown( receptor_list[index].socketFileDescriptorReceptor, SD_BOTH );
 #endif
     receptor_list.erase(receptor_list.begin()+(int)index);
@@ -159,9 +160,9 @@ void vpClient::deconnect(const unsigned int &index)
 void vpClient::stop()
 {
   for(unsigned int i = 0 ; i < receptor_list.size() ; i++){
-#ifdef UNIX
+#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
     shutdown( receptor_list[i].socketFileDescriptorReceptor, SHUT_RDWR );
-#else // WIN32
+#else // _WIN32
     shutdown( receptor_list[i].socketFileDescriptorReceptor, SD_BOTH );
 #endif
     receptor_list.erase(receptor_list.begin()+(int)i);
@@ -184,7 +185,7 @@ bool vpClient::connectServer(vpNetwork::vpReceptor &serv)
   
   numberOfAttempts = 15;
   unsigned int ind = 1;
-  int connectionResult;
+  int connectionResult=-1;
   
   while(ind <= numberOfAttempts){
     std::cout << "Attempt number " << ind << "..." << std::endl;

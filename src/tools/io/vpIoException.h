@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpIoException.h 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpIoException.h 4649 2014-02-07 14:57:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -71,12 +71,12 @@
  */
 class VISP_EXPORT vpIoException : public vpException
 {
-public:
-  /*!
+  public:
+    /*!
     \brief Lists the possible error than can be emmited while calling
     vpIo member.
    */
-  enum error
+    enum error
     {
       invalidDirectoryName, /*! Directory name is invalid. */
       cantCreateDirectory,  /*! Unable to create a directory. */
@@ -84,25 +84,20 @@ public:
       cantGetenv            /*! Cannot get environment variable value. */
     } ;
 
-public:
-  vpIoException (const int code, const char * msg)
-    : vpException(code, msg){ ; }
-  vpIoException (const int code, const std::string & msg)
-    : vpException(code, msg){ ; }
-  vpIoException (const int code)
-    : vpException(code){ ; }
+  public:
+    vpIoException (const int id,  const char* format, ...)
+    {
+      this->code = id;
+      va_list args;
+      va_start(args, format);
+      setMessage(format, args);
+      va_end (args);
+    }
+    vpIoException (const int id, const std::string & msg)
+      : vpException(id, msg){ ; }
+    vpIoException (const int id)
+      : vpException(id){ ; }
 
 };
 
-
-
-
-
-#endif /* #ifndef __vpIoException_H */
-
-
-/*
- * Local variables:
- * c-basic-offset: 2
- * End:
- */
+#endif

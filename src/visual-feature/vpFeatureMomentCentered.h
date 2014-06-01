@@ -3,7 +3,7 @@
  * $Id: vpFeatureMomentImpl.h 3317 2011-09-06 14:14:47Z fnovotny $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -85,11 +85,11 @@ private:
         /*!
           associated moment name
           */
-        const char* momentName(){ return "vpMomentCentered";}
+        const char* momentName() const { return "vpMomentCentered";}
         /*!
           feature name
           */
-        const char* name(){ return "vpFeatureMomentCentered";}
+        const char* name() const { return "vpFeatureMomentCentered";}
 
 
 };
@@ -117,7 +117,7 @@ class vpMomentDatabase;
       - vpMomentCentered
 */
 class VISP_EXPORT vpFeatureMomentCentered : public vpFeatureMoment{
-private:
+protected:
     unsigned int order;
  public:
         vpFeatureMomentCentered(vpMomentDatabase& moments,double A, double B, double C,vpFeatureMomentDatabase* featureMoments=NULL);
@@ -130,18 +130,18 @@ private:
         }
 #endif
 
-        vpMatrix 	interaction (unsigned int select_one,unsigned int select_two);
+        vpMatrix interaction (unsigned int select_one,unsigned int select_two) const;
 
         /*!
           associated moment name
           */
-        const char* momentName(){ return "vpMomentCentered";}
+        const char* momentName() const { return "vpMomentCentered";}
         /*!
           feature name
           */
-        const char* name(){ return "vpFeatureMomentCentered";}
+        const char* name() const { return "vpFeatureMomentCentered";}
 
-
+        friend VISP_EXPORT std::ostream & operator<<(std::ostream & os, const vpFeatureMomentCentered& v);
 };
 
 #endif

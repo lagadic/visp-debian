@@ -3,7 +3,7 @@
  * $Id: vpSimulatorPioneerPan.cpp 2456 2010-01-07 10:33:12Z nmelchio $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -62,7 +62,7 @@
   setSamplingTime().
 
 */
-vpSimulatorPioneerPan::vpSimulatorPioneerPan()
+vpSimulatorPioneerPan::vpSimulatorPioneerPan() : wMc_(), wMm_(), xm_(0), ym_(0), theta_(0), q_pan_()
 {
   init() ;
 }
@@ -107,13 +107,13 @@ vpSimulatorPioneerPan::~vpSimulatorPioneerPan()
   Get the robot jacobian expressed in the end-effector frame.
   The jacobian expression is given in vpPioneerPan class.
 
-  \param eJe : A 6 by 3 matrix representing the robot jacobian \f$ {^e}{\bf
+  \param _eJe : A 6 by 3 matrix representing the robot jacobian \f$ {^e}{\bf
   J}_e\f$ expressed in the end-effector frame.
 */
 void
-vpSimulatorPioneerPan::get_eJe(vpMatrix &eJe)
+vpSimulatorPioneerPan::get_eJe(vpMatrix &_eJe)
 {
-  eJe = vpUnicycle::get_eJe();
+  _eJe = vpUnicycle::get_eJe();
 }
 
 /*!

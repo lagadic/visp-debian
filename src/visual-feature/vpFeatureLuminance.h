@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpFeatureLuminance.h 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpFeatureLuminance.h 4664 2014-02-16 16:17:54Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -51,11 +51,7 @@
   \file vpFeatureLuminance.h
   \brief Class that defines the image luminance visual feature
 
-  for more details see
-  C. Collewet, E. Marchand, F. Chaumette. Visual
-  servoing set free from image processing. In IEEE Int. Conf. on
-  Robotics and Automation, ICRA'08, Pages 81-86, Pasadena, Californie,
-  Mai 2008.
+  For more details see \cite collewet:inria-00261398.
 */
 
 
@@ -82,11 +78,7 @@ class VISP_EXPORT vpLuminance
   \class vpFeatureLuminance
   \brief Class that defines the image luminance visual feature
 
-  For more details see
-  C. Collewet, E. Marchand, F. Chaumette. Visual
-  servoing set free from image processing. In IEEE Int. Conf. on
-  Robotics and Automation, ICRA'08, Pages 81-86, Pasadena, Californie,
-  Mai 2008.
+  For more details see \cite collewet:inria-00261398.
 */
 
 class VISP_EXPORT vpFeatureLuminance : public vpBasicFeature
@@ -116,7 +108,9 @@ public:
   void init(unsigned int _nbr, unsigned int _nbc, double _Z) ;
 
   vpFeatureLuminance() ;
- 
+  vpFeatureLuminance(const vpFeatureLuminance& f) ;
+  vpFeatureLuminance &operator=(const vpFeatureLuminance& f) ;
+
   //! Destructor.
   virtual ~vpFeatureLuminance()  ;
 

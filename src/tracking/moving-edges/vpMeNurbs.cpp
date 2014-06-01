@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpMeNurbs.cpp 4135 2013-02-13 16:48:19Z fspindle $
+ * $Id: vpMeNurbs.cpp 4649 2014-02-07 14:57:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -66,6 +66,15 @@
 #  else
 #    include <cv.h>
 #  endif
+#endif
+
+double computeDelta(double deltai, double deltaj);
+void findAngle(const vpImage<unsigned char> &I, const vpImagePoint &iP,
+               vpMe* me, double &angle, double &convlt);
+vpImagePoint findFirstBorder(const vpImage<unsigned char>& Isub, const vpImagePoint &iP);
+bool findCenterPoint(std::list<vpImagePoint> *ip_edges_list);
+#ifdef VISP_BUILD_DEPRECATED_FUNCTIONS
+vp_deprecated bool findCenterPoint(vpList<vpImagePoint> *ip_edges_list);
 #endif
 
 //Compute the angle delta = arctan(deltai/deltaj)
@@ -220,20 +229,19 @@ bool findCenterPoint(std::list<vpImagePoint> *ip_edges_list)
 /*!
   Basic constructor that calls the constructor of the class vpMeTracker.
 */
-vpMeNurbs::vpMeNurbs():vpMeTracker()
+vpMeNurbs::vpMeNurbs()
+  : nurbs(), dist(0.), nbControlPoints(20), beginPtFound(0), endPtFound(0), enableCannyDetection(false),
+    cannyTh1(100.), cannyTh2(200.)
 {
-  nbControlPoints = 20;
-  beginPtFound = 0;
-  endPtFound =0;
-  enableCannyDetection = false;
-  cannyTh1 = 100.0;
-  cannyTh2 = 200.0;
 }
 
 /*!
   Copy constructor.
 */
-vpMeNurbs::vpMeNurbs(const vpMeNurbs &menurbs):vpMeTracker(menurbs)
+vpMeNurbs::vpMeNurbs(const vpMeNurbs &menurbs)
+  : vpMeTracker(menurbs),
+    nurbs(), dist(0.), nbControlPoints(20), beginPtFound(0), endPtFound(0), enableCannyDetection(false),
+    cannyTh1(100.), cannyTh2(200.)
 {
   nurbs = menurbs.nurbs;
   dist = menurbs.dist;
@@ -459,7 +467,7 @@ vpMeNurbs::seekExtremities(const vpImage<unsigned char> &I)
   //Check if the two extremities are not to close to eachother.
   double d = vpImagePoint::distance(begin[0],end[0]);
   double threshold = 3*me->getSampleStep();
-  double sample = me->getSampleStep();
+  double sample_step = me->getSampleStep();
   vpImagePoint pt;
   if ( d > threshold /*|| (list.firstValue()).mask_sign != (list.lastValue()).mask_sign*/)
   {
@@ -483,8 +491,8 @@ vpMeNurbs::seekExtremities(const vpImage<unsigned char> &I)
     si = si * vpMath::sign(begin[1].get_i());
     for (int i=0 ; i < 3 ; i++)
     {
-      P.ifloat = P.ifloat - si*sample ; P.i = (int)P.ifloat ;
-      P.jfloat = P.jfloat - co*sample ; P.j = (int)P.jfloat ;
+      P.ifloat = P.ifloat - si*sample_step ; P.i = (int)P.ifloat ;
+      P.jfloat = P.jfloat - co*sample_step ; P.j = (int)P.jfloat ;
       pt.set_ij(P.ifloat,P.jfloat);
       if (vpImagePoint::distance(end[0],pt) < threshold) break;
       if(!outOfImage(P.i, P.j, 5, rows, cols))
@@ -501,9 +509,9 @@ vpMeNurbs::seekExtremities(const vpImage<unsigned char> &I)
           }
         }
         else {
-	  if (vpDEBUG_ENABLE(3)) {
-	    vpDisplay::displayCross(I, pt, 10, vpColor::blue) ;
-	  }
+          if (vpDEBUG_ENABLE(3)) {
+            vpDisplay::displayCross(I, pt, 10, vpColor::blue) ;
+          }
         }
       }
     }
@@ -521,8 +529,8 @@ vpMeNurbs::seekExtremities(const vpImage<unsigned char> &I)
     si = si * vpMath::sign(end[1].get_i());
     for (int i=0 ; i < 3 ; i++)
     {
-      P.ifloat = P.ifloat + si*sample ; P.i = (int)P.ifloat ;
-      P.jfloat = P.jfloat + co*sample ; P.j = (int)P.jfloat ;
+      P.ifloat = P.ifloat + si*sample_step ; P.i = (int)P.ifloat ;
+      P.jfloat = P.jfloat + co*sample_step ; P.j = (int)P.jfloat ;
       pt.set_ij(P.ifloat,P.jfloat);
       if (vpImagePoint::distance(begin[0],pt) < threshold) break;
       if(!outOfImage(P.i, P.j, 5, rows, cols))
@@ -538,9 +546,9 @@ vpMeNurbs::seekExtremities(const vpImage<unsigned char> &I)
           }
         }
         else {
-	  if (vpDEBUG_ENABLE(3)) {
-	    vpDisplay::displayCross(I, pt, 10, vpColor::blue) ;
-	  }
+          if (vpDEBUG_ENABLE(3)) {
+            vpDisplay::displayCross(I, pt, 10, vpColor::blue) ;
+          }
         }
       }
     }
@@ -551,8 +559,8 @@ vpMeNurbs::seekExtremities(const vpImage<unsigned char> &I)
   {
     list.pop_front();
   }
-  if(begin != NULL) delete[] begin;
-  if(end != NULL) delete[] end;
+  /*if(begin != NULL)*/ delete[] begin;
+  /*if(end != NULL)  */ delete[] end;
 }
 
 
@@ -709,7 +717,7 @@ vpMeNurbs::seekExtremitiesCanny(const vpImage<unsigned char> & /* I */)
       me->setRange(memory_range);
     }
     
-    if (begin != NULL) delete[] begin;
+    /* if (begin != NULL) */ delete[] begin;
     beginPtFound = 0;
   }
 
@@ -806,6 +814,7 @@ vpMeNurbs::seekExtremitiesCanny(const vpImage<unsigned char> & /* I */)
       }
 
       std::list<vpMeSite>::iterator itList = list.end();
+      --itList; // Move on the last element
       double convlt;
       double delta;
       int nbr = 0;
@@ -839,17 +848,18 @@ vpMeNurbs::seekExtremitiesCanny(const vpImage<unsigned char> & /* I */)
       unsigned int  memory_range = me->getRange();
       me->setRange(3);
       std::list<vpMeSite>::iterator itList2 = list.end();
+      --itList2; // Move to the last element
       for (int j = 0; j < nbr; j++)
       {
-        vpMeSite s = *itList2;
-        s.track(I,me,false);
-        *itList2 = s;
+        vpMeSite me_s = *itList2;
+        me_s.track(I,me,false);
+        *itList2 = me_s;
         --itList2;
       }
       me->setRange(memory_range);
     }
     
-    if (end != NULL) delete[] end;
+    /* if (end != NULL) */ delete[] end;
     endPtFound = 0;
   }
 #else
@@ -944,14 +954,14 @@ vpMeNurbs::localReSample(const vpImage<unsigned char> &I)
       
       //if(( u != 1.0 || uend != 1.0)
       if( (std::fabs(u-1.0) > std::fabs(vpMath::maximum(u, 1.0))*std::numeric_limits<double>::epsilon())
-          || (std::fabs(uend-1.0) > std::fabs(vpMath::maximum(u, 1.0))*std::numeric_limits<double>::epsilon()))
+          || (std::fabs(uend-1.0) > std::fabs(vpMath::maximum(uend, 1.0))*std::numeric_limits<double>::epsilon()))
       {
         iP = nurbs.computeCurveDersPoint(u, 1);
 
         while (vpImagePoint::sqrDistance(iP[0],iPend) > vpMath::sqr(me->getSampleStep()) && u < uend)
         {
           u+=0.01;
-          if (iP!=NULL) {
+          /*if (iP!=NULL)*/ {
             delete[] iP;
             iP = NULL;
           }
@@ -970,7 +980,7 @@ vpMeNurbs::localReSample(const vpImage<unsigned char> &I)
             }
           }
         }
-        if (iP!=NULL) {
+        /*if (iP!=NULL)*/ {
           delete[] iP;
           iP = NULL;
         }

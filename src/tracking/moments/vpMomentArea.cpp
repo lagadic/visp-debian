@@ -3,7 +3,7 @@
  * $Id: vpMomentArea.cpp 3530 2012-01-03 10:52:12Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -55,7 +55,7 @@ void vpMomentArea::compute(){
 		/*   getMoments() returns a reference to a vpMomentDatabase. It is a protected member of and is inherited from vpMoment
 		 *  .get() is a member function of vpMomentDatabase that returns a specific moment which is linked to it
 		 */
-		vpMomentCentered& momentCentered = static_cast<vpMomentCentered&>(getMoments().get("vpMomentCentered",found_moment_centered));
+		const vpMomentCentered& momentCentered = static_cast<const vpMomentCentered&>(getMoments().get("vpMomentCentered",found_moment_centered));
 		if(!found_moment_centered) throw vpException(vpException::notInitialized,"vpMomentCentered not found");
 		values[0] = momentCentered.get(2,0) + momentCentered.get(0,2);
     }
@@ -74,7 +74,7 @@ vpMomentArea::vpMomentArea() : vpMoment(){
 /*!
   Outputs the moment's values to a stream.
 */
-std::ostream & operator<<(std::ostream & os, const vpMomentArea& m){
+VISP_EXPORT std::ostream & operator<<(std::ostream & os, const vpMomentArea& m){
     os << "Area a:" << m.values[0];
     return os;    
 }

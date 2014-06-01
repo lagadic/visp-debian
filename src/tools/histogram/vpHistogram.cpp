@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpHistogram.cpp 4303 2013-07-04 14:14:00Z fspindle $
+ * $Id: vpHistogram.cpp 4649 2014-02-07 14:57:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -51,6 +51,8 @@
 #include <visp/vpHistogram.h>
 #include <stdlib.h>
 
+bool compare_vpHistogramPeak (vpHistogramPeak first, vpHistogramPeak second);
+
 // comparison,
 bool compare_vpHistogramPeak (vpHistogramPeak first, vpHistogramPeak second)
 {
@@ -63,20 +65,16 @@ bool compare_vpHistogramPeak (vpHistogramPeak first, vpHistogramPeak second)
 /*!
   Defaut constructor for a gray level histogram.
 */
-vpHistogram::vpHistogram()
+vpHistogram::vpHistogram() : histogram(NULL), size(256)
 {
-  histogram = NULL;
-  size = 256;
   init();
 }
 
 /*!
   Copy constructor of a gray level histogram.
 */
-vpHistogram::vpHistogram(const vpHistogram &h)
+vpHistogram::vpHistogram(const vpHistogram &h)  : histogram(NULL), size(256)
 {
-  //  vpTRACE("copy");
-  histogram = NULL;
   init(h.size);
   memcpy(histogram, h.histogram, size * sizeof(unsigned));
 }
@@ -89,9 +87,8 @@ vpHistogram::vpHistogram(const vpHistogram &h)
   \sa calculate()
 */
 vpHistogram::vpHistogram(const vpImage<unsigned char> &I)
+ : histogram(NULL), size(256)
 {
-  histogram = NULL;
-  size = 256;
   init();
 
   calculate(I);
@@ -138,14 +135,14 @@ vpHistogram::operator=(const vpHistogram &h)
   - Initialise all the values to zero.
 */
 void
-vpHistogram::init(unsigned size)
+vpHistogram::init(unsigned size_)
 {
   if (histogram != NULL) {
     delete [] histogram;
     histogram = NULL;
   }
 
-  this->size = size;
+  this->size = size_;
   histogram = new unsigned [size];
 
   memset(histogram, 0, size * sizeof(unsigned));

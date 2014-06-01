@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: moveAfma4.cpp 4086 2013-02-02 07:26:19Z fspindle $
+ * $Id: moveAfma4.cpp 4574 2014-01-09 08:48:51Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -241,11 +241,12 @@ main(int argc, const char ** argv)
     sleep(5) ;
 
     std::cout << "The end" << std::endl;
+    return 0;
   }
-  catch (...) {
-    vpERROR_TRACE(" Test failed") ;
+  catch(vpException e) {
+    std::cout << "Catch a ViSP exception: " << e << std::endl;
+    return 1;
   }
-  return 0;
 }
 #else
 int

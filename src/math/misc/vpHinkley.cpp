@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpHinkley.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpHinkley.cpp 4649 2014-02-07 14:57:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -78,11 +78,8 @@
 
 */
 vpHinkley::vpHinkley()
+  : dmin2(0.1), alpha(0.2), nsignal(0), mean(0), Sk(0), Mk(0), Tk(0), Nk(0)
 {
-  init();
-
-  setAlpha(0.2);
-  setDelta(0.2);
 }
 
 /*!
@@ -92,21 +89,18 @@ vpHinkley::vpHinkley()
   Call init() to initialise the Hinkley's test and set \f$\alpha\f$
   and \f$\delta\f$ thresholds.
 
-  \param alpha : \f$\alpha\f$ is a predefined threshold.
+  \param alpha_val : \f$\alpha\f$ is a predefined threshold.
 
-  \param delta : \f$\delta\f$ denotes the jump minimal magnitude that
+  \param delta_val : \f$\delta\f$ denotes the jump minimal magnitude that
   we want to detect.
 
   \sa setAlpha(), setDelta()
 
 */
 
-vpHinkley::vpHinkley(double alpha, double delta)
+vpHinkley::vpHinkley(double alpha_val, double delta_val)
+  : dmin2(delta_val/2.), alpha(alpha_val), nsignal(0), mean(0), Sk(0), Mk(0), Tk(0), Nk(0)
 {
-  init();
-
-  setAlpha(alpha);
-  setDelta(delta);
 }
 
 /*!
@@ -114,21 +108,21 @@ vpHinkley::vpHinkley(double alpha, double delta)
   Call init() to initialise the Hinkley's test and set \f$\alpha\f$
   and \f$\delta\f$ thresholds.
 
-  \param alpha : \f$\alpha\f$ is a predefined threshold.
+  \param alpha_val : \f$\alpha\f$ is a predefined threshold.
 
-  \param delta : \f$\delta\f$ denotes the jump minimal magnitude that
+  \param delta_val : \f$\delta\f$ denotes the jump minimal magnitude that
   we want to detect.
 
   \sa setAlpha(), setDelta()
 
 */
 void
-vpHinkley::init(double alpha, double delta)
+vpHinkley::init(double alpha_val, double delta_val)
 {
   init();
 
-  setAlpha(alpha);
-  setDelta(delta);
+  setAlpha(alpha_val);
+  setDelta(delta_val);
 }
 
 /*!
@@ -178,9 +172,9 @@ void vpHinkley::setDelta(double delta)
   \sa setDelta()
 
 */
-void vpHinkley::setAlpha(double alpha)
+void vpHinkley::setAlpha(double alpha_val)
 {
-  this->alpha = alpha;
+  this->alpha = alpha_val;
 }
 
 /*!

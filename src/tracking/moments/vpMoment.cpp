@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpMoment.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpMoment.cpp 4649 2014-02-07 14:57:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -52,8 +52,7 @@
 /*!
   Default constructor
 */
-vpMoment::vpMoment(): object(NULL),moments(NULL) {
-}
+vpMoment::vpMoment(): object(NULL), moments(NULL), values() {}
 
 
 /*!
@@ -99,23 +98,27 @@ int main()
 
   \endcode
 
-  \param moments : database of moment primitives.
+  \param data_base : database of moment primitives.
 */
-void vpMoment::linkTo(vpMomentDatabase& moments){
-    std::strcpy(_name,name());
-    this->moments=&moments;
+void vpMoment::linkTo(vpMomentDatabase& data_base){
+  if (strlen( name() ) >= 255) {
+    throw(vpException(vpException::memoryAllocationError,
+                      "Not enough memory to intialize the moment name"));
+  }
 
+  std::strcpy(_name,name());
+  this->moments=&data_base;
 
-    moments.add(*this,_name);
+  data_base.add(*this,_name);
 }
 
 
 /*!
   Updates the moment with the current object. This does not compute any values.
-  \param object : object descriptor of the current camera vision.
+  \param moment_object : object descriptor of the current camera vision.
 */
-void vpMoment::update(vpMomentObject& object){
-    this->object=&object;
+void vpMoment::update(vpMomentObject& moment_object){
+    this->object=&moment_object;
 }
 
 /*!
@@ -123,7 +126,7 @@ void vpMoment::update(vpMomentObject& object){
   \param os : a std::stream.
   \param m : a moment instance.
 */
-std::ostream & operator<<(std::ostream & os, const vpMoment& m){
+VISP_EXPORT std::ostream & operator<<(std::ostream & os, const vpMoment& m){
   for(std::vector<double>::const_iterator i = m.values.begin();i!=m.values.end();i++)
     os << *i << ",";
 

@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpMomentDatabase.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpMomentDatabase.cpp 4620 2014-01-27 21:28:32Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -62,7 +62,7 @@ void vpMomentDatabase::add(vpMoment& moment,const char* name){
   \param found : true if the moment's type exists in the database, false otherwise.
   \return Moment corresponding to \e type.
 */
-vpMoment& vpMomentDatabase::get(const char* type, bool& found){
+const vpMoment& vpMomentDatabase::get(const char* type, bool& found) const {
   std::map<const char*,vpMoment*,vpMomentDatabase::cmp_str>::const_iterator it = moments.find(type);
     
     found = (it!=moments.end());
@@ -86,7 +86,7 @@ void vpMomentDatabase::updateAll(vpMomentObject& object){
 /*!
 	Outputs all the moments values in the database to a stream.
 */
-std::ostream & operator<<(std::ostream & os, const vpMomentDatabase& m){
+VISP_EXPORT std::ostream & operator<<(std::ostream & os, const vpMomentDatabase& m){
   std::map<const char*,vpMoment*,vpMomentDatabase::cmp_str>::const_iterator itr;
     os << "{";
     

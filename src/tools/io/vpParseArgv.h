@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpParseArgv.h 2780 2010-09-08 08:37:15Z fspindle $
+ * $Id: vpParseArgv.h 4473 2013-09-27 16:50:44Z fspindle $
  *
  * Declarations for Tk-related things that are visible
  * outside of the Tk module itself.
@@ -35,6 +35,7 @@
 
 
 #include <visp/vpConfig.h>
+#include <visp/vpException.h>
 
 /*!
   \class vpParseArgv

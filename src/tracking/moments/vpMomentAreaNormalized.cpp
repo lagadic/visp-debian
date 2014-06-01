@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpMomentAreaNormalized.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpMomentAreaNormalized.cpp 4649 2014-02-07 14:57:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -54,7 +54,7 @@ void vpMomentAreaNormalized::compute(){
     
     /* getMoments() returns a reference to a vpMomentDatabase. (a protected member inherited from vpMoment)
       .get() 		is a member function of vpMomentDatabase that returns a specific moment which is linked to it*/
-    vpMomentCentered& momentCentered = static_cast<vpMomentCentered&>(getMoments().get("vpMomentCentered",found_moment_centered));
+    const vpMomentCentered& momentCentered = static_cast<const vpMomentCentered&>(getMoments().get("vpMomentCentered",found_moment_centered));
 
     if(!found_moment_centered) throw vpException(vpException::notInitialized,"vpMomentCentered not found");
 
@@ -71,17 +71,19 @@ void vpMomentAreaNormalized::compute(){
 
 /*!
   Default constructor.
-  \param desiredSurface : desired area \e a* when the visual servoing converges.
-  \param desiredDepth : desired depth \e Z* when the visual servoing converges.
+  \param desired_surface : desired area \e a* when the visual servoing converges.
+  \param desired_depth : desired depth \e Z* when the visual servoing converges.
 */
-vpMomentAreaNormalized::vpMomentAreaNormalized(double desiredSurface, double desiredDepth) : vpMoment(),desiredSurface(desiredSurface),desiredDepth(desiredDepth){
+vpMomentAreaNormalized::vpMomentAreaNormalized(double desired_surface, double desired_depth)
+  : vpMoment(),desiredSurface(desired_surface),desiredDepth(desired_depth)
+{
     values.resize(1);
 }
 
 /*!
   Outputs the moment's values to a stream.
 */
-std::ostream & operator<<(std::ostream & os, const vpMomentAreaNormalized& m){
+VISP_EXPORT std::ostream & operator<<(std::ostream & os, const vpMomentAreaNormalized& m){
     os << "An:" << m.values[0] ;
 
     return os;    

@@ -1,9 +1,9 @@
 /****************************************************************************
 *
-* $Id: vpPoseLowe.cpp 4276 2013-06-25 12:36:48Z fspindle $
+* $Id: vpPoseLowe.cpp 4649 2014-02-07 14:57:11Z fspindle $
 *
 * This file is part of the ViSP software.
-* Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+* Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
 * 
 * This software is free software; you can redistribute it and/or
 * modify it under the terms of the GNU General Public License
@@ -94,6 +94,8 @@ static double	XO[NBPTMAX],YO[NBPTMAX],ZO[NBPTMAX];
 #define MINI 0.001
 #define MINIMUM 0.000001
 
+void eval_function(int npt,double *xc,double *f);
+void	fcn (int m, int n, double *xc, double *fvecc, double *jac, int ldfjac, int iflag);
 
 void eval_function(int npt,double *xc,double *f)
 {
@@ -290,7 +292,6 @@ vpPose::poseLowe(vpHomogeneousMatrix & cMo)
 #if (DEBUG_LEVEL1)
   std::cout << "begin CCalcuvpPose::PoseLowe(...) " << std::endl;
 #endif
-  unsigned int i;
   int	n, m;	/* nombre d'elements dans la matrice jac */
   int	lwa;	/* taille du vecteur wa */
   int	ldfjac;	/* taille maximum d'une ligne de jac */
@@ -321,19 +322,18 @@ vpPose::poseLowe(vpHomogeneousMatrix & cMo)
   }
 
   vpPoint P ;
-  i=0;
+  unsigned int i_=0;
   for (std::list<vpPoint>::const_iterator it = listP.begin(); it != listP.end(); ++it)
   {
     P = *it;
-    XI[i] = P.get_x();//*cam.px + cam.xc ;
-    YI[i] = P.get_y() ;//;*cam.py + cam.yc ;
-    XO[i] = P.get_oX();
-    YO[i] = P.get_oY();
-    ZO[i] = P.get_oZ();
-    ++i;
+    XI[i_] = P.get_x();//*cam.px + cam.xc ;
+    YI[i_] = P.get_y() ;//;*cam.py + cam.yc ;
+    XO[i_] = P.get_oX();
+    YO[i_] = P.get_oY();
+    ZO[i_] = P.get_oZ();
+    ++i_;
   }
-  tst_lmder = lmder1 (&fcn, m, n, sol, f, &jac[0][0], ldfjac, tol, &info,
-    ipvt, lwa, wa);
+  tst_lmder = lmder1 (&fcn, m, n, sol, f, &jac[0][0], ldfjac, tol, &info, ipvt, lwa, wa);
   if (tst_lmder == -1)
   {
     std::cout <<  " in CCalculPose::PoseLowe(...) : " ;
@@ -341,10 +341,10 @@ vpPose::poseLowe(vpHomogeneousMatrix & cMo)
     // return FATAL_ERROR ;
   }
 
-  for (i = 0; i < 3; i++)
+  for (unsigned int i = 0; i < 3; i++)
     u[i] = sol[i + 3];
 
-  for (i=0;i<3;i++)
+  for (unsigned int i=0;i<3;i++)
   {
     cMo[i][3] = sol[i];
     u[i] = sol[i+3];

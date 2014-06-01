@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpSickLDMRS.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpSickLDMRS.cpp 4649 2014-02-07 14:57:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -39,22 +39,24 @@
  *
  *****************************************************************************/
 
-#if ( defined(UNIX) && !defined(WIN32) )
+#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__)))
 
 #include <visp/vpSickLDMRS.h>
 #include <visp/vpMath.h>
 #include <visp/vpDebug.h>
 #include <visp/vpTime.h>
 #include <sys/socket.h>
+#include <sys/select.h>
 #include <netinet/in.h>
 #include <fcntl.h>
 #include <errno.h>
 #include <netdb.h>
 #include <string.h>
-#include <strings.h>
+//#include <strings.h>
 #include <math.h>
 #include <assert.h>
 #include <stdlib.h>
+#include <limits.h>
 
 
 
@@ -72,19 +74,18 @@
   body messages.
 */
 vpSickLDMRS::vpSickLDMRS()
+  : socket_fd(-1), body(NULL), vAngle(), time_offset(0),
+    isFirstMeasure(true), maxlen_body(104000)
 {
   ip = "131.254.12.119";
   port = 12002;
-  body = new unsigned char [104000];
-  isFirstMeasure = true;
-  time_offset = 0;
+  body = new unsigned char [maxlen_body];
 
   vAngle.resize(4); // Vertical angle of the 4 layers
   vAngle[0] = vpMath::rad(-1.2);
   vAngle[1] = vpMath::rad(-0.4); 
   vAngle[2] = vpMath::rad( 0.4); 
   vAngle[3] = vpMath::rad( 1.2);
-
 }
 
 /*!
@@ -99,16 +100,16 @@ vpSickLDMRS::~vpSickLDMRS()
 /*! 
   Initialize the connexion with the Sick LD-MRS laser scanner.
 
-  \param ip : Ethernet address of the laser.
-  \param port : Ethernet port of the laser.
+  \param ip_address : Ethernet address of the laser.
+  \param com_port : Ethernet port of the laser.
 
   \return true if the device was initialized, false otherwise.
   
 */
-bool vpSickLDMRS::setup(std::string ip, int port)
+bool vpSickLDMRS::setup(std::string ip_address, int com_port)
 {
-  setIpAddress( ip );
-  setPort( port );
+  setIpAddress( ip_address );
+  setPort( com_port );
   return ( this->setup() );
 }
 
@@ -130,7 +131,8 @@ bool vpSickLDMRS::setup()
      fprintf(stderr, "Failed to create socket\n"); 
      return false;
   }
-  bzero(&serv_addr, sizeof(serv_addr));
+  //bzero(&serv_addr, sizeof(serv_addr));
+  memset(&serv_addr, 0, sizeof(serv_addr));
   serv_addr.sin_family = AF_INET;                     // Internet/IP
   serv_addr.sin_addr.s_addr = inet_addr(ip.c_str());  // IP address
   serv_addr.sin_port = htons(port);                   // server port
@@ -265,6 +267,9 @@ bool vpSickLDMRS::measure(vpLaserScan laserscan[4])
   double hAngle; // horizontal angle in rad
   double rDist; // radial distance in meters
   vpScanPoint scanPoint;
+
+  if (numPoints > USHRT_MAX-2)
+    throw(vpException (vpException::ioError, "Out of range number of point"));
 
   for (int i=0; i < numPoints; i++) {
     ushortptr = (unsigned short *) (body+44+i*10);

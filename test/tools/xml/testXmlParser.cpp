@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: testXmlParser.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: testXmlParser.cpp 4658 2014-02-09 09:50:14Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -212,6 +212,9 @@ vpExampleDataParser::writeMainClass(xmlNodePtr node)
 // List of allowed command line options
 #define GETOPTARGS	"o:h"
 
+void usage(const char *name, const char *badparam, const std::string& opath, const std::string& user);
+bool getOptions(int argc, const char **argv, std::string &opath, const std::string& user);
+
 /*!
 
 Print the program options.
@@ -225,25 +228,23 @@ Print the program options.
 void usage(const char *name, const char *badparam, const std::string& opath, const std::string& user)
 {
   fprintf(stdout, "\n\
-          Write and read data in a xml file.\n\
+Write and read data in a xml file.\n\
           \n\
-          SYNOPSIS\n\
-          %s [-o <output image path>] [-h]\n						      \
-          ", name);
+SYNOPSIS\n\
+  %s [-o <output image path>] [-h]\n", name);
 
-          fprintf(stdout, "\n\
-                  OPTIONS:                                               Default\n\
-                  -o <output data path>                               %s\n\
-                  Set data output path.\n\
-                  From this directory, creates the \"%s\"\n\
-                  subdirectory depending on the username, where \n\
-                  dataTestXml.xml file is written.\n\
+  fprintf(stdout, "\n\
+OPTIONS:                                               Default\n\
+  -o <output data path>                               %s\n\
+     Set data output path.\n\
+     From this directory, creates the \"%s\"\n\
+     subdirectory depending on the username, where \n\
+     dataTestXml.xml file is written.\n\
                   \n\
-                  -h\n\
-                  Print the help.\n\n",
-                  opath.c_str(), user.c_str());
+  -h\n\
+     Print the help.\n\n", opath.c_str(), user.c_str());
 
-      if (badparam) {
+  if (badparam) {
     fprintf(stderr, "ERROR: \n" );
     fprintf(stderr, "\nBad parameter [%s]\n", badparam);
   }
@@ -258,19 +259,18 @@ void usage(const char *name, const char *badparam, const std::string& opath, con
   \param user : Username.
   \return false if the program has to be stopped, true otherwise.
 */
-bool getOptions(int argc, const char **argv,
-                std::string &opath, const std::string& user)
+bool getOptions(int argc, const char **argv, std::string &opath, const std::string& user)
 {
-  const char *optarg;
+  const char *optarg_;
   int	c;
-  while ((c = vpParseArgv::parse(argc, argv, GETOPTARGS, &optarg)) > 1) {
+  while ((c = vpParseArgv::parse(argc, argv, GETOPTARGS, &optarg_)) > 1) {
 
     switch (c) {
-    case 'o': opath = optarg; break;
+    case 'o': opath = optarg_; break;
     case 'h': usage(argv[0], NULL, opath, user); return false; break;
 
     default:
-      usage(argv[0], optarg, opath, user); return false; break;
+      usage(argv[0], optarg_, opath, user); return false; break;
     }
   }
 
@@ -278,7 +278,7 @@ bool getOptions(int argc, const char **argv,
     // standalone param or error
     usage(argv[0], NULL, opath, user);
     std::cerr << "ERROR: " << std::endl;
-    std::cerr << "  Bad argument " << optarg << std::endl << std::endl;
+    std::cerr << "  Bad argument " << optarg_ << std::endl << std::endl;
     return false;
   }
 
@@ -293,88 +293,93 @@ bool getOptions(int argc, const char **argv,
 
 int main(int argc, const char** argv)
 {
-  std::string opt_opath;
-  std::string opath;
-  std::string filename;
-  std::string username;
+  try {
+    std::string opt_opath;
+    std::string opath;
+    std::string filename;
+    std::string username;
 
-  std::cout <<  "-------------------------------------------------------" << std::endl ;
-  std::cout <<  "  testXmlParser.cpp" <<std::endl << std::endl ;
-  std::cout <<  "  writing and readind data using a xml parser" << std::endl ;
-  std::cout <<  "-------------------------------------------------------" << std::endl ;
-  std::cout << std::endl ;
+    std::cout <<  "-------------------------------------------------------" << std::endl ;
+    std::cout <<  "  testXmlParser.cpp" <<std::endl << std::endl ;
+    std::cout <<  "  writing and readind data using a xml parser" << std::endl ;
+    std::cout <<  "-------------------------------------------------------" << std::endl ;
+    std::cout << std::endl ;
 
-  // Set the default output path
-#ifdef UNIX
-  opt_opath = "/tmp";
-#elif WIN32
-  opt_opath = "C:\\temp";
+    // Set the default output path
+#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
+    opt_opath = "/tmp";
+#elif defined(_WIN32)
+    opt_opath = "C:\\temp";
 #endif
 
-  // Get the user login name
-  vpIoTools::getUserName(username);
+    // Get the user login name
+    vpIoTools::getUserName(username);
 
-  // Read the command line options
-  if (getOptions(argc, argv, opt_opath, username) == false) {
-    exit (-1);
-  }
-
-  // Get the option values
-  if (!opt_opath.empty())
-    opath = opt_opath;
-
-  // Append to the output path string, the login name of the user
-  std::string dirname = opath + vpIoTools::path("/") + username;
-
-  // Test if the output path exist. If no try to create it
-  if (vpIoTools::checkDirectory(dirname) == false) {
-    try {
-      // Create the dirname
-      vpIoTools::makeDirectory(dirname);
+    // Read the command line options
+    if (getOptions(argc, argv, opt_opath, username) == false) {
+      exit (-1);
     }
-    catch (...) {
-      usage(argv[0], NULL, opath, username);
-      std::cerr << std::endl
-                << "ERROR:" << std::endl;
-      std::cerr << "  Cannot create " << dirname << std::endl;
-      std::cerr << "  Check your -o " << opath << " option " << std::endl;
-      exit(-1);
+
+    // Get the option values
+    if (!opt_opath.empty())
+      opath = opt_opath;
+
+    // Append to the output path string, the login name of the user
+    std::string dirname = opath + vpIoTools::path("/") + username;
+
+    // Test if the output path exist. If no try to create it
+    if (vpIoTools::checkDirectory(dirname) == false) {
+      try {
+        // Create the dirname
+        vpIoTools::makeDirectory(dirname);
+      }
+      catch (...) {
+        usage(argv[0], NULL, opath, username);
+        std::cerr << std::endl
+                  << "ERROR:" << std::endl;
+        std::cerr << "  Cannot create " << dirname << std::endl;
+        std::cerr << "  Check your -o " << opath << " option " << std::endl;
+        exit(-1);
+      }
     }
+
+    filename = dirname + vpIoTools::path("/") + "dataTestXml.xml";
+
+    // Write data using a parser.
+    {
+      vpExampleDataParser parser1;
+
+      // Acquire data from measurments or tests.
+      parser1.setRange(3.5);
+      parser1.setStep(2);
+      parser1.setSizeFilter(5);
+      parser1.setName("cube");
+
+      std::cout << "Write data to " << filename << std::endl;
+      parser1.save(filename);
+    }
+
+    // Read data using another parser.
+    {
+      vpExampleDataParser parser2;
+
+      parser2.parse(filename);
+
+      std::cout << "Read from " << filename << std::endl ;
+      std::cout << "Range : " << parser2.getRange() << std::endl;
+      std::cout << "Step : " << parser2.getStep() << std::endl;
+      std::cout << "Filter size : " << parser2.getSizeFilter() << std::endl;
+      std::cout << "name : " << parser2.getName() << std::endl;
+    }
+
+    // Clean up memory allocated by the xml library
+    vpXmlParser::cleanup();
+    return 0;
   }
-
-  filename = dirname + vpIoTools::path("/") + "dataTestXml.xml";
-  
-  // Write data using a parser.
-  {
-    vpExampleDataParser parser1;
-
-    // Acquire data from measurments or tests.  
-    parser1.setRange(3.5);
-    parser1.setStep(2);
-    parser1.setSizeFilter(5);
-    parser1.setName("cube");
-    
-    std::cout << "Write data to " << filename << std::endl;
-    parser1.save(filename);
+  catch(vpException e) {
+    std::cout << "Catch an exception: " << e << std::endl;
+    return 1;
   }
-  
-  // Read data using another parser. 
-  {
-    vpExampleDataParser parser2;
-    
-    parser2.parse(filename);
-    
-    std::cout << "Read from " << filename << std::endl ;
-    std::cout << "Range : " << parser2.getRange() << std::endl;
-    std::cout << "Step : " << parser2.getStep() << std::endl;
-    std::cout << "Filter size : " << parser2.getSizeFilter() << std::endl;
-    std::cout << "name : " << parser2.getName() << std::endl;
-  }
-
-  // Clean up memory allocated by the xml library
-  vpXmlParser::cleanup();
-
-  return 0;  
 }
 
 #else

@@ -10,8 +10,7 @@
 #undef MIN
  
 void
-vpCalibration::calibLagrange(
-  vpCameraParameters &cam, vpHomogeneousMatrix &cMo)
+vpCalibration::calibLagrange(vpCameraParameters &cam_est, vpHomogeneousMatrix &cMo_est)
 {
 
   vpMatrix A(2*npt,3) ;
@@ -141,7 +140,7 @@ vpCalibration::calibLagrange(
   resul[3] = sqrt(sol[6]*sol[6]+sol[7]*sol[7]+sol[8]*sol[8] /* py */
                   -resul[1]*resul[1]);
 
-  cam.initPersProjWithoutDistortion(resul[2],resul[3],resul[0],resul[1]);
+  cam_est.initPersProjWithoutDistortion(resul[2],resul[3],resul[0],resul[1]);
 
   resul[4] = (sol[9]-sol[11]*resul[0])/resul[2];  /* X0 */
   resul[5] = (sol[10]-sol[11]*resul[1])/resul[3]; /* Y0 */
@@ -159,12 +158,12 @@ vpCalibration::calibLagrange(
   for (unsigned int i=0 ; i < 3 ; i++)
   {
     for (unsigned int j=0 ; j < 3 ; j++)
-      cMo[i][j] = rd[i][j];
+      cMo_est[i][j] = rd[i][j];
   }
-  for (unsigned int i=0 ; i < 3 ; i++) cMo[i][3] = resul[i+4] ;
+  for (unsigned int i=0 ; i < 3 ; i++) cMo_est[i][3] = resul[i+4] ;
 
-  this->cMo = cMo ;
-  this->cMo_dist = cMo;
+  this->cMo = cMo_est ;
+  this->cMo_dist = cMo_est;
 
   double deviation,deviation_dist;
   this->computeStdDeviation(deviation,deviation_dist);
@@ -173,11 +172,11 @@ vpCalibration::calibLagrange(
 
 
 void
-vpCalibration::calibVVS(
-  vpCameraParameters &cam,
-  vpHomogeneousMatrix &cMo,
-  bool verbose)
+vpCalibration::calibVVS(vpCameraParameters &cam_est,
+                        vpHomogeneousMatrix &cMo_est,
+                        bool verbose)
 {
+  std::ios::fmtflags original_flags( std::cout.flags() );
   std::cout.precision(10);
   unsigned int   n_points = npt ;
 
@@ -199,7 +198,6 @@ vpCalibration::calibVVS(
 
   for (unsigned int i =0 ; i < n_points ; i++)
   {
-
     oX[i]  = *it_LoX;
     oY[i]  = *it_LoY;
     oZ[i]  = *it_LoZ;
@@ -208,7 +206,6 @@ vpCalibration::calibVVS(
 
     u[i] = ip.get_u()  ;
     v[i] = ip.get_v()  ;
-
 
     ++it_LoX;
     ++it_LoY;
@@ -223,22 +220,21 @@ vpCalibration::calibVVS(
   double r =1e12-1;
   while (vpMath::equal(residu_1,r,threshold) == false && iter < nbIterMax)
   {
-
     iter++ ;
     residu_1 = r ;
 
-    double px = cam.get_px();
-    double py = cam.get_py();
-    double u0 = cam.get_u0();
-    double v0 = cam.get_v0();
+    double px = cam_est.get_px();
+    double py = cam_est.get_py();
+    double u0 = cam_est.get_u0();
+    double v0 = cam_est.get_v0();
 
     r = 0 ;
 
     for (unsigned int i=0 ; i < n_points; i++)
     {
-      cX[i] = oX[i]*cMo[0][0]+oY[i]*cMo[0][1]+oZ[i]*cMo[0][2] + cMo[0][3];
-      cY[i] = oX[i]*cMo[1][0]+oY[i]*cMo[1][1]+oZ[i]*cMo[1][2] + cMo[1][3];
-      cZ[i] = oX[i]*cMo[2][0]+oY[i]*cMo[2][1]+oZ[i]*cMo[2][2] + cMo[2][3];
+      cX[i] = oX[i]*cMo_est[0][0]+oY[i]*cMo_est[0][1]+oZ[i]*cMo_est[0][2] + cMo_est[0][3];
+      cY[i] = oX[i]*cMo_est[1][0]+oY[i]*cMo_est[1][1]+oZ[i]*cMo_est[1][2] + cMo_est[1][3];
+      cZ[i] = oX[i]*cMo_est[2][0]+oY[i]*cMo_est[2][1]+oZ[i]*cMo_est[2][2] + cMo_est[2][3];
 
       Pd[2*i] =   u[i] ;
       Pd[2*i+1] = v[i] ;
@@ -249,7 +245,6 @@ vpCalibration::calibVVS(
       r += ((vpMath::sqr(P[2*i]-Pd[2*i]) + vpMath::sqr(P[2*i+1]-Pd[2*i+1]))) ;
     }
 
-
     vpColVector error ;
     error = P-Pd ;
     //r = r/n_points ;
@@ -257,7 +252,6 @@ vpCalibration::calibVVS(
     vpMatrix L(n_points*2,10) ;
     for (unsigned int i=0 ; i < n_points; i++)
     {
-
       double x = cX[i] ;
       double y = cY[i] ;
       double z = cZ[i] ;
@@ -267,7 +261,6 @@ vpCalibration::calibVVS(
       double Y =   y*inv_z ;
 
       //---------------
-
       {
         L[2*i][0] =  px * (-inv_z) ;
         L[2*i][1] =  0 ;
@@ -296,8 +289,6 @@ vpCalibration::calibVVS(
         L[2*i+1][8]= 0;
         L[2*i+1][9]= Y ;
       }
-
-
     }    // end interaction
     vpMatrix Lp ;
     Lp = L.pseudoInverse(1e-10) ;
@@ -312,10 +303,10 @@ vpCalibration::calibVVS(
     for (unsigned int i=0 ; i <6 ; i++)
       Tc_v[i] = Tc[i] ;
 
-    cam.initPersProjWithoutDistortion(px+Tc[8],py+Tc[9],
+    cam_est.initPersProjWithoutDistortion(px+Tc[8],py+Tc[9],
                                       u0+Tc[6],v0+Tc[7]) ;
 
-    cMo = vpExponentialMap::direct(Tc_v).inverse()*cMo ;
+    cMo_est = vpExponentialMap::direct(Tc_v).inverse()*cMo_est ;
     if (verbose)
       std::cout <<  " std dev " << sqrt(r/n_points) << std::endl;
 
@@ -326,21 +317,23 @@ vpCalibration::calibVVS(
     throw(vpCalibrationException(vpCalibrationException::convergencyError,
                                  "Maximum number of iterations reached")) ;
   }
-  this->cMo   = cMo;
-  this->cMo_dist = cMo;
+  this->cMo   = cMo_est;
+  this->cMo_dist = cMo_est;
   this->residual = r;
   this->residual_dist = r;
   if (verbose)
     std::cout <<  " std dev " << sqrt(r/n_points) << std::endl;
-
+  // Restore ostream format
+  std::cout.flags(original_flags);
 }
 
 void
 vpCalibration::calibVVSMulti(std::vector<vpCalibration> &table_cal,
-                             vpCameraParameters &cam,
+                             vpCameraParameters &cam_est,
                              double &globalReprojectionError,
                              bool verbose)
 {
+  std::ios::fmtflags original_flags( std::cout.flags() );
   std::cout.precision(10);
   unsigned int nbPoint[256]; //number of points by image
   unsigned int nbPointTotal = 0; //total number of points
@@ -351,6 +344,12 @@ vpCalibration::calibVVSMulti(std::vector<vpCalibration> &table_cal,
   {
     nbPoint[i] = table_cal[i].npt;
     nbPointTotal += nbPoint[i];
+  }
+
+  if (nbPointTotal < 4) {
+    //vpERROR_TRACE("Not enough point to calibrate");
+    throw(vpCalibrationException(vpCalibrationException::notInitializedError,
+                                 "Not enough point to calibrate")) ;
   }
 
   vpColVector oX(nbPointTotal), cX(nbPointTotal)  ;
@@ -400,10 +399,10 @@ vpCalibration::calibVVSMulti(std::vector<vpCalibration> &table_cal,
     iter++ ;
     residu_1 = r ;
     
-    double px = cam.get_px();
-    double py = cam.get_py();
-    double u0 = cam.get_u0();
-    double v0 = cam.get_v0();
+    double px = cam_est.get_px();
+    double py = cam_est.get_py();
+    double u0 = cam_est.get_u0();
+    double v0 = cam_est.get_v0();
    
     r = 0 ;
     curPoint = 0 ; //current point indice
@@ -504,7 +503,7 @@ vpCalibration::calibVVSMulti(std::vector<vpCalibration> &table_cal,
     for (unsigned int i = 0 ; i < nbPose6 ; i++)
       Tc_v[i] = Tc[i] ;
 
-    cam.initPersProjWithoutDistortion(px+Tc[nbPose6+2],
+    cam_est.initPersProjWithoutDistortion(px+Tc[nbPose6+2],
                                       py+Tc[nbPose6+3],
                                       u0+Tc[nbPose6],
                                       v0+Tc[nbPose6+1]) ;
@@ -534,20 +533,22 @@ vpCalibration::calibVVSMulti(std::vector<vpCalibration> &table_cal,
   for (unsigned int p = 0 ; p < nbPose ; p++)
   {
     table_cal[p].cMo_dist = table_cal[p].cMo ;
-    table_cal[p].cam = cam;
-    table_cal[p].cam_dist = cam;
+    table_cal[p].cam = cam_est;
+    table_cal[p].cam_dist = cam_est;
     double deviation,deviation_dist;
     table_cal[p].computeStdDeviation(deviation,deviation_dist);
   }
   globalReprojectionError = sqrt(r/nbPointTotal);
+  // Restore ostream format
+  std::cout.flags(original_flags);
 }
 
 void
-vpCalibration::calibVVSWithDistortion(
-  vpCameraParameters& cam,
-  vpHomogeneousMatrix& cMo,
-  bool verbose)
+vpCalibration::calibVVSWithDistortion(vpCameraParameters& cam_est,
+                                      vpHomogeneousMatrix& cMo_est,
+                                      bool verbose)
 {
+  std::ios::fmtflags original_flags( std::cout.flags() );
   std::cout.precision(10);
   unsigned int n_points =npt ;
 
@@ -590,23 +591,21 @@ vpCalibration::calibVVSWithDistortion(
   double r =1e12-1;
   while (vpMath::equal(residu_1,r,threshold)  == false && iter < nbIterMax)
   {
-
     iter++ ;
     residu_1 = r ;
 
-
     r = 0 ;
-    double u0 = cam.get_u0() ;
-    double v0 = cam.get_v0() ;
+    double u0 = cam_est.get_u0() ;
+    double v0 = cam_est.get_v0() ;
 
-    double px = cam.get_px() ;
-    double py = cam.get_py() ;
+    double px = cam_est.get_px() ;
+    double py = cam_est.get_py() ;
     
     double inv_px = 1/px ;
     double inv_py = 1/py ;
 
-    double kud = cam.get_kud() ;
-    double kdu = cam.get_kdu() ;
+    double kud = cam_est.get_kud() ;
+    double kdu = cam_est.get_kdu() ;
 
     double k2ud = 2*kud;
     double k2du = 2*kdu;    
@@ -619,9 +618,9 @@ vpCalibration::calibVVSWithDistortion(
       unsigned int i42 = 4*i+2;
       unsigned int i43 = 4*i+3;
          
-      cX[i] = oX[i]*cMo[0][0]+oY[i]*cMo[0][1]+oZ[i]*cMo[0][2] + cMo[0][3];
-      cY[i] = oX[i]*cMo[1][0]+oY[i]*cMo[1][1]+oZ[i]*cMo[1][2] + cMo[1][3];
-      cZ[i] = oX[i]*cMo[2][0]+oY[i]*cMo[2][1]+oZ[i]*cMo[2][2] + cMo[2][3];
+      cX[i] = oX[i]*cMo_est[0][0]+oY[i]*cMo_est[0][1]+oZ[i]*cMo_est[0][2] + cMo_est[0][3];
+      cY[i] = oX[i]*cMo_est[1][0]+oY[i]*cMo_est[1][1]+oZ[i]*cMo_est[1][2] + cMo_est[1][3];
+      cZ[i] = oX[i]*cMo_est[2][0]+oY[i]*cMo_est[2][1]+oZ[i]*cMo_est[2][2] + cMo_est[2][3];
 
       double x = cX[i] ;
       double y = cY[i] ;
@@ -669,7 +668,6 @@ vpCalibration::calibVVSWithDistortion(
 
       P[i42] = u0 + px*X*kr2ud ;
       P[i43] = v0 + py*Y*kr2ud ;
-
 
       r += (vpMath::sqr(P[i4]-Pd[i4]) +
           vpMath::sqr(P[i41]-Pd[i41]) +
@@ -762,12 +760,12 @@ vpCalibration::calibVVSWithDistortion(
     for (unsigned int i=0 ; i <6 ; i++)
       Tc_v[i] = Tc[i] ;
 
-    cam.initPersProjWithDistortion(px + Tc[8], py + Tc[9],
+    cam_est.initPersProjWithDistortion(px + Tc[8], py + Tc[9],
                                    u0 + Tc[6], v0 + Tc[7],
                                    kud + Tc[11],
                                    kdu + Tc[10]);
 
-    cMo = vpExponentialMap::direct(Tc_v).inverse()*cMo ;
+    cMo_est = vpExponentialMap::direct(Tc_v).inverse()*cMo_est ;
     if (verbose)
       std::cout <<  " std dev " << sqrt(r/n_points) << std::endl;
 
@@ -779,19 +777,23 @@ vpCalibration::calibVVSWithDistortion(
                                  "Maximum number of iterations reached")) ;
   }
   this->residual_dist = r;
-  this->cMo_dist = cMo ;
-  this->cam_dist = cam ;
+  this->cMo_dist = cMo_est ;
+  this->cam_dist = cam_est ;
 
   if (verbose)
     std::cout <<  " std dev " << sqrt(r/n_points) << std::endl;
+
+  // Restore ostream format
+  std::cout.flags(original_flags);
 }
 
 
 void
 vpCalibration::calibVVSWithDistortionMulti(std::vector<vpCalibration> &table_cal,
-                                           vpCameraParameters &cam, double &globalReprojectionError,
+                                           vpCameraParameters &cam_est, double &globalReprojectionError,
                                            bool verbose)
 {
+  std::ios::fmtflags original_flags( std::cout.flags() );
   std::cout.precision(10);
   unsigned int nbPoint[1024]; //number of points by image
   unsigned int nbPointTotal = 0; //total number of points
@@ -801,6 +803,13 @@ vpCalibration::calibVVSWithDistortionMulti(std::vector<vpCalibration> &table_cal
   {
     nbPoint[i] = table_cal[i].npt;
     nbPointTotal += nbPoint[i];
+  }
+
+  if (nbPointTotal < 4)
+  {
+    //vpERROR_TRACE("Not enough point to calibrate");
+    throw(vpCalibrationException(vpCalibrationException::notInitializedError,
+                                 "Not enough point to calibrate")) ;
   }
 
   vpColVector oX(nbPointTotal), cX(nbPointTotal)  ;
@@ -869,16 +878,16 @@ vpCalibration::calibVVSWithDistortionMulti(std::vector<vpCalibration> &table_cal
 
     vpMatrix L(nbPointTotal*4,nbPose6+6) ;
     curPoint = 0 ; //current point indice
-    double px = cam.get_px() ;
-    double py = cam.get_py() ;
-    double u0 = cam.get_u0() ;
-    double v0 = cam.get_v0() ;
+    double px = cam_est.get_px() ;
+    double py = cam_est.get_py() ;
+    double u0 = cam_est.get_u0() ;
+    double v0 = cam_est.get_v0() ;
 
     double inv_px = 1/px ;
     double inv_py = 1/py ;
 
-    double kud = cam.get_kud() ;
-    double kdu = cam.get_kdu() ;
+    double kud = cam_est.get_kud() ;
+    double kdu = cam_est.get_kdu() ;
 
     double k2ud = 2*kud;
     double k2du = 2*kdu;
@@ -1031,7 +1040,7 @@ vpCalibration::calibVVSWithDistortionMulti(std::vector<vpCalibration> &table_cal
     for (unsigned int i = 0 ; i < 6*nbPose ; i++)
       Tc_v[i] = Tc[i] ;
 
-    cam.initPersProjWithDistortion(  px+Tc[nbPose6+2], py+Tc[nbPose6+3],
+    cam_est.initPersProjWithDistortion(  px+Tc[nbPose6+2], py+Tc[nbPose6+3],
                                      u0+Tc[nbPose6], v0+Tc[nbPose6+1],
                                      kud + Tc[nbPose6+5],
                                      kdu + Tc[nbPose6+4]);
@@ -1062,12 +1071,15 @@ vpCalibration::calibVVSWithDistortionMulti(std::vector<vpCalibration> &table_cal
   int totalPoints = 0;
   for (unsigned int p = 0 ; p < nbPose ; p++)
   {
-    table_cal[p].cam_dist = cam ;
-    perViewError = table_cal[p].computeStdDeviation_dist(table_cal[p].cMo_dist, cam);
+    table_cal[p].cam_dist = cam_est ;
+    perViewError = table_cal[p].computeStdDeviation_dist(table_cal[p].cMo_dist, cam_est);
     totalError += perViewError*perViewError * table_cal[p].npt;
     totalPoints += (int)table_cal[p].npt;
   }
   globalReprojectionError = sqrt(r/(nbPointTotal));
+
+  // Restore ostream format
+  std::cout.flags(original_flags);
 }
 
 #ifdef VISP_BUILD_DEPRECATED_FUNCTIONS
@@ -1488,9 +1500,10 @@ void vpCalibration::calibrationTsai(std::vector<vpHomogeneousMatrix>& cMo,
 void
 vpCalibration::calibVVSMulti(unsigned int nbPose,
                              vpCalibration table_cal[],
-                             vpCameraParameters &cam,
+                             vpCameraParameters &cam_est,
                              bool verbose)
 {
+  std::ios::fmtflags original_flags( std::cout.flags() );
   std::cout.precision(10);
   unsigned int nbPoint[256]; //number of points by image
   unsigned int nbPointTotal = 0; //total number of points
@@ -1501,6 +1514,13 @@ vpCalibration::calibVVSMulti(unsigned int nbPose,
   {
     nbPoint[i] = table_cal[i].npt;
     nbPointTotal += nbPoint[i];
+  }
+
+  if (nbPointTotal < 4)
+  {
+    //vpERROR_TRACE("Not enough point to calibrate");
+    throw(vpCalibrationException(vpCalibrationException::notInitializedError,
+                                 "Not enough point to calibrate")) ;
   }
 
   vpColVector oX(nbPointTotal), cX(nbPointTotal)  ;
@@ -1550,10 +1570,10 @@ vpCalibration::calibVVSMulti(unsigned int nbPose,
     iter++ ;
     residu_1 = r ;
 
-    double px = cam.get_px();
-    double py = cam.get_py();
-    double u0 = cam.get_u0();
-    double v0 = cam.get_v0();
+    double px = cam_est.get_px();
+    double py = cam_est.get_py();
+    double u0 = cam_est.get_u0();
+    double v0 = cam_est.get_v0();
 
     r = 0 ;
     curPoint = 0 ; //current point indice
@@ -1654,7 +1674,7 @@ vpCalibration::calibVVSMulti(unsigned int nbPose,
     for (unsigned int i = 0 ; i < nbPose6 ; i++)
       Tc_v[i] = Tc[i] ;
 
-    cam.initPersProjWithoutDistortion(px+Tc[nbPose6+2],
+    cam_est.initPersProjWithoutDistortion(px+Tc[nbPose6+2],
                                       py+Tc[nbPose6+3],
                                       u0+Tc[nbPose6],
                                       v0+Tc[nbPose6+1]) ;
@@ -1683,13 +1703,16 @@ vpCalibration::calibVVSMulti(unsigned int nbPose,
   for (unsigned int p = 0 ; p < nbPose ; p++)
   {
     table_cal[p].cMo_dist = table_cal[p].cMo ;
-    table_cal[p].cam = cam;
-    table_cal[p].cam_dist = cam;
+    table_cal[p].cam = cam_est;
+    table_cal[p].cam_dist = cam_est;
     double deviation,deviation_dist;
     table_cal[p].computeStdDeviation(deviation,deviation_dist);
   }
   if (verbose)
     std::cout <<  " Global std dev " << sqrt(r/nbPointTotal) << std::endl;
+
+  // Restore ostream format
+  std::cout.flags(original_flags);
 }
 
 
@@ -1697,9 +1720,10 @@ void
 vpCalibration::calibVVSWithDistortionMulti(
   unsigned int nbPose,
   vpCalibration table_cal[],
-  vpCameraParameters &cam,
+  vpCameraParameters &cam_est,
   bool verbose)
 {
+  std::ios::fmtflags original_flags( std::cout.flags() );
   std::cout.precision(10);
   unsigned int nbPoint[1024]; //number of points by image
   unsigned int nbPointTotal = 0; //total number of points
@@ -1709,6 +1733,13 @@ vpCalibration::calibVVSWithDistortionMulti(
   {
     nbPoint[i] = table_cal[i].npt;
     nbPointTotal += nbPoint[i];
+  }
+
+  if (nbPointTotal < 4)
+  {
+    //vpERROR_TRACE("Not enough point to calibrate");
+    throw(vpCalibrationException(vpCalibrationException::notInitializedError,
+                                 "Not enough point to calibrate")) ;
   }
 
   vpColVector oX(nbPointTotal), cX(nbPointTotal)  ;
@@ -1777,16 +1808,16 @@ vpCalibration::calibVVSWithDistortionMulti(
 
     vpMatrix L(nbPointTotal*4,nbPose6+6) ;
     curPoint = 0 ; //current point indice
-    double px = cam.get_px() ;
-    double py = cam.get_py() ;
-    double u0 = cam.get_u0() ;
-    double v0 = cam.get_v0() ;
+    double px = cam_est.get_px() ;
+    double py = cam_est.get_py() ;
+    double u0 = cam_est.get_u0() ;
+    double v0 = cam_est.get_v0() ;
 
     double inv_px = 1/px ;
     double inv_py = 1/py ;
 
-    double kud = cam.get_kud() ;
-    double kdu = cam.get_kdu() ;
+    double kud = cam_est.get_kud() ;
+    double kdu = cam_est.get_kdu() ;
 
     double k2ud = 2*kud;
     double k2du = 2*kdu;
@@ -1939,7 +1970,7 @@ vpCalibration::calibVVSWithDistortionMulti(
     for (unsigned int i = 0 ; i < 6*nbPose ; i++)
       Tc_v[i] = Tc[i] ;
 
-    cam.initPersProjWithDistortion(  px+Tc[nbPose6+2], py+Tc[nbPose6+3],
+    cam_est.initPersProjWithDistortion(  px+Tc[nbPose6+2], py+Tc[nbPose6+3],
                                      u0+Tc[nbPose6], v0+Tc[nbPose6+1],
                                      kud + Tc[nbPose6+5],
                                      kdu + Tc[nbPose6+4]);
@@ -1967,10 +1998,12 @@ vpCalibration::calibVVSWithDistortionMulti(
 
   for (unsigned int p = 0 ; p < nbPose ; p++)
   {
-    table_cal[p].cam_dist = cam ;
-    table_cal[p].computeStdDeviation_dist(table_cal[p].cMo_dist,
-                                          cam);
+    table_cal[p].cam_dist = cam_est ;
+    table_cal[p].computeStdDeviation_dist(table_cal[p].cMo_dist, cam_est);
   }
   if (verbose)
     std::cout <<" Global std dev " << sqrt(r/(nbPointTotal)) << std::endl;
+
+  // Restore ostream format
+  std::cout.flags(original_flags);
 }

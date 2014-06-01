@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpServolens.h 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpServolens.h 4604 2014-01-21 14:15:23Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -45,7 +45,7 @@
 
 #include <visp/vpConfig.h>
 
-#if defined(UNIX)
+#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__)))
 
 /*!
 
@@ -120,39 +120,34 @@ class VISP_EXPORT vpServolens
 
   void open(const char *port="/dev/ttyS0");
   void close();
-  void reset();
+  void reset() const;
 
-  void setController(vpControllerType controller);
-  void setAutoIris(bool enable);
-  void setPosition(vpServoType servo, unsigned int position);
-  bool getPosition(vpServoType servo, unsigned int &position);
-  vpCameraParameters getCameraParameters(vpImage<unsigned char> &I);
+  void setController(vpControllerType controller) const;
+  void setAutoIris(bool enable) const;
+  void setPosition(vpServoType servo, unsigned int position) const;
+  bool getPosition(vpServoType servo, unsigned int &position) const;
+  vpCameraParameters getCameraParameters(vpImage<unsigned char> &I) const;
 
-  void enablePrompt(bool active);
+  void enablePrompt(bool active) const;
 
  private:
 
-  void init();
+  void init() const;
 
-  void enableCmdComplete(vpServoType servo, bool active);
+  void enableCmdComplete(vpServoType servo, bool active) const;
 
-  char wait();
-  void wait(vpServoType servo);
+  char wait() const;
+  void wait(vpServoType servo) const;
 
-  bool read(char *c, long timeout_s);
-  void write(const char *s);
+  bool read(char *c, long timeout_s) const;
+  void write(const char *s) const;
 
-  bool clean(const char *in, char *out);
+  bool clean(const char *in, char *out) const;
 
   int remfd; // file pointer of the host's tty
   bool isinit;
 };
 
-/*
- * Local variables:
- * c-basic-offset: 2
- * End:
- */
 #endif
 #endif
 

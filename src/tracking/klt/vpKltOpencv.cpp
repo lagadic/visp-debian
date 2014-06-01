@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpKltOpencv.cpp 4198 2013-04-05 12:13:23Z fspindle $
+ * $Id: vpKltOpencv.cpp 4632 2014-02-03 17:06:40Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -63,12 +63,12 @@ void vpKltOpencv::clean()
   if (pyramid) cvReleaseImage(&pyramid);
   if (prev_pyramid) cvReleaseImage(&prev_pyramid);
   
-  image = 0;
-  prev_image = 0;
-  pyramid = 0;
-  prev_pyramid = 0;
+  image = NULL;
+  prev_image = NULL;
+  pyramid = NULL;
+  prev_pyramid = NULL;
   
-  swap_temp = 0;
+  swap_temp = NULL;
   countFeatures = 0;
   countPrevFeatures = 0;
   flags = 0;
@@ -85,12 +85,12 @@ void vpKltOpencv::cleanAll()
   if (lostDuringTrack) cvFree(&lostDuringTrack);
   if (featuresid) cvFree(&featuresid);
   if (prev_featuresid) cvFree(&prev_featuresid);
-  features = 0;
-  prev_features = 0;
-  status = 0;
+  features = NULL;
+  prev_features = NULL;
+  status = NULL;
   lostDuringTrack = 0;
-  featuresid = 0;
-  prev_featuresid = 0;
+  featuresid = NULL;
+  prev_featuresid = NULL;
 }
 
 void vpKltOpencv::reset()
@@ -99,54 +99,45 @@ void vpKltOpencv::reset()
 
 }
 
+/*!
+  Default constructor.
+ */
 vpKltOpencv::vpKltOpencv()
+  : initialized(0), maxFeatures(50), globalcountFeatures(0), win_size(10), quality(0.01),
+    min_distance(10), harris_free_parameter(0.04), block_size(3), use_harris(1),
+    pyramid_level(3), _tid(-1), image(NULL), prev_image(NULL), pyramid(NULL),
+    prev_pyramid(NULL), swap_temp(NULL), countFeatures(0), countPrevFeatures(0),
+    features(NULL), prev_features(NULL), featuresid(NULL), prev_featuresid(NULL),
+    flags(0), initial_guess(false), lostDuringTrack(0), status(0), OnInitialize(0),
+    OnFeatureLost(0), OnNewFeature(0), OnMeasureFeature(0), IsFeatureValid(0)
 {
-  //Valeurs par d�faut pour le KLT
-  initialized = 0;
-  maxFeatures = 50;
-  countFeatures = 0;
-  countPrevFeatures = 0;
-  globalcountFeatures = 0;
-  win_size = 10;
-  quality = 0.01;
-  min_distance = 10;
-  block_size = 3;
-  use_harris = 1;
-  pyramid_level = 3;
-  harris_free_parameter = 0.04;
-
-  //Zeroing pointers
-  image = 0;
-  prev_image = 0;
-  pyramid = 0;
-  prev_pyramid = 0;
-  swap_temp = 0;
-  features = 0;
-  prev_features = 0;
-  flags = 0;
-  status = 0;
-  lostDuringTrack = 0;
-  featuresid = 0;
-  prev_featuresid = 0;
-  OnInitialize = 0;
-  OnFeatureLost = 0;
-  OnNewFeature = 0;
-  OnMeasureFeature = 0;
-  IsFeatureValid = 0;
-  initial_guess = false;
-
   features = (CvPoint2D32f*)cvAlloc((unsigned int)maxFeatures*sizeof(features[0]));
   prev_features = (CvPoint2D32f*)cvAlloc((unsigned int)maxFeatures*sizeof(prev_features[0]));
   status = (char*)cvAlloc((size_t)maxFeatures);
   lostDuringTrack = (bool*)cvAlloc((size_t)maxFeatures);
   featuresid = (long*)cvAlloc((unsigned int)maxFeatures*sizeof(long));
   prev_featuresid = (long*)cvAlloc((unsigned int)maxFeatures*sizeof(long));
-
-
-  _tid = -1;
 }
 
+/*!
+  Copy constructor.
+ */
 vpKltOpencv::vpKltOpencv(const vpKltOpencv& copy)
+  : initialized(0), maxFeatures(50), globalcountFeatures(0), win_size(10), quality(0.01),
+    min_distance(10), harris_free_parameter(0.04), block_size(3), use_harris(1),
+    pyramid_level(3), _tid(-1), image(NULL), prev_image(NULL), pyramid(NULL),
+    prev_pyramid(NULL), swap_temp(NULL), countFeatures(0), countPrevFeatures(0),
+    features(NULL), prev_features(NULL), featuresid(NULL), prev_featuresid(NULL),
+    flags(0), initial_guess(false), lostDuringTrack(0), status(0), OnInitialize(0),
+    OnFeatureLost(0), OnNewFeature(0), OnMeasureFeature(0), IsFeatureValid(0)
+{
+  *this = copy;
+}
+
+/*!
+  Copy operator.
+ */
+vpKltOpencv & vpKltOpencv::operator=(const vpKltOpencv& copy)
 {
   //Shallow copy of primitives
   initialized = copy.initialized;
@@ -170,18 +161,12 @@ vpKltOpencv::vpKltOpencv(const vpKltOpencv& copy)
   OnMeasureFeature = copy.OnMeasureFeature;
   IsFeatureValid = copy.IsFeatureValid;
 
+  initial_guess = copy.initial_guess;
+  lostDuringTrack = copy.lostDuringTrack;
+
   if (!initialized) {
-    image = 0;
-    prev_image = 0;
-    pyramid = 0;
-    prev_pyramid = 0;
-    features = 0;
-    prev_features = 0;
     status = 0;
     lostDuringTrack = 0;
-    featuresid = 0;
-    prev_featuresid = 0;
-    swap_temp = 0;
     countFeatures = 0;
     countPrevFeatures = 0;
     flags = 0;
@@ -189,72 +174,74 @@ vpKltOpencv::vpKltOpencv(const vpKltOpencv& copy)
     globalcountFeatures = 0;
   }
 
-  	if (copy.image)
-  	{
-           image =  cvCreateImage(cvGetSize(copy.image), 8, 1);
-	   //		/*IplImage **/cvCopyImage(copy.image,image);
-	   cvCopy(copy.image, image, 0);
-  	}
+  if (copy.image)
+  {
+    image =  cvCreateImage(cvGetSize(copy.image), 8, 1);
+    //		/*IplImage **/cvCopyImage(copy.image,image);
+    cvCopy(copy.image, image, 0);
+  }
 
-  	if (copy.prev_image)
-  	{
-          prev_image = cvCreateImage(cvGetSize(copy.prev_image), IPL_DEPTH_8U, 1);
-	  //	/*IplImage **/ cvCopyImage(copy.prev_image,prev_image);
-	  cvCopy(copy.prev_image, prev_image, 0);
-  	}
+  if (copy.prev_image)
+  {
+    prev_image = cvCreateImage(cvGetSize(copy.prev_image), IPL_DEPTH_8U, 1);
+    //	/*IplImage **/ cvCopyImage(copy.prev_image,prev_image);
+    cvCopy(copy.prev_image, prev_image, 0);
+  }
 
-  	if (copy.pyramid)
-  	{
-          pyramid = cvCreateImage(cvGetSize(copy.pyramid), IPL_DEPTH_8U, 1);
-	  // /*IplImage **/cvCopyImage(copy.pyramid,pyramid);
-	  cvCopy(copy.pyramid, pyramid, 0);
-  	}
+  if (copy.pyramid)
+  {
+    pyramid = cvCreateImage(cvGetSize(copy.pyramid), IPL_DEPTH_8U, 1);
+    // /*IplImage **/cvCopyImage(copy.pyramid,pyramid);
+    cvCopy(copy.pyramid, pyramid, 0);
+  }
 
-  	if (copy.prev_pyramid)
-  	{
-          prev_pyramid = cvCreateImage(cvGetSize(copy.prev_pyramid), IPL_DEPTH_8U, 1);
-	  //	/*IplImage **/cvCopyImage(copy.prev_pyramid,prev_pyramid);
-	  cvCopy(copy.prev_pyramid, prev_pyramid, 0);
-  	}
+  if (copy.prev_pyramid)
+  {
+    prev_pyramid = cvCreateImage(cvGetSize(copy.prev_pyramid), IPL_DEPTH_8U, 1);
+    //	/*IplImage **/cvCopyImage(copy.prev_pyramid,prev_pyramid);
+    cvCopy(copy.prev_pyramid, prev_pyramid, 0);
+  }
 
   //Deep copy of arrays
   if (copy.features) {
-      /*CvPoint2D32f **/features =
-	(CvPoint2D32f*)cvAlloc((unsigned int)copy.maxFeatures*sizeof(CvPoint2D32f));
-      for (int i = 0; i < copy.maxFeatures; i++)
-	features[i] = copy.features[i];
-    }
+    /*CvPoint2D32f **/features =
+        (CvPoint2D32f*)cvAlloc((unsigned int)copy.maxFeatures*sizeof(CvPoint2D32f));
+    for (int i = 0; i < copy.maxFeatures; i++)
+      features[i] = copy.features[i];
+  }
 
   if (copy.prev_features) {
-      /*CvPoint2D32f **/prev_features =
-	(CvPoint2D32f*)cvAlloc((unsigned int)copy.maxFeatures*sizeof(CvPoint2D32f));
-      for (int i = 0; i < copy.maxFeatures; i++)
-	prev_features[i] = copy.prev_features[i];
-    }
+    /*CvPoint2D32f **/prev_features =
+        (CvPoint2D32f*)cvAlloc((unsigned int)copy.maxFeatures*sizeof(CvPoint2D32f));
+    for (int i = 0; i < copy.maxFeatures; i++)
+      prev_features[i] = copy.prev_features[i];
+  }
 
   if (copy.featuresid) {
-      /*long **/featuresid = (long*)cvAlloc((unsigned int)copy.maxFeatures*sizeof(long));
-      for (int i = 0; i < copy.maxFeatures; i++)
-	featuresid[i] = copy.featuresid[i];
-    }
+    /*long **/featuresid = (long*)cvAlloc((unsigned int)copy.maxFeatures*sizeof(long));
+    for (int i = 0; i < copy.maxFeatures; i++)
+      featuresid[i] = copy.featuresid[i];
+  }
 
   if (copy.prev_featuresid) {
-      /*long **/prev_featuresid = (long*)cvAlloc((unsigned int)copy.maxFeatures*sizeof(long));
-      for (int i = 0; i < copy.maxFeatures; i++)
-	prev_featuresid[i] = copy.prev_featuresid[i];
-    }
+    /*long **/prev_featuresid = (long*)cvAlloc((unsigned int)copy.maxFeatures*sizeof(long));
+    for (int i = 0; i < copy.maxFeatures; i++)
+      prev_featuresid[i] = copy.prev_featuresid[i];
+  }
 
   if (copy.status) {
-      /*char **/status = (char*)cvAlloc((unsigned int)copy.maxFeatures*sizeof(char));
-      for (int i = 0; i < copy.maxFeatures; i++)
-	status[i] = copy.status[i];
-    }
+    /*char **/status = (char*)cvAlloc((unsigned int)copy.maxFeatures*sizeof(char));
+    for (int i = 0; i < copy.maxFeatures; i++)
+      status[i] = copy.status[i];
+  }
 
   if (copy.lostDuringTrack) {
     /*bool **/lostDuringTrack = (bool*)cvAlloc((unsigned int)copy.maxFeatures*sizeof(bool));
     for (int i = 0; i < copy.maxFeatures; i++)
       lostDuringTrack[i] = copy.lostDuringTrack[i];
   }
+
+  return *this;
 }
 
 vpKltOpencv::~vpKltOpencv()

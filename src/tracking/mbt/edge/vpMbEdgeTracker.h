@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpMbEdgeTracker.h 4338 2013-07-23 14:29:30Z fspindle $
+ * $Id: vpMbEdgeTracker.h 4649 2014-02-07 14:57:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -380,7 +380,7 @@ public:
     
     \return an instance of the moving edge parameters used by the tracker.
   */
-  inline void getMovingEdge(vpMe &me ) const { me = this->me;}
+  inline void getMovingEdge(vpMe &p_me ) const { p_me = this->me;}
   
   /*!
     Get the near distance for clipping.
@@ -439,10 +439,10 @@ public:
   /*!
     Set the camera parameters.
 
-    \param cam : the new camera parameters
+    \param camera : the new camera parameters
   */
-  virtual void setCameraParameters(const vpCameraParameters& cam) {
-    this->cam = cam;
+  virtual void setCameraParameters(const vpCameraParameters& camera) {
+    this->cam = camera;
 
     for (unsigned int i = 0; i < scales.size(); i += 1){
       if(scales[i]){
@@ -487,9 +487,9 @@ public:
   /*!
     Set the value of the gain used to compute the control law.
     
-    \param lambda : the desired value for the gain.
+    \param gain : the desired value for the gain.
   */
-  virtual inline void setLambda(const double lambda) {this->lambda = lambda;}
+  virtual inline void setLambda(const double gain) {this->lambda = gain;}
   
   void setMovingEdge(const vpMe &me);
   
@@ -511,7 +511,7 @@ protected:
   void computeVVS(const vpImage<unsigned char>& _I);
   void downScale(const unsigned int _scale);
   void init(const vpImage<unsigned char>& I);
-  virtual void initCylinder(const vpPoint& _p1, const vpPoint _p2, const double _radius, const unsigned int _indexCylinder=0);
+  virtual void initCylinder(const vpPoint& p1, const vpPoint &p2, const double radius, const unsigned int indexCylinder=0);
   virtual void initFaceFromCorners(const std::vector<vpPoint>& _corners, const unsigned int _indexFace = -1);
   void initMovingEdge(const vpImage<unsigned char> &I, const vpHomogeneousMatrix &_cMo) ;
   void initPyramid(const vpImage<unsigned char>& _I, std::vector<const vpImage<unsigned char>* >& _pyramid);

@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpMatrixException.h 4195 2013-04-05 08:28:41Z marchand $
+ * $Id: vpMatrixException.h 4649 2014-02-07 14:57:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -68,12 +68,12 @@
  */
 class VISP_EXPORT vpMatrixException : public vpException
 {
-public:
-  /*!
+  public:
+    /*!
     \brief Lists the possible error than can be emmited while calling
     vpMatrix member
    */
-  enum errorCodeEnum
+    enum errorCodeEnum
     {
       //! error returns by a constructor
       constructionError,
@@ -92,25 +92,20 @@ public:
       rankDeficient
     } ;
 
-public:
-  vpMatrixException (const int code, const char * msg)
-    : vpException(code, msg){ ; }
-  vpMatrixException (const int code, const std::string & msg)
-    : vpException(code, msg){ ; }
-  vpMatrixException (const int code)
-    : vpException(code){ ; }
- // vpMatrixException() : vpException() { ;}
+  public:
+    vpMatrixException (const int id,  const char* format, ...)
+    {
+      this->code = id;
+      va_list args;
+      va_start(args, format);
+      setMessage(format, args);
+      va_end (args);
+    }
+    vpMatrixException (const int id, const std::string & msg)
+      : vpException(id, msg){ ; }
+    vpMatrixException (const int id)
+      : vpException(id){ ; }
+    // vpMatrixException() : vpException() { ;}
 };
 
-
-
-
-
-#endif /* #ifndef __vpMatrixException_ERROR_H */
-
-
-/*
- * Local variables:
- * c-basic-offset: 2
- * End:
- */
+#endif
