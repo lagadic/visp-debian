@@ -25,6 +25,7 @@ DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
 # opencv: available on all platforms
 # coin3: available on all platforms
 # lapack: available on all platforms
+# libgsl0: available on all platforms
 # ogre: available on all platforms
 # xml2: available on all platforms
 # libjpeg6b: available on all platforms
@@ -37,7 +38,7 @@ CONFIGURE_ARGS=	\
  -DUSE_DC1394_1=OFF -DUSE_FFMPEG=ON				\
  -DUSE_OPENCV=ON 						\
  -DUSE_COIN=ON -DUSE_GSL=OFF					\
- -DUSE_LAPACK=ON -DUSE_OGRE=ON					\
+ -DUSE_LAPACK=ON -DUSE_GSL=ON -DUSE_OGRE=ON			\
  -DUSE_XML2=ON -DUSE_GTK2=ON -DUSE_LIBJPEG=ON			\
  -DUSE_LIBPNG=ON -DUSE_X11=ON
 
