@@ -4,7 +4,7 @@ Upstream-Contact: visp@inria.fr
 Source: http://www.irisa.fr/lagadic/visp/download.html
 
 Files: *
-Copyright: 2005-2012, INRIA
+Copyright: 2005-2014, INRIA
 License: GPL-2
  See `/usr/share/common-licenses/GPL-2'.
 
@@ -64,6 +64,6 @@ License: Tcl/Tk license
 
 
 Files: debian/*
-Copyright: 2012, Thomas Moulard <thomas.moulard@gmail.com>
+Copyright: 2014, Thomas Moulard <thomas.moulard@gmail.com>
 License: GPL-2
  See `/usr/share/common-licenses/GPL-2'.

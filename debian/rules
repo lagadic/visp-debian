@@ -78,7 +78,7 @@ override_dh_auto_build-indep:
 	dh_auto_build -- html-doc # Generate Doxygen HTML documentation.
 
 override_dh_strip:
-	dh_strip -a --dbg-package=libvisp2.8-dbg
+	dh_strip -a --dbg-package=libvisp2.9-dbg
 
 # Parallelism is disabled in tests as some cannot run at the same
 # time
