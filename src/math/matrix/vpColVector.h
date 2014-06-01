@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpColVector.h 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpColVector.h 4649 2014-02-07 14:57:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -121,7 +121,7 @@ public:
   //! operator multiplication by a scalar V =  A * x
   vpColVector operator*(const double x) const;
   //! operator A = -A
-  vpColVector operator-() ;
+  vpColVector operator-() const;
 
   vpColVector rows(unsigned int first_row, unsigned int last_row)
   { 
@@ -175,20 +175,20 @@ public:
 
   */
   inline void rad2deg() {
-    double rad2deg = 180.0/M_PI;
+    double r2d = 180.0/M_PI;
 
     for (unsigned int i=0; i < rowNum; i++)
-      (*this)[i] *= rad2deg;
+      (*this)[i] *= r2d;
   }
   /*!
     Convert a column vector containing angles in degrees into radians.
 
   */
   inline void deg2rad() {
-    double deg2rad = M_PI/180.0;
+    double d2r = M_PI/180.0;
 
     for (unsigned int i=0; i < rowNum; i++)
-      (*this)[i] *= deg2rad;
+      (*this)[i] *= d2r;
   }
 
   /*!

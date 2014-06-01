@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpMomentGravityCenter.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpMomentGravityCenter.cpp 4620 2014-01-27 21:28:32Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -60,14 +60,14 @@ vpMomentGravityCenter::vpMomentGravityCenter() : vpMoment(){
   Returns a vector of the two gravity center coordinates.
   \return Coordinates in the following moment: \f$(x_g,y_g)\f$.
 */
-std::vector<double>& vpMomentGravityCenter::get(){
+const std::vector<double>& vpMomentGravityCenter::get() const{
     return values;
 }
 
 /*!
   Outputs the moment's values to a stream.
 */
-std::ostream & operator<<(std::ostream & os, const vpMomentGravityCenter& m){
+VISP_EXPORT std::ostream & operator<<(std::ostream & os, const vpMomentGravityCenter& m){
     os << "Xg=" << m.values[0] << ", Yg=" << m.values[1];
     
     return os;    

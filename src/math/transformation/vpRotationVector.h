@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpRotationVector.h 4317 2013-07-17 09:40:17Z fspindle $
+ * $Id: vpRotationVector.h 4632 2014-02-03 17:06:40Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -83,11 +83,10 @@ int main()
   
   std::cout << "Rxyz rotation vector: " << r << std::endl;
 
-  double rx = r[1];       // Get the value of the angle around x axis
-  double ry = r[2];       // Get the value of the angle around y axis
-  double rz = r[3];       // Get the value of the angle around z axis
+  double rx = r[0];       // Get the value of the angle around x axis
+  double ry = r[1];       // Get the value of the angle around y axis
+  double rz = r[2];       // Get the value of the angle around z axis
 }
-  
   \endcode
 
 */
@@ -100,18 +99,29 @@ protected:
   unsigned int _size;
   void init(const unsigned int size);
 public:
-  //! Constructor that constructs a vector of size 3 initialize three vector values to zero.
-  vpRotationVector() { 
-	init(3);
+  //! Constructor that constructs a vector of size 3 and initialize all values to zero.
+  vpRotationVector()
+    : r(NULL), _size(0)
+  {
+    init(3);
   }
 
-  
-  //! Constructor that constructs a vector of size n initialize three vector values to zero.
-  vpRotationVector(const unsigned int n) { 
-	init(n);
+  //! Constructor that constructs a vector of size n and initialize all values to zero.
+  vpRotationVector(const unsigned int n)
+    : r(NULL), _size(n)
+  {
+    init(n);
   }
-  
-  ~vpRotationVector();
+  /*!
+    Copy operator.
+  */
+  vpRotationVector(const vpRotationVector &v)
+    : r(NULL), _size(0)
+  {
+    *this = v;
+  }
+
+  virtual ~vpRotationVector();
 
   /*!
     Operator that allows to set the value of an element of the rotation 
@@ -124,7 +134,19 @@ public:
   */
   inline const double &operator [](unsigned int n) const { return *(r+n);  }
 
-    
+  /*!
+    Affectation of two vectors.
+  */
+  vpRotationVector &operator=(const vpRotationVector &v)
+  {
+    init(v.size());
+    for (unsigned int i=0; i<_size; i++)
+    {
+      r[i] = v.r[i] ;
+    }
+    return *this;
+  }
+
   /*! Returns the size of the rotation vector
    */
   unsigned int size() const;
@@ -132,8 +154,7 @@ public:
   // Transpose of the rotation vector.
   vpRowVector t() const;
 
-  friend VISP_EXPORT std::ostream &operator << (std::ostream &s,
-						const vpRotationVector &m);
+  friend VISP_EXPORT std::ostream &operator << (std::ostream &s, const vpRotationVector &m);
 
 } ;
 

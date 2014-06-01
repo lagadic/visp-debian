@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpDot.cpp 4317 2013-07-17 09:40:17Z fspindle $
+ * $Id: vpDot.cpp 4649 2014-02-07 14:57:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -55,6 +55,10 @@
 #include <visp/vpTrackingException.h>
 #include <vector>
 
+#ifdef VISP_USE_MSVC
+#  pragma comment(linker, "/STACK:256000000") // Increase max recursion depth
+#endif
+
 /*
   \class vpDot
   \brief Track a white dot
@@ -95,9 +99,13 @@ void vpDot::init()
   nbMaxPoint = 0;
 }
 
-vpDot::vpDot() : vpTracker()
+vpDot::vpDot()
+  : m00(0.), m01(0.), m10(0.), m11(0.), m20(0.), m02(0.),
+    mu11(0.), mu20(0.), mu02(0.), ip_connexities_list(), ip_edges_list(), connexityType(CONNEXITY_4),
+    cog(), u_min(0), u_max(0), v_min(0), v_max(0), graphics(false), thickness(1), maxDotSizePercentage(0.25),
+    gray_level_out(0), mean_gray_level(0), gray_level_min(128), gray_level_max(255), grayLevelPrecision(0.85),
+    gamma(1.5), compute_moment(false), nbMaxPoint(0)
 {
-  init() ;
 }
 
 /*!
@@ -105,17 +113,26 @@ vpDot::vpDot() : vpTracker()
 
   \param ip : An image point with sub-pixel coordinates.
  */
-vpDot::vpDot(const vpImagePoint &ip) : vpTracker()
+vpDot::vpDot(const vpImagePoint &ip)
+  : m00(0.), m01(0.), m10(0.), m11(0.), m20(0.), m02(0.),
+    mu11(0.), mu20(0.), mu02(0.), ip_connexities_list(), ip_edges_list(), connexityType(CONNEXITY_4),
+    cog(), u_min(0), u_max(0), v_min(0), v_max(0), graphics(false), thickness(1), maxDotSizePercentage(0.25),
+    gray_level_out(0), mean_gray_level(0), gray_level_min(128), gray_level_max(255), grayLevelPrecision(0.85),
+    gamma(1.5), compute_moment(false), nbMaxPoint(0)
 {
-  init() ;
-
   cog = ip;
 }
 
 /*!
   \brief Copy constructor.
  */
-vpDot::vpDot(const vpDot& d)  : vpTracker()
+vpDot::vpDot(const vpDot& d)
+  : vpTracker(d),
+    m00(0.), m01(0.), m10(0.), m11(0.), m20(0.), m02(0.),
+    mu11(0.), mu20(0.), mu02(0.), ip_connexities_list(), ip_edges_list(), connexityType(CONNEXITY_4),
+    cog(), u_min(0), u_max(0), v_min(0), v_max(0), graphics(false), thickness(1), maxDotSizePercentage(0.25),
+    gray_level_out(0), mean_gray_level(0), gray_level_min(128), gray_level_max(255), grayLevelPrecision(0.85),
+    gamma(1.5), compute_moment(false), nbMaxPoint(0)
 {
   *this = d ;
 }
@@ -125,7 +142,6 @@ vpDot::vpDot(const vpDot& d)  : vpTracker()
  */
 vpDot::~vpDot()
 {
-
   ip_connexities_list.clear() ;
 }
 
@@ -743,10 +759,10 @@ vpDot::initTracking(const vpImage<unsigned char>& I, const vpImagePoint &ip)
   \param ip : Location of the starting point from which the dot will
   be tracked in the image.
 
-  \param gray_level_min : Minimum gray level threshold used to segment the dot;
+  \param level_min : Minimum gray level threshold used to segment the dot;
   value comprised between 0 and 255.
 
-  \param gray_level_max : Maximum gray level threshold used to segment the
+  \param level_max : Maximum gray level threshold used to segment the
   dot; value comprised between 0 and 255. \e gray_level_max should be
   greater than \e gray_level_min.
 
@@ -754,13 +770,13 @@ vpDot::initTracking(const vpImage<unsigned char>& I, const vpImagePoint &ip)
 */
 void
 vpDot::initTracking(const vpImage<unsigned char>& I, const vpImagePoint &ip,
-		    unsigned int gray_level_min, unsigned int gray_level_max)
+                    unsigned int level_min, unsigned int level_max)
 {
 
   cog = ip ;
 
-  this->gray_level_min = gray_level_min;
-  this->gray_level_max = gray_level_max;
+  this->gray_level_min = level_min;
+  this->gray_level_max = level_max;
 
   try {
     track( I );
@@ -832,14 +848,14 @@ vpDot::track(const vpImage<unsigned char> &I)
 
   \param I : Image to process.
 
-  \param cog [out] : Sub pixel coordinate of the tracked dot.
+  \param ip [out] : Sub pixel coordinate of the tracked dot center of gravity.
 */
 void
-vpDot::track(const vpImage<unsigned char> &I, vpImagePoint &cog)
+vpDot::track(const vpImage<unsigned char> &I, vpImagePoint &ip)
 {
   track( I ) ;
 
-  cog = this->cog;
+  ip = this->cog;
 }
 
 /*!
@@ -847,12 +863,11 @@ vpDot::track(const vpImage<unsigned char> &I, vpImagePoint &cog)
 
   \param I : Image.
   \param color : The color used for the display.
-  \param thickness : Thickness of the displayed cross located at the dot cog.
+  \param thick : Thickness of the displayed cross located at the dot cog.
 */
-void vpDot::display(const vpImage<unsigned char>& I, vpColor color,
-                     unsigned int thickness)
+void vpDot::display(const vpImage<unsigned char>& I, vpColor color, unsigned int thick) const
 {
-  vpDisplay::displayCross(I, cog, 3*thickness+8, color, thickness);
+  vpDisplay::displayCross(I, cog, 3*thickness+8, color, thick);
   std::list<vpImagePoint>::const_iterator it;
 
   for (it = ip_edges_list.begin(); it != ip_edges_list.end(); ++it)
@@ -865,7 +880,7 @@ void vpDot::display(const vpImage<unsigned char>& I, vpColor color,
 
   Set the precision of the gray level of the dot.
 
-  \param grayLevelPrecision : It is a double precision float which value is 
+  \param precision : It is a double precision float which value is
   in ]0,1]:
   - 1 means full precision, whereas values close to 0 show a very bad accuracy.
   - Values lower or equal to 0 are brought back to an epsion>0
@@ -878,7 +893,7 @@ void vpDot::display(const vpImage<unsigned char>& I, vpColor color,
 
   \sa setWidth(), setHeight(), setGrayLevelMin(), setGrayLevelMax()
 */
-void vpDot::setGrayLevelPrecision( const double & grayLevelPrecision )
+void vpDot::setGrayLevelPrecision( const double & precision )
 {
   double epsilon = 0.05;
   if( grayLevelPrecision<epsilon )
@@ -891,7 +906,7 @@ void vpDot::setGrayLevelPrecision( const double & grayLevelPrecision )
   }
   else
   {
-    this->grayLevelPrecision = grayLevelPrecision;
+    this->grayLevelPrecision = precision;
   }
 }
 
@@ -949,5 +964,13 @@ void vpDot::display(const vpImage<vpRGBa>& I,const vpImagePoint &cog,
   }
 }
 
+/*!
+  Writes the dot center of gravity coordinates in the frame (i,j) (For more details
+  about the orientation of the frame see the vpImagePoint documentation) to the stream \e os,
+  and returns a reference to the stream.
+*/
+VISP_EXPORT std::ostream& operator<< (std::ostream& os, vpDot& d) {
+  return (os << "(" << d.getCog() << ")" ) ;
+} ;
 
 

@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpKeyboard.h 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpKeyboard.h 4604 2014-01-21 14:15:23Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -50,7 +50,7 @@
 
 #include <visp/vpConfig.h>
 
-#if ( defined(UNIX) && !defined(WIN32) )
+#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__)))
 
 #  include <iostream>
 #  include <termios.h>

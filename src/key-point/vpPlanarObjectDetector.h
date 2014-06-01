@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpPlanarObjectDetector.h 4303 2013-07-04 14:14:00Z fspindle $
+ * $Id: vpPlanarObjectDetector.h 4574 2014-01-09 08:48:51Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License

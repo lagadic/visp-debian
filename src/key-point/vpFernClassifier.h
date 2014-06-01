@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpFernClassifier.h 4201 2013-04-08 08:20:47Z fspindle $
+ * $Id: vpFernClassifier.h 4664 2014-02-16 16:17:54Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -73,13 +73,8 @@
   image. The points of interests belonging to the model and the points detected
   in the current image are given in pixels thanks to the vpImagePoint class.
   
-  For more details about the Ferns Classifier and the point detector, see
-   - Mustafa Özuysal, Michael Calonder, Vincent Lepetit, Pascal Fua, "Fast 
-      KeyPoint Recognition Using Random Ferns", IEEE Transactions on Pattern 
-      Analysis and Machine Intelligence, 15 Jan. 2009.
-
-   - Vincent Lepetit, Pascal Fua, “Towards Recognizing Feature Points Using 
-      Classification Trees”, Technical Report IC/2004/74, EPFL, 2004.
+  For more details about the Ferns Classifier and the point detector,
+  see \cite Ozuysal10 and \cite Lepetit04c.
       
   To use this class, you first have to detect points in the model and train the 
   associated Fern classifier. Then, for each new grabbed image, You can detect

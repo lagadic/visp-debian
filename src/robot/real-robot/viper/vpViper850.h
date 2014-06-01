@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpViper850.h 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpViper850.h 4574 2014-01-09 08:48:51Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -111,19 +111,19 @@ class VISP_EXPORT vpViper850: public vpViper
 
 
   //! Get the current camera model projection type
-  vpCameraParameters::vpCameraParametersProjType getCameraParametersProjType(){
+  vpCameraParameters::vpCameraParametersProjType getCameraParametersProjType() const{
     return projModel;
   };
 
   void getCameraParameters(vpCameraParameters &cam,
 			   const unsigned int &image_width,
-			   const unsigned int &image_height);
+               const unsigned int &image_height) const;
   void getCameraParameters(vpCameraParameters &cam,
-			   const vpImage<unsigned char> &I);
-  void getCameraParameters(vpCameraParameters &cam, const vpImage<vpRGBa> &I);
+               const vpImage<unsigned char> &I) const;
+  void getCameraParameters(vpCameraParameters &cam, const vpImage<vpRGBa> &I) const;
 
   //! Get the current tool type
-  vpToolType getToolType(){
+  vpToolType getToolType() const {
     return tool_current;
   };
 

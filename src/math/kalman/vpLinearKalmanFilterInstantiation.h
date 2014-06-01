@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpLinearKalmanFilterInstantiation.h 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpLinearKalmanFilterInstantiation.h 4649 2014-02-07 14:57:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -88,11 +88,12 @@ class VISP_EXPORT vpLinearKalmanFilterInstantiation : public vpKalmanFilter
     By default the state model is unknown and set to
     vpLinearKalmanFilterInstantiation::unknown.
   */
-  vpLinearKalmanFilterInstantiation() : vpKalmanFilter()
+    vpLinearKalmanFilterInstantiation() : model(unknown)
     {
-      setStateModel(unknown);
     };
 
+  /*! Destructor that does nothng. */
+  virtual ~vpLinearKalmanFilterInstantiation() {};
   /*!
     Return the current state model.
    */
@@ -155,8 +156,8 @@ int main()
 }
   \endcode
 */
-void vpLinearKalmanFilterInstantiation::setStateModel(vpStateModel model) {
-  this->model = model;
+void vpLinearKalmanFilterInstantiation::setStateModel(vpStateModel mdl) {
+  this->model = mdl;
   switch(model) {
   case stateConstVel_MeasurePos:
   case stateConstVelWithColoredNoise_MeasureVel:

@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpMbEdgeTracker.cpp 4337 2013-07-23 13:57:53Z ayol $
+ * $Id: vpMbEdgeTracker.cpp 4649 2014-02-07 14:57:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -46,8 +46,6 @@
   \brief Make the complete tracking of an object by using its CAD model.
 */
 
-
-
 #include <visp/vpDebug.h>
 #include <visp/vpPose.h>
 #include <visp/vpExponentialMap.h>
@@ -71,36 +69,23 @@
 #include <sstream>
 #include <float.h>
 
+bool samePoint(const vpPoint &P1, const vpPoint &P2, double threshold);
+
 /*!
   Basic constructor
 */
 vpMbEdgeTracker::vpMbEdgeTracker()
+  : compute_interaction(1), lambda(1), me(), lines(1), cylinders(1), nline(0), ncylinder(0),
+    index_polygon(0), faces(), nbvisiblepolygone(0), percentageGdPt(0.4), scales(1),
+    Ipyramid(0), scaleLevel(0), useOgre(false),
+    angleAppears( vpMath::rad(89) ), angleDisappears( vpMath::rad(89) ),
+    distNearClip(0.001), distFarClip(100), clippingFlag(vpMbtPolygon::NO_CLIPPING)
 {
-  index_polygon =0;
-  compute_interaction=1;
-  nline = 0;
-  ncylinder = 0;
-  lambda = 1;
-  nbvisiblepolygone = 0;
-  percentageGdPt = 0.4;
-  computeCovariance = false;
-
-  lines.resize(1);
-  cylinders.resize(1);
-  scales.resize(1);
   scales[0] = true;
-  lines[0].clear();
-  cylinders[0].clear();
-  Ipyramid.resize(0);
   
 #ifdef VISP_HAVE_OGRE
   faces.getOgreContext()->setWindowName("MBT Edge");
 #endif
-  useOgre = false;
-  
-  angleAppears = vpMath::rad(95);
-  angleDisappears = vpMath::rad(95);
-  clippingFlag = vpMbtPolygon::NO_CLIPPING;
 }
 
 /*!
@@ -139,12 +124,12 @@ vpMbEdgeTracker::~vpMbEdgeTracker()
 /*! 
   Set the moving edge parameters.
   
-  \param me : an instance of vpMe containing all the desired parameters
+  \param p_me : an instance of vpMe containing all the desired parameters
 */
 void
-vpMbEdgeTracker::setMovingEdge(const vpMe &me)
+vpMbEdgeTracker::setMovingEdge(const vpMe &p_me)
 {
-  this->me = me;
+  this->me = p_me;
 
   for (unsigned int i = 0; i < scales.size(); i += 1){
     if(scales[i]){
@@ -268,8 +253,8 @@ vpMbEdgeTracker::computeVVS(const vpImage<unsigned char>& _I)
       double fac = 1;
       if (iter == 0)
       {
-        for(std::list<int>::const_iterator it = l->Lindex_polygon.begin(); it!=l->Lindex_polygon.end(); ++it){
-          int index = *it;
+        for(std::list<int>::const_iterator itindex = l->Lindex_polygon.begin(); itindex!=l->Lindex_polygon.end(); ++itindex){
+          int index = *itindex;
           if (l->hiddenface->isAppearing((unsigned int)index))
           {
             fac = 0.2;
@@ -740,8 +725,8 @@ vpMbEdgeTracker::testTracking()
     if (l->isVisible() && l->meline != NULL)
     {
       nbExpectedPoint += (int)l->meline->expecteddensity;
-      for(std::list<vpMeSite>::const_iterator it=l->meline->getMeList().begin(); it!=l->meline->getMeList().end(); ++it){
-        vpMeSite pix = *it;
+      for(std::list<vpMeSite>::const_iterator itme=l->meline->getMeList().begin(); itme!=l->meline->getMeList().end(); ++itme){
+        vpMeSite pix = *itme;
         if (pix.getState() == vpMeSite::NO_SUPPRESSION) nbGoodPoint++;
         else nbBadPoint++;
       }
@@ -755,14 +740,14 @@ vpMbEdgeTracker::testTracking()
     if (cy->meline1 !=NULL && cy->meline2 != NULL)
     {
       nbExpectedPoint += (int)cy->meline1->expecteddensity;
-      for(std::list<vpMeSite>::const_iterator it=cy->meline1->getMeList().begin(); it!=cy->meline1->getMeList().end(); ++it){
-        vpMeSite pix = *it;
+      for(std::list<vpMeSite>::const_iterator itme1=cy->meline1->getMeList().begin(); itme1!=cy->meline1->getMeList().end(); ++itme1){
+        vpMeSite pix = *itme1;
         if (pix.getState() == vpMeSite::NO_SUPPRESSION) nbGoodPoint++;
         else nbBadPoint++;
       }
       nbExpectedPoint += (int)cy->meline2->expecteddensity;
-      for(std::list<vpMeSite>::const_iterator it=cy->meline2->getMeList().begin(); it!=cy->meline2->getMeList().end(); ++it){
-        vpMeSite pix = *it;
+      for(std::list<vpMeSite>::const_iterator itme2=cy->meline2->getMeList().begin(); itme2!=cy->meline2->getMeList().end(); ++itme2){
+        vpMeSite pix = *itme2;
         if (pix.getState() == vpMeSite::NO_SUPPRESSION) nbGoodPoint++;
         else nbBadPoint++;
       }
@@ -1018,8 +1003,6 @@ vpMbEdgeTracker::loadConfigFile(const std::string& configFile)
     <fov_clipping>1</fov_clipping>
   </face>
   <camera>
-    <width>640</width>
-    <height>480</height>
     <u0>320</u0>
     <v0>240</v0>
     <px>686.24</px>
@@ -1037,10 +1020,10 @@ vpMbEdgeTracker::loadConfigFile(const char* configFile)
   vpMbtXmlParser xmlp;
   
   xmlp.setCameraParameters(cam);
-  xmlp.setMovingEdge(me);
   xmlp.setAngleAppear(vpMath::deg(angleAppears));
   xmlp.setAngleDisappear(vpMath::deg(angleDisappears));
-  
+  xmlp.setMovingEdge(me);
+
   try{
     std::cout << " *********** Parsing XML for Mb Edge Tracker ************ " << std::endl;
     xmlp.parse(configFile);
@@ -1067,7 +1050,8 @@ vpMbEdgeTracker::loadConfigFile(const char* configFile)
     setFarClippingDistance(xmlp.getFarClippingDistance());
   
   if(xmlp.getFovClipping())
-    clippingFlag = clippingFlag | vpMbtPolygon::FOV_CLIPPING;
+    setClipping(clippingFlag | vpMbtPolygon::FOV_CLIPPING);
+
 #else
   vpTRACE("You need the libXML2 to read the config file %s", configFile);
 #endif
@@ -1078,16 +1062,16 @@ vpMbEdgeTracker::loadConfigFile(const char* configFile)
   Display the 3D model from a given position of the camera.
 
   \param I : The image.
-  \param cMo : Pose used to project the 3D model into the image.
-  \param cam : The camera parameters.
+  \param cMo_ : Pose used to project the 3D model into the image.
+  \param camera : The camera parameters.
   \param col : The desired color.
   \param thickness : The thickness of the lines.
   \param displayFullModel : If true, the full model is displayed (even the non visible surfaces).
 */
 void
-vpMbEdgeTracker::display(const vpImage<unsigned char>& I, const vpHomogeneousMatrix &cMo, const vpCameraParameters &cam,
-											const vpColor& col,
-											const unsigned int thickness, const bool displayFullModel)
+vpMbEdgeTracker::display(const vpImage<unsigned char>& I, const vpHomogeneousMatrix &cMo_,
+                         const vpCameraParameters &camera, const vpColor& col,
+                         const unsigned int thickness, const bool displayFullModel)
 {
   vpMbtDistanceLine *l ;
   
@@ -1095,11 +1079,11 @@ vpMbEdgeTracker::display(const vpImage<unsigned char>& I, const vpHomogeneousMat
     if(scales[i]){
       for(std::list<vpMbtDistanceLine*>::const_iterator it=lines[scaleLevel].begin(); it!=lines[scaleLevel].end(); ++it){
         l = *it;
-        l->display(I,cMo, cam, col, thickness, displayFullModel);
+        l->display(I,cMo_, camera, col, thickness, displayFullModel);
       }
 
       for(std::list<vpMbtDistanceCylinder*>::const_iterator it=cylinders[scaleLevel].begin(); it!=cylinders[scaleLevel].end(); ++it){
-        (*it)->display(I, cMo, cam, col, thickness);
+        (*it)->display(I, cMo_, camera, col, thickness);
       }
 
       break ; //displaying model on one scale only
@@ -1108,7 +1092,7 @@ vpMbEdgeTracker::display(const vpImage<unsigned char>& I, const vpHomogeneousMat
   
 #ifdef VISP_HAVE_OGRE
   if(useOgre)
-    faces.displayOgre(cMo);
+    faces.displayOgre(cMo_);
 #endif
 }
 
@@ -1116,16 +1100,16 @@ vpMbEdgeTracker::display(const vpImage<unsigned char>& I, const vpHomogeneousMat
   Display the 3D model from a given position of the camera.
 
   \param I : The image.
-  \param cMo : Pose used to project the 3D model into the image.
-  \param cam : The camera parameters.
+  \param cMo_ : Pose used to project the 3D model into the image.
+  \param camera : The camera parameters.
   \param col : The desired color.
   \param thickness : The thickness of the lines.
   \param displayFullModel : If true, the full model is displayed (even the non visible surfaces).
 */
 void
-vpMbEdgeTracker::display(const vpImage<vpRGBa>& I, const vpHomogeneousMatrix &cMo, const vpCameraParameters &cam,
-											const vpColor& col,
-											const unsigned int thickness, const bool displayFullModel)
+vpMbEdgeTracker::display(const vpImage<vpRGBa>& I, const vpHomogeneousMatrix &cMo_,
+                         const vpCameraParameters &camera, const vpColor& col,
+                         const unsigned int thickness, const bool displayFullModel)
 {
   vpMbtDistanceLine *l ;
   
@@ -1133,11 +1117,11 @@ vpMbEdgeTracker::display(const vpImage<vpRGBa>& I, const vpHomogeneousMatrix &cM
     if(scales[i]){
       for(std::list<vpMbtDistanceLine*>::const_iterator it=lines[scaleLevel].begin(); it!=lines[scaleLevel].end(); ++it){
         l = *it;
-        l->display(I, cMo, cam, col, thickness, displayFullModel) ;
+        l->display(I, cMo_, camera, col, thickness, displayFullModel) ;
       }
 
       for(std::list<vpMbtDistanceCylinder*>::const_iterator it=cylinders[scaleLevel].begin(); it!=cylinders[scaleLevel].end(); ++it){
-        (*it)->display(I, cMo, cam, col, thickness) ;
+        (*it)->display(I, cMo_, camera, col, thickness) ;
       }
 
       break ; //displaying model on one scale only
@@ -1146,7 +1130,7 @@ vpMbEdgeTracker::display(const vpImage<vpRGBa>& I, const vpHomogeneousMatrix &cM
   
 #ifdef VISP_HAVE_OGRE
   if(useOgre)
-    faces.displayOgre(cMo);
+    faces.displayOgre(cMo_);
 #endif
 }
 
@@ -1168,8 +1152,8 @@ vpMbEdgeTracker::initMovingEdge(const vpImage<unsigned char> &I, const vpHomogen
     l = *it;
     bool isvisible = false ;
 
-    for(std::list<int>::const_iterator it=l->Lindex_polygon.begin(); it!=l->Lindex_polygon.end(); ++it){
-      int index = *it;
+    for(std::list<int>::const_iterator itindex=l->Lindex_polygon.begin(); itindex!=l->Lindex_polygon.end(); ++itindex){
+      int index = *itindex;
       if (index ==-1) isvisible =true ;
       else
       {
@@ -1545,13 +1529,15 @@ vpMbEdgeTracker::visibleFace(const vpImage<unsigned char> & _I,
   unsigned int n ;
   bool changed = false;
 
-  if(!useOgre)
-    n = faces.setVisible(_I, cam, _cMo, vpMath::rad(89), vpMath::rad(89), changed) ;
+  if(!useOgre) {
+    //n = faces.setVisible(_I, cam, _cMo, vpMath::rad(89), vpMath::rad(89), changed) ;
+    n = faces.setVisible(_I, cam, _cMo,  angleAppears, angleDisappears, changed) ;
+  }
   else{
 #ifdef VISP_HAVE_OGRE   
     n = faces.setVisibleOgre(_I, cam, _cMo, angleAppears, angleDisappears, changed);
 #else
-    n = faces.setVisible(_I, cam, _cMo, vpMath::rad(89), vpMath::rad(89), changed) ;
+    n = faces.setVisible(_I, cam, _cMo,  angleAppears, angleDisappears, changed) ;
 #endif
   } 
   
@@ -1625,18 +1611,18 @@ vpMbEdgeTracker::initFaceFromCorners(const std::vector<vpPoint>& _corners, const
   Add a cylinder to track from tow points on the axis (defining the length of
   the cylinder) and its radius.
 
-  \param _p1 : First point on the axis.
-  \param _p2 : Second point on the axis.
-  \param _radius : Radius of the cylinder.
-  \param _indexCylinder : Index of the cylinder.
+  \param p1 : First point on the axis.
+  \param p2 : Second point on the axis.
+  \param radius : Radius of the cylinder.
+  \param indexCylinder : Index of the cylinder.
 */
 void
-vpMbEdgeTracker::initCylinder(const vpPoint& _p1, const vpPoint _p2, const double _radius, const unsigned int _indexCylinder)
+vpMbEdgeTracker::initCylinder(const vpPoint& p1, const vpPoint &p2, const double radius, const unsigned int indexCylinder)
 {
-  if(_indexCylinder != 0){
-    ncylinder = _indexCylinder;
+  if(indexCylinder != 0){
+    ncylinder = indexCylinder;
   }
-  addCylinder(_p1, _p2, _radius);
+  addCylinder(p1, p2, radius);
 }
 
 /*!
@@ -1679,10 +1665,10 @@ vpMbEdgeTracker::resetTracker()
   nbvisiblepolygone = 0;
   percentageGdPt = 0.4;
   
-  angleAppears = vpMath::rad(95);
-  angleDisappears = vpMath::rad(95);
+  angleAppears = vpMath::rad(89);
+  angleDisappears = vpMath::rad(89);
   clippingFlag = vpMbtPolygon::NO_CLIPPING;
-  
+
   // reinitialization of the scales.
   this->setScales(scales);
 }
@@ -1694,14 +1680,45 @@ vpMbEdgeTracker::resetTracker()
   
   \param I : The image containing the object to initialize.
   \param cad_name : Path to the file containing the 3D model description.
-  \param cMo : The new vpHomogeneousMatrix between the camera and the new model
+  \param cMo_ : The new vpHomogeneousMatrix between the camera and the new model
 */
 void
-vpMbEdgeTracker::reInitModel(const vpImage<unsigned char>& I, const char* cad_name, const vpHomogeneousMatrix& cMo)
+vpMbEdgeTracker::reInitModel(const vpImage<unsigned char>& I, const char* cad_name,
+                             const vpHomogeneousMatrix& cMo_)
 {
-  resetTracker();
+  this->cMo.setIdentity();
+  vpMbtDistanceLine *l;
+  vpMbtDistanceCylinder *cy;
+
+  for (unsigned int i = 0; i < scales.size(); i += 1){
+    if(scales[i]){
+      for(std::list<vpMbtDistanceLine*>::const_iterator it=lines[i].begin(); it!=lines[i].end(); ++it){
+        l = *it;
+        if (l!=NULL) delete l ;
+        l = NULL ;
+      }
+
+      for(std::list<vpMbtDistanceCylinder*>::const_iterator it=cylinders[i].begin(); it!=cylinders[i].end(); ++it){
+        cy = *it;
+        if (cy!=NULL) delete cy;
+        cy = NULL;
+      }
+      lines[i].clear();
+      cylinders[i].clear();
+    }
+  }
+
+  faces.reset();
+
+  index_polygon =0;
+  //compute_interaction=1;
+  nline = 0;
+  ncylinder = 0;
+  //lambda = 1;
+  nbvisiblepolygone = 0;
+
   loadModel(cad_name);
-  initFromPose(I, cMo);
+  initFromPose(I, cMo_);
 }
 
 /*!
@@ -1727,8 +1744,8 @@ vpMbEdgeTracker::getNbPoints(const unsigned int level) const
     l = *it;
     if (l->isVisible() && l->meline != NULL)
     {
-      for(std::list<vpMeSite>::const_iterator it=l->meline->getMeList().begin(); it!=l->meline->getMeList().end(); ++it){
-        if (it->getState() == vpMeSite::NO_SUPPRESSION) nbGoodPoints++;
+      for(std::list<vpMeSite>::const_iterator itme=l->meline->getMeList().begin(); itme!=l->meline->getMeList().end(); ++itme){
+        if (itme->getState() == vpMeSite::NO_SUPPRESSION) nbGoodPoints++;
       }
     }
   }
@@ -1738,11 +1755,11 @@ vpMbEdgeTracker::getNbPoints(const unsigned int level) const
     cy = *it;
     if (cy->meline1 != NULL || cy->meline2 != NULL)
     {
-      for(std::list<vpMeSite>::const_iterator it=cy->meline1->getMeList().begin(); it!=cy->meline1->getMeList().end(); ++it){
-        if (it->getState() == vpMeSite::NO_SUPPRESSION) nbGoodPoints++;
+      for(std::list<vpMeSite>::const_iterator itme1=cy->meline1->getMeList().begin(); itme1!=cy->meline1->getMeList().end(); ++itme1){
+        if (itme1->getState() == vpMeSite::NO_SUPPRESSION) nbGoodPoints++;
       }
-      for(std::list<vpMeSite>::const_iterator it=cy->meline2->getMeList().begin(); it!=cy->meline2->getMeList().end(); ++it){
-        if (it->getState() == vpMeSite::NO_SUPPRESSION) nbGoodPoints++;
+      for(std::list<vpMeSite>::const_iterator itme2=cy->meline2->getMeList().begin(); itme2!=cy->meline2->getMeList().end(); ++itme2){
+        if (itme2->getState() == vpMeSite::NO_SUPPRESSION) nbGoodPoints++;
       }
     }
   }
@@ -1799,18 +1816,18 @@ vpMbEdgeTracker::getNbPolygon() const
   
   \warning At least one level must be activated. 
   
-  \param scales : The vector describing the levels to use.
+  \param scale : The vector describing the levels to use.
 */
 void 
-vpMbEdgeTracker::setScales(const std::vector<bool>& scales)
+vpMbEdgeTracker::setScales(const std::vector<bool>& scale)
 {
   unsigned int nbActivatedLevels = 0;
-  for (unsigned int i = 0; i < scales.size(); i += 1){
-    if(scales[i]){
+  for (unsigned int i = 0; i < scale.size(); i += 1){
+    if(scale[i]){
       nbActivatedLevels++;
     }
   }
-  if((scales.size() < 1) || (nbActivatedLevels == 0)){
+  if((scale.size() < 1) || (nbActivatedLevels == 0)){
     vpERROR_TRACE(" !! WARNING : must use at least one level for the tracking. Use the global one");
     this->scales.resize(0);
     this->scales.push_back(true);
@@ -1820,9 +1837,9 @@ vpMbEdgeTracker::setScales(const std::vector<bool>& scales)
     cylinders[0].clear();
   }
   else{
-    this->scales = scales;
-    lines.resize(scales.size());
-    cylinders.resize(scales.size());
+    this->scales = scale;
+    lines.resize(scale.size());
+    cylinders.resize(scale.size());
     for (unsigned int i = 0; i < lines.size(); i += 1){
       lines[i].clear();
       cylinders[i].clear();

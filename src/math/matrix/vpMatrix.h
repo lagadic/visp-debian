@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpMatrix.h 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpMatrix.h 4574 2014-01-09 08:48:51Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -45,6 +45,7 @@
 #define vpMatrix_H
 
 #include <visp/vpConfig.h>
+#include <visp/vpException.h>
 #include <visp/vpTime.h>
 
 #ifdef VISP_HAVE_GSL
@@ -63,6 +64,7 @@ class vpTranslationVector;
 class vpColVector;
 class vpTranslationVector;
 class vpRowVector;
+class vpHomography;
 
 
 
@@ -133,6 +135,8 @@ protected:
   vpMatrix(const vpMatrix &m, unsigned int r, unsigned int c, 
 	   unsigned int nrows, unsigned int ncols) ;
 
+  vpMatrix(const vpHomography& H);
+
   //! Destructor (Memory de-allocation)
   virtual ~vpMatrix();
 
@@ -176,50 +180,14 @@ protected:
   //@{
 
   int print(std::ostream& s, unsigned int length, char const* intro=0);
-  std::ostream & matlabPrint(std::ostream & os);
-  std::ostream & maplePrint(std::ostream & os);
-  std::ostream & cppPrint(std::ostream & os, const char * matrixName = NULL, bool octet = false);
+  std::ostream & matlabPrint(std::ostream & os) const;
+  std::ostream & maplePrint(std::ostream & os) const;
+  std::ostream & csvPrint(std::ostream & os) const;
+  std::ostream & cppPrint(std::ostream & os, const char * matrixName = NULL, bool octet = false) const;
 
   void printSize() { std::cout << getRows() <<" x " << getCols() <<"  " ; }
   //@}
   
-  static bool saveMatrix(const char *filename, const vpMatrix &M, const bool binary = false, const char *Header = "");
-  static bool loadMatrix(const char *filename, vpMatrix &M, const bool binary = false, char *Header = NULL);
-
-  /*!
-    Save a matrix to a file.
-
-    \param filename : absolute file name
-    \param M : matrix to be saved
-    \param binary :If true the matrix is save in a binary file, else a text file.
-    \param Header : optional line that will be saved at the beginning of the file
-
-    \return Returns true if no problem appends.
-
-    Warning : If you save the matrix as in a text file the precision is less than if you save it in a binary file.
-  */
-  static inline bool saveMatrix(std::string filename, const vpMatrix &M, 
-				const bool binary = false, 
-				const char *Header = "")
-  {
-    return vpMatrix::saveMatrix(filename.c_str(), M, binary, Header);
-  }
-
-  /*!
-    Load a matrix to a file.
-
-    \param filename : absolute file name
-    \param M : matrix to be loaded
-    \param binary :If true the matrix is load from a binary file, else from a text file.
-    \param Header : Header of the file is load in this parameter
-
-    \return Returns true if no problem appends.
-  */
-  static inline bool loadMatrix(std::string filename, vpMatrix &M, 
-				const bool binary = false, char *Header = NULL)
-  {
-    return vpMatrix::loadMatrix(filename.c_str(), M, binary, Header);
-  }
 
   //---------------------------------
   // Copy / assignment
@@ -234,6 +202,8 @@ protected:
 
   //! Copy operator.   Allow operation such as A = B
   vpMatrix &operator=(const vpMatrix &B);
+  //! Copy operator.   Allow operation such as A = H
+  vpMatrix &operator=(const vpHomography &H);
   //! Set all the element of the matrix A to x
   vpMatrix &operator=(const double x);
   void diag(const vpColVector &A);
@@ -245,24 +215,118 @@ protected:
   /** @name Access/modification operators  */
   //@{
   //! write elements Aij (usage : A[i][j] = x )
-  inline double *operator[](unsigned int n) { return rowPtrs[n]; }
+  inline double *operator[](unsigned int i) { return rowPtrs[i]; }
   //! read elements Aij  (usage : x = A[i][j] )
-  inline double *operator[](unsigned int n) const {return rowPtrs[n];}
+  inline double *operator[](unsigned int i) const {return rowPtrs[i];}
   //@}
 
   //---------------------------------
   // Matrix operations (Static).
-  //---------------------------------
+  //---------------------------------  
 
-  static void mult2Matrices(const vpMatrix &A, const vpMatrix &B, vpMatrix &C);
   static void add2Matrices(const vpMatrix &A, const vpMatrix &B, vpMatrix &C);
   static void add2WeightedMatrices(const vpMatrix &A, const double &wA, const vpMatrix &B,const double &wB, vpMatrix &C);
-  static void sub2Matrices(const vpMatrix &A, const vpMatrix &B, vpMatrix &C);
-  static void negateMatrix(const vpMatrix &A, vpMatrix &C);
-  static void multMatrixVector(const vpMatrix &A, const vpColVector &b, vpColVector &c);
-  
   static vpMatrix computeCovarianceMatrix(const vpMatrix &A, const vpColVector &x, const vpColVector &b);
   static vpMatrix computeCovarianceMatrix(const vpMatrix &A, const vpColVector &x, const vpColVector &b, const vpMatrix &w);
+  static void computeHLM(const vpMatrix &H, const double &alpha, vpMatrix &HLM);
+
+  // Create a diagonal matrix with the element of a vector DAii = Ai
+  static void createDiagonalMatrix(const vpColVector &A, vpMatrix &DA)  ;
+  // Insert matrix A in the current matrix at the given position (r, c).
+  void insert(const vpMatrix&A, const unsigned int r, const unsigned int c);
+  // Insert matrix B in matrix A at the given position (r, c).
+  static vpMatrix insert(const vpMatrix &A,const  vpMatrix &B, const unsigned int r, const unsigned int c) ;
+  // Insert matrix B in matrix A (not modified) at the given position (r, c), the result is given in matrix C.
+  static void insert(const vpMatrix &A, const vpMatrix &B, vpMatrix &C, const unsigned int r, const unsigned int c) ;
+
+  // Juxtapose to matrices C = [ A B ]
+  static vpMatrix juxtaposeMatrices(const vpMatrix &A,const  vpMatrix &B) ;
+  // Juxtapose to matrices C = [ A B ]
+  static void juxtaposeMatrices(const vpMatrix &A,const  vpMatrix &B, vpMatrix &C) ;
+  // Compute Kronecker product matrix
+  static void kron(const vpMatrix  &m1, const vpMatrix  &m2 , vpMatrix  &out);
+
+  // Compute Kronecker product matrix
+  static vpMatrix kron(const vpMatrix  &m1, const vpMatrix  &m2 );
+
+  /*!
+    Load a matrix from a file.
+
+    \param filename : absolute file name
+    \param M : matrix to be loaded
+    \param binary :If true the matrix is loaded from a binary file, else from a text file.
+    \param Header : Header of the file is loaded in this parameter
+
+    \return Returns true if no problem appends.
+  */
+  static inline bool loadMatrix(std::string filename, vpMatrix &M,
+                                const bool binary = false, char *Header = NULL)
+  {
+    return vpMatrix::loadMatrix(filename.c_str(), M, binary, Header);
+  }
+  static bool loadMatrix(const char *filename, vpMatrix &M, const bool binary = false, char *Header = NULL);
+  static void mult2Matrices(const vpMatrix &A, const vpMatrix &B, vpMatrix &C);
+  static void multMatrixVector(const vpMatrix &A, const vpColVector &b, vpColVector &c);
+  static void negateMatrix(const vpMatrix &A, vpMatrix &C);
+  /*!
+    Save a matrix to a file.
+
+    \param filename : absolute file name
+    \param M : matrix to be saved
+    \param binary :If true the matrix is save in a binary file, else a text file.
+    \param Header : optional line that will be saved at the beginning of the file
+
+    \return Returns true if no problem appends.
+
+    Warning : If you save the matrix as in a text file the precision is less than if you save it in a binary file.
+  */
+  static inline bool saveMatrix(std::string filename, const vpMatrix &M,
+        const bool binary = false,
+        const char *Header = "")
+  {
+    return vpMatrix::saveMatrix(filename.c_str(), M, binary, Header);
+  }
+  static bool saveMatrix(const char *filename, const vpMatrix &M, const bool binary = false, const char *Header = "");
+
+  /*!
+    Save a matrix in a YAML-formatted file.
+
+    \param filename : absolute file name.
+    \param M : matrix to be saved in the file.
+    \param header : optional lines that will be saved at the beginning of the file. Should be YAML-formatted and will adapt to the indentation if any.
+
+    \return Returns true if success.
+
+  */
+  static inline bool saveMatrixYAML(std::string filename, const vpMatrix &M, const char *header = "")
+  {
+    return vpMatrix::saveMatrixYAML(filename.c_str(), M, header);
+  }
+  static bool saveMatrixYAML(const char *filename, const vpMatrix &M, const char *header = "");
+  /*!
+    Load a matrix from a YAML-formatted file.
+
+    \param filename : absolute file name.
+    \param M : matrix to be loaded from the file.
+    \param header : Header of the file is loaded in this parameter.
+
+    \return Returns true if no problem appends.
+  */
+  static inline bool loadMatrixYAML(std::string filename, vpMatrix &M, char *header = NULL)
+  {
+    return vpMatrix::loadMatrixYAML(filename.c_str(), M, header);
+  }
+  static bool loadMatrixYAML(const char *filename, vpMatrix &M, char *header = NULL);
+
+
+  // Stack the matrix A below the current one, copy if not initialized this = [ this A ]^T
+  void stackMatrices(const vpMatrix &A);
+  //! Stack two Matrices C = [ A B ]^T
+  static vpMatrix stackMatrices(const vpMatrix &A,const  vpMatrix &B) ;
+  //! Stack two Matrices C = [ A B ]^T
+  static void stackMatrices(const vpMatrix &A,const  vpMatrix &B, vpMatrix &C) ;
+  static void sub2Matrices(const vpMatrix &A, const vpMatrix &B, vpMatrix &C);
+  
 
   //---------------------------------
   // Matrix operations.
@@ -275,6 +339,7 @@ protected:
   vpMatrix &operator-=(const vpMatrix &B);
 
   vpMatrix operator*(const vpMatrix &B) const;
+  vpMatrix operator*(const vpHomography &H) const;
   vpMatrix operator+(const vpMatrix &B) const;
   vpMatrix operator-(const vpMatrix &B) const;
   vpMatrix operator-() const;
@@ -372,13 +437,6 @@ protected:
   vpMatrix kron(const vpMatrix  &m1);
   //@}
   
-  // Compute Kronecker product matrix 
-  static void kron(const vpMatrix  &m1, const vpMatrix  &m2 , vpMatrix  &out);
-
-  // Compute Kronecker product matrix 
-  static vpMatrix kron(const vpMatrix  &m1, const vpMatrix  &m2 );
-
-
   //-------------------------------------------------
   // Matrix inversion
   //-------------------------------------------------
@@ -460,6 +518,7 @@ protected:
   vpColVector solveBySVD(const vpColVector &B) const ;
 
   unsigned int kernel(vpMatrix &KerA, double svThreshold=1e-6);
+  double cond();
   //@}
 
   //-------------------------------------------------
@@ -473,28 +532,6 @@ protected:
   vpColVector eigenValues();
   void eigenValues(vpColVector &evalue, vpMatrix &evector);
   //@}
-
-  //! Stack two Matrices C = [ A B ]^T
-  static vpMatrix stackMatrices(const vpMatrix &A,const  vpMatrix &B) ;
-  //! Stack two Matrices C = [ A B ]^T
-  static void stackMatrices(const vpMatrix &A,const  vpMatrix &B, vpMatrix &C) ;
-  // Juxtapose to matrices C = [ A B ]
-  static vpMatrix juxtaposeMatrices(const vpMatrix &A,const  vpMatrix &B) ;
-  // Juxtapose to matrices C = [ A B ]
-  static void juxtaposeMatrices(const vpMatrix &A,const  vpMatrix &B, vpMatrix &C) ;
-
-  // Create a diagonal matrix with the element of a vector DAii = Ai
-  static void createDiagonalMatrix(const vpColVector &A, vpMatrix &DA)  ;
-  
-  // Stack the matrix A below the current one, copy if not initialized this = [ this A ]^T
-  void stackMatrices(const vpMatrix &A);
-
-  // Insert matrix A in the current matrix at the given position (r, c). 
-  void insert(const vpMatrix&A, const unsigned int r, const unsigned int c);
-  // Insert matrix B in matrix A at the given position (r, c). 
-  static vpMatrix insert(const vpMatrix &A,const  vpMatrix &B, const unsigned int r, const unsigned int c) ;
-  // Insert matrix B in matrix A (not modified) at the given position (r, c), the result is given in matrix C. 
-  static void insert(const vpMatrix &A, const vpMatrix &B, vpMatrix &C, const unsigned int r, const unsigned int c) ;
 
   // -------------------------
   // Norms

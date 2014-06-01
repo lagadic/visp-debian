@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpMbtKltPolygon.h 4339 2013-07-23 15:24:42Z ayol $
+ * $Id: vpMbtKltPolygon.h 4661 2014-02-10 19:34:58Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -157,7 +157,7 @@ public:
   */
   virtual inline void setCameraParameters(const vpCameraParameters& _cam){ cam = _cam; } 
   
-  void                updateMask(IplImage* _mask, unsigned int _nb = 255, unsigned int _shiftBorder = 0);
+  void                updateMask(IplImage* _mask, unsigned char _nb = 255, unsigned int _shiftBorder = 0);
   
 //###################
 // Static Functions

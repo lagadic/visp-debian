@@ -3,7 +3,7 @@
  * $Id: vpPose.h 2453 2010-01-07 10:01:10Z nmelchio $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -59,6 +59,12 @@
   By default the class uses colored images.
 */
 vpImageSimulator::vpImageSimulator(const vpColorPlan &col)
+  : cMt(), interp(SIMPLE), normal_obj(), normal_Cam(), normal_Cam_optim(),
+    distance(1.), visible_result(1.), visible(false), X0_2_optim(NULL),
+    euclideanNorm_u(0.), euclideanNorm_v(0.), vbase_u(), vbase_v(),
+    vbase_u_optim(NULL), vbase_v_optim(NULL), Xinter_optim(NULL), T1(), T2(),
+    colorI(col), Ig(), Ic(), rect(), cleanPrevImage(false),
+    setBackgroundTexture(false), bgColor(vpColor::white), focal()
 {
   for(int i=0;i<4;i++)
     X[i].resize(3);
@@ -84,12 +90,6 @@ vpImageSimulator::vpImageSimulator(const vpColorPlan &col)
   vbase_u_optim = new double[3];
   vbase_v_optim = new double[3];
   Xinter_optim = new double[3];
-  
-  colorI = col;
-  interp = SIMPLE;
-  bgColor = vpColor::white;
-  cleanPrevImage = false;
-  setBackgroundTexture = false;
 }
 
 
@@ -97,6 +97,12 @@ vpImageSimulator::vpImageSimulator(const vpColorPlan &col)
   Copy constructor
 */
 vpImageSimulator::vpImageSimulator(const vpImageSimulator &text)
+  : cMt(), interp(SIMPLE), normal_obj(), normal_Cam(), normal_Cam_optim(),
+    distance(1.), visible_result(1.), visible(false), X0_2_optim(NULL),
+    euclideanNorm_u(0.), euclideanNorm_v(0.), vbase_u(), vbase_v(),
+    vbase_u_optim(NULL), vbase_v_optim(NULL), Xinter_optim(NULL), T1(), T2(),
+    colorI(GRAY_SCALED), Ig(), Ic(), rect(), cleanPrevImage(false),
+    setBackgroundTexture(false), bgColor(vpColor::white), focal()
 {
   for(int i=0;i<4;i++)
   {
@@ -1423,12 +1429,12 @@ vpImageSimulator::getImage(vpImage<vpRGBa> &I,
 /*!
   Enable to set the position of the 3D plane relative to the virtual camera.
   
-  \param _cMt : The pose of the plane relative to the virtual camera.
+  \param cMt_ : The pose of the plane relative to the virtual camera.
 */
 void
-vpImageSimulator::setCameraPosition(const vpHomogeneousMatrix &_cMt)
+vpImageSimulator::setCameraPosition(const vpHomogeneousMatrix &cMt_)
 {
-  cMt = _cMt;
+  cMt = cMt_;
   vpRotationMatrix R;
   cMt.extract(R);
 
@@ -1457,8 +1463,9 @@ vpImageSimulator::setCameraPosition(const vpHomogeneousMatrix &_cMt)
 
   if (angle > 0)
     visible=true;
-  else 
+  else {
     visible=false;
+  }
 
   if(visible)
   {
@@ -1500,12 +1507,12 @@ vpImageSimulator::setCameraPosition(const vpHomogeneousMatrix &_cMt)
 }
 
 void
-vpImageSimulator::initPlan(vpColVector* _X)
+vpImageSimulator::initPlan(vpColVector* X_)
 {
   for (unsigned int i = 0; i < 4; i++)
   {
-    X[i]=_X[i];
-    pt[i].setWorldCoordinates(_X[i][0],_X[i][1],_X[i][2]);
+    X[i]=X_[i];
+    pt[i].setWorldCoordinates(X_[i][0],X_[i][1],X_[i][2]);
   }
 
   normal_obj=vpColVector::crossProd(X[1]-X[0],X[3]-X[0]);
@@ -1526,14 +1533,14 @@ vpImageSimulator::initPlan(vpColVector* _X)
   - \f$ X[3] \f$ :Bottom left corner.
   
   \param I : The image which is projected.
-  \param _X : table of the 3D coordinates corresponding to the image corners.
+  \param X_ : table of the 3D coordinates corresponding to the image corners.
 */
 void
-vpImageSimulator::init(const vpImage<unsigned char> &I,vpColVector* _X)
+vpImageSimulator::init(const vpImage<unsigned char> &I,vpColVector* X_)
 {
   Ig = I;
   vpImageConvert::convert(I,Ic);
-  initPlan(_X);
+  initPlan(X_);
 }
 
 /*!
@@ -1547,14 +1554,14 @@ vpImageSimulator::init(const vpImage<unsigned char> &I,vpColVector* _X)
   - \f$ X[3] \f$ :Bottom left corner.
   
   \param I : The image which is projected.
-  \param _X : table of the 3D coordinates corresponding to the image corners.
+  \param X_ : table of the 3D coordinates corresponding to the image corners.
 */
 void
-vpImageSimulator::init(const vpImage<vpRGBa> &I,vpColVector* _X)
+vpImageSimulator::init(const vpImage<vpRGBa> &I,vpColVector* X_)
 {
   Ic = I;
   vpImageConvert::convert(I,Ig);
-  initPlan(_X);
+  initPlan(X_);
 }
 
 /*!
@@ -1568,14 +1575,14 @@ vpImageSimulator::init(const vpImage<vpRGBa> &I,vpColVector* _X)
   - \f$ X[3] \f$ :Bottom left corner.
   
   \param file_image : The adress of an image file.
-  \param _X : table of the 3D coordinates corresponding to the image corners.
+  \param X_ : table of the 3D coordinates corresponding to the image corners.
 */
 void
-vpImageSimulator::init(const char* file_image,vpColVector* _X)
+vpImageSimulator::init(const char* file_image,vpColVector* X_)
 {
   vpImageIo::read(Ig,file_image);
   vpImageIo::read(Ic,file_image);
-  initPlan(_X);
+  initPlan(X_);
 }
 
 /*!
@@ -1589,21 +1596,21 @@ vpImageSimulator::init(const char* file_image,vpColVector* _X)
   - \f$ X[3] \f$ :Bottom left corner.
 
   \param I : The image which is projected.
-  \param _X : Vector of the 3D coordinates in the object frame (oX, oY, oZ)
+  \param X_ : Vector of the 3D coordinates in the object frame (oX, oY, oZ)
   corresponding to the image corners.
 */
 void
-vpImageSimulator::init(const vpImage<unsigned char> &I, const std::vector<vpPoint>& _X)
+vpImageSimulator::init(const vpImage<unsigned char> &I, const std::vector<vpPoint>& X_)
 {
-  if(_X.size() != 4){
+  if(X_.size() != 4){
     throw vpException(vpException::dimensionError, "the vector must contains 4 points to initialise the simulator");
   }
   vpColVector Xvec[4];
   for(unsigned int i=0; i<4; ++i){
     Xvec[i].resize(3);
-    Xvec[i][0] = _X[i].get_oX();
-    Xvec[i][1] = _X[i].get_oY();
-    Xvec[i][2] = _X[i].get_oZ();
+    Xvec[i][0] = X_[i].get_oX();
+    Xvec[i][1] = X_[i].get_oY();
+    Xvec[i][2] = X_[i].get_oZ();
   }
 
   Ig = I;
@@ -1613,7 +1620,7 @@ vpImageSimulator::init(const vpImage<unsigned char> &I, const std::vector<vpPoin
 /*!
   Initialise the image thanks to an image \f$ I \f$ and a table of vector containing the 3D coordinates of the image's corners.
 
-  \throw vpException::dimensionError if the _X vector is not of size 4.
+  \throw vpException::dimensionError if the X_ vector is not of size 4.
 
   - \f$ X[0] \f$ :Top left corner.
   - \f$ X[1] \f$ :Top right corner.
@@ -1621,21 +1628,21 @@ vpImageSimulator::init(const vpImage<unsigned char> &I, const std::vector<vpPoin
   - \f$ X[3] \f$ :Bottom left corner.
 
   \param I : The image which is projected.
-  \param _X : Vector of the 3D coordinates in the object frame (oX, oY, oZ)
+  \param X_ : Vector of the 3D coordinates in the object frame (oX, oY, oZ)
   corresponding to the image corners.
 */
 void
-vpImageSimulator::init(const vpImage<vpRGBa> &I, const std::vector<vpPoint>& _X)
+vpImageSimulator::init(const vpImage<vpRGBa> &I, const std::vector<vpPoint>& X_)
 {
-  if(_X.size() != 4){
+  if(X_.size() != 4){
     throw vpException(vpException::dimensionError, "the vector must contains 4 points to initialise the simulator");
   }
   vpColVector Xvec[4];
   for(unsigned int i=0; i<4; ++i){
     Xvec[i].resize(3);
-    Xvec[i][0] = _X[i].get_oX();
-    Xvec[i][1] = _X[i].get_oY();
-    Xvec[i][2] = _X[i].get_oZ();
+    Xvec[i][0] = X_[i].get_oX();
+    Xvec[i][1] = X_[i].get_oY();
+    Xvec[i][2] = X_[i].get_oZ();
   }
 
   Ic = I;
@@ -1645,7 +1652,7 @@ vpImageSimulator::init(const vpImage<vpRGBa> &I, const std::vector<vpPoint>& _X)
 /*!
   Initialise the image thanks to an image whose adress is given by \f$ file_image \f$ and a table of vector containing the 3D coordinates of the image's corners.
 
-  \throw vpException::dimensionError if the _X vector is not of size 4.
+  \throw vpException::dimensionError if the X_ vector is not of size 4.
 
   - \f$ X[0] \f$ :Top left corner.
   - \f$ X[1] \f$ :Top right corner.
@@ -1653,21 +1660,21 @@ vpImageSimulator::init(const vpImage<vpRGBa> &I, const std::vector<vpPoint>& _X)
   - \f$ X[3] \f$ :Bottom left corner.
 
   \param file_image : The adress of an image file.
-  \param _X : Vector of the 3D coordinates in the object frame (oX, oY, oZ)
+  \param X_ : Vector of the 3D coordinates in the object frame (oX, oY, oZ)
   corresponding to the image corners.
 */
 void
-vpImageSimulator::init(const char* file_image, const std::vector<vpPoint>& _X)
+vpImageSimulator::init(const char* file_image, const std::vector<vpPoint>& X_)
 {
-  if(_X.size() != 4){
+  if(X_.size() != 4){
     throw vpException(vpException::dimensionError, "the vector must contains 4 points to initialise the simulator");
   }
   vpColVector Xvec[4];
   for(unsigned int i=0; i<4; ++i){
     Xvec[i].resize(3);
-    Xvec[i][0] = _X[i].get_oX();
-    Xvec[i][1] = _X[i].get_oY();
-    Xvec[i][2] = _X[i].get_oZ();
+    Xvec[i][0] = X_[i].get_oX();
+    Xvec[i][1] = X_[i].get_oY();
+    Xvec[i][2] = X_[i].get_oZ();
   }
 
   vpImageIo::read(Ig,file_image);
@@ -1950,4 +1957,19 @@ vpImageSimulator::getRoi(const unsigned int &Iwidth,
   rectangle.setBottom(bottom);
   rectangle.setLeft(left);
   rectangle.setRight(right);
+}
+
+std::vector<vpColVector>
+vpImageSimulator::get3DcornersTextureRectangle()
+{
+  std::vector<vpColVector> X_;
+  for (int i=0; i<4; i++)
+    X_.push_back(X[i]);
+  return X_;
+}
+
+VISP_EXPORT std::ostream& operator<< (std::ostream &os, const vpImageSimulator& /*ip*/)
+{
+  os << "";
+  return os;
 }

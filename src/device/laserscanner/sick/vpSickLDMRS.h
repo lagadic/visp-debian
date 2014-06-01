@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpSickLDMRS.h 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpSickLDMRS.h 4632 2014-02-03 17:06:40Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -43,17 +43,18 @@
 
 #include <visp/vpConfig.h>
 
-#if ( defined(UNIX) && !defined(WIN32) )
+#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__)))
 
 #include <arpa/inet.h>
 #include <iostream>
 #include <vector>
-
+#include <string.h>
 
 #include <visp/vpScanPoint.h>
 #include <visp/vpLaserScan.h>
 #include <visp/vpLaserScanner.h>
 #include <visp/vpColVector.h>
+#include <visp/vpException.h>
 
 /*!
 
@@ -80,7 +81,7 @@
 
 int main()
 {
-#ifdef UNIX
+#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
   std::string ip = "131.254.12.119";
 
   vpSickLDMRS laser;
@@ -98,7 +99,7 @@ int main()
       vpScanPoint p;
     
       for (unsigned int i=0; i < pointsInLayer.size(); i++) {
-	std::cout << pointsInLayer[i] << std::endl; 
+        std::cout << pointsInLayer[i] << std::endl;
       }
     }
   }
@@ -117,26 +118,42 @@ class VISP_EXPORT vpSickLDMRS : public vpLaserScanner
   };
   vpSickLDMRS();
   /*! Copy constructor. */
-  vpSickLDMRS(const vpSickLDMRS &sick) : vpLaserScanner(sick) {
-    socket_fd = sick.socket_fd;
-    body = new unsigned char [104000];
+  vpSickLDMRS(const vpSickLDMRS &sick)
+    : vpLaserScanner(sick), socket_fd(-1), body(NULL), vAngle(), time_offset(0),
+      isFirstMeasure(true), maxlen_body(104000)
+ {
+    *this = sick;
   };
   virtual ~vpSickLDMRS();
+  /*! Copy constructor. */
+  vpSickLDMRS &operator=(const vpSickLDMRS &sick)
+  {
+    socket_fd = sick.socket_fd;
+    vAngle = sick.vAngle;
+    time_offset = sick.time_offset;
+    isFirstMeasure = sick.isFirstMeasure;
+    maxlen_body = sick.maxlen_body;
+    if (body) delete [] body;
+    body = new unsigned char [104000];
+    memcpy(body, sick.body, maxlen_body);
+    return (*this);
+  };
+
   bool setup(std::string ip, int port);
   bool setup();
   bool measure(vpLaserScan laserscan[4]);
 
  protected:
-#ifdef WIN32
+#if defined(_WIN32)
   SOCKET socket_fd;
 #else
   int socket_fd;  
 #endif
- private:
   unsigned char *body;
   vpColVector vAngle; // constant vertical angle for each layer
   double time_offset;
   bool isFirstMeasure;
+  size_t maxlen_body;
  };
 
 #endif

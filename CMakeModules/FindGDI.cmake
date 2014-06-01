@@ -1,9 +1,9 @@
 #############################################################################
 #
-# $Id: FindGDI.cmake 4293 2013-07-01 16:05:01Z fspindle $
+# $Id: FindGDI.cmake 4574 2014-01-09 08:48:51Z fspindle $
 #
 # This file is part of the ViSP software.
-# Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+# Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
 # 
 # This software is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -107,6 +107,7 @@ IF(WIN32)
                    "C:/Program Files/Microsoft SDKs/Windows/v7.0A/Lib"
                    "C:/Program Files (x86)/Microsoft SDKs/Windows/v7.0A/Lib"
                    "C:/Program Files (x86)/Microsoft SDKs/Windows/v7.1/Lib"
+                   "C:/Program Files (x86)/Microsoft SDKs/Windows/v7.1A/Lib"
                    "C:/Program Files/Microsoft Platform SDK/Lib"
                    "C:/DXSDK/Include/Lib"
                    "C:/Program Files/Microsoft SDKs/Windows/v6.0a/Lib"

@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpD3DRenderer.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpD3DRenderer.cpp 4604 2014-01-21 14:15:23Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -41,7 +41,7 @@
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 
 #include <visp/vpConfig.h>
-#if ( defined(WIN32) & defined(VISP_HAVE_D3D9) )
+#if ( defined(_WIN32) & defined(VISP_HAVE_D3D9) )
 
 #include <visp/vpD3DRenderer.h>
 #include <visp/vpColor.h>

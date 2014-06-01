@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpDisplayException.h 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpDisplayException.h 4649 2014-02-07 14:57:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -73,12 +73,12 @@
  */
 class VISP_EXPORT vpDisplayException : public vpException
 {
-public:
-  /*!
+  public:
+    /*!
     \brief Lists the possible error than can be emmited while calling
     vpDisplay member
    */
-  enum errorDisplayCodeEnum
+    enum errorDisplayCodeEnum
     {
       notInitializedError,
       cannotOpenWindowError,
@@ -89,33 +89,26 @@ public:
       depthNotSupportedError
     } ;
 
-public:
-  vpDisplayException(const int code, const char * msg)
-   : vpException(code, msg)
+  public:
+    vpDisplayException(const int id,  const char* format, ...)
+    {
+      this->code = id;
+      va_list args;
+      va_start(args, format);
+      setMessage(format, args);
+      va_end (args);
+    }
+
+    vpDisplayException (const int id, const std::string & msg)
+      : vpException(id, msg)
     {
     }
-  
-  vpDisplayException (const int code, const std::string & msg)
-    : vpException(code, msg)
+
+    vpDisplayException (const int id)
+      : vpException(id)
     {
     }
-  
-  vpDisplayException (const int code)
-    : vpException(code)
-  {
-  }
 
 };
 
-
-
-
-
-#endif /* #ifndef __vpDisplayException_H */
-
-
-/*
- * Local variables:
- * c-basic-offset: 2
- * End:
- */
+#endif

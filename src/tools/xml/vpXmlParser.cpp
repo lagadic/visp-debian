@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpXmlParser.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpXmlParser.cpp 4632 2014-02-03 17:06:40Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -58,9 +58,8 @@
   
   Initialise the main tag with default value.
 */
-vpXmlParser::vpXmlParser()
+vpXmlParser::vpXmlParser() : nodeMap(), main_tag("config")
 {
-  main_tag = "config";
 }
 
 /*!
@@ -88,6 +87,7 @@ vpXmlParser::~vpXmlParser()
   \param _twin : The parser to copy.
 */
 vpXmlParser::vpXmlParser(const vpXmlParser& _twin)
+ : nodeMap(), main_tag("config")
 {
   main_tag = _twin.main_tag;
   nodeMap = _twin.nodeMap;
@@ -387,7 +387,9 @@ vpXmlParser::save(const std::string& filename, const bool append)
   else{
   	if(!append){
       xmlFreeDoc(doc);
-  		remove(filename.c_str());
+      if (remove(filename.c_str()) != 0)
+        throw vpException(vpException::ioError, "Cannot remove existing xml file");
+
   		doc = xmlNewDoc ((xmlChar*)"1.0");
   		root_node = xmlNewNode(NULL, (xmlChar*)main_tag.c_str());
   		xmlDocSetRootElement(doc, root_node);

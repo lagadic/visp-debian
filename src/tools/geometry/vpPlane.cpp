@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpPlane.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpPlane.cpp 4649 2014-02-07 14:57:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -68,13 +68,7 @@ vpPlane::operator =(const vpPlane& p)
 /*!
   Basic constructor that set the plane parameters A, B, C, D to zero.
 */
-vpPlane::vpPlane()
-{
-  setA(0) ;
-  setB(0) ;
-  setC(0) ;
-  setD(0) ;
-}
+vpPlane::vpPlane() : A(0), B(0), C(0), D(0) {}
 
 /*!
   Plane constructor from A, B, C, D parameters.
@@ -83,21 +77,17 @@ vpPlane::vpPlane()
   (x,y,z) are the coordinates of a point and \f$[A,B,C]^T\f$ is the normal
   vector of the plane.
 
-  \param A, B, C, D : Parameters of the plane.
+  \param a, b, c, d : Parameters of the plane.
 
 */
-vpPlane::vpPlane(const double A,const double B,const double C, const double D)
-{
-  setA(A) ;
-  setB(B) ;
-  setC(C) ;
-  setD(D) ;
-}
+vpPlane::vpPlane(const double a,const double b,const double c, const double d)
+  : A(a), B(b), C(c), D(d) {}
 
 /*!
   Copy constructor.
 */
 vpPlane::vpPlane(const vpPlane& P)
+  : A(0), B(0), C(0), D(0)
 {
   setA(P.getA()) ;
   setB(P.getB()) ;
@@ -120,6 +110,7 @@ vpPlane::vpPlane(const vpPlane& P)
 
 */
 vpPlane::vpPlane(const vpPoint& P, const vpColVector &n)
+  : A(0), B(0), C(0), D(0)
 {
   //Equation of the plane is given by:
   A = n[0];
@@ -211,6 +202,7 @@ vpPlane::init(const vpPoint &P, const vpPoint &Q, const vpPoint &R)
   \sa init(const vpPoint &, const vpPoint &, const vpPoint &)
 */
 vpPlane::vpPlane(const vpPoint &P, const vpPoint &Q, const vpPoint &R)
+  : A(0), B(0), C(0), D(0)
 {
   init(P,Q,R) ;
 }
@@ -359,3 +351,14 @@ void vpPlane::changeFrame(const vpHomogeneousMatrix &cMo)
   D = Do - (cMo[0][3]*A + cMo[1][3]*B  + cMo[2][3]*C);
 }
 
+/*!
+
+  Print the plane parameters as a stream like "(A,B,C,D) " where
+  A,B,C and D correspond to the parameters of the plane.
+
+*/
+VISP_EXPORT std::ostream& operator<< (std::ostream& os, vpPlane& p)
+{
+  return (os  << "("<<p.getA() << ","<<p.getB()
+    << ","<<p.getC()<< ","<<p.getD() <<") ") ;
+} ;

@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpXmlParserCamera.h 4317 2013-07-17 09:40:17Z fspindle $
+ * $Id: vpXmlParserCamera.h 4649 2014-02-07 14:57:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -257,16 +257,16 @@ public:
   unsigned int getSubsampling_height(){return this->subsampling_height;}
   vpCameraParameters getCameraParameters(){return this->camera;}
 
-  void setCameraName(const std::string& camera_name){
-    this->camera_name = camera_name;
+  void setCameraName(const std::string& name){
+    this->camera_name = name;
   }
   void setWidth(const unsigned int width){ this->image_width = width ; }
   void setHeight(const unsigned int height){ this->image_height = height ; }
-  void setSubsampling_width(const unsigned int subsampling_width){
-    this->subsampling_width = subsampling_width ;
+  void setSubsampling_width(const unsigned int subsampling){
+    this->subsampling_width = subsampling ;
   }
-  void setSubsampling_height(const unsigned int subsampling_height){
-    this->subsampling_height = subsampling_height ;
+  void setSubsampling_height(const unsigned int subsampling){
+    this->subsampling_height = subsampling ;
   }
 
 private:

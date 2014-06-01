@@ -1,9 +1,9 @@
 /****************************************************************************
 *
-* $Id: vpThetaUVector.cpp 4056 2013-01-05 13:04:42Z fspindle $
+* $Id: vpThetaUVector.cpp 4632 2014-02-03 17:06:40Z fspindle $
 *
 * This file is part of the ViSP software.
-* Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+* Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
 * 
 * This software is free software; you can redistribute it and/or
 * modify it under the terms of the GNU General Public License
@@ -53,28 +53,6 @@ rotation
 #define vpDEBUG_LEVEL1 0
 
 const double vpThetaUVector::minimum = 0.0001;
-
-/*!
-Affectation of two \f$\theta {\bf u}\f$ vector.
-*/
-vpThetaUVector &
-vpThetaUVector::operator=(const vpThetaUVector &m)
-{
-  for (int i=0; i<3; i++)
-  {
-    r[i] = m.r[i] ;
-  }
-  return *this;
-}
-
-
-/*!
-Copy constructor.
-*/
-vpThetaUVector::vpThetaUVector(const vpThetaUVector &m) : vpRotationVector()
-{
-  *this = m ;
-}
 
 /*!
 Initialize a \f$\theta {\bf u}\f$ vector from an homogeneous matrix.
@@ -271,7 +249,7 @@ vpThetaUVector::buildFrom(const vpRxyzVector& rxyz)
   return *this ;
 }
 
-/*! 
+/*!
 
 Initialize each element of the \f$\theta {\bf u}\f$ vector to the
 same angle value \e v.
@@ -327,8 +305,3 @@ vpThetaUVector::extract(double &theta, vpColVector &u) const
 }
 
 #undef vpDEBUG_LEVEL1
-/*
-* Local variables:
-* c-basic-offset: 2
-* End:
-*/

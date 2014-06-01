@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: servoMomentPoints.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: servoMomentPoints.cpp 4673 2014-02-17 09:06:49Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -67,24 +67,8 @@
 #include <visp/vpSimulatorAfma6.h>
 #include <visp/vpPlane.h>
 
-//setup robot parameters
-void paramRobot();
 
-//update moment objects and interface
-void refreshScene(vpMomentObject &obj);
-//initialize scene in the interface
-void initScene();
-//initialize the moment features
-void initFeatures();
-
-void init(vpHomogeneousMatrix& cMo, vpHomogeneousMatrix& cdMo);
-void execute(unsigned int nbIter); //launch the simulation
-void setInteractionMatrixType(vpServo::vpServoIteractionMatrixType type);
-double error();
-void _planeToABC(vpPlane& pl, double& A,double& B, double& C);
-void paramRobot();
-
-#if !defined(WIN32) && !defined(VISP_HAVE_PTHREAD)
+#if !defined(_WIN32) && !defined(VISP_HAVE_PTHREAD)
 // Robot simulator used in this example is not available
 int main()
 {
@@ -99,16 +83,41 @@ int main()
   std::cout << "You should install one of the following third-party library: X11, OpenCV, GDI, GTK." << std::endl;
 }
 #else
-int main(){
-  //intial pose
-  vpHomogeneousMatrix cMo(0.05,0.1,1.5,vpMath::rad(30),vpMath::rad(20),-vpMath::rad(15));
-  //Desired pose
-  vpHomogeneousMatrix cdMo(vpHomogeneousMatrix(0.0,0.0,1.0,vpMath::rad(0),vpMath::rad(0),vpMath::rad(0)));
 
-  //init and run the simulation
-  init(cMo,cdMo);
-  execute(1500);
-  return 0;
+//setup robot parameters
+void paramRobot();
+
+//update moment objects and interface
+void refreshScene(vpMomentObject &obj);
+//initialize scene in the interface
+void initScene();
+//initialize the moment features
+void initFeatures();
+
+void init(vpHomogeneousMatrix& cMo, vpHomogeneousMatrix& cdMo);
+void execute(unsigned int nbIter); //launch the simulation
+void setInteractionMatrixType(vpServo::vpServoIteractionMatrixType type);
+double error();
+void planeToABC(vpPlane& pl, double& A,double& B, double& C);
+void paramRobot();
+void removeJointLimits(vpSimulatorAfma6& robot);
+
+int main()
+{
+  try {  //intial pose
+    vpHomogeneousMatrix cMo(0.05,0.1,1.5,vpMath::rad(30),vpMath::rad(20),-vpMath::rad(15));
+    //Desired pose
+    vpHomogeneousMatrix cdMo(vpHomogeneousMatrix(0.0,0.0,1.0,vpMath::rad(0),vpMath::rad(0),vpMath::rad(0)));
+
+    //init and run the simulation
+    init(cMo,cdMo);
+    execute(1500);
+    return 0;
+  }
+  catch(vpException e) {
+    std::cout << "Catch an exception: " << e << std::endl;
+    return 1;
+  }
 }
 
 //init the right display
@@ -146,12 +155,10 @@ vpFeatureMomentCommon *featureMomentsDes;
 vpMomentObject src(6);
 vpMomentObject dst(6);
 
-using namespace std;
-
 
 void initScene(){
-  vector<vpPoint> src_pts;
-  vector<vpPoint> dst_pts;
+  std::vector<vpPoint> src_pts;
+  std::vector<vpPoint> dst_pts;
 
   double x[8] = { 1,3, 4,-1 ,-3,-2,-1,1};
   double y[8] = { 0,1, 4, 4, -2,-2, 1,0};
@@ -187,11 +194,11 @@ void initFeatures(){
   vpPlane pl;
   pl.setABCD(0,0,1.0,0);
   pl.changeFrame(cMo);
-  _planeToABC(pl,A,B,C);
+  planeToABC(pl,A,B,C);
 
   pl.setABCD(0,0,1.0,0);
   pl.changeFrame(cdMo);
-  _planeToABC(pl,Ad,Bd,Cd);
+  planeToABC(pl,Ad,Bd,Cd);
 
   //extracting initial position (actually we only care about Zdst)
   vpTranslationVector vec;
@@ -229,7 +236,7 @@ void refreshScene(vpMomentObject &obj){
   double x[8] = { 1,3, 4,-1 ,-3,-2,-1,1};
   double y[8] = { 0,1, 4, 4, -2,-2, 1,0};
   int nbpoints = 8;
-  vector<vpPoint> cur_pts;
+  std::vector<vpPoint> cur_pts;
 
   for (int i = 0 ; i < nbpoints ; i++){
     vpPoint p;
@@ -280,7 +287,7 @@ void execute(unsigned int nbIter){
     double A,B,C;
     pl.setABCD(0,0,1.0,0);
     pl.changeFrame(cMo);
-    _planeToABC(pl,A,B,C);
+    planeToABC(pl,A,B,C);
 
     //track points, draw points and add refresh our object
     refreshScene(obj);
@@ -316,7 +323,8 @@ void execute(unsigned int nbIter){
   delete featureMomentsDes;
 }
 
-void removeJointLimits(vpSimulatorAfma6& robot){
+void removeJointLimits(vpSimulatorAfma6& robot_)
+{
   vpColVector limMin(6);
   vpColVector limMax(6);
   limMin[0] = vpMath::rad(-3600);
@@ -333,12 +341,12 @@ void removeJointLimits(vpSimulatorAfma6& robot){
   limMax[4] = vpMath::rad(3600);
   limMax[5] = vpMath::rad(3600);
 
-  robot.setJointLimit(limMin,limMax);
-  robot.setMaxRotationVelocity(99999);
-  robot.setMaxTranslationVelocity(999999);
+  robot_.setJointLimit(limMin,limMax);
+  robot_.setMaxRotationVelocity(99999);
+  robot_.setMaxTranslationVelocity(999999);
 }
 
-void _planeToABC(vpPlane& pl, double& A,double& B, double& C){
+void planeToABC(vpPlane& pl, double& A,double& B, double& C){
 	if(fabs(pl.getD())<std::numeric_limits<double>::epsilon()){
 		std::cout << "Invalid position:" << std::endl;
 		std::cout << cMo << std::endl;

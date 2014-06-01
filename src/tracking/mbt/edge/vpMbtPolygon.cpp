@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpMbtPolygon.cpp 4319 2013-07-17 10:04:09Z ayol $
+ * $Id: vpMbtPolygon.cpp 4632 2014-02-03 17:06:40Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -56,17 +56,37 @@
   Basic constructor.
 */
 vpMbtPolygon::vpMbtPolygon()
+  : index(-1), nbpt(0), nbCornersInsidePrev(0), isvisible(false), isappearing(false),
+    p(NULL), roiPointsClip(), clippingFlag(vpMbtPolygon::NO_CLIPPING),
+    distNearClip(0.001), distFarClip(100.)
 {
-  nbpt = 0 ;
-  p = NULL ;
-  isappearing = false;
-  isvisible = false;
-  nbCornersInsidePrev = 0;
-  
-  distNearClip = 0.001;
-  distFarClip = 100.0;
-  
-  clippingFlag = vpMbtPolygon::NO_CLIPPING;
+}
+
+vpMbtPolygon::vpMbtPolygon(const vpMbtPolygon& mbtp)
+  : index(-1), nbpt(0), nbCornersInsidePrev(0), isvisible(false), isappearing(false),
+    p(NULL), roiPointsClip(), clippingFlag(vpMbtPolygon::NO_CLIPPING),
+    distNearClip(0.001), distFarClip(100.)
+{
+  *this = mbtp;
+}
+
+vpMbtPolygon& vpMbtPolygon::operator=(const vpMbtPolygon& mbtp)
+{
+  index = mbtp.index;
+  nbpt = mbtp.nbpt;
+  nbCornersInsidePrev = mbtp.nbCornersInsidePrev;
+  isvisible = mbtp.isvisible;
+  isappearing = mbtp.isappearing;
+  roiPointsClip = mbtp.roiPointsClip;
+  clippingFlag = mbtp.clippingFlag;
+  distNearClip = mbtp.distFarClip;
+
+  if (p) delete [] p;
+  p = new vpPoint [nbpt];
+  for(unsigned int i = 0; i < nbpt; i++)
+    p[i] = mbtp.p[i];
+
+  return (*this);
 }
 
 /*!

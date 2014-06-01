@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpThetaUVector.h 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpThetaUVector.h 4632 2014-02-03 17:06:40Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -148,10 +148,10 @@ private:
 
 public:
 
-  // constructor
-  vpThetaUVector() { ; }
-  // copy constructor
-  vpThetaUVector(const vpThetaUVector &tu) ;
+  /*! Default constructor that initialize all the angles to zero. */
+  vpThetaUVector() {}
+  /*! Copy constructor. */
+  vpThetaUVector(const vpThetaUVector &tu) : vpRotationVector(tu) {}
 
   // constructor initialize a Theta U vector from a homogeneous matrix
   vpThetaUVector(const vpHomogeneousMatrix & M) ;
@@ -181,8 +181,6 @@ public:
   // convert an Rxyz vector into Theta U vector
   vpThetaUVector buildFrom(const vpRxyzVector &xyz) ;
 
-  // copy operator
-  vpThetaUVector &operator=(const vpThetaUVector &tu);
   vpThetaUVector &operator=(double x) ;
 
   // extract the angle and the axis from the ThetaU representation

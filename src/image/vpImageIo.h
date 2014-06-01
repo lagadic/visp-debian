@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpImageIo.h 4314 2013-07-16 17:41:21Z fspindle $
+ * $Id: vpImageIo.h 4604 2014-01-21 14:15:23Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -56,7 +56,7 @@
 #include <stdio.h>
 #include <iostream>
 
-#ifdef WIN32
+#if defined(_WIN32)
 #  include <windows.h>
 #endif
 
@@ -89,10 +89,10 @@
 int main()
 {
   vpImage<unsigned char> I;
-#ifdef UNIX
-  std::string filename("/local/soft/ViSP/ViSP-images/Klimt/Klimt.ppm");
-#elif WIN32
+#if defined(_WIN32)
   std::string filename("C:/temp/ViSP-images/Klimt/Klimt.ppm");
+#else // UNIX
+  std::string filename("/local/soft/ViSP/ViSP-images/Klimt/Klimt.ppm");
 #endif
 
   vpImageIo::read(I, filename); // Convert the color image in a gray level image

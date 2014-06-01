@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpDisplay.cpp 4323 2013-07-18 09:24:01Z fspindle $
+ * $Id: vpDisplay.cpp 4632 2014-02-03 17:06:40Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -58,25 +58,28 @@
   Default constructor.
 */
 vpDisplay::vpDisplay()
-{
-  displayHasBeenInitialized = false;
-  windowXPosition = 0;
-  windowYPosition = 0;
+  : displayHasBeenInitialized(false), windowXPosition(0), windowYPosition(0), width(0), height(0), title_() {}
 
-  title = new char[1024];
-  strcpy (title, "" );
+/*!
+  Copy constructor.
+*/
+vpDisplay::vpDisplay(const vpDisplay &d)
+  : displayHasBeenInitialized(false), windowXPosition(0), windowYPosition(0), width(0), height(0), title_()
+{
+  displayHasBeenInitialized = d.displayHasBeenInitialized;
+  windowXPosition = d.windowXPosition;
+  windowYPosition = d.windowYPosition;
+
+  width  = d.width;
+  height = d.height;
 }
+
 /*!
   Destructor that desallocates memory.
 */
 vpDisplay::~vpDisplay()
 {
   displayHasBeenInitialized = false ;
-
-  if (title != NULL) {
-    delete [] title;
-    title = NULL;
-  }
 }
 
 /*!
@@ -117,7 +120,7 @@ vpDisplay::setFont ( const vpImage<unsigned char> &I,
 */
 void
 vpDisplay::setTitle ( const vpImage<unsigned char> &I, 
-		      const char *windowtitle )
+                      const char *windowtitle )
 {
 
   try

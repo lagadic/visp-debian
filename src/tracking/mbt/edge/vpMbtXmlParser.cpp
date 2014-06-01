@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpMbtXmlParser.cpp 4320 2013-07-17 15:37:27Z ayol $
+ * $Id: vpMbtXmlParser.cpp 4632 2014-02-03 17:06:40Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -32,12 +32,13 @@
  *
  *
  * Description:
- * Make the complete tracking of an object by using its CAD model
+ * Load XML parameters of the Model based tracker (using edges).
  *
  * Authors:
  * Nicolas Melchior
  * Romain Tallonneau
  * Eric Marchand
+ * Aurelien Yol
  *
  *****************************************************************************/
 #include <visp/vpConfig.h>
@@ -57,11 +58,8 @@
   Default constructor. 
   
 */
-vpMbtXmlParser::vpMbtXmlParser()
+vpMbtXmlParser::vpMbtXmlParser() : m_ecm()
 {
-  hasNearClipping = false;
-  hasFarClipping = false;
-  fovClipping = false;
   init();
 }
 
@@ -78,9 +76,8 @@ vpMbtXmlParser::~vpMbtXmlParser()
 void 
 vpMbtXmlParser::init()
 {
-  setMainTag("conf");
+  vpMbXmlParser::init();
 
-  nodeMap["conf"] = conf;
   nodeMap["ecm"] = ecm;
   nodeMap["mask"] = mask;
   nodeMap["size"] = size;
@@ -94,20 +91,6 @@ vpMbtXmlParser::init()
   nodeMap["sample"] = sample;
   nodeMap["step"] = step;
   nodeMap["nb_sample"] = nb_sample;
-  nodeMap["face"] = face;
-  nodeMap["angle_appear"] = angle_appear;
-  nodeMap["angle_disappear"] = angle_disappear;
-  nodeMap["near_clipping"] = near_clipping;
-  nodeMap["far_clipping"] = far_clipping;
-  nodeMap["fov_clipping"] = fov_clipping;
-  nodeMap["camera"] = camera;
-  nodeMap["height"] = height;
-  nodeMap["width"] = width;
-  nodeMap["u0"] = u0;
-  nodeMap["v0"] = v0;
-  nodeMap["px"] = px;
-  nodeMap["py"] = py;
-  
 }
 
 /*!
@@ -144,24 +127,16 @@ vpMbtXmlParser::writeMainClass(xmlNodePtr /*node*/)
 void
 vpMbtXmlParser::readMainClass(xmlDocPtr doc, xmlNodePtr node)
 {
-	bool ecm_node = false;
-  bool sample_node = false;
   bool camera_node = false;
   bool face_node = false;
+  bool ecm_node = false;
+  bool sample_node = false;
   
   for(xmlNodePtr dataNode = node->xmlChildrenNode; dataNode != NULL;  dataNode = dataNode->next)  {
     if(dataNode->type == XML_ELEMENT_NODE){
       std::map<std::string, int>::iterator iter_data= this->nodeMap.find((char*)dataNode->name);
       if(iter_data != nodeMap.end()){
         switch (iter_data->second){
-        case ecm:{
-          this->read_ecm (doc, dataNode);
-          ecm_node = true;
-          }break;
-        case sample:{
-          this->read_sample (doc, dataNode);
-          sample_node = true;
-          }break;
         case camera:{
           this->read_camera (doc, dataNode);
           camera_node = true;
@@ -169,6 +144,14 @@ vpMbtXmlParser::readMainClass(xmlDocPtr doc, xmlNodePtr node)
         case face:{
           this->read_face(doc, dataNode);
           face_node = true;
+          }break;
+        case ecm:{
+          this->read_ecm (doc, dataNode);
+          ecm_node = true;
+          }break;
+        case sample:{
+          this->read_sample (doc, dataNode);
+          sample_node = true;
           }break;
         default:{
 //          vpTRACE("unknown tag in read_sample : %d, %s", iter_data->second, (iter_data->first).c_str());
@@ -178,17 +161,31 @@ vpMbtXmlParser::readMainClass(xmlDocPtr doc, xmlNodePtr node)
     }
   }
   
-  if(!ecm_node)
-    std::cout << "WARNING: ECM Node not specified, default values used" << std::endl;
+  if(!camera_node) {
+    std::cout << "camera : u0 : "<< this->cam.get_u0() << " (default)" <<std::endl;
+    std::cout << "camera : v0 : "<< this->cam.get_v0() << " (default)" <<std::endl;
+    std::cout << "camera : px : "<< this->cam.get_px() << " (default)" <<std::endl;
+    std::cout << "camera : py : "<< this->cam.get_py() << " (default)" <<std::endl;
+  }
+
+  if(!face_node) {
+    std::cout << "face : Angle Appear : "<< angleAppear <<" (default)" <<std::endl;
+    std::cout << "face : Angle Disappear : "<< angleDisappear <<" (default)" <<std::endl;
+  }
+
+  if(!ecm_node) {
+    std::cout << "ecm : mask : size : "<< this->m_ecm.getMaskSize() << " (default)" <<std::endl;
+    std::cout << "ecm : mask : nb_mask : "<< this->m_ecm.getMaskNumber() << " (default)" <<std::endl;
+    std::cout <<"ecm : range : tracking : "<< this->m_ecm.getRange()<< " (default)" <<std::endl;
+    std::cout <<"ecm : contrast : threshold : " << this->m_ecm.getThreshold()<<" (default)" <<std::endl;
+    std::cout <<"ecm : contrast : mu1 : " << this->m_ecm.getMu1()<<" (default)" <<std::endl;
+    std::cout <<"ecm : contrast : mu2 : " << this->m_ecm.getMu2()<<" (default)" <<std::endl;
+  }
   
-  if(!sample_node)
-    std::cout << "WARNING: SAMPLE Node not specified, default values used" << std::endl;
-  
-  if(!camera_node)
-    std::cout << "WARNING: CAMERA Node not specified, default values used" << std::endl;
-  
-  if(!face_node)
-    std::cout << "WARNING: FACE Node not specified, default values used" << std::endl;
+  if(!sample_node) {
+    std::cout <<"sample : sample_step : "<< this->m_ecm.getSampleStep()<< " (default)" << std::endl;
+    std::cout <<"sample : n_total_sample : "<< this->m_ecm.getNbTotalSample()<< " (default)"<<std::endl;
+  }
 }
 
 
@@ -232,14 +229,20 @@ vpMbtXmlParser::read_ecm (xmlDocPtr doc, xmlNodePtr node)
     }
   }
   
-  if(!mask_node)
-    std::cout << "WARNING: In ECM Node, MASK Node not specified, default values used" << std::endl;
+  if(!mask_node) {
+    std::cout << "ecm : mask : size : "<< this->m_ecm.getMaskSize() << " (default)" <<std::endl;
+    std::cout << "ecm : mask : nb_mask : "<< this->m_ecm.getMaskNumber() << " (default)" <<std::endl;
+  }
   
-  if(!range_node)
-    std::cout << "WARNING: In ECM Node, RANGE Node not specified, default values used" << std::endl;
+  if(!range_node) {
+    std::cout <<"ecm : range : tracking : "<< this->m_ecm.getRange()<< " (default)" <<std::endl;
+  }
   
-  if(!contrast_node)
-    std::cout << "WARNING: In ECM Node, CONTRAST Node not specified, default values used" << std::endl;
+  if(!contrast_node) {
+    std::cout <<"ecm : contrast : threshold " << this->m_ecm.getThreshold()<<" (default)" <<std::endl;
+    std::cout <<"ecm : contrast : mu1 " << this->m_ecm.getMu1()<<" (default)" <<std::endl;
+    std::cout <<"ecm : contrast : mu2 " << this->m_ecm.getMu2()<<" (default)" <<std::endl;
+  }
 }
 
 /*!
@@ -285,188 +288,14 @@ vpMbtXmlParser::read_sample (xmlDocPtr doc, xmlNodePtr node)
   this->m_ecm.setNbTotalSample(d_nb_sample);
 
   if(!step_node)
-    std::cout << "WARNING: In SAMPLE Node, STEP Node not specified, default value used : " << this->m_ecm.getSampleStep() << std::endl;
+    std::cout <<"sample : sample_step : "<< this->m_ecm.getSampleStep()<< " (default)" << std::endl;
   else
-    std::cout <<"sample : sample_step "<< this->m_ecm.getSampleStep()<<std::endl;
+    std::cout <<"sample : sample_step : "<< this->m_ecm.getSampleStep()<<std::endl;
   
   if(!nb_sample_node)
-    std::cout << "WARNING: In SAMPLE Node, NB_SAMPLE Node not specified, default value used : " << this->m_ecm.getNbTotalSample() << std::endl;
+    std::cout <<"sample : n_total_sample : "<< this->m_ecm.getNbTotalSample()<< " (default)"<<std::endl;
   else
-    std::cout <<"sample : n_total_sample "<< this->m_ecm.getNbTotalSample()<<std::endl;
-}
-
-/*!
-  Read camera information.
-  
-  \throw vpException::fatalError if there was an unexpected number of data. 
-  
-  \param doc : Pointer to the document.
-  \param node : Pointer to the node of the camera information.
-*/
-void 
-vpMbtXmlParser::read_camera (xmlDocPtr doc, xmlNodePtr node)
-{
-  bool height_node = false;
-  bool width_node = false;
-  bool u0_node = false;
-  bool v0_node = false;
-  bool px_node = false;
-  bool py_node = false;
-  
-    // current data values.
-// 	int d_height=0 ;
-// 	int d_width= 0 ;
-	double d_u0 = this->cam.get_u0();
-	double d_v0 = this->cam.get_v0();
-	double d_px = this->cam.get_px();
-	double d_py = this->cam.get_py();
-	
-  for(xmlNodePtr dataNode = node->xmlChildrenNode; dataNode != NULL;  dataNode = dataNode->next)  {
-    if(dataNode->type == XML_ELEMENT_NODE){
-      std::map<std::string, int>::iterator iter_data= this->nodeMap.find((char*)dataNode->name);
-      if(iter_data != nodeMap.end()){
-        switch (iter_data->second){
-        case height:{
-          /* d_height = */ xmlReadIntChild(doc, dataNode);
-          height_node = true;
-          }break;
-        case width:{
-          /* d_width = */ xmlReadIntChild(doc, dataNode);
-          width_node = true;
-          }break;
-        case u0:{
-          d_u0 = xmlReadDoubleChild(doc, dataNode);
-          u0_node = true;
-          }break;
-        case v0:{
-          d_v0 = xmlReadDoubleChild(doc, dataNode);
-          v0_node = true;
-          }break;
-        case px:{
-          d_px = xmlReadDoubleChild(doc, dataNode);
-          px_node = true;
-          }break;
-        case py:{
-          d_py = xmlReadDoubleChild(doc, dataNode);
-          py_node = true;
-          }break;
-        default:{
-//          vpTRACE("unknown tag in read_camera : %d, %s", iter_data->second, (iter_data->first).c_str());
-          }break;
-        }
-      }
-    }
-  }
-  
-  this->cam.initPersProjWithoutDistortion(d_px, d_py, d_u0, d_v0) ;
-
-  if(!height_node)
-    std::cout << "WARNING: In CAMERA Node, HEIGHT Node not specified, default value used" << std::endl;
-  
-  if(!width_node)
-    std::cout << "WARNING: In CAMERA Node, WIDTH Node not specified, default value used" << std::endl;
-  
-  if(!u0_node)
-    std::cout << "WARNING: In CAMERA Node, u0 Node not specified, default value used : " << this->cam.get_u0() << std::endl;
-  else
-    std::cout << "camera : u0 "<< this->cam.get_u0() <<std::endl;
-  
-  if(!v0_node)
-    std::cout << "WARNING: In CAMERA Node, v0 Node not specified, default value used : " << this->cam.get_v0() << std::endl;
-  else
-    std::cout << "camera : v0 "<< this->cam.get_v0() <<std::endl;
-  
-  if(!px_node)
-    std::cout << "WARNING: In CAMERA Node, px Node not specified, default value used : " << this->cam.get_px() << std::endl;
-  else
-    std::cout << "camera : px "<< this->cam.get_px() <<std::endl;
-  
-  if(!py_node)
-    std::cout << "WARNING: In CAMERA Node, py Node not specified, default value used : " << this->cam.get_py() << std::endl;
-  else
-    std::cout << "camera : py "<< this->cam.get_py() <<std::endl;
-}
-
-/*!
-  Read face information.
-  
-  \throw vpException::fatalError if there was an unexpected number of data. 
-  
-  \param doc : Pointer to the document.
-  \param node : Pointer to the node of the camera information.
-*/
-void 
-vpMbtXmlParser::read_face(xmlDocPtr doc, xmlNodePtr node)
-{
-  bool angle_appear_node = false;
-  bool angle_disappear_node = false;
-  bool near_clipping_node = false;
-  bool far_clipping_node = false;
-  bool fov_clipping_node = false;
-  
-  for(xmlNodePtr dataNode = node->xmlChildrenNode; dataNode != NULL;  dataNode = dataNode->next)  {
-    if(dataNode->type == XML_ELEMENT_NODE){
-      std::map<std::string, int>::iterator iter_data= this->nodeMap.find((char*)dataNode->name);
-      if(iter_data != nodeMap.end()){
-        switch (iter_data->second){
-        case angle_appear:{
-          angleAppear = xmlReadDoubleChild(doc, dataNode);
-          angle_appear_node = true;
-          }break;
-        case angle_disappear:{
-          angleDisappear = xmlReadDoubleChild(doc, dataNode);
-          angle_disappear_node = true;
-          }break;
-        case near_clipping:{
-          nearClipping = xmlReadDoubleChild(doc, dataNode);
-          near_clipping_node = true;
-          hasNearClipping = true;
-          }break;
-        case far_clipping:{
-          farClipping = xmlReadDoubleChild(doc, dataNode);
-          far_clipping_node = true;
-          hasFarClipping = true;
-          }break;
-        case fov_clipping:{
-          fovClipping = (bool)xmlReadIntChild(doc, dataNode);
-          fov_clipping_node = true;
-          }break;
-        default:{
-//          vpTRACE("unknown tag in read_camera : %d, %s", iter_data->second, (iter_data->first).c_str());
-          }break;
-        }
-      }
-    }
-  }
-  
-  if(!angle_appear_node)
-    std::cout << "WARNING: In FACE Node, ANGLE_APPEAR Node not specified, default value used : " << angleAppear << std::endl;
-  else
-    std::cout << "face : Angle Appear "<< angleAppear <<std::endl;
-  
-  if(!angle_disappear_node)
-    std::cout << "WARNING: In FACE Node, ANGLE_DESAPPEAR Node not specified, default value used : " << angleDisappear << std::endl;
-  else
-    std::cout << "face : Angle Disappear : "<< angleDisappear <<std::endl;
-  
-  if(!near_clipping_node)
-    std::cout << "WARNING: In FACE Node, NEAR_CLIPPING Node not specified, no near clipping used" << std::endl;
-  else
-    std::cout << "face : Near Clipping : "<< nearClipping <<std::endl;
-  
-  if(!far_clipping_node)
-    std::cout << "WARNING: In FACE Node, FAR_CLIPPING Node not specified, no far clipping used" << std::endl;
-  else
-    std::cout << "face : Far Clipping : "<< farClipping <<std::endl;
-  
-  if(!fov_clipping_node)
-    std::cout << "WARNING: In FACE Node, FOV_CLIPPING Node not specified, no fov clipping used" << std::endl;
-  else{
-    if(fovClipping)
-      std::cout << "face : Fov Clipping : True" <<std::endl;
-    else
-      std::cout << "face : Fov Clipping : False" <<std::endl;
-  }
+    std::cout <<"sample : n_total_sample : "<< this->m_ecm.getNbTotalSample()<<std::endl;
 }
 
 /*!
@@ -512,14 +341,14 @@ vpMbtXmlParser::read_mask (xmlDocPtr doc, xmlNodePtr node)
   this->m_ecm.setMaskNumber(d_nb_mask);
   
   if(!size_node)
-    std::cout << "WARNING: In MASK Node, SIZE Node not specified, default value used : " << this->m_ecm.getMaskSize() << std::endl;
-  else
-    std::cout << "ecm : mask : size "<< this->m_ecm.getMaskSize() <<std::endl;
+    std::cout << "ecm : mask : size : "<< this->m_ecm.getMaskSize() << " (default)" <<std::endl;
+   else
+    std::cout << "ecm : mask : size : "<< this->m_ecm.getMaskSize() <<std::endl;
   
   if(!nb_mask_node)
-    std::cout << "WARNING: In MASK Node, NB_MASK Node not specified, default value used : " << this->m_ecm.getMaskNumber() << std::endl;
+    std::cout << "ecm : mask : nb_mask : "<< this->m_ecm.getMaskNumber() << " (default)" <<std::endl;
   else
-    std::cout << "ecm : mask : nb_mask "<< this->m_ecm.getMaskNumber() <<std::endl; 
+    std::cout << "ecm : mask : nb_mask : "<< this->m_ecm.getMaskNumber() <<std::endl;
 }
 
 /*!
@@ -558,9 +387,9 @@ vpMbtXmlParser::read_range (xmlDocPtr doc, xmlNodePtr node)
   this->m_ecm.setRange(m_range_tracking);
   
   if(!tracking_node)
-    std::cout << "WARNING: In RANGE Node, TRACKING Node not specified, default value used : " << this->m_ecm.getRange() << std::endl;
+    std::cout <<"ecm : range : tracking : "<< this->m_ecm.getRange()<< " (default)" <<std::endl;
   else
-    std::cout <<"ecm : range : tracking "<< this->m_ecm.getRange()<<std::endl;  
+    std::cout <<"ecm : range : tracking : "<< this->m_ecm.getRange()<<std::endl;
 }
 
 
@@ -614,17 +443,17 @@ vpMbtXmlParser::read_contrast (xmlDocPtr doc, xmlNodePtr node)
   this->m_ecm.setThreshold(d_edge_threshold);
   
   if(!edge_threshold_node)
-    std::cout << "WARNING: In CONTRAST Node, EDGE_THRESHOLD Node not specified, default value used : " << this->m_ecm.getThreshold() << std::endl;
+    std::cout <<"ecm : contrast : threshold " << this->m_ecm.getThreshold()<<" (default)" <<std::endl;
   else
     std::cout <<"ecm : contrast : threshold " << this->m_ecm.getThreshold()<<std::endl;
   
   if(!mu1_node)
-    std::cout << "WARNING: In CONTRAST Node, mu1 Node not specified, default value used : " << this->m_ecm.getMu1() << std::endl;
+    std::cout <<"ecm : contrast : mu1 " << this->m_ecm.getMu1()<<" (default)" <<std::endl;
   else
     std::cout <<"ecm : contrast : mu1 " << this->m_ecm.getMu1()<<std::endl;
   
   if(!mu2_node)
-    std::cout << "WARNING: In CONTRAST Node, mu2 Node not specified, default value used : " << this->m_ecm.getMu2() << std::endl;
+    std::cout <<"ecm : contrast : mu2 " << this->m_ecm.getMu2()<<" (default)" <<std::endl;
   else
     std::cout <<"ecm : contrast : mu2 " << this->m_ecm.getMu2()<<std::endl;
 }

@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpV4l2Grabber.cpp 4317 2013-07-17 09:40:17Z fspindle $
+ * $Id: vpV4l2Grabber.cpp 4656 2014-02-07 17:21:28Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -919,11 +919,22 @@ vpV4l2Grabber::open()
     if (cap.capabilities & V4L2_CAP_STREAMING)
       fprintf(stdout, "     Support streaming capture.\n");
     else
-      fprintf(stdout, "     Does not support streaming capture.\n");
+      fprintf(stdout, "     Does not support streaming capture\n");
     if(cap.capabilities & V4L2_CAP_ASYNCIO)
-      fprintf(stdout, "     Support asynchronous I/O methods.\n");
+      fprintf(stdout, "     Support asynchronous I/O methods\n");
     else
-      fprintf(stdout, "     Does not support asynchronous I/O methods.\n");
+      fprintf(stdout, "     Does not support asynchronous I/O methods\n");
+    if(cap.capabilities & V4L2_CAP_TIMEPERFRAME)
+      fprintf(stdout, "     Support time per frame field\n");
+    else
+      fprintf(stdout, "     Does not support time per frame field\n");
+    // Get framerate
+    struct v4l2_streamparm streamparm;
+    streamparm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
+    if (v4l2_ioctl(fd, VIDIOC_G_PARM, &streamparm) != -1) {
+      fprintf(stdout, "     Current acquisition framerate: %d fps\n",
+              streamparm.parm.output.timeperframe.denominator);
+    }
   }
 
   getCapabilities();

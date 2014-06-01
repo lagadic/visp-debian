@@ -1,9 +1,9 @@
 #############################################################################
 #
-# $Id: FindCMU1394.cmake 4056 2013-01-05 13:04:42Z fspindle $
+# $Id: FindCMU1394.cmake 4603 2014-01-21 13:40:58Z fspindle $
 #
 # This file is part of the ViSP software.
-# Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+# Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
 # 
 # This software is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -52,22 +52,40 @@ if(WIN32)
     )
   #MESSAGE("DBG CMU1394_INCLUDE_DIR=${CMU1394_INCLUDE_DIR}")  
   
-  FIND_LIBRARY(CMU1394_LIBRARY_DEBUG
-    NAMES 1394camerad
-    PATHS 
-    $ENV{CMU1394_HOME}/lib
-	"C:/Program Files (x86)/CMU/1394Camera/lib"
-	"C:/Program Files/CMU/1394Camera/lib"
-    )
-  #MESSAGE("DBG CMU1394_LIBRARY_DEBUG=${CMU1394_LIBRARY_DEBUG}")
+  if(CMAKE_CL_64)
+    FIND_LIBRARY(CMU1394_LIBRARY_DEBUG
+      NAMES 1394camerad
+      PATHS 
+      $ENV{CMU1394_HOME}/lib64/x64
+	  "C:/Program Files (x86)/CMU/1394Camera/lib64/x64"
+	  "C:/Program Files/CMU/1394Camera/lib64/x64"
+      )
   
-  FIND_LIBRARY(CMU1394_LIBRARY_RELEASE
-    NAMES 1394camera
-    PATHS 
-    $ENV{CMU1394_HOME}/lib
-	"C:/Program Files (x86)/CMU/1394Camera/lib"
-	"C:/Program Files/CMU/1394Camera/lib"
-    )
+    FIND_LIBRARY(CMU1394_LIBRARY_RELEASE
+      NAMES 1394camera
+      PATHS 
+      $ENV{CMU1394_HOME}/lib64/x64
+	  "C:/Program Files (x86)/CMU/1394Camera/lib64/x64"
+	  "C:/Program Files/CMU/1394Camera/lib64/x64"
+      )
+  else()
+    FIND_LIBRARY(CMU1394_LIBRARY_DEBUG
+      NAMES 1394camerad
+      PATHS 
+      $ENV{CMU1394_HOME}/lib
+	  "C:/Program Files (x86)/CMU/1394Camera/lib"
+	  "C:/Program Files/CMU/1394Camera/lib"
+      )
+  
+    FIND_LIBRARY(CMU1394_LIBRARY_RELEASE
+      NAMES 1394camera
+      PATHS 
+      $ENV{CMU1394_HOME}/lib
+	  "C:/Program Files (x86)/CMU/1394Camera/lib"
+	  "C:/Program Files/CMU/1394Camera/lib"
+      )
+  endif()
+  #MESSAGE("DBG CMU1394_LIBRARY_DEBUG=${CMU1394_LIBRARY_DEBUG}")
   #MESSAGE("DBG CMU1394_LIBRARY_RELEASE=${CMU1394_LIBRARY_RELEASE}")
 
   set(CMU1394_LIBRARIES "")

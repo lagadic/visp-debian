@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpDisplayGTK.cpp 4174 2013-03-22 10:28:41Z fspindle $
+ * $Id: vpDisplayGTK.cpp 4632 2014-02-03 17:06:40Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -80,10 +80,17 @@
 vpDisplayGTK::vpDisplayGTK(vpImage<unsigned char> &I,
                            int x,
                            int y,
-                           const char *title) : vpDisplay()
+                           const char *title)
 {
+  widget = NULL;
+  vectgtk = NULL;
+  font = NULL;
+  colormap = NULL;
+  background = NULL;
+  gc = NULL;
+  nrow = ncol = 0;
   col = NULL;
-  widget = NULL ;
+
   init(I, x, y, title) ;
 }
 
@@ -99,10 +106,17 @@ vpDisplayGTK::vpDisplayGTK(vpImage<unsigned char> &I,
 vpDisplayGTK::vpDisplayGTK(vpImage<vpRGBa> &I,
                            int x,
                            int y,
-                           const char *title) : vpDisplay()
+                           const char *title)
 {
+  widget = NULL;
+  vectgtk = NULL;
+  font = NULL;
+  colormap = NULL;
+  background = NULL;
+  gc = NULL;
+  nrow = ncol = 0;
   col = NULL;
-  widget = NULL ;
+
   init(I, x, y, title) ;
 }
 
@@ -130,16 +144,24 @@ int main()
 }
   \endcode
 */
-vpDisplayGTK::vpDisplayGTK(int x, int y, const char *title) : vpDisplay()
+vpDisplayGTK::vpDisplayGTK(int x, int y, const char *title)
 {
+  widget = NULL;
+  vectgtk = NULL;
+  font = NULL;
+  colormap = NULL;
+  background = NULL;
+  gc = NULL;
+  nrow = ncol = 0;
+  col = NULL;
+
   windowXPosition = x ;
   windowYPosition = y ;
 
-  col = NULL;
-  widget = NULL ;
-
-  if (title != NULL)
-    strcpy(this->title, title) ;
+  if(title != NULL)
+    title_ = std::string(title);
+  else
+    title_ = std::string(" ");
 }
 
 /*!
@@ -163,8 +185,14 @@ int main()
 */
 vpDisplayGTK::vpDisplayGTK() : vpDisplay()
 {
+  widget = NULL;
+  vectgtk = NULL;
+  font = NULL;
+  colormap = NULL;
+  background = NULL;
+  gc = NULL;
+  nrow = ncol = 0;
   col = NULL;
-  widget = NULL ;
 }
 
 /*!
@@ -361,15 +389,20 @@ vpDisplayGTK::init(unsigned int width, unsigned int height,
   gdk_colormap_alloc_color(colormap,&darkGray,FALSE,TRUE);
   col[vpColor::id_darkGray] = &darkGray ;
 
-  /* Chargement des polices */
-  Police1 = gdk_font_load("-*-times-medium-r-normal-*-16-*-*-*-*-*-*-*");
-  Police2 = gdk_font_load("-*-courier-bold-r-normal-*-*-140-*-*-*-*-*-*");
+  // Try to load a default font
+  font = gdk_font_load("-*-times-medium-r-normal-*-16-*-*-*-*-*-*-*");
+  if (font == NULL)
+    font = gdk_font_load("-*-courier-bold-r-normal-*-*-140-*-*-*-*-*-*");
+  if (font == NULL)
+    font = gdk_font_load("-*-courier 10 pitch-medium-r-normal-*-16-*-*-*-*-*-*-*");
 
-  if (title != NULL)
-    strcpy(this->title, title) ;
+  if(title != NULL)
+    title_ = std::string(title);
+  else
+    title_ = std::string(" ");
 
   displayHasBeenInitialized = true ;
-  setTitle(this->title) ;
+  gdk_window_set_title(widget->window, title_.c_str());
 }
 
 
@@ -380,7 +413,7 @@ vpDisplayGTK::init(unsigned int width, unsigned int height,
   Set the font used to display a text in overlay. The display is
   performed using displayCharString().
 
-  \param font : The expected font name. 
+  \param fontname : The expected font name.
 
   \note Under UNIX, to know all the available fonts, use the
   "xlsfonts" binary in a terminal. You can also use the "xfontsel" binary.
@@ -388,9 +421,9 @@ vpDisplayGTK::init(unsigned int width, unsigned int height,
   \sa displayCharString()
 */
 void
-vpDisplayGTK::setFont(const char * /* font */)
+vpDisplayGTK::setFont(const char *fontname)
 {
-  vpERROR_TRACE("Not yet implemented" ) ;
+  font = gdk_font_load((const gchar*)fontname);
 }
 
 /*!
@@ -402,8 +435,11 @@ vpDisplayGTK::setTitle(const char *title)
 {
   if (displayHasBeenInitialized)
   {
-    if (title != NULL)
-      gdk_window_set_title(widget->window,(char *)title);
+    if(title != NULL)
+      title_ = std::string(title);
+    else
+      title_ = std::string(" ");
+    gdk_window_set_title(widget->window, title_.c_str());
   }
   else
   {
@@ -780,12 +816,13 @@ void vpDisplayGTK::displayCharString ( const vpImagePoint &ip,
       gdk_colormap_alloc_color(colormap,&gdkcolor,FALSE,TRUE);
       gdk_gc_set_foreground(gc, &gdkcolor);     
     }
-
-    gdk_draw_string(background, Police2, gc,
-		    vpMath::round( ip.get_u() ), 
-		    vpMath::round( ip.get_v() ),
-		    (const gchar *)text);
-
+    if (font != NULL)
+      gdk_draw_string(background, font, gc,
+                      vpMath::round( ip.get_u() ),
+                      vpMath::round( ip.get_v() ),
+                      (const gchar *)text);
+    else
+      std::cout << "Cannot draw string: no font is selected" << std::endl;
   }
   else
   {

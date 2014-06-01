@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpPose.h 4303 2013-07-04 14:14:00Z fspindle $
+ * $Id: vpPose.h 4632 2014-02-03 17:06:40Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -102,7 +102,7 @@ protected :
 private:
   int vvsIterMax ; //! define the maximum number of iteration in VVS
   //! variable used in the Dementhon approach
-  vpPoint *c3d ;
+  std::vector<vpPoint> c3d ;
   //! Flag used to specify if the covariance matrix has to be computed or not.
   bool computeCovariance;
   //! Covariance matrix
@@ -120,7 +120,7 @@ protected:
   int calculArbreDementhon(vpMatrix &b, vpColVector &U, vpHomogeneousMatrix &cMo) ;
 
 public:
-  //! constructor
+  // constructor
   vpPose() ;
   //! destructor
   virtual ~vpPose() ;
@@ -169,8 +169,8 @@ public:
   void setRansacNbInliersToReachConsensus(const unsigned int &nbC){ ransacNbInlierConsensus = nbC; }
   void setRansacThreshold(const double &t){ ransacThreshold = t; }
   void setRansacMaxTrials(const int &rM){ ransacMaxTrials = rM; }
-  unsigned int getRansacNbInliers(){ return (unsigned int) ransacInliers.size(); }
-  std::vector<vpPoint> getRansacInliers(){ return ransacInliers; }
+  unsigned int getRansacNbInliers() const { return (unsigned int) ransacInliers.size(); }
+  std::vector<vpPoint> getRansacInliers() const{ return ransacInliers; }
   
   /*!
     Set if the covaraince matrix has to be computed in the Virtual Visual Servoing approach.

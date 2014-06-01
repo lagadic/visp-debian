@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpRobotSimulator.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpRobotSimulator.cpp 4632 2014-02-03 17:06:40Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -46,7 +46,6 @@
 /*!
   Basic constructor that sets the sampling time by default to 40ms.
 */
-vpRobotSimulator::vpRobotSimulator() : vpRobot()
+vpRobotSimulator::vpRobotSimulator() : vpRobot(), delta_t_(0.040f)
 {
-  setSamplingTime(0.040f);
 }

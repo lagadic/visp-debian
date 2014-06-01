@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpMomentCommon.h 4276 2013-06-25 12:36:48Z fspindle $
+ * $Id: vpMomentCommon.h 4574 2014-01-09 08:48:51Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -70,14 +70,15 @@ class vpMomentObject;
     - vpMomentBasic
     - vpMomentGravityCenter
     - vpMomentCentered
-    - vpMomentCenteredNormalized
+    - vpMomentGravityCenterNormalized
     - vpMomentAreaNormalized
     - vpMomentCInvariant
     - vpMomentAlpha
+    - vpMomentArea
 
     There is no need to do the linkTo operations manually nor is it necessary to care about the order of moment computation.
 
-    This class carries an vpMomentCommon::updateAll method capable of updating AND computing moments from an object (see 4-step process in vpMoment).
+    This class carries an vpMomentCommon::updateAll() method capable of updating AND computing moments from an object (see 4-step process in vpMoment).
     The moments computed by this class are classical moments used in moment-based visual servoing.
     For more information see \cite Tahri05z.
 
@@ -88,7 +89,8 @@ class vpMomentObject;
     - the surface of the destination object in the end of the visual servoing process.
     - the reference alpha: angular position of the object used to obtain the Mu3 set.
 
-    Shortcuts for each of these prerequisites are provided by this class except depth (methods vpMomentCommon::getMu3, vpMomentCommon::getSurface,vpMomentCommon::getAlpha).
+    Shortcuts for each of these prerequisites are provided by this class except depth (methods
+    vpMomentCommon::getMu3(), vpMomentCommon::getSurface(), vpMomentCommon::getAlpha()).
 
     \attention Make sure your object is at least of order 5 when using this pre-filled database.
 
@@ -100,18 +102,17 @@ private:
     vpMomentCentered momentCentered;
     vpMomentGravityCenterNormalized momentGravityNormalized;
     vpMomentAreaNormalized momentSurfaceNormalized;
-    vpMomentCInvariant momentCInvariant;
+    vpMomentCInvariant* momentCInvariant;
     vpMomentAlpha momentAlpha;
     vpMomentArea momentArea;
 public:
-    vpMomentCommon(double dstSurface,std::vector<double> ref,double refAlpha,double dstZ=1.0);
+    vpMomentCommon(double dstSurface,std::vector<double> ref,double refAlpha,double dstZ=1.0, bool flg_sxsyfromnormalized=false);
 
-    static double getAlpha(vpMomentObject& objec);
+    static double getAlpha(vpMomentObject& object);
     static std::vector<double> getMu3(vpMomentObject& object);
     static double getSurface(vpMomentObject& object);
 
     void updateAll(vpMomentObject& object);
+    ~vpMomentCommon();
 };
-
-
 #endif // VPCOMMONMOMENTS_H

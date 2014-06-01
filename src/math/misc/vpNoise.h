@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpNoise.h 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpNoise.h 4649 2014-02-07 14:57:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -71,37 +71,26 @@
  */
 class VISP_EXPORT vpUniRand
 {
+    /*unsigned*/ long    a  ;
+    /*unsigned*/ long    m ; //2^31-1
+    /*unsigned*/ long    q ; //integer part of m/a
+    /*unsigned*/ long    r ;//r=m mod a
+    double    normalizer ; //we use a normalizer > m to ensure ans will never be 1 (it is the case if x = 739806647)
 
+  private:
+    void draw0();
+  protected:
+    long x;
+    double draw1();
 
-	/*unsigned*/ long    a  ;
-	/*unsigned*/ long    m ; //2^31-1
-	/*unsigned*/ long    q ; //integer part of m/a
-	/*unsigned*/ long    r ;//r=m mod a
-	double    normalizer ; //we use a normalizer > m to ensure ans will never be 1 (it is the case if x = 739806647)
+  public:
+    vpUniRand(const long seed = 0)
+      : a(16807), m(2147483647), q(127773), r(2836), normalizer(2147484721.0), x((seed)? seed : 739806647)
+    {
+    }
+    virtual ~vpUniRand() {};
 
-
-private:
-	void draw0();
-protected:
-	long x;
-	double draw1();
-	void init()
-	{
-		a = 16807 ;
-		m = /*(unsigned long)*/2147483647 ; //2^31-1
-		q = 127773 ; //integer part of m/a
-		r = 2836 ;//r=m mod a
-		//we use a normalizer > m to ensure ans will never be
-		// 1 (it is the case if x = 739806647)
-		normalizer = 2147484721.0 ;
-	}
-
-public:
-	vpUniRand(const long seed = 0):x((seed)? seed : 739806647)
-	{
-		init() ;
-	}
-	double operator()() {return draw1();}
+    double operator()() {return draw1();}
 
 };
 
@@ -117,12 +106,11 @@ public:
 
   \code
 #include <iostream>
-
 #include <visp/vpNoise.h>
 
 int main()
 {
-  vpGaussRand noise(0.5, 0);
+  vpGaussRand noise(0.5, 10);
   for(int i=0; i< 10; i++) {
     std::cout << "noise " << i << ": " << noise() << std::endl;
   }
@@ -132,38 +120,54 @@ int main()
  */
 class vpGaussRand : public vpUniRand
 {
-	double mean;
-	double sigma;
+  private :
+    double mean;
+    double sigma;
+    double gaussianDraw();
 
-public:
+  public:
 
-	// Initialization
-	vpGaussRand() {init();mean=0;sigma=0;x=739806647;}
-	vpGaussRand(const double sqrtvariance,
-			const double _mean,
-			const long seed = 0):mean(_mean), sigma(sqrtvariance)
-	{
-		init() ;
-		mean = 0 ;
-		if (seed) x=seed; else x=739806647;
-	}
-	/*!
-      Set the standard deviation and mean for gaussian noise
+    /*!
+      Default noise generator constructor.
+     */
+    vpGaussRand() : vpUniRand(), mean(0), sigma(0) {}
 
-      \param _s new standard deviation
-      \param _m new mean
-	 */
-	inline void setSigmaMean(const double _s, const double _m) {mean=_m;sigma=_s;}
-	/*!
-        Set the seed of the noise
+    /*!
+      Gaussian noise random generator constructor.
 
-        \param seed new seed
-	 */
-	inline void seed(const long seed) {x=seed;}
-	inline double operator()() {return sigma*gaussianDraw()+mean;}
+      \param sigma_val : Standard deviation.
+      \param mean_val : Mean value.
+      \param noise_seed : Seed of the noise
+    */
+    vpGaussRand(const double sigma_val, const double mean_val, const long noise_seed = 0)
+      : vpUniRand(noise_seed), mean(mean_val), sigma(sigma_val) {}
 
-private :
-	double gaussianDraw();
+    /*!
+      Set the standard deviation and mean for gaussian noise.
+
+      \param sigma_val : New standard deviation sigma.
+      \param mean_val : New mean value.
+    */
+    void setSigmaMean(const double sigma_val, const double mean_val) {
+      this->mean = mean_val;
+      this->sigma = sigma_val;
+    }
+
+    /*!
+      Set the seed of the noise.
+
+      \param seed_val : New seed.
+    */
+    void seed(const long seed_val) {
+      x=seed_val;
+    }
+
+    /*!
+      Return a random value from the Gaussian noise generator.
+    */
+    double operator()() {
+      return sigma*gaussianDraw()+mean;
+    }
 };
 
 #endif

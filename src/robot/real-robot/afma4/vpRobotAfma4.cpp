@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpRobotAfma4.cpp 4107 2013-02-06 10:04:49Z fspindle $
+ * $Id: vpRobotAfma4.cpp 4574 2014-01-09 08:48:51Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -554,7 +554,7 @@ vpRobotAfma4::getPowerState(void)
 
 */
 void
-vpRobotAfma4::get_cVe(vpVelocityTwistMatrix &cVe)
+vpRobotAfma4::get_cVe(vpVelocityTwistMatrix &cVe) const
 {
   vpHomogeneousMatrix cMe ;
   vpAfma4::get_cMe(cMe) ;
@@ -572,7 +572,7 @@ vpRobotAfma4::get_cVe(vpVelocityTwistMatrix &cVe)
 
 */
 void
-vpRobotAfma4::get_cVf(vpVelocityTwistMatrix &cVf)
+vpRobotAfma4::get_cVf(vpVelocityTwistMatrix &cVf) const
 {
   double position[this->njoint];
   double timestamp;
@@ -604,7 +604,7 @@ vpRobotAfma4::get_cVf(vpVelocityTwistMatrix &cVf)
 
 */
 void
-vpRobotAfma4::get_cMe(vpHomogeneousMatrix &cMe)
+vpRobotAfma4::get_cMe(vpHomogeneousMatrix &cMe) const
 {
   vpAfma4::get_cMe(cMe) ;
 }

@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpQuaternionVector.h 4317 2013-07-17 09:40:17Z fspindle $
+ * $Id: vpQuaternionVector.h 4632 2014-02-03 17:06:40Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -82,9 +82,11 @@ private:
   static const double minimum;
 public:
     
-  vpQuaternionVector() ;    
+  /*! Default constructor that initialize all the angles to zero. */
+  vpQuaternionVector() : vpRotationVector(4) {}
+  /*! Copy constructor. */
+  vpQuaternionVector(const vpQuaternionVector &q) : vpRotationVector(q) {}
   vpQuaternionVector(const double x, const double y, const double z,const double w) ;    
-  vpQuaternionVector(const vpQuaternionVector &q);
   vpQuaternionVector(const vpRotationMatrix &R);
 
   void buildFrom(const vpRotationMatrix& R);
@@ -104,8 +106,7 @@ public:
   vpQuaternionVector operator-( vpQuaternionVector &q)  ;
   vpQuaternionVector operator-()  ;
   vpQuaternionVector operator*(const double l) ;
-  vpQuaternionVector operator* ( vpQuaternionVector &rq) ;
-  vpQuaternionVector &operator=( vpQuaternionVector &q); 
+  vpQuaternionVector operator*( vpQuaternionVector &rq) ;
 } ;
 
 #endif

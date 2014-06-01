@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpMeEllipse.h 4231 2013-04-29 16:26:28Z fspindle $
+ * $Id: vpMeEllipse.h 4649 2014-02-07 14:57:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -175,9 +175,9 @@ public:
 
       Compared to the classical equation of an ellipse, \f$ K_0 \f$ is equal to 1 and \f$ K_1 \f$ is equal to 0.
 
-      \param circle : Set to true if you want to track a circle.
+      \param is_circle : Set to true if you want to track a circle.
   */
-  void setCircle(bool circle) { this->circle = circle ; }
+  void setCircle(bool is_circle) { this->circle = is_circle ; }
   
   /*!
     Gets the 0 order moment \f$ m_{00} \f$ which represents the area of the ellipse.

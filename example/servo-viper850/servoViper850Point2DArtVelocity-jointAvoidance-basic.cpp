@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: servoViper850Point2DArtVelocity-jointAvoidance-basic.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: servoViper850Point2DArtVelocity-jointAvoidance-basic.cpp 4664 2014-02-16 16:17:54Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -47,10 +47,8 @@
 
   Joint limits avoidance by stopping the motion on axis near the joint limits. 
 
-  Implemented from section III.B in F. Chaumette, E. Marchand. A
-  redundancy-based iterative approach for avoiding joint limits: Application
-  to visual servoing. IEEE Trans. on Robotics and Automation, 17(5):719-730,
-  October 2001.
+  Implemented from section III.B in \cite Chaumette01c.
+
 */
 
 #include <visp/vpConfig.h>

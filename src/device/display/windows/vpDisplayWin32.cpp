@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpDisplayWin32.cpp 4174 2013-03-22 10:28:41Z fspindle $
+ * $Id: vpDisplayWin32.cpp 4661 2014-02-10 19:34:58Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -58,7 +58,7 @@ const int vpDisplayWin32::MAX_INIT_DELAY  = 5000;
 void vpCreateWindow(threadParam * param)
 {
   //char* title = param->title;
-  (param->vpDisp)->window.initWindow(param->title, param->x, param->y,
+  (param->vpDisp)->window.initWindow(param->title.c_str(), param->x, param->y,
 				     param->w, param->h);
   delete param;
 }
@@ -150,7 +150,9 @@ void vpDisplayWin32::init(unsigned int width, unsigned int height,
 			  const char *title)
 {
   if (title != NULL)
-    strcpy(this->title, title) ;
+    title_ = std::string(title);
+  else
+    title_ = std::string(" ");
 
   if (x != -1)
     windowXPosition = x;
@@ -164,7 +166,7 @@ void vpDisplayWin32::init(unsigned int width, unsigned int height,
   param->w = width;
   param->h = height;
   param->vpDisp = this;
-  param->title = this->title;
+  param->title = this->title_;
 
   //creates the window in a separate thread
   hThread = CreateThread(NULL,0,(LPTHREAD_START_ROUTINE)vpCreateWindow,
@@ -706,7 +708,7 @@ void vpDisplayWin32::flushDisplayROI(const vpImagePoint &iP, const unsigned int 
 
   //sends a message to the window
 #  if 1 // new version FS
-  WPARAM wp = (hr1.left_top << sizeof(unsigned short)) + hr1.right_bottom;
+  WPARAM wp = (WPARAM)(hr1.left_top << sizeof(unsigned short)) + hr1.right_bottom;
   LPARAM lp = (hr2.left_top << sizeof(unsigned short)) + hr2.right_bottom;
 #  else // produce warnings with MinGW
   WPARAM wp=*((WPARAM*)(&hr1));

@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpFernClassifier.cpp 4303 2013-07-04 14:14:00Z fspindle $
+ * $Id: vpFernClassifier.cpp 4632 2014-02-03 17:06:40Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -54,9 +54,14 @@
   Basic constructor 
   
 */
-vpFernClassifier::vpFernClassifier():vpBasicKeyPoint(), gen(0, 256, 5, true, 0.6, 1.5, -CV_PI/2, CV_PI/2, -CV_PI/2, CV_PI/2)
+vpFernClassifier::vpFernClassifier()
+  : vpBasicKeyPoint(),
+    ldetector(), fernClassifier(), gen(0, 256, 5, true, 0.6, 1.5, -CV_PI/2, CV_PI/2, -CV_PI/2, CV_PI/2),
+    hasLearn(false), threshold(20), nbView(2000), dist(2), nbClassfier(100), ClassifierSize(11),
+    nbOctave(2), patchSize(32), radius(7), nbPoints(200), blurImage(true), radiusBlur(7),
+    sigmaBlur(1), nbMinPoint(10), curIplImg(NULL), objKeypoints(), modelROI_Ref(), modelROI(),
+    modelPoints(), imgKeypoints(), refPt(), curPt()
 {
-  init();
 }
 
 /*!
@@ -70,9 +75,14 @@ vpFernClassifier::vpFernClassifier():vpBasicKeyPoint(), gen(0, 256, 5, true, 0.6
   \param _objectName : the name of the object to load
 */
 vpFernClassifier::vpFernClassifier(const std::string& _dataFile, const std::string& _objectName)
+  : vpBasicKeyPoint(),
+    ldetector(), fernClassifier(), gen(0, 256, 5, true, 0.6, 1.5, -CV_PI/2, CV_PI/2, -CV_PI/2, CV_PI/2),
+    hasLearn(false), threshold(20), nbView(2000), dist(2), nbClassfier(100), ClassifierSize(11),
+    nbOctave(2), patchSize(32), radius(7), nbPoints(200), blurImage(true), radiusBlur(7),
+    sigmaBlur(1), nbMinPoint(10), curIplImg(NULL), objKeypoints(), modelROI_Ref(), modelROI(),
+    modelPoints(), imgKeypoints(), refPt(), curPt()
 {
-  init();
-  this->load(_dataFile, _objectName);
+   this->load(_dataFile, _objectName);
 }
 
 /*!

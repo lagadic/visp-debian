@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpDisplayWin32.h 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpDisplayWin32.h 4632 2014-02-03 17:06:40Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -46,6 +46,8 @@
 #ifndef vpDisplayWin32_hh
 #define vpDisplayWin32_hh
 
+#include <string>
+
 #include <visp/vpImage.h>
 #include <visp/vpDisplay.h>
 #include <windows.h>
@@ -76,7 +78,7 @@ struct threadParam
   unsigned int h;
 
   //! Title of the window.
-  char * title;
+  std::string title;
 };
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */
 

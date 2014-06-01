@@ -1,9 +1,9 @@
 #############################################################################
 #
-# $Id: CMakeLists.txt 4277 2013-06-25 13:09:01Z fspindle $
+# $Id: CMakeLists.txt 4598 2014-01-20 17:07:30Z fspindle $
 #
 # This file is part of the ViSP software.
-# Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+# Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
 # 
 # This software is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -65,3 +65,25 @@ ENDFOREACH(source)
 # of acquired images
 ADD_TEST(calibrateTsai calibrateTsai)
 
+# copy the data
+get_target_property(target_location camera_calibration LOCATION)
+get_filename_component(target_location "${target_location}" PATH)
+list(APPEND data2copy "${CMAKE_CURRENT_SOURCE_DIR}/default-chessboard.cfg" )
+list(APPEND data2copy "${CMAKE_CURRENT_SOURCE_DIR}/default-circles.cfg" )
+list(APPEND data2copy "${CMAKE_CURRENT_SOURCE_DIR}/chessboard-01.png" )
+list(APPEND data2copy "${CMAKE_CURRENT_SOURCE_DIR}/chessboard-02.png" )
+list(APPEND data2copy "${CMAKE_CURRENT_SOURCE_DIR}/chessboard-03.png" )
+list(APPEND data2copy "${CMAKE_CURRENT_SOURCE_DIR}/chessboard-04.png" )
+list(APPEND data2copy "${CMAKE_CURRENT_SOURCE_DIR}/chessboard-05.png" )
+list(APPEND data2copy "${CMAKE_CURRENT_SOURCE_DIR}/circles-01.png" )
+list(APPEND data2copy "${CMAKE_CURRENT_SOURCE_DIR}/circles-02.png" )
+list(APPEND data2copy "${CMAKE_CURRENT_SOURCE_DIR}/circles-03.png" )
+list(APPEND data2copy "${CMAKE_CURRENT_SOURCE_DIR}/circles-04.png" )
+list(APPEND data2copy "${CMAKE_CURRENT_SOURCE_DIR}/circles-05.png" )
+foreach(data ${data2copy})
+  add_custom_command(
+    TARGET camera_calibration
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy "${data}" "${target_location}"
+  )
+endforeach()

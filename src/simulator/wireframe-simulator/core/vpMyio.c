@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpMyio.c 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpMyio.c 4574 2014-01-09 08:48:51Z fspindle $
  *
 * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -107,7 +107,14 @@ void fscanf_string (char **str)
 		lexerr ("start", "string expected", NULL);
 	if (*str == NULL)
 		*str = (char *) malloc ((mylength + 1) * sizeof (char));
-	else	*str = (char *) realloc (*str, (mylength + 1) * sizeof (char));
+  else
+    *str = (char *) realloc (*str, (mylength + 1) * sizeof (char));
+
+  if (*str == NULL) {
+    printf("Unable to read the string: bad memory allocation");
+    return;
+  }
+
 	strncpy (*str, mytext, mylength);
 }
 

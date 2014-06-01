@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpRobotBiclopsController.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpRobotBiclopsController.cpp 4604 2014-01-21 14:15:23Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -41,7 +41,7 @@
 
 #include <signal.h>
 #include <string.h>
-#ifdef UNIX
+#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
 #  include <unistd.h>
 #endif
 #include <visp/vpConfig.h>
@@ -89,6 +89,7 @@ vpRobotBiclopsController::vpRobotBiclopsController()
     shm.q_dot[i] = 0.;
     shm.actual_q[i] = 0.;
     shm.jointLimit[i] = false;
+    shm.status[i] = STOP;
   }
 
 }

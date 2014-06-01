@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: testReadImage.cpp 4314 2013-07-16 17:41:21Z fspindle $
+ * $Id: testReadImage.cpp 4658 2014-02-09 09:50:14Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -57,6 +57,8 @@
 // List of allowed command line options
 #define GETOPTARGS	"i:p:h"
 
+void usage(const char *name, const char *badparam, std::string ipath, std::string ppath);
+bool getOptions(int argc, const char **argv, std::string &ipath, std::string &ppath);
 
 /*
 
@@ -112,20 +114,19 @@ OPTIONS:                                               Default\n\
   \return false if the program has to be stopped, true otherwise.
 
 */
-bool getOptions(int argc, const char **argv,
-                std::string &ipath, std::string &ppath)
+bool getOptions(int argc, const char **argv, std::string &ipath, std::string &ppath)
 {
-  const char *optarg;
+  const char *optarg_;
   int	c;
-  while ((c = vpParseArgv::parse(argc, argv, GETOPTARGS, &optarg)) > 1) {
+  while ((c = vpParseArgv::parse(argc, argv, GETOPTARGS, &optarg_)) > 1) {
 
     switch (c) {
-    case 'i': ipath = optarg; break;
-    case 'p': ppath = optarg; break;
+    case 'i': ipath = optarg_; break;
+    case 'p': ppath = optarg_; break;
     case 'h': usage(argv[0], NULL, ipath, ppath); return false; break;
 
     default:
-      usage(argv[0], optarg, ipath, ppath); return false; break;
+      usage(argv[0], optarg_, ipath, ppath); return false; break;
     }
   }
 
@@ -133,7 +134,7 @@ bool getOptions(int argc, const char **argv,
     // standalone param or error
     usage(argv[0], NULL, ipath, ppath);
     std::cerr << "ERROR: " << std::endl;
-    std::cerr << "  Bad argument " << optarg << std::endl << std::endl;
+    std::cerr << "  Bad argument " << optarg_ << std::endl << std::endl;
     return false;
   }
 
@@ -143,102 +144,100 @@ bool getOptions(int argc, const char **argv,
 int
 main(int argc, const char ** argv)
 {
+  try {
+    std::string env_ipath;
+    std::string opt_ipath;
+    std::string opt_ppath;
+    std::string ipath;
+    std::string ppath;
+    std::string filename;
 
-  std::string env_ipath;
-  std::string opt_ipath;
-  std::string opt_ppath;
-  std::string ipath;
-  std::string ppath;
-  std::string filename;
+    // Get the VISP_IMAGE_PATH environment variable value
+    char *ptenv = getenv("VISP_INPUT_IMAGE_PATH");
+    if (ptenv != NULL)
+      env_ipath = ptenv;
 
-  // Get the VISP_IMAGE_PATH environment variable value
-  char *ptenv = getenv("VISP_INPUT_IMAGE_PATH");
-  if (ptenv != NULL)
-    env_ipath = ptenv;
+    // Set the default input path
+    if (! env_ipath.empty())
+      ipath = env_ipath;
 
-  // Set the default input path
-  if (! env_ipath.empty())
-    ipath = env_ipath;
+    // Read the command line options
+    if (getOptions(argc, argv, opt_ipath, opt_ppath) == false) {
+      exit (-1);
+    }
 
-  // Read the command line options
-  if (getOptions(argc, argv, opt_ipath, opt_ppath) == false) {
-    exit (-1);
-  }
+    // Get the option values
+    if (!opt_ipath.empty())
+      ipath = opt_ipath;
+    if (!opt_ppath.empty())
+      ppath = opt_ppath;
 
-  // Get the option values
-  if (!opt_ipath.empty())
-    ipath = opt_ipath;
-  if (!opt_ppath.empty())
-    ppath = opt_ppath;
+    // Compare ipath and env_ipath. If they differ, we take into account
+    // the input path comming from the command line option
+    if (!opt_ipath.empty() && !env_ipath.empty()) {
+      if (ipath != env_ipath) {
+        std::cout << std::endl
+                  << "WARNING: " << std::endl;
+        std::cout << "  Since -i <visp image path=" << ipath << "> "
+                  << "  is different from VISP_IMAGE_PATH=" << env_ipath << std::endl
+                  << "  we skip the environment variable." << std::endl;
+      }
+    }
 
-  // Compare ipath and env_ipath. If they differ, we take into account
-  // the input path comming from the command line option
-  if (!opt_ipath.empty() && !env_ipath.empty()) {
-    if (ipath != env_ipath) {
-      std::cout << std::endl
-                << "WARNING: " << std::endl;
-      std::cout << "  Since -i <visp image path=" << ipath << "> "
-                << "  is different from VISP_IMAGE_PATH=" << env_ipath << std::endl
-                << "  we skip the environment variable." << std::endl;
+
+    //
+    // Here starts really the test
+    //
+
+    /////////////////////////////////////////////////////////////////////
+    // Create a grey level image
+    //vpImage<vpRGBa> I;
+    vpImage<unsigned char> I;
+    vpImage<vpRGBa> Irgb;
+
+    if (opt_ppath.empty())
+    {
+      filename = ipath +  vpIoTools::path("/ViSP-images/Klimt/Klimt.ppm");
+      vpImageIo::read(I,filename);
+      printf("Read ppm ok\n");
+      filename = ipath +  vpIoTools::path("/ViSP-images/Klimt/Klimt.pgm");
+      vpImageIo::read(I,filename);
+      printf("Read pgm ok\n");
+      filename = ipath +  vpIoTools::path("/ViSP-images/Klimt/Klimt.jpeg");
+      vpImageIo::read(I,filename);
+      printf("Read jpeg ok\n");
+      filename = ipath +  vpIoTools::path("/ViSP-images/mire/mire.jpg");
+      vpImageIo::read(I,filename);
+      printf("Read jpg ok\n");
+      filename = ipath +  vpIoTools::path("/ViSP-images/Klimt/Klimt.png");
+      vpImageIo::read(I,filename);
+      printf("Read png ok\n");
+
+      filename = ipath +  vpIoTools::path("/ViSP-images/Klimt/Klimt.ppm");
+      vpImageIo::read(Irgb,filename);
+      printf("Read ppm ok\n");
+      filename = ipath +  vpIoTools::path("/ViSP-images/Klimt/Klimt.pgm");
+      vpImageIo::read(Irgb,filename);
+      printf("Read pgm ok\n");
+      filename = ipath +  vpIoTools::path("/ViSP-images/Klimt/Klimt.jpeg");
+      vpImageIo::read(Irgb,filename);
+      printf("Read jpeg ok\n");
+      filename = ipath +  vpIoTools::path("/ViSP-images/mire/mire.jpg");
+      vpImageIo::read(Irgb,filename);
+      printf("Read jpg ok\n");
+      filename = ipath +  vpIoTools::path("/ViSP-images/Klimt/Klimt.png");
+      vpImageIo::read(Irgb,filename);
+      printf("Read png ok\n");
+    }
+    else
+    {
+      filename = opt_ppath;
+      vpImageIo::read(I,filename);
+      vpTRACE("image read without problem");
     }
   }
-
-
-  // 
-  // Here starts really the test
-  // 
-
-  /////////////////////////////////////////////////////////////////////
-  // Create a grey level image
-  //vpImage<vpRGBa> I;
-  vpImage<unsigned char> I;
-  vpImage<vpRGBa> Irgb;
-  
-  try {
-  if (opt_ppath.empty())
-  {
-    filename = ipath +  vpIoTools::path("/ViSP-images/Klimt/Klimt.ppm");
-    vpImageIo::read(I,filename);
-    printf("Read ppm ok\n");
-    filename = ipath +  vpIoTools::path("/ViSP-images/Klimt/Klimt.pgm");
-    vpImageIo::read(I,filename);
-    printf("Read pgm ok\n");
-    filename = ipath +  vpIoTools::path("/ViSP-images/Klimt/Klimt.jpeg");
-    vpImageIo::read(I,filename);
-    printf("Read jpeg ok\n");
-    filename = ipath +  vpIoTools::path("/ViSP-images/mire/mire.jpg");
-    vpImageIo::read(I,filename);
-    printf("Read jpg ok\n");
-    filename = ipath +  vpIoTools::path("/ViSP-images/Klimt/Klimt.png");
-    vpImageIo::read(I,filename);
-    printf("Read png ok\n");
-
-    filename = ipath +  vpIoTools::path("/ViSP-images/Klimt/Klimt.ppm");
-    vpImageIo::read(Irgb,filename);
-    printf("Read ppm ok\n");
-    filename = ipath +  vpIoTools::path("/ViSP-images/Klimt/Klimt.pgm");
-    vpImageIo::read(Irgb,filename);
-    printf("Read pgm ok\n");
-    filename = ipath +  vpIoTools::path("/ViSP-images/Klimt/Klimt.jpeg");
-    vpImageIo::read(Irgb,filename);
-    printf("Read jpeg ok\n");
-    filename = ipath +  vpIoTools::path("/ViSP-images/mire/mire.jpg");
-    vpImageIo::read(Irgb,filename);
-    printf("Read jpg ok\n");
-    filename = ipath +  vpIoTools::path("/ViSP-images/Klimt/Klimt.png");
-    vpImageIo::read(Irgb,filename);
-    printf("Read png ok\n");
+  catch(vpException e) {
+    std::cout << "Catch an exception: " << e << std::endl;
   }
-  else
-  {
-    filename = opt_ppath;
-    vpImageIo::read(I,filename);
-    vpTRACE("image read without problem");
-  }
-  }
-  catch(...) {
-    std::cout << "Unsupported image format" << std::endl;
-  }
-
   return 0;
 }

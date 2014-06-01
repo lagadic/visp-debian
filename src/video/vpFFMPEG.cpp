@@ -3,7 +3,7 @@
  * $Id: vpImagePoint.h 2359 2009-11-24 15:09:25Z nmelchio $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -65,23 +65,15 @@ extern "C"
   Basic constructor.
 */
 vpFFMPEG::vpFFMPEG()
+  : width(-1), height(-1), frameNumber(0), pFormatCtx(NULL), pCodecCtx(NULL),
+    pCodec(NULL), pFrame(NULL), pFrameRGB(NULL), pFrameGRAY(NULL), packet(NULL),
+    img_convert_ctx(NULL), videoStream(0), numBytes(0), buffer(NULL), index(),
+    streamWasOpen(false), streamWasInitialized(false), color_type(COLORED),
+    f(NULL), outbuf(NULL), picture_buf(NULL), outbuf_size(0), out_size(0),
+    bit_rate(500000), encoderWasOpened(false),
+    framerate_stream(-1), framerate_encoder(25)
 {
-  frameNumber = 0;
-  width = -1;
-  height = -1;
-  framerate_stream = -1;
-  framerate_encoder = 25;
-  buffer = NULL;
-  streamWasOpen = false;
-  streamWasInitialized = false;
-  bit_rate = 500000;
-  outbuf = NULL;
-  picture_buf = NULL;
-  f = NULL;
-  encoderWasOpened = false;
   packet = new AVPacket;
-
-  pFormatCtx = NULL;
 }
 
 /*!
@@ -99,14 +91,14 @@ vpFFMPEG::~vpFFMPEG()
   and the dimension of the images using getWidth() and getHeight().
   
   \param filename : Path to the video which has to be read.
-  \param color_type : Desired color map used to open the video.
+  \param colortype : Desired color map used to open the video.
   The parameter can take two values : COLORED and GRAY_SCALED.
   
   \return It returns true if the paramters could be initialized. Else it returns false.
 */
-bool vpFFMPEG::openStream(const char *filename, vpFFMPEGColorType color_type)
+bool vpFFMPEG::openStream(const char *filename, vpFFMPEGColorType colortype)
 {
-  this->color_type = color_type;
+  this->color_type = colortype;
   
   av_register_all();
 #if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53,0,0) // libavformat 52.84.0
@@ -141,7 +133,7 @@ bool vpFFMPEG::openStream(const char *filename, vpFFMPEGColorType color_type)
 #endif
     {
       videoStream = i;
-      std::cout << "rate: " << pFormatCtx->streams[i]->r_frame_rate.num << " " << pFormatCtx->streams[i]->r_frame_rate.den << std::endl;
+      //std::cout << "rate: " << pFormatCtx->streams[i]->r_frame_rate.num << " " << pFormatCtx->streams[i]->r_frame_rate.den << std::endl;
       framerate_stream =  pFormatCtx->streams[i]->r_frame_rate.num;
       framerate_stream /= pFormatCtx->streams[i]->r_frame_rate.den;
       found_codec= true;
@@ -643,8 +635,7 @@ void vpFFMPEG::closeStream()
   Allocates and initializes the parameters depending on the video to write.
   
   \param filename : Path to the video which has to be writen.
-  \param width : Width of the image which will be saved.
-  \param height : Height of the image which will be saved.
+  \param w,h : Width and height of the image which will be saved.
   \param codec : Type of codec used to encode the video.
   
   By default codec is set to AV_CODEC_ID_MPEG1VIDEO. But if installed, you can use one of the
@@ -656,9 +647,9 @@ void vpFFMPEG::closeStream()
   \return It returns true if the paramters could be initialized. Else it returns false.
 */
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(54,51,110) // libavcodec 54.51.100
-bool vpFFMPEG::openEncoder(const char *filename, unsigned int width, unsigned int height, CodecID codec)
+bool vpFFMPEG::openEncoder(const char *filename, unsigned int w, unsigned int h, CodecID codec)
 #else
-bool vpFFMPEG::openEncoder(const char *filename, unsigned int width, unsigned int height, AVCodecID codec)
+bool vpFFMPEG::openEncoder(const char *filename, unsigned int w, unsigned int h, AVCodecID codec)
 #endif
 {
   av_register_all();
@@ -681,10 +672,10 @@ bool vpFFMPEG::openEncoder(const char *filename, unsigned int width, unsigned in
   /* put sample parameters */
   pCodecCtx->bit_rate = (int)bit_rate;
   /* resolution must be a multiple of two */
-  pCodecCtx->width = (int)width;
-  pCodecCtx->height = (int)height;
-  this->width = (int)width;
-  this->height = (int)height;
+  pCodecCtx->width = (int)w;
+  pCodecCtx->height = (int)h;
+  this->width = (int)w;
+  this->height = (int)h;
   /* frames per second */
   pCodecCtx->time_base= (AVRational){1,framerate_encoder};
   pCodecCtx->gop_size = 10; /* emit one intra frame every ten frames */

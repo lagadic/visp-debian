@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpRzyxVector.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpRzyxVector.cpp 4632 2014-02-03 17:06:40Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -50,29 +50,6 @@
   Rzyx(phi,theta,psi) = Rot(z,phi)Rot(y,theta,Rot(x,psi)
 
 */
-
-
-/*!
-  Affectation of two vectors.
-*/
-vpRzyxVector &
-vpRzyxVector::operator=(const vpRzyxVector &m)
-{
-
-  for (int i=0; i<3; i++)
-  {
-      r[i] = m.r[i] ;
-  }
-  return *this;
-}
-
-
-//! Copy constructor.
-vpRzyxVector::vpRzyxVector(const vpRzyxVector &m) : vpRotationVector()
-{
-  *this = m ;
-}
-
 
 /*! 
   Constructor that initialize \f$R_{zyx}=(\varphi,\theta,\psi)\f$ Euler

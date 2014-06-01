@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpAfma4.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpAfma4.cpp 4632 2014-02-03 17:06:40Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -69,6 +69,7 @@ const unsigned int vpAfma4::njoint = 4;
 
 */
 vpAfma4::vpAfma4()
+  : _a1(0), _d3(0), _d4(0), _etc(), _erc(), _eMc()
 {
   // Set the default parameters in case of the config files on the NAS
   // at Inria are not available.
@@ -148,7 +149,7 @@ vpAfma4::init (void)
 
 */
 vpHomogeneousMatrix
-vpAfma4::getForwardKinematics(const vpColVector & q)
+vpAfma4::getForwardKinematics(const vpColVector & q) const
 {
   vpHomogeneousMatrix fMc;
   fMc = get_fMc(q);
@@ -186,7 +187,7 @@ vpAfma4::getForwardKinematics(const vpColVector & q)
   \sa getForwardKinematics(const vpColVector & q)
 */
 vpHomogeneousMatrix
-vpAfma4::get_fMc (const vpColVector & q)
+vpAfma4::get_fMc (const vpColVector & q) const
 {
   vpHomogeneousMatrix fMc;
   get_fMc(q, fMc);
@@ -221,7 +222,7 @@ vpAfma4::get_fMc (const vpColVector & q)
 
 */
 void
-vpAfma4::get_fMc(const vpColVector & q, vpHomogeneousMatrix & fMc)
+vpAfma4::get_fMc(const vpColVector & q, vpHomogeneousMatrix & fMc) const
 {
 
   // Compute the direct geometric model: fMe = transformation between
@@ -269,7 +270,7 @@ vpAfma4::get_fMc(const vpColVector & q, vpHomogeneousMatrix & fMc)
 
 */
 void
-vpAfma4::get_fMe(const vpColVector & q, vpHomogeneousMatrix & fMe)
+vpAfma4::get_fMe(const vpColVector & q, vpHomogeneousMatrix & fMe) const
 {
   double            q1 = q[0]; // rot touret
   double            q2 = q[1]; // vertical translation
@@ -320,7 +321,7 @@ vpAfma4::get_fMe(const vpColVector & q, vpHomogeneousMatrix & fMe)
 
 */
 void
-vpAfma4::get_cMe(vpHomogeneousMatrix &cMe)
+vpAfma4::get_cMe(vpHomogeneousMatrix &cMe) const
 {
   cMe = this->_eMc.inverse();
 }
@@ -335,7 +336,7 @@ vpAfma4::get_cMe(vpHomogeneousMatrix &cMe)
 
 */
 void
-vpAfma4::get_cVe(vpVelocityTwistMatrix &cVe)
+vpAfma4::get_cVe(vpVelocityTwistMatrix &cVe) const
 {
   vpHomogeneousMatrix cMe ;
   get_cMe(cMe) ;
@@ -364,7 +365,7 @@ vpAfma4::get_cVe(vpVelocityTwistMatrix &cVe)
 
 */
 void
-vpAfma4::get_cVf(const vpColVector & q, vpVelocityTwistMatrix &cVf)
+vpAfma4::get_cVf(const vpColVector & q, vpVelocityTwistMatrix &cVf) const
 {
   vpHomogeneousMatrix fMc, cMf ;
   get_fMc(q, fMc) ;
@@ -374,8 +375,6 @@ vpAfma4::get_cVf(const vpColVector & q, vpVelocityTwistMatrix &cVf)
 
   return;
 }
-
-
 
 /*!
 
@@ -414,7 +413,7 @@ vpAfma4::get_cVf(const vpColVector & q, vpVelocityTwistMatrix &cVf)
   \sa get_fJe()
 */
 void
-vpAfma4::get_eJe(const vpColVector &q, vpMatrix &eJe)
+vpAfma4::get_eJe(const vpColVector &q, vpMatrix &eJe) const
 {
   double            q4 = q[2]; // pan
   double            q5 = q[3]; // tilt
@@ -468,7 +467,7 @@ vpAfma4::get_eJe(const vpColVector &q, vpMatrix &eJe)
 */
 
 void
-vpAfma4::get_fJe(const vpColVector &q, vpMatrix &fJe)
+vpAfma4::get_fJe(const vpColVector &q, vpMatrix &fJe) const
 {
   fJe.resize(6,4) ;
 
@@ -524,7 +523,7 @@ vpAfma4::get_fJe(const vpColVector &q, vpMatrix &fJe)
   \sa get_eJe() and get_fJe()
 
 */
-void vpAfma4::get_fJe_inverse(const vpColVector &q, vpMatrix &fJe_inverse)
+void vpAfma4::get_fJe_inverse(const vpColVector &q, vpMatrix &fJe_inverse) const
 {
   fJe_inverse.resize(4, 6) ;
   fJe_inverse = 0;
@@ -560,7 +559,7 @@ void vpAfma4::get_fJe_inverse(const vpColVector &q, vpMatrix &fJe_inverse)
 
 */
 vpColVector
-vpAfma4::getJointMin()
+vpAfma4::getJointMin() const
 {
   vpColVector qmin(4);
   for (unsigned int i=0; i < 4; i ++)
@@ -577,7 +576,7 @@ vpAfma4::getJointMin()
 
 */
 vpColVector
-vpAfma4::getJointMax()
+vpAfma4::getJointMax() const
 {
   vpColVector qmax(4);
   for (unsigned int i=0; i < 4; i ++)
@@ -596,7 +595,7 @@ vpAfma4::getJointMax()
   \param os : Output stream.
   \param afma4 : Robot parameters.
 */
-std::ostream & operator << (std::ostream & os,
+VISP_EXPORT std::ostream & operator << (std::ostream & os,
 			    const vpAfma4 & afma4)
 {
   vpRotationMatrix eRc;
@@ -649,9 +648,3 @@ std::ostream & operator << (std::ostream & os,
 
   return os;
 }
-
-/*
- * Local variables:
- * c-basic-offset: 2
- * End:
- */

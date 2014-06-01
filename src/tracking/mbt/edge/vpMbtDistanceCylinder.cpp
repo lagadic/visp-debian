@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpMbtDistanceCylinder.cpp 4303 2013-07-04 14:14:00Z fspindle $
+ * $Id: vpMbtDistanceCylinder.cpp 4649 2014-02-07 14:57:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -64,22 +64,12 @@
   Basic constructor
 */
 vpMbtDistanceCylinder::vpMbtDistanceCylinder()
+  : name(), index(0), cam(), me(NULL), alpha(0), wmean1(1), wmean2(1),
+    featureline1(), featureline2(), meline1(NULL), meline2(NULL),
+    cercle1(NULL), cercle2(NULL), radius(0), p1(NULL), p2(NULL), L(),
+    error(), nbFeature(0), nbFeaturel1(0), nbFeaturel2(0), Reinit(false),
+    c(NULL)
 {
-  name = "";
-  p1 = NULL ;
-  p2 = NULL ;
-  c = NULL ;
-  meline1 = NULL ;
-  meline2 = NULL ;
-  wmean1 = 1 ;
-  wmean2 = 1 ;
-  nbFeaturel1 =0 ;
-  nbFeaturel2 =0 ;
-  nbFeature =0 ;
-  Reinit = false;
-
-  cercle1 = NULL;
-  cercle2 = NULL;
 }
 
 /*!
@@ -497,12 +487,13 @@ vpMbtDistanceCylinder::reinitMovingEdge(const vpImage<unsigned char> &I, const v
 
   \param I : The image.
   \param cMo : Pose used to project the 3D model into the image.
-  \param cam : The camera parameters.
+  \param camera : The camera parameters.
   \param col : The desired color.
   \param thickness : The thickness of the lines.
 */
 void
-vpMbtDistanceCylinder::display(const vpImage<unsigned char>&I, const vpHomogeneousMatrix &cMo, const vpCameraParameters&cam, const vpColor col, const unsigned int thickness)
+vpMbtDistanceCylinder::display(const vpImage<unsigned char>&I, const vpHomogeneousMatrix &cMo,
+                               const vpCameraParameters&camera, const vpColor col, const unsigned int thickness)
 {
 	// Perspective projection
 	p1->changeFrame(cMo);
@@ -527,8 +518,8 @@ vpMbtDistanceCylinder::display(const vpImage<unsigned char>&I, const vpHomogeneo
   double rho2,theta2;
 
   // Meters to pixels conversion
-  vpMeterPixelConversion::convertLine(cam,c->getRho1(),c->getTheta1(),rho1,theta1);
-  vpMeterPixelConversion::convertLine(cam,c->getRho2(),c->getTheta2(),rho2,theta2);
+  vpMeterPixelConversion::convertLine(camera,c->getRho1(),c->getTheta1(),rho1,theta1);
+  vpMeterPixelConversion::convertLine(camera,c->getRho2(),c->getTheta2(),rho2,theta2);
 
 	// Determine intersections between circles and limbos
 	double i11,i12,i21,i22,j11,j12,j21,j22;
@@ -556,12 +547,13 @@ vpMbtDistanceCylinder::display(const vpImage<unsigned char>&I, const vpHomogeneo
 
   \param I : The image.
   \param cMo : Pose used to project the 3D model into the image.
-  \param cam : The camera parameters.
+  \param camera : The camera parameters.
   \param col : The desired color.
   \param thickness : The thickness of the lines.
 */
 void
-vpMbtDistanceCylinder::display(const vpImage<vpRGBa>&I, const vpHomogeneousMatrix &cMo, const vpCameraParameters&cam, const vpColor col, const unsigned int thickness)
+vpMbtDistanceCylinder::display(const vpImage<vpRGBa> &I, const vpHomogeneousMatrix &cMo,
+                               const vpCameraParameters &camera, const vpColor col, const unsigned int thickness)
 {
 	// Perspective projection
 	p1->changeFrame(cMo);
@@ -586,8 +578,8 @@ vpMbtDistanceCylinder::display(const vpImage<vpRGBa>&I, const vpHomogeneousMatri
   double rho2,theta2;
 
   // Meters to pixels conversion
-  vpMeterPixelConversion::convertLine(cam,c->getRho1(),c->getTheta1(),rho1,theta1);
-  vpMeterPixelConversion::convertLine(cam,c->getRho2(),c->getTheta2(),rho2,theta2);
+  vpMeterPixelConversion::convertLine(camera,c->getRho1(),c->getTheta1(),rho1,theta1);
+  vpMeterPixelConversion::convertLine(camera,c->getRho2(),c->getTheta2(),rho2,theta2);
 
 	// Determine intersections between circles and limbos
 	double i11,i12,i21,i22,j11,j12,j21,j22;

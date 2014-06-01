@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpViper850.cpp 4210 2013-04-16 08:57:46Z fspindle $
+ * $Id: vpViper850.cpp 4649 2014-02-07 14:57:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -57,56 +57,56 @@ static const char *opt_viper850[] = {"CAMERA", "eMc_ROT_XYZ","eMc_TRANS_XYZ",
                                      NULL};
 
 const char * const vpViper850::CONST_EMC_MARLIN_F033C_WITHOUT_DISTORTION_FILENAME
-#ifdef WIN32
+#if defined(_WIN32)
 = "Z:/robot/Viper850/current/include/const_eMc_MarlinF033C_without_distortion_Viper850.cnf";
 #else
 = "/udd/fspindle/robot/Viper850/current/include/const_eMc_MarlinF033C_without_distortion_Viper850.cnf";
 #endif
 
 const char * const vpViper850::CONST_EMC_MARLIN_F033C_WITH_DISTORTION_FILENAME
-#ifdef WIN32 
+#if defined(_WIN32) 
 = "Z:/robot/Viper850/current/include/const_eMc_MarlinF033C_with_distortion_Viper850.cnf";
 #else
 = "/udd/fspindle/robot/Viper850/current/include/const_eMc_MarlinF033C_with_distortion_Viper850.cnf";
 #endif
 
 const char * const vpViper850::CONST_EMC_PTGREY_FLEA2_WITHOUT_DISTORTION_FILENAME
-#ifdef WIN32
+#if defined(_WIN32)
 = "Z:/robot/Viper850/current/include/const_eMc_PTGreyFlea2_without_distortion_Viper850.cnf";
 #else
 = "/udd/fspindle/robot/Viper850/current/include/const_eMc_PTGreyFlea2_without_distortion_Viper850.cnf";
 #endif
 
 const char * const vpViper850::CONST_EMC_PTGREY_FLEA2_WITH_DISTORTION_FILENAME
-#ifdef WIN32 
+#if defined(_WIN32) 
 = "Z:/robot/Viper850/current/include/const_eMc_PTGreyFlea2_with_distortion_Viper850.cnf";
 #else
 = "/udd/fspindle/robot/Viper850/current/include/const_eMc_PTGreyFlea2_with_distortion_Viper850.cnf";
 #endif
 
 const char * const vpViper850::CONST_EMC_SCHUNK_GRIPPER_WITHOUT_DISTORTION_FILENAME
-#ifdef WIN32
+#if defined(_WIN32)
 = "Z:/robot/Viper850/current/include/const_eMc_schunk_gripper_without_distortion_Viper850.cnf";
 #else
 = "/udd/fspindle/robot/Viper850/current/include/const_eMc_schunk_gripper_without_distortion_Viper850.cnf";
 #endif
 
 const char * const vpViper850::CONST_EMC_SCHUNK_GRIPPER_WITH_DISTORTION_FILENAME
-#ifdef WIN32
+#if defined(_WIN32)
 = "Z:/robot/Viper850/current/include/const_eMc_schunk_gripper_with_distortion_Viper850.cnf";
 #else
 = "/udd/fspindle/robot/Viper850/current/include/const_eMc_schunk_gripper_with_distortion_Viper850.cnf";
 #endif
 
 const char * const vpViper850::CONST_EMC_GENERIC_WITHOUT_DISTORTION_FILENAME
-#ifdef WIN32
+#if defined(_WIN32)
 = "Z:/robot/Viper850/current/include/const_eMc_generic_without_distortion_Viper850.cnf";
 #else
 = "/udd/fspindle/robot/Viper850/current/include/const_eMc_generic_without_distortion_Viper850.cnf";
 #endif
 
 const char * const vpViper850::CONST_EMC_GENERIC_WITH_DISTORTION_FILENAME
-#ifdef WIN32
+#if defined(_WIN32)
 = "Z:/robot/Viper850/current/include/const_eMc_generic_with_distortion_Viper850.cnf";
 #else
 = "/udd/fspindle/robot/Viper850/current/include/const_eMc_generic_with_distortion_Viper850.cnf";
@@ -114,7 +114,7 @@ const char * const vpViper850::CONST_EMC_GENERIC_WITH_DISTORTION_FILENAME
 
 
 const char * const vpViper850::CONST_CAMERA_FILENAME
-#ifdef WIN32 
+#if defined(_WIN32) 
 = "Z:/robot/Viper850/current/include/const_camera_Viper850.xml";
 #else
 = "/udd/fspindle/robot/Viper850/current/include/const_camera_Viper850.xml";
@@ -139,6 +139,8 @@ const vpViper850::vpToolType vpViper850::defaultTool = vpViper850::TOOL_PTGREY_F
 
 */
 vpViper850::vpViper850()
+  : tool_current(vpViper850::defaultTool), projModel(vpCameraParameters::perspectiveProjWithoutDistortion)
+
 {
   // Denavit Hartenberg parameters
   a1 = 0.075;
@@ -209,15 +211,15 @@ vpViper850::init (const char *camera_extrinsic_parameters)
 
   \param tool : Camera in use.
 
-  \param projModel : Projection model of the camera.
+  \param proj_model : Projection model of the camera.
 
 */
 void
 vpViper850::init (vpViper850::vpToolType tool,
-                  vpCameraParameters::vpCameraParametersProjType projModel)
+                  vpCameraParameters::vpCameraParametersProjType proj_model)
 {
   
-  this->projModel = projModel;
+  this->projModel = proj_model;
   
 #ifdef VISP_HAVE_ACCESS_TO_NAS
   // Read the robot parameters from files
@@ -226,19 +228,19 @@ vpViper850::init (vpViper850::vpToolType tool,
   case vpViper850::TOOL_MARLIN_F033C_CAMERA: {
     switch(projModel) {
     case vpCameraParameters::perspectiveProjWithoutDistortion :
-#ifdef UNIX
+#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
       snprintf(filename_eMc, FILENAME_MAX, "%s",
                CONST_EMC_MARLIN_F033C_WITHOUT_DISTORTION_FILENAME);
-#else // WIN32
+#else // _WIN32
       _snprintf(filename_eMc, FILENAME_MAX, "%s",
                 CONST_EMC_MARLIN_F033C_WITHOUT_DISTORTION_FILENAME);
 #endif
       break;
     case vpCameraParameters::perspectiveProjWithDistortion :
-#ifdef UNIX
+#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
       snprintf(filename_eMc, FILENAME_MAX, "%s",
                CONST_EMC_MARLIN_F033C_WITH_DISTORTION_FILENAME);
-#else // WIN32
+#else // _WIN32
       _snprintf(filename_eMc, FILENAME_MAX, "%s",
                 CONST_EMC_MARLIN_F033C_WITH_DISTORTION_FILENAME);
 #endif
@@ -249,19 +251,19 @@ vpViper850::init (vpViper850::vpToolType tool,
   case vpViper850::TOOL_PTGREY_FLEA2_CAMERA: {
     switch(projModel) {
     case vpCameraParameters::perspectiveProjWithoutDistortion :
-#ifdef UNIX
+#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
       snprintf(filename_eMc, FILENAME_MAX, "%s",
                CONST_EMC_PTGREY_FLEA2_WITHOUT_DISTORTION_FILENAME);
-#else // WIN32
+#else // _WIN32
       _snprintf(filename_eMc, FILENAME_MAX, "%s",
                 CONST_EMC_PTGREY_FLEA2_WITHOUT_DISTORTION_FILENAME);
 #endif
       break;
     case vpCameraParameters::perspectiveProjWithDistortion :
-#ifdef UNIX
+#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
       snprintf(filename_eMc, FILENAME_MAX, "%s",
                CONST_EMC_PTGREY_FLEA2_WITH_DISTORTION_FILENAME);
-#else // WIN32
+#else // _WIN32
       _snprintf(filename_eMc, FILENAME_MAX, "%s",
                 CONST_EMC_PTGREY_FLEA2_WITH_DISTORTION_FILENAME);
 #endif
@@ -272,19 +274,19 @@ vpViper850::init (vpViper850::vpToolType tool,
   case vpViper850::TOOL_SCHUNK_GRIPPER_CAMERA: {
     switch(projModel) {
     case vpCameraParameters::perspectiveProjWithoutDistortion :
-#ifdef UNIX
+#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
       snprintf(filename_eMc, FILENAME_MAX, "%s",
                CONST_EMC_SCHUNK_GRIPPER_WITHOUT_DISTORTION_FILENAME);
-#else // WIN32
+#else // _WIN32
       _snprintf(filename_eMc, FILENAME_MAX, "%s",
                 CONST_EMC_SCHUNK_GRIPPER_WITHOUT_DISTORTION_FILENAME);
 #endif
       break;
     case vpCameraParameters::perspectiveProjWithDistortion :
-#ifdef UNIX
+#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
       snprintf(filename_eMc, FILENAME_MAX, "%s",
                CONST_EMC_SCHUNK_GRIPPER_WITH_DISTORTION_FILENAME);
-#else // WIN32
+#else // _WIN32
       _snprintf(filename_eMc, FILENAME_MAX, "%s",
                 CONST_EMC_SCHUNK_GRIPPER_WITH_DISTORTION_FILENAME);
 #endif
@@ -295,19 +297,19 @@ vpViper850::init (vpViper850::vpToolType tool,
   case vpViper850::TOOL_GENERIC_CAMERA: {
     switch(projModel) {
     case vpCameraParameters::perspectiveProjWithoutDistortion :
-#ifdef UNIX
+#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
       snprintf(filename_eMc, FILENAME_MAX, "%s",
                CONST_EMC_GENERIC_WITHOUT_DISTORTION_FILENAME);
-#else // WIN32
+#else // _WIN32
       _snprintf(filename_eMc, FILENAME_MAX, "%s",
                 CONST_EMC_GENERIC_WITHOUT_DISTORTION_FILENAME);
 #endif
       break;
     case vpCameraParameters::perspectiveProjWithDistortion :
-#ifdef UNIX
+#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
       snprintf(filename_eMc, FILENAME_MAX, "%s",
                CONST_EMC_GENERIC_WITH_DISTORTION_FILENAME);
-#else // WIN32
+#else // _WIN32
       _snprintf(filename_eMc, FILENAME_MAX, "%s",
                 CONST_EMC_GENERIC_WITH_DISTORTION_FILENAME);
 #endif
@@ -354,6 +356,7 @@ vpViper850::init (vpViper850::vpToolType tool,
       etc[2] =  0.1022; // tz
       break;
     }
+    break;
   }
   case vpViper850::TOOL_PTGREY_FLEA2_CAMERA:
   case vpViper850::TOOL_SCHUNK_GRIPPER_CAMERA:  {
@@ -375,6 +378,7 @@ vpViper850::init (vpViper850::vpToolType tool,
       etc[2] =  0.078; // tz
       break;
     }
+    break;
   }
   case vpViper850::TOOL_GENERIC_CAMERA: {
     // Set eMc to identity
@@ -389,6 +393,7 @@ vpViper850::init (vpViper850::vpToolType tool,
       etc[2] = 0; // tz
       break;
     }
+    break;
   }
   }
   vpRotationMatrix eRc(erc);
@@ -574,7 +579,7 @@ int main()
 void
 vpViper850::getCameraParameters (vpCameraParameters &cam,
                                  const unsigned int &image_width,
-                                 const unsigned int &image_height)
+                                 const unsigned int &image_height) const
 {
 #if defined(VISP_HAVE_XML2) && defined (VISP_HAVE_ACCESS_TO_NAS)
   vpXmlParserCamera parser;
@@ -796,7 +801,7 @@ int main()
 */
 void
 vpViper850::getCameraParameters (vpCameraParameters &cam,
-                                 const vpImage<unsigned char> &I)
+                                 const vpImage<unsigned char> &I) const
 {
   getCameraParameters(cam,I.getWidth(),I.getHeight());
 }
@@ -866,15 +871,7 @@ int main()
 
 void
 vpViper850::getCameraParameters (vpCameraParameters &cam,
-                                 const vpImage<vpRGBa> &I)
+                                 const vpImage<vpRGBa> &I) const
 {
   getCameraParameters(cam,I.getWidth(),I.getHeight());
 }
-
-
-
-/*
- * Local variables:
- * c-basic-offset: 2
- * End:
- */

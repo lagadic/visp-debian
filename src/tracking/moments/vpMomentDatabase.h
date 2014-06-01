@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpMomentDatabase.h 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpMomentDatabase.h 4632 2014-02-03 17:06:40Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -136,9 +136,10 @@ class VISP_EXPORT vpMomentDatabase{
         std::map<const char*,vpMoment*,cmp_str> moments;
         void add(vpMoment& moment, const char* name);
  public:
+        vpMomentDatabase() : moments() {}
         virtual ~vpMomentDatabase() {}
 
-        vpMoment& get(const char* type, bool& found);
+        const vpMoment& get(const char* type, bool& found) const;
         /*!
           Get the first element in the database.
           May be useful in case an unnamed object is present but is the only element in the database.

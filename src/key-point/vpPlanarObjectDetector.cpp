@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpPlanarObjectDetector.cpp 4182 2013-03-27 13:20:58Z fspindle $
+ * $Id: vpPlanarObjectDetector.cpp 4632 2014-02-03 17:06:40Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -60,13 +60,9 @@
 
 */
 vpPlanarObjectDetector::vpPlanarObjectDetector()
+  : fern(), homography(), H(), dst_corners(), isCorrect(false), ref_corners(), modelROI(), currentImagePoints(),
+    refImagePoints(), minNbMatching(10)
 {
-  isCorrect = false;
-  dst_corners.resize(0); 
-  ref_corners.resize(0);
-  currentImagePoints.resize(0);
-  refImagePoints.resize(0);
-  minNbMatching = 10;
 }
 
 /*!
@@ -78,19 +74,18 @@ vpPlanarObjectDetector::vpPlanarObjectDetector()
 
 */
 vpPlanarObjectDetector::vpPlanarObjectDetector(const std::string& _dataFile, const std::string& _objectName)
+  : fern(), homography(), H(), dst_corners(), isCorrect(false), ref_corners(), modelROI(), currentImagePoints(),
+    refImagePoints(), minNbMatching(10)
 {
-  isCorrect = false;
   load(_dataFile, _objectName);
 }
 
 /*!
-  initialise stuff
-  
+  Initialise stuff. For the moment does nothing.
 */
 void
 vpPlanarObjectDetector::init()
 {
-
 }
 
 /*!

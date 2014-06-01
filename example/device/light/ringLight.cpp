@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: ringLight.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: ringLight.cpp 4574 2014-01-09 08:48:51Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -166,15 +166,15 @@ bool getOptions(int argc, const char **argv, bool &on, int &nsec, double &nmsec)
 int
 main(int argc, const char **argv)
 {
-  bool on = false;
-  int nsec = 5; // Time while the ring light is turned on
-  double nmsec = 0; // Pulse duration
-
-  // Read the command line options
-  if (getOptions(argc, argv, on, nsec, nmsec) == false) {
-    exit (-1);
-  }
   try {
+    bool on = false;
+    int nsec = 5; // Time while the ring light is turned on
+    double nmsec = 0; // Pulse duration
+
+    // Read the command line options
+    if (getOptions(argc, argv, on, nsec, nmsec) == false) {
+      exit (-1);
+    }
 
     vpRingLight light;
 

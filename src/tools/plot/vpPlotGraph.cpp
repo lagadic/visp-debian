@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpPlotGraph.cpp 4303 2013-07-04 14:14:00Z fspindle $
+ * $Id: vpPlotGraph.cpp 4649 2014-02-07 14:57:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -61,40 +61,22 @@
 
 #if defined(VISP_HAVE_DISPLAY)
 
-vpPlotGraph::vpPlotGraph()
-{
-  curveList = NULL;
-  
-  gridColor.setColor(200,200,200);
-  
-  nbDivisionx = 10;
-  nbDivisiony = 10;
-  nbDivisionz = 10;
-  
-  xmax = 10;
-  xmin = 0;
-  ymax = 10;
-  ymin = -10;
-  zmax = 10;
-  zmin = -10;
-  xdelt = 1;
-  ydelt = 1;
-  zdelt = 1;
-  gridx = true;
-  gridy = true;
-  scaleInitialized = false;
-  firstPoint = true;
-  
-  dispUnit = false;
-  dispTitle = false;
-  dispLegend = false;
+int laFonctionSansNom (const double delta);
+void getGrid3DPoint(const double pente, vpImagePoint &iPunit, vpImagePoint &ip1, vpImagePoint &ip2, vpImagePoint &ip3);
 
-  blockedr = false;
-  blockedz = false;
-  blocked = false;
-  
-  epsi = 5;
-  epsj = 6;
+
+vpPlotGraph::vpPlotGraph()
+  : xorg(0.), yorg(0.), zoomx(1.), zoomy(1.), xmax(10), ymax(10), xmin(0), ymin(-10),
+    xdelt(1), ydelt(1), gridx(true), gridy(true), gridColor(), curveNbr(1), curveList(NULL),
+    scaleInitialized(false), firstPoint(true), nbDivisionx(10), nbDivisiony(10), topLeft(),
+    width(0), height(0), graphZone(), dTopLeft(), dWidth(0), dHeight(0), dGraphZone(),
+    dTopLeft3D(), dGraphZone3D(), cam(), cMo(), cMf(), w_xval(0), w_xsize(0), w_yval(0), w_ysize(0),
+    w_zval(0), w_zsize(0), ptXorg(0), ptYorg(0), ptZorg(0), zoomx_3D(1.), zoomy_3D(1.), zoomz_3D(1.),
+    nbDivisionz(10), zorg(1.), zoomz(1.), zmax(10), zmin(-10), zdelt(1), old_iPr(), old_iPz(),
+    blockedr(false), blockedz(false), blocked(false), epsi(5), epsj(6),
+    dispUnit(false), dispTitle(false), dispLegend(false), gridThickness(1)
+{
+  gridColor.setColor(200,200,200);
   
   old_iPr = vpImagePoint(-1,-1);
   old_iPz = vpImagePoint(-1,-1);
@@ -130,11 +112,11 @@ vpPlotGraph::initGraph (unsigned int nbCurve)
 }
 
 void
-vpPlotGraph::initSize (vpImagePoint topLeft, unsigned int width, unsigned int height, unsigned int margei, unsigned int margej)
+vpPlotGraph::initSize (vpImagePoint top_left, unsigned int w, unsigned int h, unsigned int margei, unsigned int margej)
 {
-  this->topLeft = topLeft;
-  this->width = width;
-  this->height = height;
+  this->topLeft = top_left;
+  this->width = w;
+  this->height = h;
   graphZone.setTopLeft(topLeft);
   graphZone.setWidth(width);
   graphZone.setHeight(height);
@@ -237,36 +219,61 @@ vpPlotGraph::setCurveColor(const unsigned int curveNum, const vpColor color)
 }
 
 void
-vpPlotGraph::setTitle (const char *title)
+vpPlotGraph::setTitle (const char *title_)
 {
-  strcpy(this->title, title);
+  if (strlen(title_) >= 256) {
+    throw(vpException(vpException::memoryAllocationError,
+                      "Not enough memory to intialize the title"));
+  }
+
+  strcpy(this->title, title_);
   dispTitle = true;
 }
 
 void
-vpPlotGraph::setUnitX (const char *unitx)
+vpPlotGraph::setUnitX (const char *unit_x)
 {
-  strcpy(this->unitx, unitx);
+  if (strlen(unit_x) >= 256) {
+    throw(vpException(vpException::memoryAllocationError,
+                      "Not enough memory to intialize the unit along x axis"));
+  }
+
+  strcpy(this->unitx, unit_x);
   dispUnit = true;
 }
 
 void
-vpPlotGraph::setUnitY (const char *unity)
+vpPlotGraph::setUnitY (const char *unit_y)
 {
-  strcpy(this->unity, unity);
+  if (strlen(unit_y) >= 256) {
+    throw(vpException(vpException::memoryAllocationError,
+                      "Not enough memory to intialize the unit along y axis"));
+  }
+
+  strcpy(this->unity, unit_y);
   dispUnit = true;
 }
 
 void
-vpPlotGraph::setUnitZ (const char *unitz)
+vpPlotGraph::setUnitZ (const char *unit_z)
 {
-  strcpy(this->unitz, unitz);
+  if (strlen(unit_z) >= 256) {
+    throw(vpException(vpException::memoryAllocationError,
+                      "Not enough memory to intialize the unit along z axis"));
+  }
+
+  strcpy(this->unitz, unit_z);
   dispUnit = true;
 }
 
 void
 vpPlotGraph::setLegend (const unsigned int curveNum, const char *legend)
 {
+  if (strlen(legend) >= 256) {
+    throw(vpException(vpException::memoryAllocationError,
+                      "Not enough memory to intialize the legend"));
+  }
+
   strcpy((curveList+curveNum)->legend,legend);
   dispLegend = true;
 }
@@ -480,12 +487,13 @@ vpPlotGraph::rescaley(unsigned int side, double extremity)
 }
 
 void
-vpPlotGraph::initScale(vpImage<unsigned char> &I, const double xmin, const double xmax, const int nbDivx, const double ymin, const double ymax, const int nbDivy, const bool gx, const bool gy)
+vpPlotGraph::initScale(vpImage<unsigned char> &I, const double x_min, const double x_max, const int nbDivx,
+                       const double y_min, const double y_max, const int nbDivy, const bool gx, const bool gy)
 {
-  this->xmin = xmin;
-  this->xmax = xmax;
-  this->ymin = ymin;
-  this->ymax = ymax;
+  this->xmin = x_min;
+  this->xmax = x_max;
+  this->ymin = y_min;
+  this->ymax = y_max;
   this->gridx = gx;
   this->gridy = gy;
   this->nbDivisionx = nbDivx;
@@ -499,14 +507,16 @@ vpPlotGraph::initScale(vpImage<unsigned char> &I, const double xmin, const doubl
 
 
 void
-vpPlotGraph::initScale(vpImage<unsigned char> &I, const double xmin, const double xmax, const int nbDivx, const double ymin, const double ymax, const int nbDivy, const double zmin, const double zmax, const int nbDivz, const bool gx, const bool gy)
+vpPlotGraph::initScale(vpImage<unsigned char> &I, const double x_min, const double x_max, const int nbDivx,
+                       const double y_min, const double y_max, const int nbDivy,
+                       const double z_min, const double z_max, const int nbDivz, const bool gx, const bool gy)
 {
-  this->xmin = xmin;
-  this->xmax = xmax;
-  this->ymin = ymin;
-  this->ymax = ymax;
-  this->zmin = zmin;
-  this->zmax = zmax;
+  this->xmin = x_min;
+  this->xmax = x_max;
+  this->ymin = y_min;
+  this->ymax = y_max;
+  this->zmin = z_min;
+  this->zmax = z_max;
   this->gridx = gx;
   this->gridy = gy;
   this->nbDivisionx = nbDivx;
@@ -881,7 +891,7 @@ vpPlotGraph::check3Dpoint(vpImagePoint &iP)
     if (iP.get_j() <dTopLeft3D.get_j())
       iP.set_j(dTopLeft3D.get_j());
     else if (iP.get_j() > dTopLeft3D.get_j()+dWidth)
-      iP.set_i(dTopLeft3D.get_j()+dWidth-1);
+      iP.set_j(dTopLeft3D.get_j()+dWidth-1);
     return false;
   }
   return true;
@@ -1089,7 +1099,7 @@ vpPlotGraph::displayGrid3D (vpImage<unsigned char> &I)
     vpDisplay::displayArrow(I,iP[0],iP[1], vpColor::black, gridThickness);
     if (dispUnit)
     {
-      vpImagePoint iPunit(iP[1].get_i(),iP[1].get_j()-10*epsj);
+      iPunit.set_ij(iP[1].get_i(),iP[1].get_j()-10*epsj);
       check3Dpoint (iPunit);
       vpDisplay::displayCharString(I,iPunit,unitx, vpColor::black);
     }
@@ -1099,7 +1109,7 @@ vpPlotGraph::displayGrid3D (vpImage<unsigned char> &I)
     vpDisplay::displayArrow(I,iP[3],iP[2], vpColor::black, gridThickness);
     if (dispUnit)
     {
-      vpImagePoint iPunit(iP[2].get_i(),iP[2].get_j()-10*epsj);
+      iPunit.set_ij(iP[2].get_i(),iP[2].get_j()-10*epsj);
       check3Dpoint (iPunit);
       vpDisplay::displayCharString(I,iPunit,unity, vpColor::black);
     }
@@ -1109,7 +1119,7 @@ vpPlotGraph::displayGrid3D (vpImage<unsigned char> &I)
     vpDisplay::displayArrow(I,iP[4],iP[5], vpColor::black, gridThickness);
     if (dispUnit)
     {
-      vpImagePoint iPunit(iP[5].get_i(),iP[5].get_j()-10*epsj);
+      iPunit.set_ij(iP[5].get_i(),iP[5].get_j()-10*epsj);
       check3Dpoint (iPunit);
       vpDisplay::displayCharString(I,iPunit,unitz, vpColor::black);
     }
@@ -1209,14 +1219,14 @@ vpPlotGraph::plot (vpImage<unsigned char> &I, const unsigned int curveNb, const 
 #if( defined VISP_HAVE_X11 || defined VISP_HAVE_GDI )
   double top;
   double left;
-  double width;
-  double height;
+  double width_;
+  double height_;
   
-  if (iP.get_i() <= (curveList+curveNb)->lastPoint.get_i()) {top = iP.get_i()-5; height = (curveList+curveNb)->lastPoint.get_i() - top+10;}
-  else {top = (curveList+curveNb)->lastPoint.get_i()-5; height = iP.get_i() - top+10;}
-  if (iP.get_j() <= (curveList+curveNb)->lastPoint.get_j()) {left = iP.get_j()-5; width = (curveList+curveNb)->lastPoint.get_j() - left+10;}
-  else {left = (curveList+curveNb)->lastPoint.get_j()-5; width = iP.get_j() - left+10;}
-  vpDisplay::flushROI(I,vpRect(left,top,width,height));
+  if (iP.get_i() <= (curveList+curveNb)->lastPoint.get_i()) {top = iP.get_i()-5; height_ = (curveList+curveNb)->lastPoint.get_i() - top+10;}
+  else {top = (curveList+curveNb)->lastPoint.get_i()-5; height_ = iP.get_i() - top+10;}
+  if (iP.get_j() <= (curveList+curveNb)->lastPoint.get_j()) {left = iP.get_j()-5; width_ = (curveList+curveNb)->lastPoint.get_j() - left+10;}
+  else {left = (curveList+curveNb)->lastPoint.get_j()-5; width_ = iP.get_j() - left+10;}
+  vpDisplay::flushROI(I,vpRect(left,top,width_,height_));
 #endif
   
   (curveList+curveNb)->lastPoint = iP;
@@ -1368,13 +1378,13 @@ vpPlotGraph::navigation(const vpImage<unsigned char> &I, bool &changed)
 
   if (old_iPr != vpImagePoint(-1,-1) && blockedr)
   {
-    double width = vpMath::minimum(I.getWidth(),I.getHeight());
+    double width_ = vpMath::minimum(I.getWidth(),I.getHeight());
     
     double diffi = iP.get_i() - old_iPr.get_i();
     double diffj = iP.get_j() - old_iPr.get_j();
     
-    anglei = diffi*360/width;
-    anglej = diffj*360/width;
+    anglei = diffi*360/width_;
+    anglej = diffj*360/width_;
     mov.buildFrom(0,0,0,vpMath::rad(anglei),vpMath::rad(-anglej),0);
     changed = true;
   }

@@ -3,7 +3,7 @@
  * $Id: vpImagePoint.h 2359 2009-11-24 15:09:25Z nmelchio $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -55,20 +55,14 @@
   Basic constructor.
 */
 vpVideoReader::vpVideoReader()
+  : imSequence(NULL),
+#ifdef VISP_HAVE_FFMPEG
+    ffmpeg(NULL),
+#endif
+    formatType(FORMAT_UNKNOWN), initFileName(false), isOpen(false), frameCount(0),
+    firstFrame(0), lastFrame(0), firstFrameIndexIsSet(false), lastFrameIndexIsSet(false)
 {
-  imSequence = NULL;
-  #ifdef VISP_HAVE_FFMPEG
-  ffmpeg = NULL;
-  #endif
-  initFileName = false;
-  isOpen = false;
-  firstFrame = 0;
-  frameCount = 0;
-  lastFrame = 0;
-  firstFrameIndexIsSet = false;
-  lastFrameIndexIsSet = false;
 }
-
 
 /*!
   Basic destructor.
@@ -105,6 +99,11 @@ void vpVideoReader::setFileName(const char *filename)
     throw (vpImageException(vpImageException::noFileNameError,"filename empty ")) ;
   }
   
+  if (strlen( filename ) >= FILENAME_MAX) {
+    throw(vpException(vpException::memoryAllocationError,
+                      "Not enough memory to intialize the file name"));
+  }
+
   strcpy(this->fileName,filename);
   
   formatType = getFormat(fileName);
@@ -487,25 +486,30 @@ vpVideoReader::findLastFrameIndex()
 
   if (imSequence != NULL)
   {
-    char name[FILENAME_MAX];
-    int image_number = firstFrame;
-    std::fstream file;
-    bool failed;
-    do
-    {
-      sprintf(name,fileName,image_number) ;
-      file.open(name, std::fstream::in);
-      failed = file.fail();
-      if (!failed) file.close();
-      image_number++;
-    }while(!failed);
+    if (! lastFrameIndexIsSet) {
+      char name[FILENAME_MAX];
+      int image_number = firstFrame;
+      bool failed;
+      do
+      {
+        std::fstream file;
+        sprintf(name,fileName,image_number) ;
+        file.open(name, std::ios::in);
+        failed = file.fail();
+        if (!failed) file.close();
+        image_number++;
+      }while(!failed);
 
-    lastFrame = image_number - 2;
+      lastFrame = image_number - 2;
+    }
   }
 
-  #ifdef VISP_HAVE_FFMPEG
-  else if (ffmpeg != NULL)
-    lastFrame = (long)(ffmpeg->getFrameNumber() - 1);
+#ifdef VISP_HAVE_FFMPEG
+  else if (ffmpeg != NULL) {
+    if (! lastFrameIndexIsSet) {
+      lastFrame = (long)(ffmpeg->getFrameNumber() - 1);
+    }
+  }
   #endif
 }
 /*!
@@ -519,11 +523,11 @@ vpVideoReader::findFirstFrameIndex()
     if (! firstFrameIndexIsSet) {
       char name[FILENAME_MAX];
       int image_number = 0;
-      std::fstream file;
       bool failed;
       do {
+        std::fstream file;
         sprintf(name, fileName, image_number) ;
-        file.open(name, std::fstream::in);
+        file.open(name, std::ios::in);
         failed = file.fail();
         if (!failed) file.close();
         image_number++;

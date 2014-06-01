@@ -3,7 +3,7 @@
  * $Id: servoSimuPoint3DCamVelocity.cpp 2457 2010-01-07 10:41:18Z nmelchio $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -66,6 +66,9 @@
 // List of allowed command line options
 #define GETOPTARGS	"h"
 
+void usage(const char *name, const char *badparam);
+bool getOptions(int argc, const char **argv);
+
 /*!
 
 Print the program options.
@@ -107,15 +110,15 @@ Set the program options.
 */
 bool getOptions(int argc, const char **argv)
 {
-  const char *optarg;
+  const char *optarg_;
   int	c;
-  while ((c = vpParseArgv::parse(argc, argv, GETOPTARGS, &optarg)) > 1) {
+  while ((c = vpParseArgv::parse(argc, argv, GETOPTARGS, &optarg_)) > 1) {
 
     switch (c) {
     case 'h': usage(argv[0], NULL); return false; break;
 
     default:
-      usage(argv[0], optarg);
+      usage(argv[0], optarg_);
       return false; break;
     }
   }
@@ -124,7 +127,7 @@ bool getOptions(int argc, const char **argv)
     // standalone param or error
     usage(argv[0], NULL);
     std::cerr << "ERROR: " << std::endl;
-    std::cerr << "  Bad argument " << optarg << std::endl << std::endl;
+    std::cerr << "  Bad argument " << optarg_ << std::endl << std::endl;
     return false;
   }
 
@@ -134,92 +137,99 @@ bool getOptions(int argc, const char **argv)
 int
 main(int argc, const char ** argv)
 {
-  // Read the command line options
-  if (getOptions(argc, argv) == false) {
-    exit (-1);
-  }
+  try {
+    // Read the command line options
+    if (getOptions(argc, argv) == false) {
+      exit (-1);
+    }
 
-  vpServo task ;
-  vpSimulatorCamera robot ;
+    vpServo task ;
+    vpSimulatorCamera robot ;
 
-  std::cout << std::endl ;
-  std::cout << "-------------------------------------------------------" << std::endl ;
-  std::cout << " Test program for vpServo "  <<std::endl ;
-  std::cout << " Eye-in-hand task control, velocity computed in the camera frame" << std::endl ;
-  std::cout << " Simulation " << std::endl ;
-  std::cout << " task : servo a 3D point " << std::endl ;
-  std::cout << "-------------------------------------------------------" << std::endl ;
-  std::cout << std::endl ;
+    std::cout << std::endl ;
+    std::cout << "-------------------------------------------------------" << std::endl ;
+    std::cout << " Test program for vpServo "  <<std::endl ;
+    std::cout << " Eye-in-hand task control, velocity computed in the camera frame" << std::endl ;
+    std::cout << " Simulation " << std::endl ;
+    std::cout << " task : servo a 3D point " << std::endl ;
+    std::cout << "-------------------------------------------------------" << std::endl ;
+    std::cout << std::endl ;
 
-  // sets the initial camera location
-  vpHomogeneousMatrix cMo ;
-  cMo[0][3] = 0.1 ;
-  cMo[1][3] = 0.2 ;
-  cMo[2][3] = 2 ;
-  // Compute the position of the object in the world frame
-  vpHomogeneousMatrix wMc, wMo;
-  robot.getPosition(wMc) ;
-  wMo = wMc * cMo;
-
-  // sets the point coordinates in the world frame
-  vpPoint point ;
-  point.setWorldCoordinates(0,0,0) ;
-
-  // computes the point coordinates in the camera frame
-  point.track(cMo) ;
-
-  std::cout << "Point coordinates in the camera frame: " << point.cP.t() ;
-
-  vpFeaturePoint3D p ;
-  p.buildFrom(point) ;
-
-  // sets the desired position of the point
-  vpFeaturePoint3D pd ;
-  pd.set_XYZ(0,0,1) ;
-
-  // define the task
-  // - we want an eye-in-hand control law
-  // - robot is controlled in the camera frame
-  task.setServo(vpServo::EYEINHAND_CAMERA) ;
-
-  // we want to see a point on a point
-  std::cout << std::endl ;
-  task.addFeature(p,pd) ;
-
-  // set the gain") ;
-  task.setLambda(1) ;
-
-  // Display task information
-  task.print() ;
-
-  unsigned int iter=0 ;
-  // loop
-  while(iter++<200)
-  {
-    std::cout << "---------------------------------------------" << iter <<std::endl ;
-    vpColVector v ;
-
-    // get the robot position
+    // sets the initial camera location
+    vpHomogeneousMatrix cMo ;
+    cMo[0][3] = 0.1 ;
+    cMo[1][3] = 0.2 ;
+    cMo[2][3] = 2 ;
+    // Compute the position of the object in the world frame
+    vpHomogeneousMatrix wMc, wMo;
     robot.getPosition(wMc) ;
-    // Compute the position of the camera wrt the object frame
-    cMo = wMc.inverse() * wMo;
+    wMo = wMc * cMo;
 
-    // new point position
+    // sets the point coordinates in the world frame
+    vpPoint point ;
+    point.setWorldCoordinates(0,0,0) ;
+
+    // computes the point coordinates in the camera frame
     point.track(cMo) ;
+
+    std::cout << "Point coordinates in the camera frame: " << point.cP.t() ;
+
+    vpFeaturePoint3D p ;
     p.buildFrom(point) ;
-    //   std::cout << p.cP.t() ;
-    //   std::cout << (p.get_s()).t() ;
 
-    // compute the control law
-    v = task.computeControlLaw() ;
-    // send the camera velocity to the controller
-    robot.setVelocity(vpRobot::CAMERA_FRAME, v) ;
+    // sets the desired position of the point
+    vpFeaturePoint3D pd ;
+    pd.set_XYZ(0,0,1) ;
 
-    std::cout << "|| s - s* || = " << ( task.getError() ).sumSquare() <<std::endl ;
+    // define the task
+    // - we want an eye-in-hand control law
+    // - robot is controlled in the camera frame
+    task.setServo(vpServo::EYEINHAND_CAMERA) ;
+
+    // we want to see a point on a point
+    std::cout << std::endl ;
+    task.addFeature(p,pd) ;
+
+    // set the gain") ;
+    task.setLambda(1) ;
+
+    // Display task information
+    task.print() ;
+
+    unsigned int iter=0 ;
+    // loop
+    while(iter++<200)
+    {
+      std::cout << "---------------------------------------------" << iter <<std::endl ;
+      vpColVector v ;
+
+      // get the robot position
+      robot.getPosition(wMc) ;
+      // Compute the position of the camera wrt the object frame
+      cMo = wMc.inverse() * wMo;
+
+      // new point position
+      point.track(cMo) ;
+      p.buildFrom(point) ;
+      //   std::cout << p.cP.t() ;
+      //   std::cout << (p.get_s()).t() ;
+
+      // compute the control law
+      v = task.computeControlLaw() ;
+      // send the camera velocity to the controller
+      robot.setVelocity(vpRobot::CAMERA_FRAME, v) ;
+
+      std::cout << "|| s - s* || = " << ( task.getError() ).sumSquare() <<std::endl ;
+    }
+
+    // Display task information
+    task.print() ;
+    task.kill();
+    return 0;
   }
-
-  // Display task information
-  task.print() ;
-  task.kill();
+  catch(vpException e) {
+    std::cout << "Catch a ViSP exception: " << e << std::endl;
+    return 1;
+  }
 }
 

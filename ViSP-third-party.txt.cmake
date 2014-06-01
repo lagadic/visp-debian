@@ -25,15 +25,13 @@ Robots
   Pioneer                     : ${VISP_HAVE_PIONEER_FOUND}
   Viper S650                  : ${VISP_HAVE_VIPER650_FOUND}
   Viper S850                  : ${VISP_HAVE_VIPER850_FOUND}
-  Cycab                       : ${VISP_HAVE_CYCAB_FOUND}
-Video devices (display)                  
+Video devices (display)
   X11                         : ${VISP_HAVE_X11_FOUND}
   GTK                         : ${VISP_HAVE_GTK_FOUND} 
   OpenCV                      : ${VISP_HAVE_OPENCV_FOUND} 
   GDI                         : ${VISP_HAVE_GDI_FOUND}
   Direct3D                    : ${VISP_HAVE_D3D9_FOUND}
 Framegrabbers
-  Firewire libdc1394-1.x      : ${VISP_HAVE_DC1394_1_FOUND}
   Firewire libdc1394-2.x      : ${VISP_HAVE_DC1394_2_FOUND}
   Video For Linux Two         : ${VISP_HAVE_V4L2_FOUND}
   DirectShow                  : ${VISP_HAVE_DIRECTSHOW_FOUND}

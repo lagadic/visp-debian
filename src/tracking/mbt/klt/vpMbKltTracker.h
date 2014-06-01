@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpMbKltTracker.h 4338 2013-07-23 14:29:30Z fspindle $
+ * $Id: vpMbKltTracker.h 4649 2014-02-07 14:57:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -405,9 +405,9 @@ public:
           /*!
             Set the value of the gain used to compute the control law.
             
-            \param lambda : the desired value for the gain.
+            \param gain : the desired value for the gain.
           */
-  virtual inline  void    setLambda(const double lambda) {this->lambda = lambda;}
+  virtual inline  void    setLambda(const double gain) {this->lambda = gain;}
   
           /*!
             Set the erosion of the mask used on the Model faces.
@@ -443,7 +443,7 @@ protected:
           void            computeVVS(const unsigned int &nbInfos, vpColVector &w);
           
   virtual void            initFaceFromCorners(const std::vector<vpPoint>& corners, const unsigned int indexFace = -1);
-  virtual void            initCylinder(const vpPoint& , const vpPoint , const double , const unsigned int ){};
+  virtual void            initCylinder(const vpPoint&, const vpPoint &, const double, const unsigned int ){};
   
           void            preTracking(const vpImage<unsigned char>& I, unsigned int &nbInfos, unsigned int &nbFaceUsed);
           bool            postTracking(const vpImage<unsigned char>& I, vpColVector &w);

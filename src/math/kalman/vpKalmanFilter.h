@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpKalmanFilter.h 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpKalmanFilter.h 4649 2014-02-07 14:57:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -128,18 +128,20 @@ protected :
 
 public:
   vpKalmanFilter() ;
-  vpKalmanFilter(unsigned int nsignal) ;
-  vpKalmanFilter(unsigned int size_state, unsigned int size_measure, unsigned int nsignal) ;
+  vpKalmanFilter(unsigned int n_signal) ;
+  vpKalmanFilter(unsigned int size_state, unsigned int size_measure, unsigned int n_signal) ;
+  /*! Destructor that does noting. */
+  virtual ~vpKalmanFilter() {};
   /*!
     Set the number of signal to filter.
   */
-  void setNumberOfSignal(unsigned int nsignal)
+  void setNumberOfSignal(unsigned int n_signal)
   {
-    this->nsignal = nsignal;
+    this->nsignal = n_signal;
   }
 
   // int init() { return init_done ; }
-  void init(unsigned int size_state, unsigned int size_measure, unsigned int nsignal) ;
+  void init(unsigned int size_state, unsigned int size_measure, unsigned int n_signal) ;
   void prediction() ;
   void filtering(vpColVector &z) ;
   /*!

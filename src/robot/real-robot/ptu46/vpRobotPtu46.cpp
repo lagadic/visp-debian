@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpRobotPtu46.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpRobotPtu46.cpp 4574 2014-01-09 08:48:51Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -235,7 +235,7 @@ vpRobotPtu46::stopMotion(void)
 
 */
 void
-vpRobotPtu46::get_cVe(vpVelocityTwistMatrix &cVe)
+vpRobotPtu46::get_cVe(vpVelocityTwistMatrix &cVe) const
 {
   vpHomogeneousMatrix cMe ;
   vpPtu46::get_cMe(cMe) ;
@@ -253,7 +253,7 @@ vpRobotPtu46::get_cVe(vpVelocityTwistMatrix &cVe)
 
 */
 void
-vpRobotPtu46::get_cMe(vpHomogeneousMatrix &cMe)
+vpRobotPtu46::get_cMe(vpHomogeneousMatrix &cMe) const
 {
   vpPtu46::get_cMe(cMe) ;
 }

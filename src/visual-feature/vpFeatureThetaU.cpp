@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpFeatureThetaU.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpFeatureThetaU.cpp 4632 2014-02-03 17:06:40Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -91,8 +91,8 @@ vpFeatureThetaU::init()
   visual feature.
 
 */
-vpFeatureThetaU::vpFeatureThetaU(vpFeatureThetaURotationRepresentationType r):
-  vpBasicFeature()
+vpFeatureThetaU::vpFeatureThetaU(vpFeatureThetaURotationRepresentationType r)
+  : rotation(r)
 {
   //vpTRACE("0x%x", this);
   init() ;
@@ -121,15 +121,12 @@ vpFeatureThetaU::vpFeatureThetaU(vpFeatureThetaURotationRepresentationType r):
 */
 
 vpFeatureThetaU::vpFeatureThetaU(vpThetaUVector &tu, 
-				 vpFeatureThetaURotationRepresentationType r):
-  vpBasicFeature()
+                                 vpFeatureThetaURotationRepresentationType r)
+  : rotation(r)
 {
   init() ;
   
   buildFrom(tu) ;
-
-  // kind of rotation representation
-  rotation = r;
 }
 
 /*!
@@ -150,16 +147,13 @@ vpFeatureThetaU::vpFeatureThetaU(vpThetaUVector &tu,
 */
 
 vpFeatureThetaU::vpFeatureThetaU(vpRotationMatrix &R, 
-				 vpFeatureThetaURotationRepresentationType r):
-  vpBasicFeature()
+                                 vpFeatureThetaURotationRepresentationType r)
+  : rotation(r)
 {
   init() ;
   
   vpThetaUVector tu(R) ;
   buildFrom(tu) ;
-
-  // kind of rotation representation
-  rotation = r;
 }
 
 /*!
@@ -182,17 +176,14 @@ vpFeatureThetaU::vpFeatureThetaU(vpRotationMatrix &R,
 
 */
 vpFeatureThetaU::vpFeatureThetaU(vpHomogeneousMatrix &M, 
-				 vpFeatureThetaURotationRepresentationType r):
- vpBasicFeature()
+                                 vpFeatureThetaURotationRepresentationType r)
+  : rotation(r)
 {
   init() ;
   vpRotationMatrix R ;
   M.extract(R)  ;
   vpThetaUVector tu(R) ;
   buildFrom(tu) ;
-
-  // kind of rotation representation
-  rotation = r;
 }
 
 /*!

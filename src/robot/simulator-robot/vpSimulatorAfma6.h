@@ -3,7 +3,7 @@
  * $Id: vpSimulatorAfma6.h 2598 2010-06-02 09:20:22Z nmelchio $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -52,7 +52,7 @@
 
 #include <string>
 
-#if defined(WIN32) || defined(VISP_HAVE_PTHREAD)
+#if defined(_WIN32) || defined(VISP_HAVE_PTHREAD)
 
 /*!
   \class vpSimulatorAfma6
@@ -209,11 +209,14 @@ public:
     void getDisplacement(const vpRobot::vpControlFrameType frame,
                          vpColVector &displacement);
     void getPosition(const vpRobot::vpControlFrameType frame, vpColVector &q);
-    void getPosition (const vpRobot::vpControlFrameType frame,
-                      vpPoseVector &position);
+    void getPosition(const vpRobot::vpControlFrameType frame, vpColVector &q, double &timestamp);
+    void getPosition(const vpRobot::vpControlFrameType frame, vpPoseVector &position);
+    void getPosition(const vpRobot::vpControlFrameType frame, vpPoseVector &position, double &timestamp);
     double getPositioningVelocity (void){return positioningVelocity;}
     void getVelocity(const vpRobot::vpControlFrameType frame, vpColVector &q);
+    void getVelocity(const vpRobot::vpControlFrameType frame, vpColVector &q, double &timestamp);
     vpColVector getVelocity (const vpRobot::vpControlFrameType frame);
+    vpColVector getVelocity (const vpRobot::vpControlFrameType frame, double &timestamp);
 
     void get_cMe(vpHomogeneousMatrix &cMe);
     void get_cVe(vpVelocityTwistMatrix &cVe);
@@ -240,7 +243,7 @@ public:
                       const double pos5,
                       const double pos6);
     void setPosition(const char *filename);
-    void setPositioningVelocity (const double velocity) {positioningVelocity = velocity;}
+    void setPositioningVelocity (const double vel) {positioningVelocity = vel;}
     bool setPosition(const vpHomogeneousMatrix &cdMo, vpImage<unsigned char> *Iint=NULL, const double &errMax = 0.001);
     vpRobot::vpRobotStateType setRobotState (const vpRobot::vpRobotStateType newState);
     
@@ -255,7 +258,7 @@ protected:
     void findHighestPositioningSpeed(vpColVector &q);
     void getExternalImage(vpImage<vpRGBa> &I);
     inline void get_fMi(vpHomogeneousMatrix *fMit) {
-#if defined(WIN32)
+#if defined(_WIN32)
       WaitForSingleObject(mutex_fMi,INFINITE);
       for (int i = 0; i < 8; i++)
         fMit[i] = fMi[i];

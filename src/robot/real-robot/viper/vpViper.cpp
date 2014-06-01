@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpViper.cpp 4206 2013-04-13 07:29:06Z fspindle $
+ * $Id: vpViper.cpp 4649 2014-02-07 14:57:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -68,6 +68,7 @@ const unsigned int vpViper::njoint = 6;
 
 */
 vpViper::vpViper()
+  : eMc(), etc(), erc(), a1(0), d1(0), a2(), a3(), d4(0), d6(0), c56(0), joint_max(), joint_min()
 {
   // Default values are initialized
 
@@ -125,7 +126,7 @@ vpViper::vpViper()
 
 */
 vpHomogeneousMatrix
-vpViper::getForwardKinematics(const vpColVector & q)
+vpViper::getForwardKinematics(const vpColVector & q) const
 {
   vpHomogeneousMatrix fMc;
   fMc = get_fMc(q);
@@ -148,7 +149,7 @@ vpViper::getForwardKinematics(const vpColVector & q)
   \return true if the joint position is in the joint limits. false otherwise. 
  */
 bool 
-vpViper::convertJointPositionInLimits(unsigned int joint, const double &q, double &q_mod, const bool &verbose)
+vpViper::convertJointPositionInLimits(unsigned int joint, const double &q, double &q_mod, const bool &verbose) const
 {
   double eps = 0.01;
   if (q >= joint_min[joint]-eps && q <= joint_max[joint]+eps ) {
@@ -228,7 +229,7 @@ vpViper::convertJointPositionInLimits(unsigned int joint, const double &q, doubl
 
 */
 unsigned int
-vpViper::getInverseKinematicsWrist(const vpHomogeneousMatrix & fMw, vpColVector & q, const bool &verbose)
+vpViper::getInverseKinematicsWrist(const vpHomogeneousMatrix & fMw, vpColVector & q, const bool &verbose) const
 {
   vpColVector q_sol[8];
 
@@ -573,14 +574,14 @@ vpViper::getInverseKinematicsWrist(const vpHomogeneousMatrix & fMw, vpColVector 
 
 */
 unsigned int
-vpViper::getInverseKinematics(const vpHomogeneousMatrix & fMc, vpColVector & q, const bool &verbose)
+vpViper::getInverseKinematics(const vpHomogeneousMatrix & fMc, vpColVector & q, const bool &verbose) const
 {
   vpHomogeneousMatrix fMw;
   vpHomogeneousMatrix wMe;
-  vpHomogeneousMatrix eMc;
+  vpHomogeneousMatrix eMc_;
   this->get_wMe(wMe);
-  this->get_eMc(eMc);
-  fMw = fMc * eMc.inverse() * wMe.inverse();
+  this->get_eMc(eMc_);
+  fMw = fMc * eMc_.inverse() * wMe.inverse();
   
   return (getInverseKinematicsWrist(fMw, q, verbose));
 }
@@ -611,7 +612,7 @@ vpViper::getInverseKinematics(const vpHomogeneousMatrix & fMc, vpColVector & q, 
 
 */
 vpHomogeneousMatrix
-vpViper::get_fMc (const vpColVector & q)
+vpViper::get_fMc (const vpColVector & q) const
 {
   vpHomogeneousMatrix fMc;
   get_fMc(q, fMc);
@@ -641,7 +642,7 @@ vpViper::get_fMc (const vpColVector & q)
   \sa get_fMe(), get_eMc()
 */
 void
-vpViper::get_fMc(const vpColVector & q, vpHomogeneousMatrix & fMc)
+vpViper::get_fMc(const vpColVector & q, vpHomogeneousMatrix & fMc) const
 {
 
   // Compute the direct geometric model: fMe = transformation between
@@ -728,7 +729,7 @@ int main()
 
 */
 void
-vpViper::get_fMe(const vpColVector & q, vpHomogeneousMatrix & fMe)
+vpViper::get_fMe(const vpColVector & q, vpHomogeneousMatrix & fMe) const
 {
   double q1 = q[0];
   double q2 = q[1];
@@ -824,7 +825,7 @@ vpViper::get_fMe(const vpColVector & q, vpHomogeneousMatrix & fMe)
   
 */
 void
-vpViper::get_fMw(const vpColVector & q, vpHomogeneousMatrix & fMw)
+vpViper::get_fMw(const vpColVector & q, vpHomogeneousMatrix & fMw) const
 {
   double q1 = q[0];
   double q2 = q[1];
@@ -856,7 +857,6 @@ vpViper::get_fMw(const vpColVector & q, vpHomogeneousMatrix & fMw)
   double s6 = sin(q6);
   double c23 = cos(q2+q3);
   double s23 = sin(q2+q3);
-
 
   fMw[0][0] = c1*(c23*(c4*c5*c6-s4*s6)-s23*s5*c6)-s1*(s4*c5*c6+c4*s6);
   fMw[1][0] = -s1*(c23*(-c4*c5*c6+s4*s6)+s23*s5*c6)+c1*(s4*c5*c6+c4*s6);
@@ -890,7 +890,7 @@ vpViper::get_fMw(const vpColVector & q, vpHomogeneousMatrix & fMw)
 
 */
 void
-vpViper::get_wMe(vpHomogeneousMatrix & wMe)
+vpViper::get_wMe(vpHomogeneousMatrix & wMe) const
 {
   // Set the rotation as identity
   wMe.setIdentity();
@@ -905,15 +905,15 @@ vpViper::get_wMe(vpHomogeneousMatrix & wMe)
   the camera frame. This transformation is constant and correspond to
   the extrinsic camera parameters estimated by calibration.
 
-  \param eMc : Transformation between the the
+  \param eMc_ : Transformation between the the
   end-effector frame and the camera frame.
 
   \sa get_cMe()
 */
 void
-vpViper::get_eMc(vpHomogeneousMatrix &eMc)
+vpViper::get_eMc(vpHomogeneousMatrix &eMc_) const
 {
-  eMc = this->eMc;
+  eMc_ = this->eMc;
 }
 
 /*!
@@ -928,7 +928,7 @@ vpViper::get_eMc(vpHomogeneousMatrix &eMc)
   \sa get_eMc()
 */
 void
-vpViper::get_cMe(vpHomogeneousMatrix &cMe)
+vpViper::get_cMe(vpHomogeneousMatrix &cMe) const
 {
   cMe = this->eMc.inverse();
 }
@@ -949,7 +949,7 @@ vpViper::get_cMe(vpHomogeneousMatrix &cMe)
 
 */
 void
-vpViper::get_cVe(vpVelocityTwistMatrix &cVe)
+vpViper::get_cVe(vpVelocityTwistMatrix &cVe) const
 {
   vpHomogeneousMatrix cMe ;
   get_cMe(cMe) ;
@@ -982,7 +982,7 @@ vpViper::get_cVe(vpVelocityTwistMatrix &cVe)
   \sa get_fJw()
 */
 void
-vpViper::get_eJe(const vpColVector &q, vpMatrix &eJe)
+vpViper::get_eJe(const vpColVector &q, vpMatrix &eJe) const
 {
   vpMatrix V(6,6);
   V = 0;
@@ -1068,7 +1068,7 @@ vpViper::get_eJe(const vpColVector &q, vpMatrix &eJe)
 */
 
 void
-vpViper::get_fJw(const vpColVector &q, vpMatrix &fJw)
+vpViper::get_fJw(const vpColVector &q, vpMatrix &fJw) const
 {
   double q1 = q[0];
   double q2 = q[1];
@@ -1174,7 +1174,7 @@ vpViper::get_fJw(const vpColVector &q, vpMatrix &fJw)
   \sa get_fJw
 */
 void
-vpViper::get_fJe(const vpColVector &q, vpMatrix &fJe)
+vpViper::get_fJe(const vpColVector &q, vpMatrix &fJe) const
 {
   vpMatrix V(6,6);
   V = 0;
@@ -1216,7 +1216,7 @@ vpViper::get_fJe(const vpColVector &q, vpMatrix &fJe)
 
 */
 vpColVector
-vpViper::getJointMin()
+vpViper::getJointMin() const
 {
   return joint_min;
 }
@@ -1229,7 +1229,7 @@ vpViper::getJointMin()
 
 */
 vpColVector
-vpViper::getJointMax()
+vpViper::getJointMax() const
 {
   return joint_max;
 }
@@ -1245,12 +1245,10 @@ vpViper::getJointMax()
 
 */
 double
-vpViper::getCoupl56()
+vpViper::getCoupl56() const
 {
   return c56;
 }
-
-
 
 /*!
 
@@ -1261,7 +1259,7 @@ vpViper::getCoupl56()
   \param os : Output stream.
   \param viper : Robot parameters.
 */
-std::ostream & operator << (std::ostream & os, const vpViper & viper)
+VISP_EXPORT std::ostream & operator << (std::ostream & os, const vpViper & viper)
 {
   vpRotationMatrix eRc;
   viper.eMc.extract(eRc);
@@ -1302,8 +1300,3 @@ std::ostream & operator << (std::ostream & os, const vpViper & viper)
 
   return os;
 }
-/*
- * Local variables:
- * c-basic-offset: 2
- * End:
- */

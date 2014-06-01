@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpNurbs.cpp 4303 2013-07-04 14:14:00Z fspindle $
+ * $Id: vpNurbs.cpp 4649 2014-02-07 14:57:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -64,6 +64,7 @@ inline double distance(const vpImagePoint &iP1, const double w1, const vpImagePo
   compute cubic NURBS.
 */
 vpNurbs::vpNurbs()
+  : weights()
 {
   p = 3;
 }
@@ -71,7 +72,7 @@ vpNurbs::vpNurbs()
 /*!
   Copy constructor.
 */
-vpNurbs::vpNurbs(const vpNurbs &nurbs)  : vpBSpline(nurbs)
+vpNurbs::vpNurbs(const vpNurbs &nurbs)  : vpBSpline(nurbs), weights()
 {
   weights = nurbs.weights;
 }
@@ -691,13 +692,19 @@ vpNurbs::removeCurveKnot(double u, unsigned int r, unsigned int num, double TOL)
   The result of the method is composed by a knot vector, a set of control points and a set of associated weights.
   
   \param l_crossingPoints : The list of data points which have to be interpolated.
-  \param l_p : Degree of the NURBS basis functions.
+  \param l_p : Degree of the NURBS basis functions. This value need to be > 0.
   \param l_knots : The knot vector
   \param l_controlPoints : the list of control points.
   \param l_weights : the list of weights.
 */
 void vpNurbs::globalCurveInterp(std::vector<vpImagePoint> &l_crossingPoints, unsigned int l_p, std::vector<double> &l_knots, std::vector<vpImagePoint> &l_controlPoints, std::vector<double> &l_weights)
 {
+  if (l_p == 0) {
+    //vpERROR_TRACE("Bad degree of the NURBS basis functions");
+    throw(vpException(vpException::badValue,
+                      "Bad degree of the NURBS basis functions")) ;
+  }
+
   l_knots.clear();
   l_controlPoints.clear();
   l_weights.clear();
@@ -786,8 +793,8 @@ void vpNurbs::globalCurveInterp(vpList<vpMeSite> &l_crossingPoints)
   l_crossingPoints.next();
   while(!l_crossingPoints.outside())
   {
-    vpMeSite s = l_crossingPoints.value();
-    vpImagePoint pt(s.ifloat,s.jfloat);
+    s = l_crossingPoints.value();
+    pt.set_ij(s.ifloat,s.jfloat);
     if (vpImagePoint::distance(pt_1,pt) >= 10)
     {
       v_crossingPoints.push_back(pt);
@@ -890,11 +897,10 @@ void vpNurbs::globalCurveApprox(std::vector<vpImagePoint> &l_crossingPoints, uns
   
   d = (double)(m+1)/(double)(l_n-l_p+1);
   
-  double i;
   double alpha;
   for(unsigned int j = 1; j <= l_n-l_p; j++)
   {
-    i = floor(j*d);
+    double i = floor(j*d);
     alpha = j*d-i;
     l_knots.push_back((1.0-alpha)*ubar[(unsigned int)i-1]+alpha*ubar[(unsigned int)i]);
   }

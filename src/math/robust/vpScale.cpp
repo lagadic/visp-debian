@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpScale.cpp 4312 2013-07-16 15:12:42Z ayol $
+ * $Id: vpScale.cpp 4649 2014-02-07 14:57:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -60,14 +60,11 @@
 
 //! Constructor
 vpScale::vpScale()
+  : bandwidth(0.02), dimension(1), kernel_type(EPANECHNIKOV)
 {
 #if (DEBUG_LEVEL2)
   std::cout << "vpScale constructor reached" << std::endl;
 #endif
-  bandwidth = 0.02;
-  dimension = 1;
-  kernel_type = EPANECHNIKOV;
-
 #if (DEBUG_LEVEL2)
   std::cout << "vpScale constructor finished" << std::endl;
 #endif
@@ -75,30 +72,22 @@ vpScale::vpScale()
 }
 
 //! Constructor
-vpScale::vpScale(double kernel_bandwidth,
-		 int dimension=1, int kernel_type=EPANECHNIKOV)
+vpScale::vpScale(double kernel_bandwidth, int dim=1, int type=EPANECHNIKOV)
+  : bandwidth(kernel_bandwidth), dimension(dim), kernel_type(type)
+
 {
 #if (DEBUG_LEVEL2)
   std::cout << "vpScale constructor reached" << std::endl;
 #endif
-
-  bandwidth = kernel_bandwidth;
-  this->dimension = (unsigned)dimension;
-  this->kernel_type = kernel_type;
-
 #if (DEBUG_LEVEL2)
   std::cout << "vpScale constructor finished" << std::endl;
 #endif
-
 }
 
 //! Destructor
 vpScale::~vpScale()
 {
-
 }
-
-
 
 // Calculate the modes of the density for the distribution
 // and their associated errors

@@ -28,72 +28,71 @@
 
 int main()
 {
-  vpHomogeneousMatrix cdMo;
-  cdMo[1][3] = 1.2;
-  cdMo[2][3] = 0.5;
+  try {
+    vpHomogeneousMatrix cdMo;
+    cdMo[1][3] = 1.2;
+    cdMo[2][3] = 0.5;
 
-  vpHomogeneousMatrix cMo;
-  cMo[0][3] = 0.3;
-  cMo[1][3] = cdMo[1][3];
-  cMo[2][3] = 1.;
-  vpRotationMatrix cRo(0, atan2( cMo[0][3], cMo[1][3]), 0);
-  cMo.insert(cRo);
+    vpHomogeneousMatrix cMo;
+    cMo[0][3] = 0.3;
+    cMo[1][3] = cdMo[1][3];
+    cMo[2][3] = 1.;
+    vpRotationMatrix cRo(0, atan2( cMo[0][3], cMo[1][3]), 0);
+    cMo.insert(cRo);
 
-  vpSimulatorPioneer robot ;
-  robot.setSamplingTime(0.04);
-  vpHomogeneousMatrix wMc, wMo;
-  robot.getPosition(wMc);
-  wMo = wMc * cMo;
+    vpSimulatorPioneer robot ;
+    robot.setSamplingTime(0.04);
+    vpHomogeneousMatrix wMc, wMo;
+    robot.getPosition(wMc);
+    wMo = wMc * cMo;
 
-  vpPoint point;
-  point.setWorldCoordinates(0,0,0);
-  point.track(cMo);
+    vpPoint point;
+    point.setWorldCoordinates(0,0,0);
+    point.track(cMo);
 
-  vpServo task;
-  task.setServo(vpServo::EYEINHAND_L_cVe_eJe);
-  task.setInteractionMatrixType(vpServo::DESIRED, vpServo::PSEUDO_INVERSE);
-  task.setLambda(0.2);
-  vpVelocityTwistMatrix cVe;
-  cVe = robot.get_cVe();
-  task.set_cVe(cVe);
+    vpServo task;
+    task.setServo(vpServo::EYEINHAND_L_cVe_eJe);
+    task.setInteractionMatrixType(vpServo::DESIRED, vpServo::PSEUDO_INVERSE);
+    task.setLambda(0.2);
+    vpVelocityTwistMatrix cVe;
+    cVe = robot.get_cVe();
+    task.set_cVe(cVe);
 
-  vpMatrix eJe;
-  robot.get_eJe(eJe);
-  task.set_eJe(eJe);
+    vpMatrix eJe;
+    robot.get_eJe(eJe);
+    task.set_eJe(eJe);
 
-  vpFeaturePoint s_x, s_xd;
-  vpFeatureBuilder::create(s_x, point);
-  s_xd.buildFrom(0, 0, cdMo[2][3]);
-  task.addFeature(s_x, s_xd, vpFeaturePoint::selectX());
+    vpFeaturePoint s_x, s_xd;
+    vpFeatureBuilder::create(s_x, point);
+    s_xd.buildFrom(0, 0, cdMo[2][3]);
+    task.addFeature(s_x, s_xd, vpFeaturePoint::selectX());
 
-  vpFeatureDepth s_Z, s_Zd;
-  double Z = point.get_Z();
-  double Zd = cdMo[2][3];
-  s_Z.buildFrom(s_x.get_x(), s_x.get_y(), Z, log(Z/Zd));
-  s_Zd.buildFrom(0, 0, Zd, 0);
-  task.addFeature(s_Z, s_Zd);
+    vpFeatureDepth s_Z, s_Zd;
+    double Z = point.get_Z();
+    double Zd = cdMo[2][3];
+    s_Z.buildFrom(s_x.get_x(), s_x.get_y(), Z, log(Z/Zd));
+    s_Zd.buildFrom(0, 0, Zd, 0);
+    task.addFeature(s_Z, s_Zd);
 
 #ifdef VISP_HAVE_DISPLAY
-  // Create a window (800 by 500) at position (400, 10) with 3 graphics
-  vpPlot graph(3, 800, 500, 400, 10, "Curves...");
+    // Create a window (800 by 500) at position (400, 10) with 3 graphics
+    vpPlot graph(3, 800, 500, 400, 10, "Curves...");
 
-  // Init the curve plotter
-  graph.initGraph(0,2);
-  graph.initGraph(1,2);
-  graph.initGraph(2,1);
-  graph.setTitle(0, "Velocities");
-  graph.setTitle(1, "Error s-s*");
-  graph.setTitle(2, "Depth");
-  graph.setLegend(0, 0, "vx");
-  graph.setLegend(0, 1, "wz");
-  graph.setLegend(1, 0, "x");
-  graph.setLegend(1, 1, "log(Z/Z*)");
-  graph.setLegend(2, 0, "Z");
+    // Init the curve plotter
+    graph.initGraph(0,2);
+    graph.initGraph(1,2);
+    graph.initGraph(2,1);
+    graph.setTitle(0, "Velocities");
+    graph.setTitle(1, "Error s-s*");
+    graph.setTitle(2, "Depth");
+    graph.setLegend(0, 0, "vx");
+    graph.setLegend(0, 1, "wz");
+    graph.setLegend(1, 0, "x");
+    graph.setLegend(1, 1, "log(Z/Z*)");
+    graph.setLegend(2, 0, "Z");
 #endif
 
-  try
-  {
-    int iter = 1;
+    int iter = 0;
     for (; ;)
     {
       robot.getPosition(wMc) ;
@@ -132,16 +131,18 @@ int main()
     graph.saveData(1, "./error2.dat");
 
     const char *legend = "Click to quit...";
-    vpDisplay::displayCharString(graph.I, graph.I.getHeight()-60, graph.I.getWidth()-150, legend, vpColor::red);
+    vpDisplay::displayCharString(graph.I, (int)graph.I.getHeight()-60, (int)graph.I.getWidth()-150, legend, vpColor::red);
     vpDisplay::flush(graph.I);
     vpDisplay::getClick(graph.I);
 #endif
-  }
-  catch(...)
-  {
-  }
 
-  // Kill the servo task
-  task.print() ;
-  task.kill();
+
+    // Kill the servo task
+    task.print() ;
+    task.kill();
+
+  }
+  catch(vpException e) {
+    std::cout << "Catch an exception: " << e << std::endl;
+  }
 }

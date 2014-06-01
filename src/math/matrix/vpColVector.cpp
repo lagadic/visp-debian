@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpColVector.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpColVector.cpp 4649 2014-02-07 14:57:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -139,7 +139,7 @@ vpColVector::vpColVector (const vpRotationVector &v){
 
   
  //! operator A = -A
-vpColVector vpColVector::operator-()
+vpColVector vpColVector::operator-() const
 {
   vpColVector A ;
   try {
@@ -185,12 +185,10 @@ vpColVector vpColVector::operator*(double x) const
 */
 vpColVector &vpColVector::operator=(const vpMatrix &m)
 {
-
-
   if (m.getCols() !=1)
   {
     vpTRACE(" m should be a 1 cols matrix ") ;
-    throw (vpException(vpException::dimensionError)," m should be a 1 cols matrix ");
+    throw (vpException(vpException::dimensionError,"m should be a 1 cols matrix "));
   }
 
   try {
