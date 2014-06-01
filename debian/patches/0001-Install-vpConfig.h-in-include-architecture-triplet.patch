@@ -1,0 +1,25 @@
+From 3f2be63a8fc682bc41ccb36b79005d15eca842ac Mon Sep 17 00:00:00 2001
+From: Fabien Spindler <Fabien.Spindler@inria.fr>
+Date: Sun, 1 Jun 2014 21:57:17 +0200
+Subject: [PATCH] Install vpConfig.h in include architecture triplet
+
+---
+ CMakeLists.txt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 9b44006..e3c2f9e 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -2107,7 +2107,7 @@ CONFIGURE_FILE(${VISP_SOURCE_DIR}/include/vpConfig.h.cmake
+ 
+ # Install vpConfig.h that may differ from the one in include/visp
+ INSTALL(FILES ${VISP_BINARY_DIR}/install/vpConfig.h
+-  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/visp
++  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${CMAKE_LIBRARY_ARCHITECTURE}/visp
+   PERMISSIONS OWNER_READ GROUP_READ WORLD_READ OWNER_WRITE
+   COMPONENT headers
+   )
+-- 
+1.9.1
+
