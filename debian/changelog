@@ -1,3 +1,16 @@
+visp (2.9.0-1) unstable; urgency=medium
+
+  [ Fabien Spindler ]
+  * Imported upstream version 2.9.0
+  * Remove obsolete patches, bump ABI to 2.9.
+  * Add patch to install vpConfig.h in include architecture triplet
+  * Add dependency to libgsl0-dev 3rd party
+  * Fix libdc1394 usage
+  * Add patch to fix build issues with ffmpeg libraries
+  * debian/control: Add Fabien Spindler as uploader.
+
+ -- Thomas Moulard <thomas.moulard@gmail.com>  Tue, 24 Jun 2014 13:41:34 +0900
+
 visp (2.8.0-5) unstable; urgency=medium
 
   * Add patches to fix CMake issues with GTK and libusb (Closes: #738391).
