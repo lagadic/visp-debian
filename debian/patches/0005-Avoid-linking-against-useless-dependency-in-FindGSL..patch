@@ -1,0 +1,33 @@
+From: Fabien Spindler <fabien.spindler@inria.fr>
+Date: Fri, 11 Jul 2014 03:47:21 +0900
+Subject: Avoid linking against useless dependency in FindGSL.cmake if
+ possible.
+
+* CMakeModules/FindGSL.cmake: do not link against libgslcblas.so if
+  not needed.
+
+Origin: upstream, private email
+---
+ CMakeModules/FindGSL.cmake | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/CMakeModules/FindGSL.cmake b/CMakeModules/FindGSL.cmake
+index adecf19..62f89fe 100644
+--- a/CMakeModules/FindGSL.cmake
++++ b/CMakeModules/FindGSL.cmake
+@@ -173,6 +173,7 @@ ELSE(WIN32)
+       FOREACH(libs ${GSL_LINK_LIBRARIES})
+ 	STRING(REGEX REPLACE "[-][l]" "" GSL_LIB_ONES ${libs})
+     	#MESSAGE("GSL_LIB_ONES=${GSL_LIB_ONES} -  ${libs}")
++	if(NOT ${GSL_LIB_ONES} MATCHES "gslcblas")
+   	MARK_AS_ADVANCED(LIBGSL_${GSL_LIB_ONES})
+ 	FIND_LIBRARY(LIBGSL_${GSL_LIB_ONES}
+ 	  NAMES ${GSL_LIB_ONES}
+@@ -186,6 +187,7 @@ ELSE(WIN32)
+      	  #MESSAGE("LIB_GSL=${LIB_GSL} -  ${libs}")
+ 	  LIST(APPEND GSL_LIBRARIES ${LIBGSL_${GSL_LIB_ONES}})
+         ENDIF()
++	endif()
+       ENDFOREACH(libs)
+ 
+       #MESSAGE("GSL_LIBRARIES=${GSL_LIBRARIES}")
