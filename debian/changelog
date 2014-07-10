@@ -1,3 +1,11 @@
+visp (2.9.0-2) unstable; urgency=medium
+
+  * Add patch to fix arch-dependent files in "Multi-Arch: same" package
+    (Closes: #754163, #754164)
+  * Add patch to avoid linking against libgslcblas.so if possible.
+
+ -- Thomas Moulard <thomas.moulard@gmail.com>  Fri, 11 Jul 2014 03:50:14 +0900
+
 visp (2.9.0-1) unstable; urgency=medium
 
   [ Fabien Spindler ]
