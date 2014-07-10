@@ -1,7 +1,6 @@
-From 590cba1ca215a798327f589aad02d041c6ca28b5 Mon Sep 17 00:00:00 2001
 From: Fabien Spindler <Fabien.Spindler@inria.fr>
 Date: Tue, 3 Jun 2014 15:45:32 +0200
-Subject: [PATCH 2/2] Fix compat with ffmpeg libraries
+Subject: Fix compat with ffmpeg libraries
 
 ---
  src/video/vpFFMPEG.cpp | 25 ++++++++++++++++++++++++-
@@ -73,6 +72,3 @@ index 744d873..83429c4 100644
  
    /* put sample parameters */
    pCodecCtx->bit_rate = (int)bit_rate;
--- 
-1.9.1
-

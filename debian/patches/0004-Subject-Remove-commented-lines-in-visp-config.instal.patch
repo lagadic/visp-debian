@@ -1,0 +1,31 @@
+From: Fabien Spindler <fabien.spindler@inria.fr>
+Date: Fri, 11 Jul 2014 03:25:53 +0900
+Subject: Remove commented lines in visp-config.install.in
+
+* CMakeModules/visp-config.install.in: remove commented lines in
+  visp-config.install.in as they trigger per-architecture differences
+  while this file is installed in bin.
+
+Origin: upstream, http://bugs.debian.org/754163
+Bug-Debian: http://bugs.debian.org/754163
+---
+ CMakeModules/visp-config.install.in | 6 ------
+ 1 file changed, 6 deletions(-)
+
+diff --git a/CMakeModules/visp-config.install.in b/CMakeModules/visp-config.install.in
+index 0376f57..e4fa2e8 100755
+--- a/CMakeModules/visp-config.install.in
++++ b/CMakeModules/visp-config.install.in
+@@ -48,12 +48,6 @@ relpath=`(cd $relpath/..; pwd)`
+ 
+ PREFIX=$relpath
+ 
+-#CFLAGS="${VISP_CONFIG_CFLAGS_SCRIPT}"
+-
+-#LIBS="${VISP_CONFIG_LIBS_SCRIPT}"
+-
+-#VERSION="${VISP_VERSION}"
+-
+ CFLAGS_CMD=`pkg-config --cflags visp`
+ CFLAGS=$CFLAGS_CMD
+ 
