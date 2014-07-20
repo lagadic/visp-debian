@@ -1,3 +1,2 @@
 usr/lib/*/libvisp.so.2*
-#usr/share/visp/ViSP-third-party.txt
-usr/share/visp/data/
+usr/share/visp*/data/
