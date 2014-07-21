@@ -1,6 +1,7 @@
 version=3
 # Mangle upstream pre-releases to make sure they are ordered before
 # the final release.
-opts=uversionmangle=s/(\d)[_\.\-\+]?((RC|rc|pre|dev|beta|alpha)\d*)$/$1~$2/ \
+opts=uversionmangle=s/(\d)[_\.\-\+]?((RC|rc|pre|dev|beta|alpha)\d*)$/$1~$2/,\
+pgpsigurlmangle=s/$/.asc/ \
 http://www.irisa.fr/lagadic/visp/download.html \
 (?:.*/|)ViSP-(\d\S*)\.(?:tar\.(?:gz|bz2|xz)|tgz|tbz2|txz|zip)(?:|\?\S+)
