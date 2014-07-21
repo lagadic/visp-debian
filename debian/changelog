@@ -1,3 +1,11 @@
+visp (2.9.0-3) unstable; urgency=medium
+
+  * Add patch to solve update failure detected by piuparts (Closes: #754657)
+  * debian/libvisp2.9.install: install share/visp* directories
+  * Check gpg signature in debian/watch
+
+ -- Thomas Moulard <thomas.moulard@gmail.com>  Mon, 21 Jul 2014 22:41:49 +0900
+
 visp (2.9.0-2) unstable; urgency=medium
 
   * Add patch to fix arch-dependent files in "Multi-Arch: same" package
