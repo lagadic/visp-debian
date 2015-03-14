@@ -6,15 +6,32 @@ Source: http://www.irisa.fr/lagadic/visp/download.html
 Files: *
 Copyright: 2005-2015, Inria
 License: GPL-2
- See `/usr/share/common-licenses/GPL-2'.
 
 Files: CMakeModules/GNUInstallDirs.cmake
 Copyright: 2011, Nikita Krupen'ko <krnekit@gmail.com>
 License: BSD-3-clause
+
+Files: src/tools/io/vpParseArgv.h
+Copyright: 1989-1992 Regents of the University of California
+License: Tcl/Tk-license
+
+Files: src/tools/io/vpParseArgv.cpp
+Copyright: 1990 Regents of the University of California
+License: Tcl/Tk-license
+
+Files: debian/*
+Copyright: 2014, Thomas Moulard <thomas.moulard@gmail.com>
+License: GPL-2
+
+
+License: GPL-2
+ See `/usr/share/common-licenses/GPL-2'.
+
+License: BSD-3-clause
  Redistribution and use in source and binary forms, with or without
  modification, are permitted provided that the following conditions are
  met:
- . 
+ .
  * Redistributions of source code must retain the above copyright notice,
    this list of conditions and the following disclaimer.
  .
@@ -38,21 +55,7 @@ License: BSD-3-clause
  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-Files: src/tools/io/vpParseArgv.h
-Copyright: 1989-1992 Regents of the University of California
-License: Tcl/Tk license
- Copyright 1989-1992 Regents of the University of California.
- Permission to use, copy, modify, and distribute this
- software and its documentation for any purpose and without
- fee is hereby granted, provided that the above copyright
- notice appear in all copies.  The University of California
- makes no representations about the suitability of this
- software for any purpose.  It is provided "as is" without
- express or implied warranty.
-
-Files: src/tools/io/vpParseArgv.cpp
-Copyright: 1990 Regents of the University of California
-License: Tcl/Tk license
+License: Tcl/Tk-license
  Copyright 1990 Regents of the University of California
  Permission to use, copy, modify, and distribute this
  software and its documentation for any purpose and without
@@ -61,9 +64,3 @@ License: Tcl/Tk license
  makes no representations about the suitability of this
  software for any purpose.  It is provided "as is" without
  express or implied warranty.
-
-
-Files: debian/*
-Copyright: 2014, Thomas Moulard <thomas.moulard@gmail.com>
-License: GPL-2
- See `/usr/share/common-licenses/GPL-2'.
