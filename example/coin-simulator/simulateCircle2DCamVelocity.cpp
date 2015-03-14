@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: simulateCircle2DCamVelocity.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: simulateCircle2DCamVelocity.cpp 5263 2015-02-04 13:43:25Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -63,9 +63,6 @@
 #include <visp/vpCameraParameters.h>
 #include <visp/vpTime.h>
 #include <visp/vpSimulator.h>
-
-
-
 #include <visp/vpMath.h>
 #include <visp/vpHomogeneousMatrix.h>
 #include <visp/vpFeatureEllipse.h>
@@ -76,10 +73,8 @@
 #include <visp/vpParseArgv.h>
 #include <visp/vpIoTools.h>
 
-
 #define GETOPTARGS	"cdi:h"
 #define SAVE 0
-
 
 /*!
 
@@ -189,108 +184,81 @@ void *mainLoop (void *_simu)
   unsigned int pos = 2 ;
   while (pos!=0)
   {
-
-
     vpServo task ;
     vpRobotCamera robot ;
 
     float sampling_time = 0.040f; // Sampling period in second
     robot.setSamplingTime(sampling_time);
+    robot.setMaxTranslationVelocity(4.);
 
-    /*      std::cout << std::endl ;
-      std::cout << "-----------------------" << std::endl ;
-      std::cout << " Test program for vpServo "  <<std::endl ;
-      std::cout << " Simulation " << std::endl ;
-      std::cout << " task : servo a circle " << std::endl ;
-      std::cout << "-----------------------" << std::endl ;
-      std::cout << std::endl ;
-*/
-
-    vpTRACE("sets the initial camera location " ) ;
-
-
+    // Sets the initial camera location
     robot.setPosition(cMo) ;
     simu->setCameraPosition(cMo) ;
 
-
     if (pos==1)  cMod[2][3] = 0.32 ;
 
-    vpTRACE("sets the circle coordinates in the world frame "  ) ;
+    // Sets the circle coordinates in the world frame
     vpCircle circle ;
     circle.setWorldCoordinates(0,0,1,0,0,0,0.1) ;
 
-    vpTRACE("sets the desired position of the visual feature ") ;
+    // Sets the desired position of the visual feature
     vpFeatureEllipse pd ;
     circle.track(cMod) ;
     vpFeatureBuilder::create(pd,circle)  ;
 
-    vpTRACE("project : computes  the circle coordinates in the camera frame and its 2D coordinates"  ) ;
-
-    vpTRACE("sets the current position of the visual feature ") ;
+    // Project : computes the circle coordinates in the camera frame and its 2D coordinates
+    // Sets the current position of the visual feature
     vpFeatureEllipse p ;
     circle.track(cMo) ;
     vpFeatureBuilder::create(p,circle)  ;
 
-    vpTRACE("define the task") ;
-    vpTRACE("\t we want an eye-in-hand control law") ;
-    vpTRACE("\t robot is controlled in the camera frame") ;
+    // Define the task
+    // We want an eye-in-hand control law
+    // Robot is controlled in the camera frame
     task.setServo(vpServo::EYEINHAND_CAMERA) ;
     task.setInteractionMatrixType(vpServo::CURRENT) ;
 
-    vpTRACE("\t we want to see a circle on a circle..") ;
+    // We want to see a circle on a circle
     std::cout << std::endl ;
     task.addFeature(p,pd) ;
 
-    vpTRACE("\t set the gain") ;
-
+    // Set the gain
     task.setLambda(1.0) ;
-    //       if (pos==2)
-    // 	task.setLambda(0.0251) ;
-    //       else
-    // 	task.setLambda(0.0251) ;
 
-
-    vpTRACE("Display task information " ) ;
+    // Display task information
     task.print() ;
 
     vpTime::wait(1000); // Sleep 1s
 
-    std::cout << "\nEnter a character to continue... " <<std::endl ;
-    {    int a ; std::cin >> a ; }
-
-
     unsigned int iter=0 ;
-    vpTRACE("\t loop") ;
+    // Visual servoing loop
     unsigned int itermax ;
     if (pos==2) itermax = 75 ; else itermax = 100 ;
-    char name[FILENAME_MAX] ;
-    while(iter++<itermax)
+    while(iter++ < itermax)
     {
       double t = vpTime::measureTimeMs();
-      std::cout << "---------------------------------------------"
-                << iter <<std::endl ;
-      vpColVector v ;
 
-      if (iter==1) vpTRACE("\t\t get the robot position ") ;
+      if (iter==1) std::cout << "get the robot position" << std::endl;
       robot.getPosition(cMo) ;
-      if (iter==1) vpTRACE("\t\t new circle position ") ;
+      if (iter==1) std::cout << "new circle position" << std::endl;
       //retrieve x,y and Z of the vpCircle structure
 
       circle.track(cMo) ;
       vpFeatureBuilder::create(p,circle);
 
-      if (iter==1) vpTRACE("\t\t compute the control law ") ;
-      v = task.computeControlLaw() ;
-      //  vpTRACE("computeControlLaw" ) ;
-      std::cout << "Task rank: " << task.getTaskRank() <<std::endl ;
-      if (iter==1)
-        vpTRACE("\t\t send the camera velocity to the controller ") ;
+      if (iter==1) std::cout << "compute the control law" << std::endl;
+      vpColVector v = task.computeControlLaw() ;
+      if (iter==1) {
+        std::cout << "Task rank: " << task.getTaskRank() <<std::endl ;
+        std::cout << "send the camera velocity to the controller" << std::endl;
+      }
       robot.setVelocity(vpRobot::CAMERA_FRAME, v) ;
 
       simu->setCameraPosition(cMo) ;
 
       if(SAVE==1)
       {
+        char name[FILENAME_MAX] ;
         sprintf(name,"/tmp/image.%04d.external.png",it) ;
         std::cout << "Save " << name << std::endl ;
         simu->write(name) ;
@@ -299,99 +267,101 @@ void *mainLoop (void *_simu)
         simu->write(name) ;
         it++ ;
       }
-      //  vpTRACE("\t\t || s - s* || ") ;
+      //  std::cout << "\t\t || s - s* || "
       //  std::cout << ( task.getError() ).sumSquare() <<std::endl ; ;
       vpTime::wait(t, sampling_time * 1000); // Wait 40 ms
 
     }
     pos-- ;
     task.kill();
-
   }
-
 
   simu->closeMainApplication() ;
 
   void *a=NULL ;
   return a ;
-  // return (void *);
 }
 
 
 int
 main(int argc, const char ** argv)
 {
-  std::string env_ipath;
-  std::string opt_ipath;
-  std::string ipath;
-  std::string filename;
-  std::string username;
-  bool opt_display = true;
+  try {
+    std::string env_ipath;
+    std::string opt_ipath;
+    std::string ipath;
+    std::string filename;
+    std::string username;
+    bool opt_display = true;
 
-  // Get the VISP_IMAGE_PATH environment variable value
-  char *ptenv = getenv("VISP_INPUT_IMAGE_PATH");
-  if (ptenv != NULL)
-    env_ipath = ptenv;
+    // Get the visp-images-data package path or VISP_INPUT_IMAGE_PATH environment variable value
+    env_ipath = vpIoTools::getViSPImagesDataPath();
 
-  // Set the default input path
-  if (! env_ipath.empty())
-    ipath = env_ipath;
+    // Set the default input path
+    if (! env_ipath.empty())
+      ipath = env_ipath;
 
-  // Read the command line options
-  if (getOptions(argc, argv, opt_ipath, opt_display) == false) {
-    exit (-1);
-  }
-
-  // Get the option values
-  if (!opt_ipath.empty())
-    ipath = opt_ipath;
-
-  // Compare ipath and env_ipath. If they differ, we take into account
-  // the input path comming from the command line option
-  if (!opt_ipath.empty() && !env_ipath.empty()) {
-    if (ipath != env_ipath) {
-      std::cout << std::endl
-                << "WARNING: " << std::endl;
-      std::cout << "  Since -i <visp image path=" << ipath << "> "
-                << "  is different from VISP_INPUT_IMAGE_PATH=" << env_ipath << std::endl
-                << "  we skip the environment variable." << std::endl;
+    // Read the command line options
+    if (getOptions(argc, argv, opt_ipath, opt_display) == false) {
+      exit (-1);
     }
+
+    // Get the option values
+    if (!opt_ipath.empty())
+      ipath = opt_ipath;
+
+    // Compare ipath and env_ipath. If they differ, we take into account
+    // the input path comming from the command line option
+    if (!opt_ipath.empty() && !env_ipath.empty()) {
+      if (ipath != env_ipath) {
+        std::cout << std::endl
+                  << "WARNING: " << std::endl;
+        std::cout << "  Since -i <visp image path=" << ipath << "> "
+                  << "  is different from VISP_INPUT_IMAGE_PATH=" << env_ipath << std::endl
+                  << "  we skip the environment variable." << std::endl;
+      }
+    }
+
+    // Test if an input path is set
+    if (opt_ipath.empty() && env_ipath.empty()){
+      usage(argv[0], NULL, ipath);
+      std::cerr << std::endl
+                << "ERROR:" << std::endl;
+      std::cerr << "  Use -i <visp image path> option or set VISP_INPUT_IMAGE_PATH "
+                << std::endl
+                << "  environment variable to specify the location of the " << std::endl
+                << "  image path where test images are located." << std::endl << std::endl;
+      exit(-1);
+    }
+
+    vpCameraParameters cam ;
+    vpHomogeneousMatrix fMo ; fMo[2][3] = 0 ;
+
+    if (opt_display) {
+
+      vpSimulator simu ;
+      simu.initInternalViewer(300, 300) ;
+      simu.initExternalViewer(300, 300) ;
+
+      vpTime::wait(1000) ;
+      simu.setZoomFactor(1.0f) ;
+      simu.addAbsoluteFrame() ;
+
+      // Load the cad model
+      filename = vpIoTools::createFilePath(ipath, "ViSP-images/iv/circle.iv");
+      simu.load(filename.c_str(),fMo) ;
+
+      simu.setInternalCameraParameters(cam) ;
+
+      simu.initApplication(&mainLoop) ;
+      simu.mainLoop() ;
+
+    }
+    return 0;
   }
-
-  // Test if an input path is set
-  if (opt_ipath.empty() && env_ipath.empty()){
-    usage(argv[0], NULL, ipath);
-    std::cerr << std::endl
-              << "ERROR:" << std::endl;
-    std::cerr << "  Use -i <visp image path> option or set VISP_INPUT_IMAGE_PATH "
-              << std::endl
-              << "  environment variable to specify the location of the " << std::endl
-              << "  image path where test images are located." << std::endl << std::endl;
-    exit(-1);
-  }
-
-  vpCameraParameters cam ;
-  vpHomogeneousMatrix fMo ; fMo[2][3] = 0 ;
-
-  if (opt_display) {
-
-    vpSimulator simu ;
-    simu.initInternalViewer(300, 300) ;
-    simu.initExternalViewer(300, 300) ;
-
-    vpTime::wait(1000) ;
-    simu.setZoomFactor(1.0f) ;
-    simu.addAbsoluteFrame() ;
-
-    // Load the cad model
-    filename = ipath +  vpIoTools::path("/ViSP-images/iv/circle.iv");
-    simu.load(filename.c_str(),fMo) ;
-
-    simu.setInternalCameraParameters(cam) ;
-
-    simu.initApplication(&mainLoop) ;
-    simu.mainLoop() ;
-
+  catch(vpException e) {
+    std::cout << "Catch an exception: " << e << std::endl;
+    return 1;
   }
 }
 

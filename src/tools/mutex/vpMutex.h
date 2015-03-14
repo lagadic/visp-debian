@@ -1,10 +1,10 @@
 /****************************************************************************
  *
- * $Id: vpMutex.h 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpMutex.h 5126 2015-01-05 22:07:11Z fspindle $
  *
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -62,7 +62,7 @@
 */
 class VISP_EXPORT vpMutex {
 public:
-	vpMutex() {
+  vpMutex() : m_mutex() {
 		pthread_mutex_init( &m_mutex, NULL );
 	}
 	void lock() {

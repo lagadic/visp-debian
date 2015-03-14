@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpMomentGravityCenterNormalized.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpMomentGravityCenterNormalized.cpp 4713 2014-03-28 18:02:26Z mbakthav $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -52,8 +52,8 @@ void vpMomentGravityCenterNormalized::compute(){
     bool found_moment_gravity;    
     bool found_moment_surface_normalized;    
     
-    vpMomentAreaNormalized& momentSurfaceNormalized = static_cast<vpMomentAreaNormalized&>(getMoments().get("vpMomentAreaNormalized",found_moment_surface_normalized));
-    vpMomentGravityCenter& momentGravity = static_cast<vpMomentGravityCenter&>(getMoments().get("vpMomentGravityCenter",found_moment_gravity));
+    const vpMomentAreaNormalized& momentSurfaceNormalized = static_cast<const vpMomentAreaNormalized&>(getMoments().get("vpMomentAreaNormalized",found_moment_surface_normalized));
+    const vpMomentGravityCenter& momentGravity = static_cast<const vpMomentGravityCenter&>(getMoments().get("vpMomentGravityCenter",found_moment_gravity));
 
     if(!found_moment_surface_normalized) throw vpException(vpException::notInitialized,"vpMomentAreaNormalized not found");
     if(!found_moment_gravity) throw vpException(vpException::notInitialized,"vpMomentGravityCenter not found");
@@ -74,8 +74,27 @@ vpMomentGravityCenterNormalized::vpMomentGravityCenterNormalized() : vpMomentGra
 /*!
   Outputs the moment's values to a stream.
 */
-std::ostream & operator<<(std::ostream & os, const vpMomentGravityCenterNormalized& m){
-    os << "Xn:" << m.values[0] << ",Yn=" << m.values[1];
-    
+VISP_EXPORT std::ostream & operator<<(std::ostream & os, const vpMomentGravityCenterNormalized& m){
+    os << (__FILE__) << std::endl;
+    os << "(Xn,Yn) = (" << m.values[0] << ", " << m.values[1] << ")" << std::endl;
     return os;    
+}
+
+/*!
+Prints the dependent moments,
+1. centre of gravity
+2. normalized area moment
+*/
+void  vpMomentGravityCenterNormalized::printDependencies(std::ostream& os) const{
+    os << (__FILE__) << std::endl;
+    bool found_moment_gravity;
+    bool found_moment_surface_normalized;
+
+    const vpMomentAreaNormalized& momentSurfaceNormalized = static_cast<const vpMomentAreaNormalized&>(getMoments().get("vpMomentAreaNormalized",found_moment_surface_normalized));
+    const vpMomentGravityCenter& momentGravity = static_cast<const vpMomentGravityCenter&>(getMoments().get("vpMomentGravityCenter",found_moment_gravity));
+
+    if(!found_moment_surface_normalized) throw vpException(vpException::notInitialized,"vpMomentAreaNormalized not found");
+    if(!found_moment_gravity) throw vpException(vpException::notInitialized,"vpMomentGravityCenter not found");
+    os << "Xg = " << momentGravity.get()[0] << "\t" << "Yg = " << momentGravity.get()[1] << std::endl;
+    os << "An = " << momentSurfaceNormalized.get()[0] << std::endl;
 }

@@ -3,7 +3,7 @@
  * $Id: vpImagePoint.h 2359 2009-11-24 15:09:25Z nmelchio $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -48,25 +48,51 @@
 #include <visp/vpDebug.h>
 #include <visp/vpVideoWriter.h>
 
+#if VISP_HAVE_OPENCV_VERSION >= 0x020200
+#  include <opencv2/imgproc/imgproc.hpp>
+#endif
+
+
 /*!
   Basic constructor.
 */
-vpVideoWriter::vpVideoWriter()
+vpVideoWriter::vpVideoWriter() :
+#ifdef VISP_HAVE_FFMPEG
+    ffmpeg(NULL),
+#  if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(54,51,110) // libavcodec 54.51.100
+    codec(CODEC_ID_MPEG1VIDEO),
+#  else
+    codec(AV_CODEC_ID_MPEG1VIDEO),
+#  endif
+    bit_rate(500000),
+    framerate(25),
+#elif VISP_HAVE_OPENCV_VERSION >= 0x020100
+    writer(), fourcc(0), framerate(0.),
+#endif
+    formatType(FORMAT_UNKNOWN), initFileName(false), isOpen(false), frameCount(0),
+    firstFrame(0), width(0), height(0)
 {
   initFileName = false;
   firstFrame = 0;
   frameCount = 0;
-  
-  #ifdef VISP_HAVE_FFMPEG
+  isOpen = false;
+  width = height = 0;
+#ifdef VISP_HAVE_FFMPEG
   ffmpeg = NULL;
-#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(54,51,110) // libavcodec 54.51.100
+#  if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(54,51,110) // libavcodec 54.51.100
   codec = CODEC_ID_MPEG1VIDEO;
-#else
+#  else
   codec = AV_CODEC_ID_MPEG1VIDEO;
-#endif
+#  endif
   bit_rate = 500000;
   framerate = 25;
-  #endif
+#elif VISP_HAVE_OPENCV_VERSION >= 0x030000
+  framerate = 25.0;
+  fourcc = cv::VideoWriter::fourcc('P','I','M','1');
+#elif VISP_HAVE_OPENCV_VERSION >= 0x020100
+  framerate = 25.0;
+  fourcc = CV_FOURCC('P','I','M','1'); // default is a MPEG-1 codec
+#endif
 }
 
 
@@ -91,15 +117,24 @@ vpVideoWriter::~vpVideoWriter()
 */
 void vpVideoWriter::setFileName(const char *filename)
 {
-  if (filename == '\0')
+  if (!filename || *filename == '\0')
   {
     vpERROR_TRACE("filename empty ") ;
     throw (vpImageException(vpImageException::noFileNameError,"filename empty ")) ;
   }
-  
+
+  if (strlen( filename ) >= FILENAME_MAX) {
+    throw(vpException(vpException::memoryAllocationError,
+                      "Not enough memory to intialize the file name"));
+  }
+
   strcpy(this->fileName,filename);
   
   formatType = getFormat(fileName);
+
+  if (formatType == FORMAT_UNKNOWN) {
+    throw(vpException(vpException::badValue, "Filename extension not supported"));
+  }
   
   initFileName = true;
 }
@@ -137,27 +172,31 @@ void vpVideoWriter::open(vpImage< vpRGBa > &I)
     width = I.getWidth();
     height = I.getHeight();
   }
-  #ifdef VISP_HAVE_FFMPEG
   else if (formatType == FORMAT_AVI ||
            formatType == FORMAT_MPEG ||
+           formatType == FORMAT_MPEG4 ||
            formatType == FORMAT_MOV)
   {
+#ifdef VISP_HAVE_FFMPEG
     ffmpeg = new vpFFMPEG;
     ffmpeg->setFramerate(framerate);
     ffmpeg->setBitRate(bit_rate);
-    if(!ffmpeg->openEncoder(fileName, I.getWidth(), I.getHeight(), codec))
-      throw (vpException(vpException::ioError ,"Could not open the video"));
+    if(!ffmpeg->openEncoder(fileName, I.getWidth(), I.getHeight(), codec)) {
+      throw (vpException(vpException::ioError ,"Could not open encode the video with ffmpeg"));
+    }
+#elif VISP_HAVE_OPENCV_VERSION >= 0x020100
+    writer = cv::VideoWriter(fileName, fourcc, framerate, cv::Size((int)I.getWidth(), (int)I.getHeight()));
+
+    if(!writer.isOpened())
+    {
+      //vpERROR_TRACE("Could not open encode the video with opencv");
+      throw (vpException(vpException::fatalError , "Could not open encode the video with opencv"));
+    }
+#else
+    //vpERROR_TRACE("To encode video files ViSP should be build with ffmpeg or opencv 3rd party libraries.");
+    throw (vpException(vpException::fatalError ,"To encode video files ViSP should be build with ffmpeg or opencv 3rd >= 2.1.0 party libraries."));
+#endif
   }
-  
-  #else
-  else if (formatType == FORMAT_AVI ||
-           formatType == FORMAT_MPEG ||
-           formatType == FORMAT_MOV)
-  {
-    vpERROR_TRACE("To write video files the FFmpeg library has to be installed");
-    throw (vpException(vpException::fatalError ,"the FFmpeg library is required"));
-  }
-  #endif
   
   frameCount = firstFrame;
   
@@ -186,27 +225,31 @@ void vpVideoWriter::open(vpImage< unsigned char > &I)
     width = I.getWidth();
     height = I.getHeight();
   }
-  #ifdef VISP_HAVE_FFMPEG
   else if (formatType == FORMAT_AVI ||
            formatType == FORMAT_MPEG ||
+           formatType == FORMAT_MPEG4 ||
            formatType == FORMAT_MOV)
   {
+#ifdef VISP_HAVE_FFMPEG
     ffmpeg = new vpFFMPEG;
     ffmpeg->setFramerate(framerate);
     ffmpeg->setBitRate(bit_rate);
-    if(!ffmpeg->openEncoder(fileName, I.getWidth(), I.getHeight(), codec))
-      throw (vpException(vpException::ioError ,"Could not open the video"));
+    if(!ffmpeg->openEncoder(fileName, I.getWidth(), I.getHeight(), codec)) {
+      throw (vpException(vpException::ioError ,"Could not encode the video with ffmpeg"));
+    }
+#elif VISP_HAVE_OPENCV_VERSION >= 0x020100
+    writer = cv::VideoWriter(fileName, fourcc, framerate, cv::Size((int)I.getWidth(), (int)I.getHeight()));
+
+    if(!writer.isOpened())
+    {
+      vpERROR_TRACE("Could not encode the video with opencv");
+      throw (vpException(vpException::ioError ,"Could not encode the video with opencv"));
+    }
+#else
+    //vpERROR_TRACE("To encode video files ViSP should be build with ffmpeg or opencv 3rd party libraries.");
+    throw (vpException(vpException::fatalError ,"To encode video files ViSP should be build with ffmpeg or opencv 3rd >= 2.1.0 party libraries."));
+#endif
   }
-  
-  #else
-  else if (formatType == FORMAT_AVI ||
-           formatType == FORMAT_MPEG ||
-           formatType == FORMAT_MOV)
-  {
-    vpERROR_TRACE("To write video files the FFmpeg library has to be installed");
-    throw (vpException(vpException::fatalError ,"the FFmpeg library is required"));
-  }
-  #endif
   
   frameCount = firstFrame;
   
@@ -241,13 +284,16 @@ void vpVideoWriter::saveFrame (vpImage< vpRGBa > &I)
 
     vpImageIo::write(I, name);
   }
-  
-  #ifdef VISP_HAVE_FFMPEG
   else
   {
+#ifdef VISP_HAVE_FFMPEG
     ffmpeg->saveFrame(I);
+#elif VISP_HAVE_OPENCV_VERSION >= 0x020100
+	  cv::Mat matFrame;
+	  vpImageConvert::convert(I, matFrame);
+	  writer << matFrame;
+#endif
   }
-  #endif
 
   frameCount++;
 }
@@ -279,13 +325,22 @@ void vpVideoWriter::saveFrame (vpImage< unsigned char > &I)
 
     vpImageIo::write(I, name);
   }
-  
-  #ifdef VISP_HAVE_FFMPEG
   else
   {
+#ifdef VISP_HAVE_FFMPEG
     ffmpeg->saveFrame(I);
+#elif VISP_HAVE_OPENCV_VERSION >= 0x030000
+    cv::Mat matFrame, rgbMatFrame;
+    vpImageConvert::convert(I, matFrame);
+    cv::cvtColor(matFrame, rgbMatFrame, cv::COLOR_GRAY2BGR);
+    writer << rgbMatFrame;
+#elif VISP_HAVE_OPENCV_VERSION >= 0x020100
+    cv::Mat matFrame, rgbMatFrame;
+    vpImageConvert::convert(I, matFrame);
+    cv::cvtColor(matFrame, rgbMatFrame, CV_GRAY2BGR);
+    writer << rgbMatFrame;
+#endif
   }
-  #endif
 
   frameCount++;
 }
@@ -354,6 +409,14 @@ vpVideoWriter::getFormat(const char *filename)
     return FORMAT_MPEG;
   else if (ext.compare(".mpg") == 0)
     return FORMAT_MPEG;
+  else if (ext.compare(".MPEG4") == 0)
+    return FORMAT_MPEG4;
+  else if (ext.compare(".mpeg4") == 0)
+    return FORMAT_MPEG4;
+  else if (ext.compare(".MP4") == 0)
+    return FORMAT_MPEG4;
+  else if (ext.compare(".mp4") == 0)
+    return FORMAT_MPEG4;
   else if (ext.compare(".MOV") == 0)
     return FORMAT_MOV;
   else if (ext.compare(".mov") == 0)

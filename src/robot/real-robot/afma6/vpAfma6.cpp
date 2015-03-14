@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpAfma6.cpp 4210 2013-04-16 08:57:46Z fspindle $
+ * $Id: vpAfma6.cpp 4649 2014-02-07 14:57:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -68,70 +68,70 @@ static const char *opt_Afma6[] = {"JOINT_MAX","JOINT_MIN","LONG_56","COUPL_56",
                                   NULL};
 
 const char * const vpAfma6::CONST_AFMA6_FILENAME
-#ifdef WIN32
+#if defined(_WIN32)
 = "Z:/robot/Afma6/current/include/const_Afma6.cnf";
 #else
 = "/udd/fspindle/robot/Afma6/current/include/const_Afma6.cnf";
 #endif
 
 const char * const vpAfma6::CONST_EMC_CCMOP_WITHOUT_DISTORTION_FILENAME
-#ifdef WIN32
+#if defined(_WIN32)
 = "Z:/robot/Afma6/current/include/const_eMc_ccmop_without_distortion_Afma6.cnf";
 #else
 = "/udd/fspindle/robot/Afma6/current/include/const_eMc_ccmop_without_distortion_Afma6.cnf";
 #endif
 
 const char * const vpAfma6::CONST_EMC_CCMOP_WITH_DISTORTION_FILENAME
-#ifdef WIN32 
+#if defined(_WIN32) 
 = "Z:/robot/Afma6/current/include/const_eMc_ccmop_with_distortion_Afma6.cnf";
 #else
 = "/udd/fspindle/robot/Afma6/current/include/const_eMc_ccmop_with_distortion_Afma6.cnf";
 #endif
 
 const char * const vpAfma6::CONST_EMC_GRIPPER_WITHOUT_DISTORTION_FILENAME
-#ifdef WIN32
+#if defined(_WIN32)
 = "Z:/robot/Afma6/current/include/const_eMc_gripper_without_distortion_Afma6.cnf";
 #else
 = "/udd/fspindle/robot/Afma6/current/include/const_eMc_gripper_without_distortion_Afma6.cnf";
 #endif
 
 const char * const vpAfma6::CONST_EMC_GRIPPER_WITH_DISTORTION_FILENAME
-#ifdef WIN32 
+#if defined(_WIN32) 
 = "Z:/robot/Afma6/current/include/const_eMc_gripper_with_distortion_Afma6.cnf";
 #else
 = "/udd/fspindle/robot/Afma6/current/include/const_eMc_gripper_with_distortion_Afma6.cnf";
 #endif
 
 const char * const vpAfma6::CONST_EMC_VACUUM_WITHOUT_DISTORTION_FILENAME
-#ifdef WIN32
+#if defined(_WIN32)
 = "Z:/robot/Afma6/current/include/const_eMc_vacuum_without_distortion_Afma6.cnf";
 #else
 = "/udd/fspindle/robot/Afma6/current/include/const_eMc_vacuum_without_distortion_Afma6.cnf";
 #endif
 
 const char * const vpAfma6::CONST_EMC_VACUUM_WITH_DISTORTION_FILENAME
-#ifdef WIN32
+#if defined(_WIN32)
 = "Z:/robot/Afma6/current/include/const_eMc_vacuum_with_distortion_Afma6.cnf";
 #else
 = "/udd/fspindle/robot/Afma6/current/include/const_eMc_vacuum_with_distortion_Afma6.cnf";
 #endif
 
 const char * const vpAfma6::CONST_EMC_GENERIC_WITHOUT_DISTORTION_FILENAME
-#ifdef WIN32
+#if defined(_WIN32)
 = "Z:/robot/Afma6/current/include/const_eMc_generic_without_distortion_Afma6.cnf";
 #else
 = "/udd/fspindle/robot/Afma6/current/include/const_eMc_generic_without_distortion_Afma6.cnf";
 #endif
 
 const char * const vpAfma6::CONST_EMC_GENERIC_WITH_DISTORTION_FILENAME
-#ifdef WIN32
+#if defined(_WIN32)
 = "Z:/robot/Afma6/current/include/const_eMc_generic_with_distortion_Afma6.cnf";
 #else
 = "/udd/fspindle/robot/Afma6/current/include/const_eMc_generic_with_distortion_Afma6.cnf";
 #endif
 
 const char * const vpAfma6::CONST_CAMERA_AFMA6_FILENAME
-#ifdef WIN32 
+#if defined(_WIN32) 
 = "Z:/robot/Afma6/current/include/const_camera_Afma6.xml";
 #else
 = "/udd/fspindle/robot/Afma6/current/include/const_camera_Afma6.xml";
@@ -154,6 +154,9 @@ const unsigned int vpAfma6::njoint = 6;
 
 */
 vpAfma6::vpAfma6()
+  : _coupl_56(0), _long_56(0), _etc(), _erc(), _eMc(),
+    tool_current(vpAfma6::defaultTool),
+    projModel(vpCameraParameters::perspectiveProjWithoutDistortion)
 {
   // Set the default parameters in case of the config files on the NAS
   // at Inria are not available.
@@ -237,15 +240,15 @@ vpAfma6::init (const char * paramAfma6,
 
   \param tool : Camera in use.
 
-  \param projModel : Projection model of the camera.
+  \param proj_model : Projection model of the camera.
 
 */
 void
 vpAfma6::init (vpAfma6::vpAfma6ToolType tool,
-               vpCameraParameters::vpCameraParametersProjType projModel)
+               vpCameraParameters::vpCameraParametersProjType proj_model)
 {
   
-  this->projModel = projModel;
+  this->projModel = proj_model;
   
 #ifdef VISP_HAVE_ACCESS_TO_NAS
   // Read the robot parameters from files
@@ -254,19 +257,19 @@ vpAfma6::init (vpAfma6::vpAfma6ToolType tool,
   case vpAfma6::TOOL_CCMOP: {
     switch(projModel) {
     case vpCameraParameters::perspectiveProjWithoutDistortion :
-#ifdef UNIX
+#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
       snprintf(filename_eMc, FILENAME_MAX, "%s",
                CONST_EMC_CCMOP_WITHOUT_DISTORTION_FILENAME);
-#else // WIN32
+#else // _WIN32
       _snprintf(filename_eMc, FILENAME_MAX, "%s",
                 CONST_EMC_CCMOP_WITHOUT_DISTORTION_FILENAME);
 #endif
       break;
     case vpCameraParameters::perspectiveProjWithDistortion :
-#ifdef UNIX
+#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
       snprintf(filename_eMc, FILENAME_MAX, "%s",
                CONST_EMC_CCMOP_WITH_DISTORTION_FILENAME);
-#else // WIN32
+#else // _WIN32
       _snprintf(filename_eMc, FILENAME_MAX, "%s",
                 CONST_EMC_CCMOP_WITH_DISTORTION_FILENAME);
 #endif
@@ -277,19 +280,19 @@ vpAfma6::init (vpAfma6::vpAfma6ToolType tool,
   case vpAfma6::TOOL_GRIPPER: {
     switch(projModel) {
     case vpCameraParameters::perspectiveProjWithoutDistortion :
-#ifdef UNIX
+#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
       snprintf(filename_eMc, FILENAME_MAX, "%s",
                CONST_EMC_GRIPPER_WITHOUT_DISTORTION_FILENAME);
-#else // WIN32
+#else // _WIN32
       _snprintf(filename_eMc, FILENAME_MAX, "%s",
                 CONST_EMC_GRIPPER_WITHOUT_DISTORTION_FILENAME);
 #endif
       break;
     case vpCameraParameters::perspectiveProjWithDistortion :
-#ifdef UNIX
+#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
       snprintf(filename_eMc, FILENAME_MAX, "%s",
                CONST_EMC_GRIPPER_WITH_DISTORTION_FILENAME);
-#else // WIN32
+#else // _WIN32
       _snprintf(filename_eMc, FILENAME_MAX, "%s",
                 CONST_EMC_GRIPPER_WITH_DISTORTION_FILENAME);
 #endif
@@ -300,19 +303,19 @@ vpAfma6::init (vpAfma6::vpAfma6ToolType tool,
   case vpAfma6::TOOL_VACUUM: {
     switch(projModel) {
     case vpCameraParameters::perspectiveProjWithoutDistortion :
-#ifdef UNIX
+#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
       snprintf(filename_eMc, FILENAME_MAX, "%s",
                CONST_EMC_VACUUM_WITHOUT_DISTORTION_FILENAME);
-#else // WIN32
+#else // _WIN32
       _snprintf(filename_eMc, FILENAME_MAX, "%s",
                 CONST_EMC_VACUUM_WITHOUT_DISTORTION_FILENAME);
 #endif
       break;
     case vpCameraParameters::perspectiveProjWithDistortion :
-#ifdef UNIX
+#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
       snprintf(filename_eMc, FILENAME_MAX, "%s",
                CONST_EMC_VACUUM_WITH_DISTORTION_FILENAME);
-#else // WIN32
+#else // _WIN32
       _snprintf(filename_eMc, FILENAME_MAX, "%s",
                 CONST_EMC_VACUUM_WITH_DISTORTION_FILENAME);
 #endif
@@ -323,19 +326,19 @@ vpAfma6::init (vpAfma6::vpAfma6ToolType tool,
   case vpAfma6::TOOL_GENERIC_CAMERA: {
     switch(projModel) {
     case vpCameraParameters::perspectiveProjWithoutDistortion :
-#ifdef UNIX
+#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
       snprintf(filename_eMc, FILENAME_MAX, "%s",
                CONST_EMC_GENERIC_WITHOUT_DISTORTION_FILENAME);
-#else // WIN32
+#else // _WIN32
       _snprintf(filename_eMc, FILENAME_MAX, "%s",
                 CONST_EMC_GENERIC_WITHOUT_DISTORTION_FILENAME);
 #endif
       break;
     case vpCameraParameters::perspectiveProjWithDistortion :
-#ifdef UNIX
+#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
       snprintf(filename_eMc, FILENAME_MAX, "%s",
                CONST_EMC_GENERIC_WITH_DISTORTION_FILENAME);
-#else // WIN32
+#else // _WIN32
       _snprintf(filename_eMc, FILENAME_MAX, "%s",
                 CONST_EMC_GENERIC_WITH_DISTORTION_FILENAME);
 #endif
@@ -382,6 +385,7 @@ vpAfma6::init (vpAfma6::vpAfma6ToolType tool,
       _etc[2] = 0.2286; // tz
       break;
     }
+    break;
   }
   case vpAfma6::TOOL_GRIPPER: {
     switch(projModel) {
@@ -402,6 +406,7 @@ vpAfma6::init (vpAfma6::vpAfma6ToolType tool,
       _etc[2] = 0.1642; // tz
       break;
     }
+    break;
   }
   case vpAfma6::TOOL_VACUUM: {
     switch(projModel) {
@@ -422,6 +427,7 @@ vpAfma6::init (vpAfma6::vpAfma6ToolType tool,
       _etc[2] = 0.1658; // tz
       break;
     }
+    break;
   }
   case vpAfma6::TOOL_GENERIC_CAMERA: {
     switch(projModel) {
@@ -436,6 +442,7 @@ vpAfma6::init (vpAfma6::vpAfma6ToolType tool,
       _etc[2] = 0; // tz
       break;
     }
+    break;
   }
   }
   vpRotationMatrix eRc(_erc);
@@ -472,7 +479,7 @@ vpAfma6::init (vpAfma6::vpAfma6ToolType tool,
 
 */
 vpHomogeneousMatrix
-vpAfma6::getForwardKinematics(const vpColVector & q)
+vpAfma6::getForwardKinematics(const vpColVector & q) const
 {
   vpHomogeneousMatrix fMc;
   fMc = get_fMc(q);
@@ -555,7 +562,7 @@ int main()
 */
 int
 vpAfma6::getInverseKinematics(const vpHomogeneousMatrix & fMc,
-                              vpColVector & q, const bool &nearest, const bool &verbose)
+                              vpColVector & q, const bool &nearest, const bool &verbose) const
 {
   vpHomogeneousMatrix fMe;
   double q_[2][6],d[2],t;
@@ -735,7 +742,7 @@ vpAfma6::getInverseKinematics(const vpHomogeneousMatrix & fMc,
   \sa getForwardKinematics(const vpColVector & q)
 */
 vpHomogeneousMatrix
-vpAfma6::get_fMc (const vpColVector & q)
+vpAfma6::get_fMc (const vpColVector & q) const
 {
   vpHomogeneousMatrix fMc;
   get_fMc(q, fMc);
@@ -763,7 +770,7 @@ vpAfma6::get_fMc (const vpColVector & q)
 
 */
 void
-vpAfma6::get_fMc(const vpColVector & q, vpHomogeneousMatrix & fMc)
+vpAfma6::get_fMc(const vpColVector & q, vpHomogeneousMatrix & fMc) const
 {
 
   // Compute the direct geometric model: fMe = transformation between
@@ -797,7 +804,7 @@ vpAfma6::get_fMc(const vpColVector & q, vpHomogeneousMatrix & fMc)
 
 */
 void
-vpAfma6::get_fMe(const vpColVector & q, vpHomogeneousMatrix & fMe)
+vpAfma6::get_fMe(const vpColVector & q, vpHomogeneousMatrix & fMe) const
 {
   double            q0 = q[0]; // meter
   double            q1 = q[1]; // meter
@@ -851,7 +858,7 @@ vpAfma6::get_fMe(const vpColVector & q, vpHomogeneousMatrix & fMe)
 
 */
 void
-vpAfma6::get_cMe(vpHomogeneousMatrix &cMe)
+vpAfma6::get_cMe(vpHomogeneousMatrix &cMe) const
 {
   cMe = this->_eMc.inverse();
 }
@@ -866,7 +873,7 @@ vpAfma6::get_cMe(vpHomogeneousMatrix &cMe)
 
 */
 void
-vpAfma6::get_cVe(vpVelocityTwistMatrix &cVe)
+vpAfma6::get_cVe(vpVelocityTwistMatrix &cVe) const
 {
   vpHomogeneousMatrix cMe ;
   get_cMe(cMe) ;
@@ -889,40 +896,41 @@ vpAfma6::get_cVe(vpVelocityTwistMatrix &cVe)
 
 */
 void
-vpAfma6::get_eJe(const vpColVector &q, vpMatrix &eJe)
+vpAfma6::get_eJe(const vpColVector &q, vpMatrix &eJe) const
 {
 
   eJe.resize(6,6) ;
 
-  double s3,c3,s4,c4,s5,c5 ;
+  double s4,c4,s5,c5,s6,c6 ;
 
-  s3=sin(q[3]); c3=cos(q[3]);
-  s4=sin(q[4]); c4=cos(q[4]);
-  s5=sin(q[5]); c5=cos(q[5]);
+  s4=sin(q[3]); c4=cos(q[3]);
+  s5=sin(q[4]); c5=cos(q[4]);
+  s6=sin(q[5]-this->_coupl_56*q[4]); c6=cos(q[5]-this->_coupl_56*q[4]);
 
   eJe = 0;
-  eJe[0][0] = s3*s4*c5+c3*s5;
-  eJe[0][1] = -c3*s4*c5+s3*s5;
-  eJe[0][2] = c4*c5;
-  eJe[0][3] = - this->_long_56*s4*c5;
+  eJe[0][0] = s4*s5*c6+c4*s6;
+  eJe[0][1] = -c4*s5*c6+s4*s6;
+  eJe[0][2] = c5*c6;
+  eJe[0][3] = - this->_long_56*s5*c6;
 
-  eJe[1][0] = -s3*s4*s5+c3*c5;
-  eJe[1][1] = c3*s4*s5+s3*c5;
-  eJe[1][2] = -c4*s5;
-  eJe[1][3] = this->_long_56*s4*s5;
+  eJe[1][0] = -s4*s5*s6+c4*c6;
+  eJe[1][1] = c4*s5*s6+s4*c6;
+  eJe[1][2] = -c5*s6;
+  eJe[1][3] = this->_long_56*s5*s6;
 
-  eJe[2][0] = -s3*c4;
-  eJe[2][1] = c3*c4;
-  eJe[2][2] = s4;
-  eJe[2][3] = this->_long_56*c4;
+  eJe[2][0] = -s4*c5;
+  eJe[2][1] = c4*c5;
+  eJe[2][2] = s5;
+  eJe[2][3] = this->_long_56*c5;
 
-  eJe[3][3] = c4*c5;
-  eJe[3][4] = s5;
+  eJe[3][3] = c5*c6;
+  eJe[3][4] = s6;
 
-  eJe[4][3] = -c4*s5;
-  eJe[4][4] = c5;
+  eJe[4][3] = -c5*s6;
+  eJe[4][4] = c6;
 
-  eJe[5][3] = s4;
+  eJe[5][3] = s5;
+  eJe[5][4] = -this->_coupl_56;
   eJe[5][5] = 1;
 
   return;
@@ -939,12 +947,13 @@ vpAfma6::get_eJe(const vpColVector &q, vpMatrix &eJe)
   1  &   0  &   0  & -Ls4 &   0  &   0   \\
   0  &   1  &   0  &  Lc4 &   0  &   0   \\
   0  &   0  &   1  &   0  &   0  &   0   \\
-  0  &   0  &   0  &   0  &   c4 & -s4c5 \\
-  0  &   0  &   0  &   0  &   s4 &  c4c5 \\
-  0  &   0  &   0  &   1  &   0  &  s5   \\
+  0  &   0  &   0  &   0  &   c4+\gamma s4c5 & -s4c5 \\
+  0  &   0  &   0  &   0  &   s4-\gamma c4c5 &  c4c5 \\
+  0  &   0  &   0  &   1  &   -gamma s5  &  s5   \\
   \end{array}
   \right)
   \f]
+  where \f$\gamma\f$ is the coupling factor between join 5 and 6.
 
   \param q : Articular joint position of the robot. q[0], q[1], q[2]
   correspond to the first 3 translations expressed in meter, while
@@ -956,7 +965,7 @@ vpAfma6::get_eJe(const vpColVector &q, vpMatrix &eJe)
 */
 
 void
-vpAfma6::get_fJe(const vpColVector &q, vpMatrix &fJe)
+vpAfma6::get_fJe(const vpColVector &q, vpMatrix &fJe) const
 {
 
   fJe.resize(6,6) ;
@@ -964,8 +973,8 @@ vpAfma6::get_fJe(const vpColVector &q, vpMatrix &fJe)
   // block superieur gauche
   fJe[0][0] = fJe[1][1] = fJe[2][2] = 1 ;
 
-  double s4 = sin(q[4]) ;
-  double c4 = cos(q[4]) ;
+  double s4 = sin(q[3]) ;
+  double c4 = cos(q[3]) ;
 
 
   // block superieur droit
@@ -973,12 +982,17 @@ vpAfma6::get_fJe(const vpColVector &q, vpMatrix &fJe)
   fJe[1][3] =   this->_long_56*c4 ;
 
 
-  double s5 = sin(q[5]) ;
-  double c5 = cos(q[5]) ;
+  double s5 = sin(q[4]) ;
+  double c5 = cos(q[4]) ;
   // block inferieur droit
   fJe[3][4] = c4 ;     fJe[3][5] = -s4*c5 ;
   fJe[4][4] = s4 ;     fJe[4][5] = c4*c5 ;
   fJe[5][3] = 1 ;      fJe[5][5] = s5 ;
+
+  // coupling between joint 5 and 6
+  fJe[3][4] += this->_coupl_56*s4*c5;
+  fJe[4][4] += -this->_coupl_56*c4*c5;
+  fJe[5][4] += -this->_coupl_56*s5;
 
   return;
 }
@@ -993,7 +1007,7 @@ vpAfma6::get_fJe(const vpColVector &q, vpMatrix &fJe)
 
 */
 vpColVector
-vpAfma6::getJointMin()
+vpAfma6::getJointMin() const
 {
   vpColVector qmin(6);
   for (unsigned int i=0; i < 6; i ++)
@@ -1010,7 +1024,7 @@ vpAfma6::getJointMin()
 
 */
 vpColVector
-vpAfma6::getJointMax()
+vpAfma6::getJointMax() const
 {
   vpColVector qmax(6);
   for (unsigned int i=0; i < 6; i ++)
@@ -1025,7 +1039,7 @@ vpAfma6::getJointMax()
   \return Coupling factor between join 5 and 6.
 */
 double
-vpAfma6::getCoupl56()
+vpAfma6::getCoupl56() const
 {
   return _coupl_56;
 }
@@ -1037,7 +1051,7 @@ vpAfma6::getCoupl56()
   \return Distance between join 5 and 6.
 */
 double
-vpAfma6::getLong56()
+vpAfma6::getLong56() const
 {
   return _long_56;
 }
@@ -1233,7 +1247,7 @@ int main()
 void
 vpAfma6::getCameraParameters (vpCameraParameters &cam,
                               const unsigned int &image_width,
-                              const unsigned int &image_height)
+                              const unsigned int &image_height) const
 {
 #if defined(VISP_HAVE_XML2) && defined (VISP_HAVE_ACCESS_TO_NAS)
   vpXmlParserCamera parser;
@@ -1451,7 +1465,7 @@ int main()
 */
 void
 vpAfma6::getCameraParameters (vpCameraParameters &cam,
-                              const vpImage<unsigned char> &I)
+                              const vpImage<unsigned char> &I) const
 {
   getCameraParameters(cam,I.getWidth(),I.getHeight());
 }
@@ -1500,7 +1514,7 @@ int main()
 
 void
 vpAfma6::getCameraParameters (vpCameraParameters &cam,
-                              const vpImage<vpRGBa> &I)
+                              const vpImage<vpRGBa> &I) const
 {
   getCameraParameters(cam,I.getWidth(),I.getHeight());
 }
@@ -1515,7 +1529,7 @@ vpAfma6::getCameraParameters (vpCameraParameters &cam,
   \param os : Output stream.
   \param afma6 : Robot parameters.
 */
-std::ostream & operator << (std::ostream & os,
+VISP_EXPORT std::ostream & operator << (std::ostream & os,
                             const vpAfma6 & afma6)
 {
   vpRotationMatrix eRc;
@@ -1568,8 +1582,4 @@ std::ostream & operator << (std::ostream & os,
 
   return os;
 }
-/*
- * Local variables:
- * c-basic-offset: 2
- * End:
- */
+

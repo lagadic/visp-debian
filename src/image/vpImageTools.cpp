@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpImageTools.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpImageTools.cpp 5236 2015-01-30 13:51:42Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -74,18 +74,18 @@
 
   \code
 #include <visp/vpImageTools.h>
-
 #include <visp/vpImage.h>
 #include <visp/vpImageIo.h>
 
 int main()
 {
   vpImage<unsigned char> I;
-#ifdef UNIX
-  std::string filename("/local/soft/ViSP/ViSP-images/Klimt/Klimt.pgm");
-#elif WIN32
-  std::string filename("C:/temp/ViSP-images/Klimt/Klimt.pgm");
+#ifdef _WIN32
+  std::string filename("C:/temp/ViSP-images/Klimt/Klimt.ppm");
+#else
+  std::string filename("/local/soft/ViSP/ViSP-images/Klimt/Klimt.ppm");
 #endif
+
   // Read an image from the disk
   vpImageIo::read(I, filename); 
 
@@ -113,19 +113,19 @@ void vpImageTools::changeLUT(vpImage<unsigned char>& I,
   }
   unsigned char v;
 
-  double factor = (B_star - A_star)/(B - A);
+  double factor = (double)(B_star - A_star)/(double)(B - A);
 
   for (unsigned int i=0 ; i < I.getHeight(); i++)
     for (unsigned int j=0 ; j < I.getWidth(); j++) {
       v = I[i][j];
 
       if (v <= A)
-	I[i][j] = A_star;
+        I[i][j] = A_star;
       else if (v >= B)
-	I[i][j] = B_star;
+        I[i][j] = B_star;
       else
-	I[i][j] = (unsigned char)(A_star + factor*(v-A));
-  }
+        I[i][j] = (unsigned char)(A_star + factor*(v-A));
+    }
 }
 
 /*!

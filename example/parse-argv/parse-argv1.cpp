@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: parse-argv1.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: parse-argv1.cpp 4658 2014-02-09 09:50:14Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -63,6 +63,9 @@
 // List of allowed command line options
 #define GETOPTARGS	"d:f:i:h"
 
+void usage(const char *name, const char *badparam, int i_val, float f_val, double d_val);
+bool getOptions(int argc, const char **argv, int &i_val, float &f_val, double &d_val);
+
 /*!
 
   Print the program options.
@@ -118,18 +121,18 @@ OPTIONS:                                               Default\n\
 */
 bool getOptions(int argc, const char **argv, int &i_val, float &f_val, double &d_val)
 {
-  const char *optarg;
+  const char *optarg_;
   int	c;
-  while ((c = vpParseArgv::parse(argc, argv, GETOPTARGS, &optarg)) > 1) {
+  while ((c = vpParseArgv::parse(argc, argv, GETOPTARGS, &optarg_)) > 1) {
 
     switch (c) {
-    case 'd': d_val = atof(optarg); break;
-    case 'f': f_val = (float) atof(optarg); break;
-    case 'i': i_val = atoi(optarg); break;
+    case 'd': d_val = atof(optarg_); break;
+    case 'f': f_val = (float) atof(optarg_); break;
+    case 'i': i_val = atoi(optarg_); break;
     case 'h': usage(argv[0], NULL, i_val, f_val, d_val); return false; break;
 
     default:
-      usage(argv[0], optarg, i_val, f_val, d_val); return false; break;
+      usage(argv[0], optarg_, i_val, f_val, d_val); return false; break;
     }
   }
 
@@ -137,7 +140,7 @@ bool getOptions(int argc, const char **argv, int &i_val, float &f_val, double &d
     // standalone param or error
     usage(argv[0], NULL, i_val, f_val, d_val);
     std::cerr << "ERROR: " << std::endl;
-    std::cerr << "  Bad argument " << optarg << std::endl << std::endl;
+    std::cerr << "  Bad argument " << optarg_ << std::endl << std::endl;
     return false;
   }
 
@@ -147,32 +150,30 @@ bool getOptions(int argc, const char **argv, int &i_val, float &f_val, double &d
 int
 main(int argc, const char ** argv)
 {
-  using ::std::cout;
-  using ::std::endl;
+  try {
+    using ::std::cout;
+    using ::std::endl;
 
-  int    i_val = 3;
-  float  f_val = 3.14f;
-  double d_val = 3.1415;
+    int    i_val = 3;
+    float  f_val = 3.14f;
+    double d_val = 3.1415;
 
-  // Read the command line options
-  if (getOptions(argc, argv, i_val, f_val, d_val) == false) {
-    return (-1);
+    // Read the command line options
+    if (getOptions(argc, argv, i_val, f_val, d_val) == false) {
+      return (-1);
+    }
+
+    cout << "Your parameters: " << endl;
+    cout << "  Integer value: " << i_val << endl;
+    cout << "  Float   value: " << f_val << endl;
+    cout << "  Double  value: " << d_val << endl << endl;
+    cout << "Call  " << argv[0]
+         << " -h to see how to change these parameters." << endl;
+
+    return 0;
   }
-
-  cout << "Your parameters: " << endl;
-  cout << "  Integer value: " << i_val << endl;
-  cout << "  Float   value: " << f_val << endl;
-  cout << "  Double  value: " << d_val << endl << endl;
-  cout << "Call  " << argv[0]
-       << " -h to see how to change these parameters." << endl;
-
-  return 0;
+  catch(vpException e) {
+    std::cout << "Catch a ViSP exception: " << e << std::endl;
+    return 1;
+  }
 }
-
-
-
-/*
- * Local variables:
- * c-basic-offset: 2
- * End:
- */

@@ -1,9 +1,9 @@
 /****************************************************************************
 *
-* $Id: vpPoseLagrange.cpp 4056 2013-01-05 13:04:42Z fspindle $
+* $Id: vpPoseLagrange.cpp 5198 2015-01-23 17:32:04Z fspindle $
 *
 * This file is part of the ViSP software.
-* Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+* Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
 * 
 * This software is free software; you can redistribute it and/or
 * modify it under the terms of the GNU General Public License
@@ -385,20 +385,20 @@ vpPose::poseLagrangePlan(vpHomogeneousMatrix &cMo, const int coplanar_plane_type
     for (i=0;i<3;i++) {s += (X1[i]*X2[i]);}
     for (i=0;i<3;i++)  {X2[i] -= (s*X1[i]);} /* X1^T X2 = 0	*/
 
-    s = 0.0;
-    for (i=0;i<3;i++)  {s += (X2[i]*X2[i]);}
+    //s = 0.0;
+    //for (i=0;i<3;i++)  {s += (X2[i]*X2[i]);}
+    s = X2[0]*X2[0] + X2[1]*X2[1] + X2[2]*X2[2]; // To avoid a Coverity copy/past error
 
     if (s<1e-10)
     {
-      std::cout << "Points that produce an error: " << std::endl;
-      for (std::list<vpPoint>::const_iterator it = listP.begin(); it != listP.end(); ++it)
-      {
-        std::cout << "P: " << (*it).get_x() << " " << (*it).get_y() << " "
-                  << (*it).get_oX() << " " << (*it).get_oY() << " " << (*it).get_oZ() << std::endl;
-      }
-      vpERROR_TRACE( "division par zero ") ;
+//      std::cout << "Points that produce an error: " << std::endl;
+//      for (std::list<vpPoint>::const_iterator it = listP.begin(); it != listP.end(); ++it)
+//      {
+//        std::cout << "P: " << (*it).get_x() << " " << (*it).get_y() << " "
+//                  << (*it).get_oX() << " " << (*it).get_oY() << " " << (*it).get_oZ() << std::endl;
+//      }
       throw(vpException(vpException::divideByZeroError,
-        "division by zero  ")) ;
+                        "Division by zero in Lagrange pose computation (planar plane case)")) ;
     }
 
     s = 1.0/sqrt(s);
@@ -453,12 +453,10 @@ vpPose::poseLagrangePlan(vpHomogeneousMatrix &cMo, const int coplanar_plane_type
       }
     }
   }
-  catch(...)
+  catch(vpException &e)
   {
-    vpERROR_TRACE(" ") ;
-    throw ;
+    throw e;
   }
-
 
 #if (DEBUG_LEVEL1)
   std::cout << "end vpCalculPose::PoseLagrange(...) " << std::endl ;
@@ -559,21 +557,21 @@ vpPose::poseLagrangeNonPlan(vpHomogeneousMatrix &cMo)
     for (i=0;i<3;i++) {s += (X1[i]*X2[i]);}
     for (i=0;i<3;i++)  {X2[i] -= (s*X1[i]);} /* X1^T X2 = 0	*/
 
-    s = 0.0;
-    for (i=0;i<3;i++)  {s += (X2[i]*X2[i]);}
+    //s = 0.0;
+    //for (i=0;i<3;i++)  {s += (X2[i]*X2[i]);}
+    s = X2[0]*X2[0] + X2[1]*X2[1] + X2[2]*X2[2]; // To avoid a Coverity copy/past error
 
     if (s<1e-10)
     {
-      std::cout << "Points that produce an error: " << std::endl;
-      for (std::list<vpPoint>::const_iterator it = listP.begin(); it != listP.end(); ++it)
-      {
-        std::cout << "P: " << (*it).get_x() << " " << (*it).get_y() << " "
-                  << (*it).get_oX() << " " << (*it).get_oY() << " " << (*it).get_oZ() << std::endl;
-      }
-      vpERROR_TRACE(" division par zero " ) ;
+//      std::cout << "Points that produce an error: " << std::endl;
+//      for (std::list<vpPoint>::const_iterator it = listP.begin(); it != listP.end(); ++it)
+//      {
+//        std::cout << "P: " << (*it).get_x() << " " << (*it).get_y() << " "
+//                  << (*it).get_oX() << " " << (*it).get_oY() << " " << (*it).get_oZ() << std::endl;
+//      }
+      //vpERROR_TRACE(" division par zero " ) ;
       throw(vpException(vpException::divideByZeroError,
-        "division by zero  ")) ;
-
+                        "Division by zero in Lagrange pose computation (non planar plane case)")) ;
     }
 
     s = 1.0/sqrt(s);
@@ -585,7 +583,6 @@ vpPose::poseLagrangeNonPlan(vpHomogeneousMatrix &cMo)
 
     calculTranslation (a, b, nl, 3, 6, X1, X2) ;
 
-
     for (i=0 ; i<3 ; i++)
     {
       cMo[i][0] = X1[i];
@@ -595,10 +592,9 @@ vpPose::poseLagrangeNonPlan(vpHomogeneousMatrix &cMo)
     }
 
   }
-  catch(...)
+  catch(vpException &e)
   {
-    vpERROR_TRACE(" ") ;
-    throw ;
+    throw e;
   }
 
 #if (DEBUG_LEVEL1)
@@ -609,11 +605,3 @@ vpPose::poseLagrangeNonPlan(vpHomogeneousMatrix &cMo)
 
 #undef DEBUG_LEVEL1
 #undef DEBUG_LEVEL2
-
-
-
-/*
-* Local variables:
-* c-basic-offset: 2
-* End:
-*/

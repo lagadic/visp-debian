@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: servoViper850Point2DArtVelocity-jointAvoidance-gpa.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: servoViper850Point2DArtVelocity-jointAvoidance-gpa.cpp 4698 2014-03-26 06:55:37Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -47,16 +47,7 @@
 
   Joint limits avoidance using a gradient projection approach. 
 
-  Implemented from :
-  
-  - E. Marchand, F. Chaumette, A. Rizzo. Using the task function approach to
-    avoid robot joint limits and kinematic singularities in visual servoing. In
-    IEEE/RSJ Int. Conf. on Intelligent Robots and Systems, IROS'96, Volume 3,
-    Pages 1083-1090, Osaka, Japan, November 1996. details.
-
-  - and section II.B in F. Chaumette, E. Marchand. A redundancy-based iterative
-    approach for avoiding joint limits: Application to visual servoing. IEEE
-    Trans. on Robotics and Automation, 17(5):719-730, October 2001.
+  Implemented from \cite Marchand96f and section II.B in \cite Chaumette01c.
 */
 
 #include <visp/vpConfig.h>
@@ -68,7 +59,7 @@
 #include <fstream>
 #include <sstream>
 
-#if (defined (VISP_HAVE_VIPER850) && defined (VISP_HAVE_DC1394_2))
+#if (defined (VISP_HAVE_VIPER850) && defined (VISP_HAVE_DC1394_2) && defined(VISP_HAVE_DISPLAY))
 
 #include <visp/vp1394TwoGrabber.h>
 #include <visp/vpImage.h>

@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpMbtDistanceLine.cpp 4311 2013-07-16 15:02:57Z ayol $
+ * $Id: vpMbtDistanceLine.cpp 5136 2015-01-08 10:09:04Z ayol $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -53,21 +53,18 @@
 #include <visp/vpFeatureBuilder.h>
 #include <stdlib.h>
 
+void buildPlane(vpPoint &P, vpPoint &Q, vpPoint &R, vpPlane &plane);
+void buildLine(vpPoint &P1, vpPoint &P2, vpPoint &P3, vpPoint &P4, vpLine &L);
+
 /*!
   Basic constructor
 */
 vpMbtDistanceLine::vpMbtDistanceLine()
+  : name(), index(0), cam(), me(NULL), alpha(0), wmean(1),
+    featureline(), poly(), meline(NULL), line(NULL), p1(NULL), p2(NULL), L(),
+    error(), nbFeature(0), Reinit(false), hiddenface(NULL), Lindex_polygon(),
+    isvisible(false)
 {
-  name = "";
-  p1 = NULL ;
-  p2 = NULL ;
-  line = NULL ;
-  meline = NULL ;
-  hiddenface = NULL ;
-  wmean = 1 ;
-  nbFeature =0 ;
-  Reinit = false;
-  isvisible = false;
 }
 
 /*!
@@ -231,6 +228,7 @@ vpMbtDistanceLine::setMovingEdge(vpMe *_me)
   me = _me ;
   if (meline != NULL)
   {
+    meline->reset();
     meline->setMe(me) ;
   }
 }
@@ -242,8 +240,9 @@ vpMbtDistanceLine::setMovingEdge(vpMe *_me)
   
   \param I : The image.
   \param cMo : The pose of the camera used to initialize the moving edges.
+  \return false if an error occur, true otherwise.
 */
-void
+bool
 vpMbtDistanceLine::initMovingEdge(const vpImage<unsigned char> &I, const vpHomogeneousMatrix &cMo)
 {
   if(isvisible){
@@ -290,6 +289,7 @@ vpMbtDistanceLine::initMovingEdge(const vpImage<unsigned char> &I, const vpHomog
       catch(...)
       {
         //vpTRACE("the line can't be initialized");
+        return false;
       }
     }
     else{
@@ -299,6 +299,7 @@ vpMbtDistanceLine::initMovingEdge(const vpImage<unsigned char> &I, const vpHomog
     }
   }   
 //	trackMovingEdge(I,cMo)  ;
+  return true;
 }
 
 
@@ -338,6 +339,7 @@ vpMbtDistanceLine::trackMovingEdge(const vpImage<unsigned char> &I, const vpHomo
     }
     catch(...)
     {
+      meline->reset();
       Reinit = true;
     }
     nbFeature =(unsigned int) meline->getMeList().size();
@@ -419,7 +421,8 @@ vpMbtDistanceLine::reinitMovingEdge(const vpImage<unsigned char> &I, const vpHom
   if(meline!= NULL)
     delete meline;
   
-  initMovingEdge(I,cMo);
+  if (initMovingEdge(I,cMo) == false)
+    Reinit = true;
 
   Reinit = false;
 }
@@ -430,20 +433,21 @@ vpMbtDistanceLine::reinitMovingEdge(const vpImage<unsigned char> &I, const vpHom
 
   \param I : The image.
   \param cMo : Pose used to project the 3D model into the image.
-  \param cam : The camera parameters.
+  \param camera : The camera parameters.
   \param col : The desired color.
   \param thickness : The thickness of the line.
   \param displayFullModel : If true, the line is displayed even if it is not visible.
 */
 void
-vpMbtDistanceLine::display(const vpImage<unsigned char>&I, const vpHomogeneousMatrix &cMo, const vpCameraParameters&cam, const vpColor col, const unsigned int thickness, const bool displayFullModel)
+vpMbtDistanceLine::display(const vpImage<unsigned char> &I, const vpHomogeneousMatrix &cMo,
+                           const vpCameraParameters &camera, const vpColor col, const unsigned int thickness, const bool displayFullModel)
 {
-  p1->changeFrame(cMo);
-  p2->changeFrame(cMo);
-
   if(isvisible || displayFullModel){
+    p1->changeFrame(cMo);
+    p2->changeFrame(cMo);
+
     vpImagePoint ip1, ip2;
-    vpCameraParameters c = cam;
+    vpCameraParameters c = camera;
     if(poly.getClipping() > 3) // Contains at least one FOV constraint
       c.computeFov(I.getWidth(), I.getHeight());
     
@@ -458,7 +462,7 @@ vpMbtDistanceLine::display(const vpImage<unsigned char>&I, const vpHomogeneousMa
        ((poly.roiPointsClip[1].second & poly.roiPointsClip[0].second & vpMbtPolygon::RIGHT_CLIPPING) == 0)){ 
       vpMeterPixelConversion::convertPoint(cam,poly.roiPointsClip[0].first.get_x(),poly.roiPointsClip[0].first.get_y(),ip1);
       vpMeterPixelConversion::convertPoint(cam,poly.roiPointsClip[1].first.get_x(),poly.roiPointsClip[1].first.get_y(),ip2);
-    
+
       vpDisplay::displayLine(I,ip1,ip2,col, thickness);
     }
   }
@@ -470,20 +474,22 @@ vpMbtDistanceLine::display(const vpImage<unsigned char>&I, const vpHomogeneousMa
 
   \param I : The image.
   \param cMo : Pose used to project the 3D model into the image.
-  \param cam : The camera parameters.
+  \param camera : The camera parameters.
   \param col : The desired color.
   \param thickness : The thickness of the line.
   \param displayFullModel : If true, the line is displayed even if it is not visible.
 */
 void
-vpMbtDistanceLine::display(const vpImage<vpRGBa>&I, const vpHomogeneousMatrix &cMo, const vpCameraParameters&cam, const vpColor col, const unsigned int thickness, const bool displayFullModel)
+vpMbtDistanceLine::display(const vpImage<vpRGBa> &I, const vpHomogeneousMatrix &cMo,
+                           const vpCameraParameters &camera, const vpColor col,
+                           const unsigned int thickness, const bool displayFullModel)
 {
-  p1->changeFrame(cMo);
-  p2->changeFrame(cMo);
-
   if(isvisible || displayFullModel){
+    p1->changeFrame(cMo);
+    p2->changeFrame(cMo);
+
     vpImagePoint ip1, ip2;
-    vpCameraParameters c = cam;
+    vpCameraParameters c = camera;
     if(poly.getClipping() > 3) // Contains at least one FOV constraint
       c.computeFov(I.getWidth(), I.getHeight());
     
@@ -566,7 +572,7 @@ vpMbtDistanceLine::computeInteractionMatrixError(const vpHomogeneousMatrix &cMo)
     double xc = cam.get_u0() ;
     double yc = cam.get_v0() ;
 
-    double alpha ;
+    double alpha_ ;
     vpMatrix H ;
     H = featureline.interaction() ;
 
@@ -580,14 +586,14 @@ vpMbtDistanceLine::computeInteractionMatrixError(const vpHomogeneousMatrix &cMo)
       x = (x-xc)*mx ;
       y = (y-yc)*my ;
 
-      alpha = x*si - y*co;
+      alpha_ = x*si - y*co;
 
       double *Lrho = H[0] ;
       double *Ltheta = H[1] ;
       // Calculate interaction matrix for a distance
       for (unsigned int k=0 ; k < 6 ; k++)
       {
-        L[j][k] = (Lrho[k] + alpha*Ltheta[k]);
+        L[j][k] = (Lrho[k] + alpha_*Ltheta[k]);
       }
       error[j] = rho - ( x*co + y*si) ;
       j++;

@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpMeEllipse.cpp 4303 2013-07-04 14:14:00Z fspindle $
+ * $Id: vpMeEllipse.cpp 4706 2014-03-28 07:52:00Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -51,6 +51,8 @@
 
 #include <cmath>    // std::fabs
 #include <limits>   // numeric_limits
+
+void computeTheta(double &theta, vpColVector &K, vpImagePoint iP);
 /*!
   Computes the \f$ \theta \f$ angle which represents the angle between the tangente to the curve and the i axis.
 
@@ -78,18 +80,18 @@ computeTheta(double &theta, vpColVector &K, vpImagePoint iP)
 /*!
   Basic constructor that calls the constructor of the class vpMeTracker.
 */
-vpMeEllipse::vpMeEllipse():vpMeTracker()
+vpMeEllipse::vpMeEllipse()
+  : K(), iPc(), a(0.), b(0.), e(0.), iP1(), iP2(), alpha1(0), alpha2(2*M_PI),
+    ce(0.), se(0.), angle(), m00(0.), mu11(0.), mu20(0.), mu02(0.),
+    m10(0.), m01(0.), m11(0.), m02(0.), m20(0.),
+    thresholdWeight(0.2), expecteddensity(0.), circle(false)
 {
   vpCDEBUG(1) << "begin vpMeEllipse::vpMeEllipse() " <<  std::endl ;
 
   // redimensionnement du vecteur de parametre
   // i^2 + K0 j^2 + 2 K1 i j + 2 K2 i + 2 K3 j + K4
 
-  circle = false ;
   K.resize(5) ;
-
-  alpha1 = 0 ;
-  alpha2 = 2*M_PI ;
 
   //j1 = j2 = i1 = i2 = 0 ;
   iP1.set_i(0);
@@ -97,17 +99,17 @@ vpMeEllipse::vpMeEllipse():vpMeTracker()
   iP2.set_i(0);
   iP2.set_j(0);
   
-  m00 = m01 = m10 = m11 = m20 = m02 = mu11 = mu20 = mu02 = 0;
-
-  thresholdWeight = 0.2;
-
   vpCDEBUG(1) << "end vpMeEllipse::vpMeEllipse() " << std::endl ;
 }
 
 /*!
   Copy constructor.
 */
-vpMeEllipse::vpMeEllipse(const vpMeEllipse &meellipse):vpMeTracker(meellipse)
+vpMeEllipse::vpMeEllipse(const vpMeEllipse &meellipse)
+  : vpMeTracker(meellipse), K(), iPc(), a(0.), b(0.), e(0.), iP1(), iP2(), alpha1(0), alpha2(2*M_PI),
+    ce(0.), se(0.), angle(), m00(0.), mu11(0.), mu20(0.), mu02(0.),
+    m10(0.), m01(0.), m11(0.), m02(0.), m20(0.),
+    thresholdWeight(0.2), expecteddensity(0.), circle(false)
 {
   K = meellipse.K;
   iPc = meellipse.iPc;
@@ -134,6 +136,9 @@ vpMeEllipse::vpMeEllipse(const vpMeEllipse &meellipse):vpMeTracker(meellipse)
   m02 = meellipse.m02;
   m20 = meellipse.m20;  
   thresholdWeight = meellipse.thresholdWeight;
+
+  circle = meellipse.circle;
+  expecteddensity = meellipse.expecteddensity;
 }
 
 /*!
@@ -272,7 +277,7 @@ vpMeEllipse::reSample(const vpImage<unsigned char>  &I)
   }
 
   unsigned int n = numberOfSignal() ;
-  double expecteddensity = (alpha2-alpha1) / vpMath::rad((double)me->getSampleStep());
+  expecteddensity = (alpha2-alpha1) / vpMath::rad((double)me->getSampleStep());
   if ((double)n<0.9*expecteddensity){
     sample(I) ;
   }
@@ -280,7 +285,7 @@ vpMeEllipse::reSample(const vpImage<unsigned char>  &I)
 
 
 /*!
-  Computes the length of the semiminor axis \f$ a \f$, the length of the semimajor axis \f$ b \f$ and, 
+  Computes the coordinates of the ellipse center, length of the semiminor axis \f$ a \f$, the length of the semimajor axis \f$ b \f$ and,
   \f$ e \f$ which is the angle made by the major axis and the i axis of the image frame \f$ (i,j) \f$.
   
   All those computations are made thanks to the parameters \f$ K = {K_0, ..., K_4} \f$.
@@ -295,7 +300,6 @@ vpMeEllipse::getParameters()
   k[0] = 1 ;
 
   double d = k[2]*k[2] - k[0]*k[1];
-
 
   iPc.set_i( (k[1] * k[3] - k[2] * k[4]) / d );
   iPc.set_j( (k[0] * k[4] - k[2] * k[3]) / d );
@@ -394,13 +398,11 @@ vpMeEllipse::computeAngle(vpImagePoint pt1, vpImagePoint pt2)
   }
   //std::cout << "end vpMeEllipse::computeAngle(..)" << alpha1 << "  " << alpha2 << std::endl ;
 
-  if (alpha2 <alpha1)
-  {
-//    double alphatmp = alpha2;
-//    alpha2 = alpha1;
-//    alpha1 = alphatmp;
+  if (alpha2 < alpha1)
     alpha2 += 2 * M_PI;
-  }
+  //else if (alpha2 == alpha1)
+  else if (std::fabs(alpha2 - alpha1) < std::fabs(alpha1) * std::numeric_limits<double>::epsilon())
+    alpha2 += 2 * M_PI;
 
   //std::cout << "end vpMeEllipse::computeAngle(..)" << alpha1 << "  " << alpha2 << std::endl ;
   
@@ -416,16 +418,16 @@ vpMeEllipse::computeAngle(vpImagePoint pt1, vpImagePoint pt2)
 void
 vpMeEllipse::updateTheta()
 {
-  vpMeSite p;
+  vpMeSite p_me;
   double theta;
   for(std::list<vpMeSite>::iterator it=list.begin(); it!=list.end(); ++it){
-    p = *it;
+    p_me = *it;
     vpImagePoint iP;
-    iP.set_i(p.ifloat);
-    iP.set_j(p.jfloat);
+    iP.set_i(p_me.ifloat);
+    iP.set_j(p_me.jfloat);
     computeTheta(theta, K, iP) ;
-    p.alpha = theta ;
-    *it = p;
+    p_me.alpha = theta ;
+    *it = p_me;
   }
 }
 
@@ -629,10 +631,10 @@ vpMeEllipse::leastSquare()
   // A = (j^2 2ij 2i 2j 1)   x = (K0 K1 K2 K3 K4)^T  b = (-i^2 )
   unsigned int i ;
 
-  vpMeSite p ;
+  vpMeSite p_me ;
 
   unsigned int iter =0 ;
-  vpColVector b(numberOfSignal()) ;
+  vpColVector b_(numberOfSignal()) ;
   vpRobust r(numberOfSignal()) ;
   r.setThreshold(2);
   r.setIteration(0) ;
@@ -658,17 +660,16 @@ vpMeEllipse::leastSquare()
 
     unsigned int k =0 ;
     for(std::list<vpMeSite>::const_iterator it=list.begin(); it!=list.end(); ++it){
-      p = *it;
-      if (p.getState() == vpMeSite::NO_SUPPRESSION)
+      p_me = *it;
+      if (p_me.getState() == vpMeSite::NO_SUPPRESSION)
       {
-
-        A[k][0] = vpMath::sqr(p.jfloat) ;
-        A[k][1] = 2 * p.ifloat * p.jfloat ;
-        A[k][2] = 2 * p.ifloat ;
-        A[k][3] = 2 * p.jfloat ;
+        A[k][0] = vpMath::sqr(p_me.jfloat) ;
+        A[k][1] = 2 * p_me.ifloat * p_me.jfloat ;
+        A[k][2] = 2 * p_me.ifloat ;
+        A[k][3] = 2 * p_me.jfloat ;
         A[k][4] = 1 ;
 
-        b[k] = - vpMath::sqr(p.ifloat) ;
+        b_[k] = - vpMath::sqr(p_me.ifloat) ;
         k++ ;
       }
     }
@@ -678,10 +679,10 @@ vpMeEllipse::leastSquare()
       DA = D*A ;
       vpMatrix DAp ;
 
-      x = DA.pseudoInverse(1e-26) *D*b ;
+      x = DA.pseudoInverse(1e-26) *D*b_ ;
 
       vpColVector residu(nos_1);
-      residu = b - A*x;
+      residu = b_ - A*x;
       r.setIteration(iter) ;
       r.MEstimator(vpRobust::TUKEY,residu,w) ;
 
@@ -696,14 +697,14 @@ vpMeEllipse::leastSquare()
 
     k =0 ;
     for(std::list<vpMeSite>::iterator it=list.begin(); it!=list.end(); ++it){
-      p = *it;
-      if (p.getState() == vpMeSite::NO_SUPPRESSION)
+      p_me = *it;
+      if (p_me.getState() == vpMeSite::NO_SUPPRESSION)
       {
         if (w[k] < thresholdWeight)
         {
-          p.setState(vpMeSite::M_ESTIMATOR);
+          p_me.setState(vpMeSite::M_ESTIMATOR);
           
-          *it = p;
+          *it = p_me;
         }
         k++ ;
       }
@@ -719,15 +720,14 @@ vpMeEllipse::leastSquare()
 
     unsigned int k =0 ;
     for(std::list<vpMeSite>::const_iterator it=list.begin(); it!=list.end(); ++it){
-      p = *it;
-      if (p.getState() == vpMeSite::NO_SUPPRESSION)
+      p_me = *it;
+      if (p_me.getState() == vpMeSite::NO_SUPPRESSION)
       {
-
-        A[k][0] = 2* p.ifloat ;
-        A[k][1] = 2 * p.jfloat ;
+        A[k][0] = 2* p_me.ifloat ;
+        A[k][1] = 2 * p_me.jfloat ;
         A[k][2] = 1 ;
 
-        b[k] = - vpMath::sqr(p.ifloat) - vpMath::sqr(p.jfloat) ;
+        b_[k] = - vpMath::sqr(p_me.ifloat) - vpMath::sqr(p_me.jfloat) ;
         k++ ;
       }
     }
@@ -737,10 +737,10 @@ vpMeEllipse::leastSquare()
       DA = D*A ;
       vpMatrix DAp ;
 
-      x = DA.pseudoInverse(1e-26) *D*b ;
+      x = DA.pseudoInverse(1e-26) *D*b_ ;
 
       vpColVector residu(nos_1);
-      residu = b - A*x;
+      residu = b_ - A*x;
       r.setIteration(iter) ;
       r.MEstimator(vpRobust::TUKEY,residu,w) ;
 
@@ -755,14 +755,14 @@ vpMeEllipse::leastSquare()
 
     k =0 ;
     for(std::list<vpMeSite>::iterator it=list.begin(); it!=list.end(); ++it){
-      p = *it;
-      if (p.getState() == vpMeSite::NO_SUPPRESSION)
+      p_me = *it;
+      if (p_me.getState() == vpMeSite::NO_SUPPRESSION)
       {
         if (w[k] < thresholdWeight)
         {
-          p.setState(vpMeSite::M_ESTIMATOR);
+          p_me.setState(vpMeSite::M_ESTIMATOR);
       
-          *it = p;
+          *it = p_me;
         }
         k++ ;
       }
@@ -840,7 +840,7 @@ vpMeEllipse::initTracking(const vpImage<unsigned char> &I, const unsigned int n,
   if (circle==false)
   {
     vpMatrix A(n,5) ;
-    vpColVector b(n) ;
+    vpColVector b_(n) ;
     vpColVector x(5) ;
 
     // Construction du systeme Ax=b
@@ -855,16 +855,16 @@ vpMeEllipse::initTracking(const vpImage<unsigned char> &I, const unsigned int n,
       A[k][3] = 2* iP[k].get_j() ;
       A[k][4] = 1 ;
 
-      b[k] = - vpMath::sqr(iP[k].get_i()) ;
+      b_[k] = - vpMath::sqr(iP[k].get_i()) ;
     }
 
-    K = A.pseudoInverse(1e-26)*b ;
+    K = A.pseudoInverse(1e-26)*b_ ;
     std::cout << K << std::endl;
   }
   else
   {
     vpMatrix A(n,3) ;
-    vpColVector b(n) ;
+    vpColVector b_(n) ;
     vpColVector x(3) ;
 
     vpColVector Kc(3) ;
@@ -874,10 +874,10 @@ vpMeEllipse::initTracking(const vpImage<unsigned char> &I, const unsigned int n,
       A[k][1] =  2* iP[k].get_j() ;
       A[k][2] = 1 ;
 
-      b[k] = - vpMath::sqr(iP[k].get_i()) - vpMath::sqr(iP[k].get_j()) ;
+      b_[k] = - vpMath::sqr(iP[k].get_i()) - vpMath::sqr(iP[k].get_j()) ;
     }
 
-    Kc = A.pseudoInverse(1e-26)*b ;
+    Kc = A.pseudoInverse(1e-26)*b_ ;
     K[0] = 1 ;
     K[1] = 0 ;
     K[2] = Kc[0] ;
@@ -891,16 +891,20 @@ vpMeEllipse::initTracking(const vpImage<unsigned char> &I, const unsigned int n,
   iP2 = iP[n-1];
 
   getParameters() ;
-  computeAngle(iP1, iP2) ;
-  display(I, vpColor::green) ;
+  std::cout << "vpMeEllipse::initTracking() ellipse avant: " << iPc << " " << a << " " << b << " " << vpMath::deg(e) << " alpha: " << alpha1 << " " << alpha2 << std::endl;
 
+  computeAngle(iP1, iP2) ;
+  std::cout << "vpMeEllipse::initTracking() ellipse apres: " << iPc << " " << a << " " << b << " " << vpMath::deg(e) << " alpha: " << alpha1 << " " << alpha2 << std::endl;
+
+  expecteddensity = (alpha2-alpha1) / vpMath::rad((double)me->getSampleStep());
+
+  display(I, vpColor::green) ;
   sample(I) ;
 
   //  2. On appelle ce qui n'est pas specifique
   {
     vpMeTracker::initTracking(I) ;
   }
-
 
   try{
     track(I) ;
@@ -913,6 +917,47 @@ vpMeEllipse::initTracking(const vpImage<unsigned char> &I, const unsigned int n,
   vpMeTracker::display(I) ;
   vpDisplay::flush(I) ;
 
+}
+
+void
+vpMeEllipse::initTracking(const vpImage<unsigned char> &I, const vpImagePoint &ic, double a_p, double b_p, double e_p,
+                          double low_alpha, double high_alpha)
+{
+  iPc = ic;
+  a = a_p;
+  b = b_p;
+  e = e_p;
+  alpha1 = low_alpha;
+  alpha2 = high_alpha;
+
+  if (alpha2 <alpha1)
+    alpha2 += 2 * M_PI;
+
+  ce = cos(e);
+  se = sin(e);
+
+//  vpDisplay::displayEllipse(I, iPc, a, b, e, 0, vpMath::rad(360), vpColor::red, 2); // TODO remove debug only
+  display(I, vpColor::green) ;
+//  vpDisplay::flush(I); // TODO remove debug only
+//  std::cout << "wait click" << std::endl;
+//  vpDisplay::getClick(I); // TODO remove debug only
+  sample(I) ;
+
+  //  2. On appelle ce qui n'est pas specifique
+  {
+    vpMeTracker::initTracking(I) ;
+  }
+
+  try{
+    track(I) ;
+  }
+  catch(...)
+  {
+    vpERROR_TRACE("Error caught") ;
+    throw ;
+  }
+  vpMeTracker::display(I) ;
+  vpDisplay::flush(I) ;
 }
 
 /*!
@@ -1060,7 +1105,7 @@ vpMeEllipse::computeMoments()
  */
 void
 vpMeEllipse::computeAngle(int ip1, int jp1, double &_alpha1,
-			  int ip2, int jp2, double &_alpha2)
+                          int ip2, int jp2, double &_alpha2)
 {
 
   getParameters() ;
@@ -1130,7 +1175,7 @@ vpMeEllipse::initTracking(const vpImage<unsigned char> &I, const unsigned int n,
   if (circle==false)
   {
     vpMatrix A(n,5) ;
-    vpColVector b(n) ;
+    vpColVector b_(n) ;
     vpColVector x(5) ;
 
     // Construction du systeme Ax=b
@@ -1145,16 +1190,16 @@ vpMeEllipse::initTracking(const vpImage<unsigned char> &I, const unsigned int n,
       A[k][3] = 2* j[k] ;
       A[k][4] = 1 ;
 
-      b[k] = - vpMath::sqr(i[k]) ;
+      b_[k] = - vpMath::sqr(i[k]) ;
     }
 
-    K = A.pseudoInverse(1e-26)*b ;
+    K = A.pseudoInverse(1e-26)*b_ ;
     std::cout << K << std::endl;
   }
   else
   {
     vpMatrix A(n,3) ;
-    vpColVector b(n) ;
+    vpColVector b_(n) ;
     vpColVector x(3) ;
 
     vpColVector Kc(3) ;
@@ -1164,10 +1209,10 @@ vpMeEllipse::initTracking(const vpImage<unsigned char> &I, const unsigned int n,
       A[k][1] =  2* j[k] ;
 
       A[k][2] = 1 ;
-      b[k] = - vpMath::sqr(i[k]) - vpMath::sqr(j[k]) ;
+      b_[k] = - vpMath::sqr(i[k]) - vpMath::sqr(j[k]) ;
     }
 
-    Kc = A.pseudoInverse(1e-26)*b ;
+    Kc = A.pseudoInverse(1e-26)*b_ ;
     K[0] = 1 ;
     K[1] = 0 ;
     K[2] = Kc[0] ;
@@ -1191,7 +1236,6 @@ vpMeEllipse::initTracking(const vpImage<unsigned char> &I, const unsigned int n,
   {
     vpMeTracker::initTracking(I) ;
   }
-
 
   try{
     track(I) ;
@@ -1221,16 +1265,18 @@ vpMeEllipse::initTracking(const vpImage<unsigned char> &I, const unsigned int n,
   
   \param E : Angle made by the major axis and the i axis of the image frame \f$ (i,j) \f$
   
-  \param smallalpha : Smallest \f$ alpha \f$ angle.
+  \param smallalpha : Smallest \f$ alpha \f$ angle in rad.
 
-  \param highalpha : Highest \f$ alpha \f$ angle.
+  \param highalpha : Highest \f$ alpha \f$ angle in rad.
   
   \param color : Color used to display th lines.
+
+  \param thickness : Thickness of the drawings.
 */
 void vpMeEllipse::display(const vpImage<unsigned char>& I, const vpImagePoint &center,
                           const double &A, const double &B, const double &E,
                           const double & smallalpha, const double &highalpha,
-                          vpColor color)
+                          const vpColor &color, unsigned int thickness)
 {
   double j1, i1;
   vpImagePoint iP11;
@@ -1240,7 +1286,7 @@ void vpMeEllipse::display(const vpImage<unsigned char>& I, const vpImagePoint &c
 
   double incr = vpMath::rad(2) ; // angle increment
 
-  vpDisplay::displayCross(I,center,20,vpColor::red) ;
+  vpDisplay::displayCross(I,center,20, vpColor::red, thickness) ;
 
   double k = smallalpha ;
   while (k+incr<highalpha)
@@ -1260,7 +1306,7 @@ void vpMeEllipse::display(const vpImage<unsigned char>& I, const vpImagePoint &c
     iP22.set_j ( center.get_j() + cos(E) *j2 - sin(E) *i2 );
     iP22.set_i ( center.get_i() -( sin(E) *j2 + cos(E) *i2) );
 
-    vpDisplay::displayLine(I, iP11, iP22, color, 3) ;
+    vpDisplay::displayLine(I, iP11, iP22, color, thickness) ;
 
     k += incr ;
   }
@@ -1280,8 +1326,8 @@ void vpMeEllipse::display(const vpImage<unsigned char>& I, const vpImagePoint &c
   iP22.set_j ( center.get_j() + cos(E) *j2 - sin(E) *i2 );
   iP22.set_i ( center.get_i() -( sin(E) *j2 + cos(E) *i2) );
 
-  vpDisplay::displayLine(I, center, iP11, vpColor::red, 3) ;
-  vpDisplay::displayLine(I, center, iP22, vpColor::blue, 3) ;
+  vpDisplay::displayLine(I, center, iP11, vpColor::red, thickness) ;
+  vpDisplay::displayLine(I, center, iP22, vpColor::blue, thickness) ;
 }
 
 /*!
@@ -1298,16 +1344,18 @@ void vpMeEllipse::display(const vpImage<unsigned char>& I, const vpImagePoint &c
 
   \param E : Angle made by the major axis and the i axis of the image frame \f$ (i,j) \f$
 
-  \param smallalpha : Smallest \f$ alpha \f$ angle.
+  \param smallalpha : Smallest \f$ alpha \f$ angle in rad.
 
-  \param highalpha : Highest \f$ alpha \f$ angle.
+  \param highalpha : Highest \f$ alpha \f$ angle in rad.
 
   \param color : Color used to display th lines.
+
+  \param thickness : Thickness of the drawings.
 */
 void vpMeEllipse::display(const vpImage<vpRGBa>& I, const vpImagePoint &center,
                           const double &A, const double &B, const double &E,
                           const double & smallalpha, const double &highalpha,
-                          vpColor color)
+                          const vpColor &color, unsigned int thickness)
 {
   double j1, i1;
   vpImagePoint iP11;
@@ -1317,7 +1365,7 @@ void vpMeEllipse::display(const vpImage<vpRGBa>& I, const vpImagePoint &center,
 
   double incr = vpMath::rad(2) ; // angle increment
 
-  vpDisplay::displayCross(I,center,20,vpColor::red) ;
+  vpDisplay::displayCross(I,center,20, vpColor::red, thickness) ;
 
   double k = smallalpha ;
   while (k+incr<highalpha)
@@ -1337,7 +1385,7 @@ void vpMeEllipse::display(const vpImage<vpRGBa>& I, const vpImagePoint &center,
     iP22.set_j ( center.get_j() + cos(E) *j2 - sin(E) *i2 );
     iP22.set_i ( center.get_i() -( sin(E) *j2 + cos(E) *i2) );
 
-    vpDisplay::displayLine(I, iP11, iP22, color, 3) ;
+    vpDisplay::displayLine(I, iP11, iP22, color, thickness) ;
 
     k += incr ;
   }
@@ -1357,6 +1405,6 @@ void vpMeEllipse::display(const vpImage<vpRGBa>& I, const vpImagePoint &center,
   iP22.set_j ( center.get_j() + cos(E) *j2 - sin(E) *i2 );
   iP22.set_i ( center.get_i() -( sin(E) *j2 + cos(E) *i2) );
 
-  vpDisplay::displayLine(I, center, iP11, vpColor::red, 3) ;
-  vpDisplay::displayLine(I, center, iP22, vpColor::blue, 3) ;
+  vpDisplay::displayLine(I, center, iP11, vpColor::red, thickness) ;
+  vpDisplay::displayLine(I, center, iP22, vpColor::blue, thickness) ;
 }

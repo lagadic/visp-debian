@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: grabOpenCV-2.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: grabOpenCV-2.cpp 5005 2014-11-24 08:25:51Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -52,7 +52,7 @@
 
 #include <visp/vpConfig.h>
 
-#if defined(VISP_HAVE_OPENCV)
+#if defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION >= 0x020100)
 
 #include <visp/vpDisplayOpenCV.h>
 #include <visp/vpImage.h>
@@ -65,41 +65,57 @@
 //              1 to dial with a second camera attached to the computer
 int main(int argc, char** argv)
 {
-  int device = 0;
-  if (argc > 1)
-    device = atoi(argv[1]);
+  try {
+    int device = 0;
+    if (argc > 1)
+      device = atoi(argv[1]);
 
-  std::cout << "Use device: " << device << std::endl;
-  cv::VideoCapture cap(device); // open the default camera
-  cap.set(CV_CAP_PROP_FRAME_WIDTH, 640);
-  cap.set(CV_CAP_PROP_FRAME_HEIGHT, 480);
-  if(!cap.isOpened())  // check if we succeeded
-    return -1;
-  cv::Mat frame;
-  cap >> frame; // get a new frame from camera
-
-  IplImage iplimage = frame;
-  std::cout << "Image size: " << iplimage.width << " " 
-            << iplimage.height << std::endl;
-
-  //vpImage<vpRGBa> I; // for color images
-  vpImage<unsigned char> I; // for gray images
-  vpImageConvert::convert(&iplimage, I);
-  vpDisplayOpenCV d(I);
-
-  for(;;) {
+    std::cout << "Use device: " << device << std::endl;
+    cv::VideoCapture cap(device); // open the default camera
+#if (VISP_HAVE_OPENCV_VERSION >= 0x030000)
+    cap.set(cv::CAP_PROP_FRAME_WIDTH, 640);
+    cap.set(cv::CAP_PROP_FRAME_HEIGHT, 480);
+#else
+    cap.set(CV_CAP_PROP_FRAME_WIDTH, 640);
+    cap.set(CV_CAP_PROP_FRAME_HEIGHT, 480);
+#endif
+    if(!cap.isOpened())  // check if we succeeded
+      return -1;
+    cv::Mat frame;
     cap >> frame; // get a new frame from camera
-    iplimage = frame;
 
-    // Convert the image in ViSP format and display it 
-    vpImageConvert::convert(&iplimage, I);
-    vpDisplay::display(I);
-    vpDisplay::flush(I);
-    if (vpDisplay::getClick(I, false)) // a click to exit
-      break;
+    std::cout << "Image size: "
+#if (VISP_HAVE_OPENCV_VERSION >= 0x030000)
+              << (int)cap.get(cv::CAP_PROP_FRAME_WIDTH) << " "
+              << (int)cap.get(cv::CAP_PROP_FRAME_HEIGHT) << std::endl;
+#else
+              << (int)cap.get(CV_CAP_PROP_FRAME_WIDTH) << " "
+              << (int)cap.get(CV_CAP_PROP_FRAME_HEIGHT) << std::endl;
+#endif
+
+    //vpImage<vpRGBa> I; // for color images
+    vpImage<unsigned char> I; // for gray images
+    vpImageConvert::convert(frame, I);
+
+    vpDisplayOpenCV d(I);
+
+    for(;;) {
+      cap >> frame; // get a new frame from camera
+
+      // Convert the image in ViSP format and display it
+      vpImageConvert::convert(frame, I);
+      vpDisplay::display(I);
+      vpDisplay::flush(I);
+      if (vpDisplay::getClick(I, false)) // a click to exit
+        break;
+    }
+    // the camera will be deinitialized automatically in VideoCapture destructor
+    return 0;
   }
-  // the camera will be deinitialized automatically in VideoCapture destructor
-  return 0;
+  catch(vpException e) {
+    std::cout << "Catch an exception: " << e << std::endl;
+    return 1;
+  }
 }
 
 #else

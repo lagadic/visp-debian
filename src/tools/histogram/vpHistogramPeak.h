@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpHistogramPeak.h 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpHistogramPeak.h 4649 2014-02-07 14:57:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -74,6 +74,9 @@ public :
   vpHistogramPeak(unsigned char level, unsigned value);
   vpHistogramPeak(const vpHistogramPeak & p);
 
+  /*! Destructor that does nothing. */
+  virtual ~vpHistogramPeak() {}
+
   vpHistogramPeak & operator=(const vpHistogramPeak &p);
   bool operator==(const vpHistogramPeak &p) const;
 
@@ -82,43 +85,43 @@ public :
     Set the peak gray \e level. To set the number of pixels having this
     gray level use setValue().
 
-    \param level : Location of the peak or gray \e level.
+    \param lvl : Location of the peak or gray \e level.
 
     \sa setValue(), set()
 
   */
-  inline void setLevel(unsigned char level)
+  inline void setLevel(unsigned char lvl)
     {
-      this->level = level;
+      this->level = lvl;
     };
   /*!
 
     Set the peak number of pixels having a same gray level. To set the
     gray level of this peak use setLevel().
 
-    \param value    : Number of pixels having the same location or gray level.
+    \param val    : Number of pixels having the same location or gray level.
 
     \sa setLevel(), set()
 
   */
-  inline void setValue(unsigned value) 
+  inline void setValue(unsigned val)
     {
-      this->value = value; 
+      this->value = val;
     };
   /*!
 
     Set the peak gray \e level and number of pixels at this gray level.
 
-    \param level : Location of the peak or gray level.
-    \param value : Number of pixels having the same location or gray level.
+    \param lvl : Location of the peak or gray level.
+    \param val : Number of pixels having the same location or gray level.
 
     \sa setLevel(), setValue()
 
   */
-  inline void set(unsigned char level, unsigned value)
+  inline void set(unsigned char lvl, unsigned val)
     {
-      this->level = level;
-      this->value = value; 
+      this->level = lvl;
+      this->value = val;
     };
       
   /*!
@@ -153,8 +156,7 @@ public :
   //---------------------------------
   // Printing
   //---------------------------------
-  friend VISP_EXPORT std::ostream &operator << (std::ostream &s,
-						const vpHistogramPeak &p);
+  friend VISP_EXPORT std::ostream &operator << (std::ostream &s,	const vpHistogramPeak &p);
 
 
 protected :

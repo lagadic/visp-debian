@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpDisplayGTK.cpp 4174 2013-03-22 10:28:41Z fspindle $
+ * $Id: vpDisplayGTK.cpp 5126 2015-01-05 22:07:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -80,10 +80,13 @@
 vpDisplayGTK::vpDisplayGTK(vpImage<unsigned char> &I,
                            int x,
                            int y,
-                           const char *title) : vpDisplay()
+                           const char *title)
+  : widget(NULL), background(NULL), gc(NULL),
+    blue(), red(), yellow(), green(), cyan(), orange(), white(), black(), gdkcolor(),
+    lightBlue(), darkBlue(), lightRed(), darkRed(),lightGreen(), darkGreen(),
+    purple(), lightGray(), gray(), darkGray(),
+    colormap(NULL), font(NULL), vectgtk(NULL), col(NULL), ncol(0), nrow(0)
 {
-  col = NULL;
-  widget = NULL ;
   init(I, x, y, title) ;
 }
 
@@ -99,10 +102,13 @@ vpDisplayGTK::vpDisplayGTK(vpImage<unsigned char> &I,
 vpDisplayGTK::vpDisplayGTK(vpImage<vpRGBa> &I,
                            int x,
                            int y,
-                           const char *title) : vpDisplay()
+                           const char *title)
+  : widget(NULL), background(NULL), gc(NULL),
+    blue(), red(), yellow(), green(), cyan(), orange(), white(), black(), gdkcolor(),
+    lightBlue(), darkBlue(), lightRed(), darkRed(),lightGreen(), darkGreen(),
+    purple(), lightGray(), gray(), darkGray(),
+    colormap(NULL), font(NULL), vectgtk(NULL), col(NULL), ncol(0), nrow(0)
 {
-  col = NULL;
-  widget = NULL ;
   init(I, x, y, title) ;
 }
 
@@ -130,16 +136,20 @@ int main()
 }
   \endcode
 */
-vpDisplayGTK::vpDisplayGTK(int x, int y, const char *title) : vpDisplay()
+vpDisplayGTK::vpDisplayGTK(int x, int y, const char *title)
+  : widget(NULL), background(NULL), gc(NULL),
+    blue(), red(), yellow(), green(), cyan(), orange(), white(), black(), gdkcolor(),
+    lightBlue(), darkBlue(), lightRed(), darkRed(),lightGreen(), darkGreen(),
+    purple(), lightGray(), gray(), darkGray(),
+    colormap(NULL), font(NULL), vectgtk(NULL), col(NULL), ncol(0), nrow(0)
 {
   windowXPosition = x ;
   windowYPosition = y ;
 
-  col = NULL;
-  widget = NULL ;
-
-  if (title != NULL)
-    strcpy(this->title, title) ;
+  if(title != NULL)
+    title_ = std::string(title);
+  else
+    title_ = std::string(" ");
 }
 
 /*!
@@ -161,10 +171,14 @@ int main()
 }
   \endcode
 */
-vpDisplayGTK::vpDisplayGTK() : vpDisplay()
+vpDisplayGTK::vpDisplayGTK()
+  : vpDisplay(), widget(NULL), background(NULL), gc(NULL),
+    blue(), red(), yellow(), green(), cyan(), orange(), white(), black(), gdkcolor(),
+    lightBlue(), darkBlue(), lightRed(), darkRed(),lightGreen(), darkGreen(),
+    purple(), lightGray(), gray(), darkGray(),
+    colormap(NULL), font(NULL), vectgtk(NULL), col(NULL), ncol(0), nrow(0)
+
 {
-  col = NULL;
-  widget = NULL ;
 }
 
 /*!
@@ -240,13 +254,13 @@ vpDisplayGTK::init(vpImage<vpRGBa> &I,
 /*!
   Initialize the display size, position and title.
 
-  \param width, height : Width and height of the window.
+  \param w, h : Width and height of the window.
   \param x, y : The window is set at position x,y (column index, row index).
   \param title : Window title.
 
 */
 void
-vpDisplayGTK::init(unsigned int width, unsigned int height,
+vpDisplayGTK::init(unsigned int w, unsigned int h,
                    int x, int y,
                    const char *title)
 {
@@ -255,8 +269,8 @@ vpDisplayGTK::init(unsigned int width, unsigned int height,
   char **argv ;
   gtk_init(argc,&argv);
 
-  this->width  = width;
-  this->height = height;
+  this->width  = w;
+  this->height = h;
 
   /* Create the window*/
   widget = gtk_window_new(GTK_WINDOW_TOPLEVEL);
@@ -361,15 +375,20 @@ vpDisplayGTK::init(unsigned int width, unsigned int height,
   gdk_colormap_alloc_color(colormap,&darkGray,FALSE,TRUE);
   col[vpColor::id_darkGray] = &darkGray ;
 
-  /* Chargement des polices */
-  Police1 = gdk_font_load("-*-times-medium-r-normal-*-16-*-*-*-*-*-*-*");
-  Police2 = gdk_font_load("-*-courier-bold-r-normal-*-*-140-*-*-*-*-*-*");
+  // Try to load a default font
+  font = gdk_font_load("-*-times-medium-r-normal-*-16-*-*-*-*-*-*-*");
+  if (font == NULL)
+    font = gdk_font_load("-*-courier-bold-r-normal-*-*-140-*-*-*-*-*-*");
+  if (font == NULL)
+    font = gdk_font_load("-*-courier 10 pitch-medium-r-normal-*-16-*-*-*-*-*-*-*");
 
-  if (title != NULL)
-    strcpy(this->title, title) ;
+  if(title != NULL)
+    title_ = std::string(title);
+  else
+    title_ = std::string(" ");
 
   displayHasBeenInitialized = true ;
-  setTitle(this->title) ;
+  gdk_window_set_title(widget->window, title_.c_str());
 }
 
 
@@ -380,7 +399,7 @@ vpDisplayGTK::init(unsigned int width, unsigned int height,
   Set the font used to display a text in overlay. The display is
   performed using displayCharString().
 
-  \param font : The expected font name. 
+  \param fontname : The expected font name.
 
   \note Under UNIX, to know all the available fonts, use the
   "xlsfonts" binary in a terminal. You can also use the "xfontsel" binary.
@@ -388,9 +407,9 @@ vpDisplayGTK::init(unsigned int width, unsigned int height,
   \sa displayCharString()
 */
 void
-vpDisplayGTK::setFont(const char * /* font */)
+vpDisplayGTK::setFont(const char *fontname)
 {
-  vpERROR_TRACE("Not yet implemented" ) ;
+  font = gdk_font_load((const gchar*)fontname);
 }
 
 /*!
@@ -402,8 +421,11 @@ vpDisplayGTK::setTitle(const char *title)
 {
   if (displayHasBeenInitialized)
   {
-    if (title != NULL)
-      gdk_window_set_title(widget->window,(char *)title);
+    if(title != NULL)
+      title_ = std::string(title);
+    else
+      title_ = std::string(" ");
+    gdk_window_set_title(widget->window, title_.c_str());
   }
   else
   {
@@ -486,24 +508,24 @@ void vpDisplayGTK::displayImage(const vpImage<unsigned char> &I)
   
   \param iP : Top left corner of the region of interest
   
-  \param width : Width of the region of interest
+  \param w : Width of the region of interest
   
-  \param height : Height of the region of interest
+  \param h : Height of the region of interest
 
   \sa init(), closeDisplay()
 */
-void vpDisplayGTK::displayImageROI ( const vpImage<unsigned char> &I,const vpImagePoint &iP, const unsigned int width, const unsigned int height )
+void vpDisplayGTK::displayImageROI ( const vpImage<unsigned char> &I,const vpImagePoint &iP, const unsigned int w, const unsigned int h )
 {
   if (displayHasBeenInitialized)
   {
     vpImage<unsigned char> Itemp;
-    vpImageTools::createSubImage(I,(unsigned int)iP.get_i(),(unsigned int)iP.get_j(),height,width,Itemp);
+    vpImageTools::createSubImage(I,(unsigned int)iP.get_i(),(unsigned int)iP.get_j(), h, w,Itemp);
     /* Copie de l'image dans le pixmap fond */
     gdk_draw_gray_image(background,
-                        gc, (gint)iP.get_u(), (gint)iP.get_v(), (gint)width, (gint)height,
+                        gc, (gint)iP.get_u(), (gint)iP.get_v(), (gint)w, (gint)h,
                         GDK_RGB_DITHER_NONE,
                         I.bitmap,
-                        (gint)width);
+                        (gint)w);
 
     /* Le pixmap background devient le fond de la zone de dessin */
     gdk_window_set_back_pixmap(widget->window, background, FALSE);
@@ -575,24 +597,24 @@ void vpDisplayGTK::displayImage(const vpImage<vpRGBa> &I)
   
   \param iP : Top left corner of the region of interest
   
-  \param width : Width of the region of interest
+  \param w : Width of the region of interest
   
-  \param height : Height of the region of interest
+  \param h : Height of the region of interest
 
   \sa init(), closeDisplay()
 */
-void vpDisplayGTK::displayImageROI ( const vpImage<vpRGBa> &I,const vpImagePoint &iP, const unsigned int width, const unsigned int height )
+void vpDisplayGTK::displayImageROI ( const vpImage<vpRGBa> &I,const vpImagePoint &iP, const unsigned int w, const unsigned int h )
 {
   if (displayHasBeenInitialized)
   {
     vpImage<vpRGBa> Itemp;
-    vpImageTools::createSubImage(I,(unsigned int)iP.get_i(),(unsigned int)iP.get_j(),height,width,Itemp);
+    vpImageTools::createSubImage(I,(unsigned int)iP.get_i(), (unsigned int)iP.get_j(), h, w, Itemp);
     /* Copie de l'image dans le pixmap fond */
     gdk_draw_rgb_32_image(background,
-                          gc, (gint)iP.get_u(), (gint)iP.get_v(), (gint)width, (gint)height,
+                          gc, (gint)iP.get_u(), (gint)iP.get_v(), (gint)w, (gint)h,
                           GDK_RGB_DITHER_NONE,
                           (unsigned char *)Itemp.bitmap,
-                          (gint)(4*width));
+                          (gint)(4*w));
 
     /* Permet de fermer la fen�tre si besoin (cas des s�quences d'images) */
     //while (g_main_iteration(FALSE));
@@ -700,10 +722,10 @@ void vpDisplayGTK::clearDisplay(const vpColor & /* color */)
   \param thickness : Thickness of the lines used to display the arrow.
 */
 void vpDisplayGTK::displayArrow ( const vpImagePoint &ip1, 
-				  const vpImagePoint &ip2,
-				  const vpColor &color,
-				  unsigned int w, unsigned int h,
-				  unsigned int thickness)
+                                  const vpImagePoint &ip2,
+                                  const vpColor &color,
+                                  unsigned int w, unsigned int h,
+                                  unsigned int thickness)
 {
   if (displayHasBeenInitialized)
   {
@@ -722,21 +744,24 @@ void vpDisplayGTK::displayArrow ( const vpImagePoint &ip1,
         a /= lg ;
         b /= lg ;
 
-	vpImagePoint ip3;
+        vpImagePoint ip3;
         ip3.set_i(ip2.get_i() - w*a);
         ip3.set_j(ip2.get_j() - w*b);
 
-	vpImagePoint ip4;
-	ip4.set_i( ip3.get_i() - b*h );
-	ip4.set_j( ip3.get_j() + a*h );
+        vpImagePoint ip4;
+        ip4.set_i( ip3.get_i() - b*h );
+        ip4.set_j( ip3.get_j() + a*h );
 
-	displayLine ( ip2, ip4, color, thickness ) ;
+        if (lg > 2*vpImagePoint::distance(ip2, ip4) )
+          displayLine ( ip2, ip4, color, thickness ) ;
         
-	ip4.set_i( ip3.get_i() + b*h );
-	ip4.set_j( ip3.get_j() - a*h );
+        ip4.set_i( ip3.get_i() + b*h );
+        ip4.set_j( ip3.get_j() - a*h );
 
-	displayLine ( ip2, ip4, color, thickness ) ;
-	displayLine ( ip1, ip2, color, thickness ) ;
+        if (lg > 2*vpImagePoint::distance(ip2, ip4) )
+          displayLine ( ip2, ip4, color, thickness ) ;
+
+        displayLine ( ip1, ip2, color, thickness ) ;
       }
     }
     catch (...)
@@ -780,12 +805,13 @@ void vpDisplayGTK::displayCharString ( const vpImagePoint &ip,
       gdk_colormap_alloc_color(colormap,&gdkcolor,FALSE,TRUE);
       gdk_gc_set_foreground(gc, &gdkcolor);     
     }
-
-    gdk_draw_string(background, Police2, gc,
-		    vpMath::round( ip.get_u() ), 
-		    vpMath::round( ip.get_v() ),
-		    (const gchar *)text);
-
+    if (font != NULL)
+      gdk_draw_string(background, font, gc,
+                      vpMath::round( ip.get_u() ),
+                      vpMath::round( ip.get_v() ),
+                      (const gchar *)text);
+    else
+      std::cout << "Cannot draw string: no font is selected" << std::endl;
   }
   else
   {
@@ -1017,7 +1043,7 @@ void vpDisplayGTK::displayPoint ( const vpImagePoint &ip,
   width and \e height the rectangle size.
 
   \param topLeft : Top-left corner of the rectangle.
-  \param width,height : Rectangle size.
+  \param w,h : Rectangle size.
   \param color : Rectangle color.
   \param fill : When set to true fill the rectangle.
 
@@ -1027,7 +1053,7 @@ void vpDisplayGTK::displayPoint ( const vpImagePoint &ip,
 */
 void
 vpDisplayGTK::displayRectangle ( const vpImagePoint &topLeft,
-				 unsigned int width, unsigned int height,
+         unsigned int w, unsigned int h,
 				 const vpColor &color, bool fill,
 				 unsigned int thickness )
 {
@@ -1052,12 +1078,12 @@ vpDisplayGTK::displayRectangle ( const vpImagePoint &topLeft,
       gdk_draw_rectangle(background, gc, FALSE,
 			 vpMath::round( topLeft.get_u() ),
 			 vpMath::round( topLeft.get_v() ),
-			 (gint)width-1, (gint)height-1);
+       (gint)w-1, (gint)h-1);
     else
       gdk_draw_rectangle(background, gc, TRUE,
 			 vpMath::round( topLeft.get_u() ),
 			 vpMath::round( topLeft.get_v() ),
-			 (gint)width, (gint)height);
+       (gint)w, (gint)h);
 
     if (thickness > 1)
       gdk_gc_set_line_attributes(gc, 0, GDK_LINE_SOLID, GDK_CAP_BUTT,
@@ -1107,19 +1133,19 @@ vpDisplayGTK::displayRectangle ( const vpImagePoint &topLeft,
 			       GDK_LINE_SOLID, GDK_CAP_BUTT,
 			       GDK_JOIN_BEVEL) ;
 
-    int width  = vpMath::round( bottomRight.get_u() - topLeft.get_u() );
-    int height = vpMath::round( bottomRight.get_v() - topLeft.get_v() );
+    int w  = vpMath::round( bottomRight.get_u() - topLeft.get_u() );
+    int h = vpMath::round( bottomRight.get_v() - topLeft.get_v() );
 
     if (fill == false)
       gdk_draw_rectangle(background, gc, FALSE,
 			 vpMath::round( topLeft.get_u() ),
 			 vpMath::round( topLeft.get_v() ),
-			 width-1,height-1);
+       w-1,h-1);
     else
       gdk_draw_rectangle(background, gc, TRUE,
 			 vpMath::round( topLeft.get_u() ),
 			 vpMath::round( topLeft.get_v() ),
-			 width, height);
+       w, h);
 
     if (thickness > 1)
       gdk_gc_set_line_attributes(gc, 0, GDK_LINE_SOLID, GDK_CAP_BUTT,
@@ -1505,11 +1531,11 @@ unsigned int vpDisplayGTK::getScreenDepth()
 
   \warning Not implemented
 */
-void vpDisplayGTK::getScreenSize(unsigned int &width, unsigned int &height)
+void vpDisplayGTK::getScreenSize(unsigned int &w, unsigned int &h)
 {
   vpTRACE("Not implemented") ;
-  width = 0;
-  height = 0;
+  w = 0;
+  h = 0;
 }
 
 /*!

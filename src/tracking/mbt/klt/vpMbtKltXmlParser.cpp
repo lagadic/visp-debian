@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpMbtKltXmlParser.cpp 4320 2013-07-17 15:37:27Z ayol $
+ * $Id: vpMbtKltXmlParser.cpp 5126 2015-01-05 22:07:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -32,7 +32,7 @@
  *
  *
  * Description:
- * Read MBT KLT Tracker information in an XML file
+ * Load XML parameters of the Model based tracker (using point features).
  *
  * Authors:
  * Aurelien Yol
@@ -55,10 +55,9 @@
   
 */
 vpMbtKltXmlParser::vpMbtKltXmlParser()
+  : maskBorder(0), maxFeatures(0), winSize(0), qualityValue(0.), minDist(0.),
+    harrisParam(0.), blockSize(0), pyramidLevels(0)
 {
-  hasNearClipping = false;
-  hasFarClipping = false;
-  fovClipping = false;
   init();
 }
 
@@ -75,9 +74,8 @@ vpMbtKltXmlParser::~vpMbtKltXmlParser()
 void 
 vpMbtKltXmlParser::init()
 {
-  setMainTag("conf");
+  vpMbXmlParser::init();
 
-  nodeMap["conf"] = conf;
   nodeMap["klt"] = klt;
   nodeMap["mask_border"] = mask_border;
   nodeMap["max_features"] = max_features;
@@ -87,19 +85,6 @@ vpMbtKltXmlParser::init()
   nodeMap["harris"] = harris;
   nodeMap["size_block"] = size_block;
   nodeMap["pyramid_lvl"] = pyramid_lvl;
-  nodeMap["face"] = face;
-  nodeMap["angle_appear"] = angle_appear;
-  nodeMap["angle_disappear"] = angle_disappear;
-  nodeMap["near_clipping"] = near_clipping;
-  nodeMap["far_clipping"] = far_clipping;
-  nodeMap["fov_clipping"] = fov_clipping;
-  nodeMap["camera"] = camera;
-  nodeMap["height"] = height;
-  nodeMap["width"] = width;
-  nodeMap["u0"] = u0;
-  nodeMap["v0"] = v0;
-  nodeMap["px"] = px;
-  nodeMap["py"] = py;
 }
 
 /*!
@@ -136,26 +121,26 @@ vpMbtKltXmlParser::writeMainClass(xmlNodePtr /*node*/)
 void
 vpMbtKltXmlParser::readMainClass(xmlDocPtr doc, xmlNodePtr node)
 {
-  bool klt_node = false;
   bool camera_node = false;
   bool face_node = false;
+  bool klt_node = false;
   
   for(xmlNodePtr dataNode = node->xmlChildrenNode; dataNode != NULL;  dataNode = dataNode->next)  {
     if(dataNode->type == XML_ELEMENT_NODE){
       std::map<std::string, int>::iterator iter_data= this->nodeMap.find((char*)dataNode->name);
       if(iter_data != nodeMap.end()){
         switch (iter_data->second){
-        case klt:{
-          this->read_klt(doc, dataNode);
-          klt_node = true;
-          }break;
         case camera:{
-          this->read_camera(doc, dataNode);
+          this->read_camera (doc, dataNode);
           camera_node = true;
           }break;
         case face:{
           this->read_face(doc, dataNode);
           face_node = true;
+          }break;
+        case klt:{
+          this->read_klt(doc, dataNode);
+          klt_node = true;
           }break;
         default:{
 //          vpTRACE("unknown tag in read_sample : %d, %s", iter_data->second, (iter_data->first).c_str());
@@ -165,95 +150,27 @@ vpMbtKltXmlParser::readMainClass(xmlDocPtr doc, xmlNodePtr node)
     }
   }
 
-  if(!klt_node)
-    std::cout << "WARNING: KLT Node not specified, default values used" << std::endl;
-  
-  if(!camera_node)
-    std::cout << "WARNING: CAMERA Node not specified, default values used" << std::endl;
-  
-  if(!face_node)
-    std::cout << "WARNING: FACE Node not specified, default values used" << std::endl;
-}
-
-/*!
-  Read face information.
-  
-  \throw vpException::fatalError if there was an unexpected number of data. 
-  
-  \param doc : Pointer to the document.
-  \param node : Pointer to the node of the camera information.
-*/
-void 
-vpMbtKltXmlParser::read_face(xmlDocPtr doc, xmlNodePtr node)
-{
-  bool angle_appear_node = false;
-  bool angle_disappear_node = false;
-  bool near_clipping_node = false;
-  bool far_clipping_node = false;
-  bool fov_clipping_node = false;
-  
-  for(xmlNodePtr dataNode = node->xmlChildrenNode; dataNode != NULL;  dataNode = dataNode->next)  {
-    if(dataNode->type == XML_ELEMENT_NODE){
-      std::map<std::string, int>::iterator iter_data= this->nodeMap.find((char*)dataNode->name);
-      if(iter_data != nodeMap.end()){
-        switch (iter_data->second){
-        case angle_appear:{
-          angleAppear = xmlReadDoubleChild(doc, dataNode);
-          angle_appear_node = true;
-          }break;
-        case angle_disappear:{
-          angleDisappear = xmlReadDoubleChild(doc, dataNode);
-          angle_disappear_node = true;
-          }break;
-        case near_clipping:{
-          nearClipping = xmlReadDoubleChild(doc, dataNode);
-          near_clipping_node = true;
-          hasNearClipping = true;
-          }break;
-        case far_clipping:{
-          farClipping = xmlReadDoubleChild(doc, dataNode);
-          far_clipping_node = true;
-          hasFarClipping = true;
-          }break;
-        case fov_clipping:{
-          fovClipping = (bool)xmlReadIntChild(doc, dataNode);
-          fov_clipping_node = true;
-          }break;
-        default:{
-//          vpTRACE("unknown tag in read_camera : %d, %s", iter_data->second, (iter_data->first).c_str());
-          }break;
-        }
-      }
-    }
+  if(!camera_node) {
+    std::cout << "camera : u0 : "<< this->cam.get_u0() << " (default)" <<std::endl;
+    std::cout << "camera : v0 : "<< this->cam.get_v0() << " (default)" <<std::endl;
+    std::cout << "camera : px : "<< this->cam.get_px() << " (default)" <<std::endl;
+    std::cout << "camera : py : "<< this->cam.get_py() << " (default)" <<std::endl;
   }
-  
-  if(!angle_appear_node)
-    std::cout << "WARNING: In FACE Node, ANGLE_APPEAR Node not specified, default value used : " << angleAppear << std::endl;
-  else
-    std::cout << "face : Angle Appear "<< angleAppear <<std::endl;
-  
-  if(!angle_disappear_node)
-    std::cout << "WARNING: In FACE Node, ANGLE_DESAPPEAR Node not specified, default value used : " << angleDisappear << std::endl;
-  else
-    std::cout << "face : Angle Disappear : "<< angleDisappear <<std::endl;
-  
-  if(!near_clipping_node)
-    std::cout << "WARNING: In FACE Node, NEAR_CLIPPING Node not specified, no near clipping used" << std::endl;
-  else
-    std::cout << "face : Near Clipping : "<< nearClipping <<std::endl;
-  
-  if(!far_clipping_node)
-    std::cout << "WARNING: In FACE Node, FAR_CLIPPING Node not specified, no far clipping used" << std::endl;
-  else
-    std::cout << "face : Far Clipping : "<< farClipping <<std::endl;
-  
-  if(!fov_clipping_node)
-    std::cout << "WARNING: In FACE Node, FOV_CLIPPING Node not specified, no fov clipping used" << std::endl;
-  else{
-    if(fovClipping)
-      std::cout << "face : Fov Clipping : True" <<std::endl;
-    else
-      std::cout << "face : Fov Clipping : False" <<std::endl;
+
+  if(!face_node) {
+    std::cout << "face : Angle Appear : "<< angleAppear <<" (default)" <<std::endl;
+    std::cout << "face : Angle Disappear : "<< angleDisappear <<" (default)" <<std::endl;
+  }
+
+  if(!klt_node) {
+    std::cout << "klt : Mask Border : "<< maskBorder <<" (default)" <<std::endl;
+    std::cout << "klt : Max Features : "<< maxFeatures <<" (default)" <<std::endl;
+    std::cout << "klt : Windows Size : "<< winSize <<" (default)" <<std::endl;
+    std::cout << "klt : Quality : "<< qualityValue <<" (default)" <<std::endl;
+    std::cout << "klt : Min Distance : "<< minDist <<" (default)" <<std::endl;
+    std::cout << "klt : Harris Parameter : "<< harrisParam <<" (default)" <<std::endl;
+    std::cout << "klt : Block Size : "<< blockSize <<" (default)" <<std::endl;
+    std::cout << "klt : Pyramid Levels : "<< pyramidLevels <<" (default)" <<std::endl;
   }
 }
 
@@ -268,7 +185,7 @@ vpMbtKltXmlParser::read_face(xmlDocPtr doc, xmlNodePtr node)
 void 
 vpMbtKltXmlParser::read_klt(xmlDocPtr doc, xmlNodePtr node)
 {
-	bool mask_border_node = false;
+  bool mask_border_node = false;
   bool max_features_node = false;
   bool window_size_node = false;
   bool quality_node = false;
@@ -323,138 +240,45 @@ vpMbtKltXmlParser::read_klt(xmlDocPtr doc, xmlNodePtr node)
   }
   
   if(!mask_border_node)
-    std::cout << "WARNING: In KLT Node, MASK_BORDER Node not specified, default value used : " << maskBorder << std::endl;
+    std::cout << "klt : Mask Border : "<< maskBorder <<" (default)" <<std::endl;
   else
     std::cout << "klt : Mask Border : "<< maskBorder <<std::endl;
   
   if(!max_features_node)
-    std::cout << "WARNING: In KLT Node, MAX_FEATURES Node not specified, default value used : " << maxFeatures << std::endl;
+    std::cout << "klt : Max Features : "<< maxFeatures <<" (default)" <<std::endl;
   else
     std::cout << "klt : Max Features : "<< maxFeatures <<std::endl;
   
   if(!window_size_node)
-    std::cout << "WARNING: In KLT Node, WINDOW_SIZE Node not specified, default value used : " << winSize << std::endl;
+    std::cout << "klt : Windows Size : "<< winSize <<" (default)" <<std::endl;
   else
     std::cout << "klt : Windows Size : "<< winSize <<std::endl;
   
   if(!quality_node)
-    std::cout << "WARNING: In KLT Node, QUALITY Node not specified, default value used : " << qualityValue << std::endl;
+    std::cout << "klt : Quality : "<< qualityValue <<" (default)" <<std::endl;
   else
     std::cout << "klt : Quality : "<< qualityValue <<std::endl;
   
   if(!min_distance_node)
-    std::cout << "WARNING: In KLT Node, MIN_DISTANCE Node not specified, default value used : " << minDist << std::endl;
+    std::cout << "klt : Min Distance : "<< minDist <<" (default)" <<std::endl;
   else
     std::cout << "klt : Min Distance : "<< minDist <<std::endl;
   
   if(!harris_node)
-    std::cout << "WARNING: In KLT Node, HARRIS Node not specified, default value used : " << harrisParam << std::endl;
+    std::cout << "klt : Harris Parameter : "<< harrisParam <<" (default)" <<std::endl;
   else
     std::cout << "klt : Harris Parameter : "<< harrisParam <<std::endl;
   
   if(!size_block_node)
-    std::cout << "WARNING: In KLT Node, SIZE_BLOCK Node not specified, default value used : " << blockSize << std::endl;
+    std::cout << "klt : Block Size : "<< blockSize <<" (default)" <<std::endl;
   else
     std::cout << "klt : Block Size : "<< blockSize <<std::endl;
   
   if(!pyramid_lvl_node)
-    std::cout << "WARNING: In KLT Node, PYRAMID_LVL Node not specified, default value used : " << pyramidLevels << std::endl;
+    std::cout << "klt : Pyramid Levels : "<< pyramidLevels <<" (default)" <<std::endl;
   else
     std::cout << "klt : Pyramid Levels : "<< pyramidLevels <<std::endl;
 }
-
-/*!
-  Read camera information.
-  
-  \throw vpException::fatalError if there was an unexpected number of data. 
-  
-  \param doc : Pointer to the document.
-  \param node : Pointer to the node of the camera information.
-*/
-void 
-vpMbtKltXmlParser::read_camera (xmlDocPtr doc, xmlNodePtr node)
-{
-  bool height_node = false;
-  bool width_node = false;
-  bool u0_node = false;
-  bool v0_node = false;
-  bool px_node = false;
-  bool py_node = false;
-  
-    // current data values.
-//  int d_height=0 ;
-//  int d_width= 0 ;
-  double d_u0 = this->cam.get_u0();
-  double d_v0 = this->cam.get_v0();
-  double d_px = this->cam.get_px();
-  double d_py = this->cam.get_py();
-  
-  for(xmlNodePtr dataNode = node->xmlChildrenNode; dataNode != NULL;  dataNode = dataNode->next)  {
-    if(dataNode->type == XML_ELEMENT_NODE){
-      std::map<std::string, int>::iterator iter_data= this->nodeMap.find((char*)dataNode->name);
-      if(iter_data != nodeMap.end()){
-        switch (iter_data->second){
-        case height:{
-          /* d_height = */ xmlReadIntChild(doc, dataNode);
-          height_node = true;
-          }break;
-        case width:{
-          /* d_width = */ xmlReadIntChild(doc, dataNode);
-          width_node = true;
-          }break;
-        case u0:{
-          d_u0 = xmlReadDoubleChild(doc, dataNode);
-          u0_node = true;
-          }break;
-        case v0:{
-          d_v0 = xmlReadDoubleChild(doc, dataNode);
-          v0_node = true;
-          }break;
-        case px:{
-          d_px = xmlReadDoubleChild(doc, dataNode);
-          px_node = true;
-          }break;
-        case py:{
-          d_py = xmlReadDoubleChild(doc, dataNode);
-          py_node = true;
-          }break;
-        default:{
-//          vpTRACE("unknown tag in read_camera : %d, %s", iter_data->second, (iter_data->first).c_str());
-          }break;
-        }
-      }
-    }
-  }
-  
-  this->cam.initPersProjWithoutDistortion(d_px, d_py, d_u0, d_v0) ;
-
-  if(!height_node)
-    std::cout << "WARNING: In CAMERA Node, HEIGHT Node not specified, default value used" << std::endl;
-  
-  if(!width_node)
-    std::cout << "WARNING: In CAMERA Node, WIDTH Node not specified, default value used" << std::endl;
-  
-  if(!u0_node)
-    std::cout << "WARNING: In CAMERA Node, u0 Node not specified, default value used : " << this->cam.get_u0() << std::endl;
-  else
-    std::cout << "camera : u0 "<< this->cam.get_u0() <<std::endl;
-  
-  if(!v0_node)
-    std::cout << "WARNING: In CAMERA Node, v0 Node not specified, default value used : " << this->cam.get_v0() << std::endl;
-  else
-    std::cout << "camera : v0 "<< this->cam.get_v0() <<std::endl;
-  
-  if(!px_node)
-    std::cout << "WARNING: In CAMERA Node, px Node not specified, default value used : " << this->cam.get_px() << std::endl;
-  else
-    std::cout << "camera : px "<< this->cam.get_px() <<std::endl;
-  
-  if(!py_node)
-    std::cout << "WARNING: In CAMERA Node, py Node not specified, default value used : " << this->cam.get_py() << std::endl;
-  else
-    std::cout << "camera : py "<< this->cam.get_py() <<std::endl;
-}
-
 
 #endif
 

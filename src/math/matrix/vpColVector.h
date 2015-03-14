@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpColVector.h 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpColVector.h 5185 2015-01-21 14:36:41Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -78,22 +78,27 @@ protected:
 
 public:
 
-  //! basic constructor
+  //! Basic constructor.
   vpColVector() : vpMatrix() {};
-  //! constructor of vector of size n
-  vpColVector(unsigned int nn) : vpMatrix(nn,1){};
-  //! copy constructor
+  //! Constructor of vector of size n. Each element is set to 0.
+  vpColVector(unsigned int n) : vpMatrix(n,1){};
+  //! Constructor of vector of size n. Each element is set to \e val.
+  vpColVector(unsigned int n, double val) : vpMatrix(n, 1, val){};
+  //! Copy constructor.
   vpColVector (const vpColVector &v);
-  //! constructor initialize a vpColVector from a vpRotationVector
+  //! Constructor that initialize a vpColVector from a vpRotationVector.
   vpColVector (const vpRotationVector &v);
+
+  void insert(unsigned int i, const vpColVector &v);
 
   /*! Set the size of the column vector.
     \param i : Column vector size.
     \param flagNullify : If true, set the data to zero.
    */
   void resize(const unsigned int i, const bool flagNullify = true)
-  {  vpMatrix::resize(i, 1, flagNullify); }
-
+  {
+    vpMatrix::resize(i, 1, flagNullify);
+  }
 
   //! Access  V[i] = x
   inline double &operator [](unsigned int n) {  return *(data + n);  }
@@ -101,27 +106,27 @@ public:
   inline const double &operator [](unsigned int n) const { return *(data+n);  }
   //! Copy operator.   Allow operation such as A = v
   vpColVector &operator=(const vpColVector &v);
-  //! Copy operator.   Allow operation such as A = v
-  vpColVector &operator<<(const vpColVector &v);
-  //! Assigment operator.   Allow operation such as A = *v
-  vpColVector &operator<<(double *);
-  //! copy from a matrix
+  // Copy from a matrix.
   vpColVector &operator=(const vpMatrix &m);
-  //! initialisation each element of the vector is x
+  //! Initialize each element of the vector to x
   vpColVector &operator=(double x);
+  // Copy operator.   Allow operation such as A << v
+  vpColVector &operator<<(const vpColVector &v);
+  // Assigment operator.   Allow operation such as A = *v
+  vpColVector &operator<<(double *);
 
-  //! operator addition of two vectors V = A+v
+  //! Addition of two vectors V = A+v
   vpColVector operator+(const vpColVector &v) const;
-  //! operator substraction of two vectors V = A-v
+  //! Substraction of two vectors V = A-v
   vpColVector operator-(const vpColVector &v) const;
-  //! operator dot product
+  //! Operator A = -A
+  vpColVector operator-() const;
+  //! Dot product
   double  operator*(const vpColVector &x) const;
-  //! operator dot product
+  //! Dot product
   vpMatrix  operator*(const vpRowVector &x) const;
-  //! operator multiplication by a scalar V =  A * x
+  //! Multiplication by a scalar V =  A * x
   vpColVector operator*(const double x) const;
-  //! operator A = -A
-  vpColVector operator-() ;
 
   vpColVector rows(unsigned int first_row, unsigned int last_row)
   { 
@@ -138,22 +143,22 @@ public:
   static vpColVector stack(const vpColVector &A, const vpColVector &B);
   static void stack(const vpColVector &A, const vpColVector &B, vpColVector &C);
 
-  //! transpose of Vector
+  //! Transpose of a vector
   vpRowVector t() const;
 
-  //! normalise the vector
+  //! Normalise the vector
   vpColVector &normalize() ;
-  //! normalise the vector
+  // normalise the vector
   //  vpColVector &normalize(vpColVector &x) const ;
 
-  //! compute the cross product of two vectors C = a x b
+  //! Compute the cross product of two vectors C = a x b
   static vpColVector crossProd(const vpColVector &a, const vpColVector &b)  ;
   
-  // compute the cross product of two vectors C = a x b
+  // Compute the cross product of two vectors C = a x b
   inline static vpColVector cross(const vpColVector &a, const vpColVector &b){
                                   return crossProd(a,b);}
   
-  // compute the skew matrix [v]x
+  // Compute the skew matrix [v]x
   static vpMatrix skew(const vpColVector &v);
   //! Dot Product
   
@@ -175,20 +180,20 @@ public:
 
   */
   inline void rad2deg() {
-    double rad2deg = 180.0/M_PI;
+    double r2d = 180.0/M_PI;
 
     for (unsigned int i=0; i < rowNum; i++)
-      (*this)[i] *= rad2deg;
+      (*this)[i] *= r2d;
   }
   /*!
     Convert a column vector containing angles in degrees into radians.
 
   */
   inline void deg2rad() {
-    double deg2rad = M_PI/180.0;
+    double d2r = M_PI/180.0;
 
     for (unsigned int i=0; i < rowNum; i++)
-      (*this)[i] *= deg2rad;
+      (*this)[i] *= d2r;
   }
 
   /*!

@@ -1,9 +1,9 @@
 #############################################################################
 #
-# $Id: AddExtraCompilationFlags.cmake 4308 2013-07-08 08:47:09Z fspindle $
+# $Id: AddExtraCompilationFlags.cmake 4608 2014-01-21 16:37:58Z fspindle $
 #
 # This file is part of the ViSP software.
-# Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+# Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
 # 
 # This software is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -144,6 +144,12 @@ MACRO(ADD_EXTRA_COMPILATION_FLAGS)
   check_c_compiler_flag(-fvisibility=hidden HAS_VISIBILITY)
   if (HAS_VISIBILITY)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden")
+  endif()
+
+  if(UNIX)
+    if(CMAKE_COMPILER_IS_GNUCXX OR CV_ICC)
+      set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+    endif()
   endif()
 
   # Remove duplicates compilation flags

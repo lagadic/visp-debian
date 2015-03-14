@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: testMatrixException.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: testMatrixException.cpp 4658 2014-02-09 09:50:14Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -58,6 +58,9 @@
 // List of allowed command line options
 #define GETOPTARGS	"h"
 
+void usage(const char *name, const char *badparam);
+bool getOptions(int argc, const char **argv);
+
 /*!
 
   Print the program options.
@@ -88,15 +91,15 @@ OPTIONS:                                               Default\n\
 */
 bool getOptions(int argc, const char **argv)
 {
-  const char *optarg;
+  const char *optarg_;
   int	c;
-  while ((c = vpParseArgv::parse(argc, argv, GETOPTARGS, &optarg)) > 1) {
+  while ((c = vpParseArgv::parse(argc, argv, GETOPTARGS, &optarg_)) > 1) {
 
     switch (c) {
     case 'h': usage(argv[0], NULL); return false; break;
 
     default:
-      usage(argv[0], optarg);
+      usage(argv[0], optarg_);
       return false; break;
     }
   }
@@ -105,7 +108,7 @@ bool getOptions(int argc, const char **argv)
     // standalone param or error
     usage(argv[0], NULL);
     std::cerr << "ERROR: " << std::endl;
-    std::cerr << "  Bad argument " << optarg << std::endl << std::endl;
+    std::cerr << "  Bad argument " << optarg_ << std::endl << std::endl;
     return false;
   }
 
@@ -116,39 +119,42 @@ bool getOptions(int argc, const char **argv)
 int
 main(int argc, const char ** argv)
 {
-  // Read the command line options
-  if (getOptions(argc, argv) == false) {
-    exit (-1);
+  try {
+    // Read the command line options
+    if (getOptions(argc, argv) == false) {
+      exit (-1);
+    }
+
+    vpMatrix M ;
+    vpMatrix M1(2,3) ;
+    vpMatrix M2(3,3) ;
+    vpMatrix M3(2,2) ;
+
+    vpTRACE("test matrix size in multiply") ;
+
+    try
+    {
+      M = M1*M3 ;
+    }
+    catch (vpMatrixException me)
+    {
+      std::cout << me << std::endl ;
+    }
+
+
+    vpTRACE("test matrix size in addition") ;
+
+    try
+    {
+      M = M1+M3 ;
+    }
+    catch (vpMatrixException me)
+    {
+      std::cout << me << std::endl ;
+    }
   }
-
-  vpMatrix M ;
-  vpMatrix M1(2,3) ;
-  vpMatrix M2(3,3) ;
-  vpMatrix M3(2,2) ;
-
-  vpTRACE("test matrix size in multiply") ;
-
-  try
-  {
-    M = M1*M3 ;
+  catch(vpException e) {
+    std::cout << "Catch an exception: " << e << std::endl;
+    return 1;
   }
-  catch (vpMatrixException me)
-  {
-    vpCTRACE ;
-    std::cout << me << std::endl ;
-  }
-
-
-  vpTRACE("test matrix size in addition") ;
-
-  try
-  {
-    M = M1+M3 ;
-  }
-  catch (vpMatrixException me)
-  {
-    vpCTRACE ;
-    std::cout << me << std::endl ;
-  }
-
 }

@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpCircle.h 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpCircle.h 4702 2014-03-27 15:33:52Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -63,25 +63,17 @@ class VISP_EXPORT vpCircle : public vpForwardProjection
 public:
   void init() ;
   vpCircle() ;
-  virtual ~vpCircle() ;
-
-public:
-  typedef enum
-    {
-      line1,
-      line2
-    } vpLineCircleType;
-
   vpCircle(const vpColVector& oP) ;
-  vpCircle(const double A, const double B1,
+  vpCircle(const double A, const double B,
 	   const double C,
 	   const double X0, const double Y0,
 	   const double Z0,
 	   const double R) ;
+  virtual ~vpCircle() ;
 
 
   void setWorldCoordinates(const vpColVector& oP) ;
-  void setWorldCoordinates(const double A, const double B1,
+  void setWorldCoordinates(const double A, const double B,
 			   const double C,
 			   const double X0, const double Y0,
 			   const double Z0,

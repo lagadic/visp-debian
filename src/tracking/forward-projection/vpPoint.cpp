@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpPoint.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpPoint.cpp 4620 2014-01-27 21:28:32Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -286,7 +286,7 @@ vpPoint::display(const vpImage<vpRGBa> &I,
   vpFeatureDisplay::displayPoint(_p[0],_p[1], cam, I, color, thickness) ;
 }
 
-std::ostream& operator<<(std::ostream& os, vpPoint& /* vpp */)
+VISP_EXPORT std::ostream& operator<<(std::ostream& os, vpPoint& /* vpp */)
 {
   return( os<<"vpPoint" );
 }

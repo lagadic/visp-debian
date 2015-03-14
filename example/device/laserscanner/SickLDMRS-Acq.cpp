@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: SickLDMRS-Acq.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: SickLDMRS-Acq.cpp 4604 2014-01-21 14:15:23Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -55,28 +55,34 @@
 #include <visp/vpParseArgv.h>
 
 
-#if ( defined(UNIX) && ( ! defined(WIN32) ) )
+#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__)))
 
 int main()
 {
-  vpSickLDMRS laser;
-  std::string ip = "131.254.12.119";
-  
-  laser.setIpAddress(ip);
-  laser.setup();
-  unsigned long int iter = 0;
+  try {
+    vpSickLDMRS laser;
+    std::string ip = "131.254.12.119";
 
-  for ( ; ; ) {
-    double t1 = vpTime::measureTimeMs();
-    vpLaserScan laserscan[4];
-    if (laser.measure(laserscan) == false)
-      continue;
-    
-    iter ++;
-    std::cout << "iter: " << iter << " time: " 
-              << vpTime::measureTimeMs() - t1 << " ms" << std::endl;
+    laser.setIpAddress(ip);
+    laser.setup();
+    unsigned long int iter = 0;
+
+    for ( ; ; ) {
+      double t1 = vpTime::measureTimeMs();
+      vpLaserScan laserscan[4];
+      if (laser.measure(laserscan) == false)
+        continue;
+
+      iter ++;
+      std::cout << "iter: " << iter << " time: "
+                << vpTime::measureTimeMs() - t1 << " ms" << std::endl;
+    }
+    return 0;
   }
-  return 0;
+  catch(vpException e) {
+    std::cout << "Catch an exception: " << e << std::endl;
+    return 1;
+  }
 }
 
 #else // #ifdef UNIX

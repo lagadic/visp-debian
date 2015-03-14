@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpPtu46.h 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpPtu46.h 4632 2014-02-03 17:06:40Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -93,20 +93,21 @@ public: /* Constants */
 public: /* Methodes publiques */
 
   vpPtu46 (void);
+  /*! Destructor that does nothing. */
+  virtual ~vpPtu46() {};
+
   void init (void);
 
-  void  computeMGD (const vpColVector &q, vpHomogeneousMatrix & fMc);
+  void  computeMGD (const vpColVector &q, vpHomogeneousMatrix & fMc) const;
+  vpHomogeneousMatrix computeMGD (const vpColVector & q) const;
+  void  computeMGD (const vpColVector & q,  vpPoseVector & r) const;
 
-  vpHomogeneousMatrix computeMGD (const vpColVector & q);
-  void  computeMGD (const vpColVector & q,  vpPoseVector & r);
+  void get_cMe(vpHomogeneousMatrix &_cMe) const;
+  void get_cVe(vpVelocityTwistMatrix &_cVe) const;
+  void get_eJe(const vpColVector &q, vpMatrix &eJe) const;
+  void get_fJe(const vpColVector &q, vpMatrix &fJe) const;
 
-  void get_cMe(vpHomogeneousMatrix &_cMe) ;
-  void get_cVe(vpVelocityTwistMatrix &_cVe) ;
-  void get_eJe(const vpColVector &q, vpMatrix &eJe);
-  void get_fJe(const vpColVector &q, vpMatrix &fJe);
-
-  friend VISP_EXPORT std::ostream & operator << (std::ostream & os,
-				     const vpPtu46 & constant);
+  friend VISP_EXPORT std::ostream & operator << (std::ostream & os, const vpPtu46 & constant);
 };
 
 

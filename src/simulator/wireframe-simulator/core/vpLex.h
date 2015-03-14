@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpLex.h 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpLex.h 5297 2015-02-10 11:19:24Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -53,9 +53,9 @@
 int lex(void);
 void unlex (void);
 void lexerr (const char* path, ...);
-int pusherr (char *str);
-int popuperr (char *str);
-int poperr (void);
+void pusherr (const char *str);
+void popuperr (const char *str);
+void poperr (void);
 int lexecho (FILE *f, int token);
 
 #endif

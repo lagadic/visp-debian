@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpOpenCVGrabber.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpOpenCVGrabber.cpp 5023 2014-12-03 16:07:48Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -46,7 +46,7 @@
 
 #include <visp/vpOpenCVGrabber.h>
 
-#if defined(VISP_HAVE_OPENCV)
+#if ( defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION < 0x020408))
 
 #include <visp/vpImageConvert.h>
 #include <visp/vpFrameGrabberException.h>
@@ -58,17 +58,13 @@
 	Basic Constructor.
 */
 vpOpenCVGrabber::vpOpenCVGrabber()
+  : capture(NULL), DeviceType(0), flip(false)
 {
 	// public memebers
 	init = false;
 
 	// protected members
 	width = height = 0;
-
-	// private members
-	capture = NULL;
-	DeviceType = 0;
-	flip = false;
 }
 
 
@@ -245,14 +241,14 @@ void vpOpenCVGrabber::setFramerate(const double framerate)
   
   \warning This function must be called after open() method.
 
-	\param width : The requested value of the captured image width.
+  \param w : The requested value of the captured image width.
 
 	\exception vpFrameGrabberException::initializationError If no
 	camera was found.
 */
-void vpOpenCVGrabber::setWidth(const unsigned int width)
+void vpOpenCVGrabber::setWidth(const unsigned int w)
 {
-	if ( cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, width))
+  if ( cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_WIDTH, w))
 	{
 	  	close();
 		vpERROR_TRACE("Impossible to set the size of the grabber");
@@ -260,7 +256,7 @@ void vpOpenCVGrabber::setWidth(const unsigned int width)
 										"Impossible to set the size of the grabber") );
 	}
 
-	this->width = width;
+  this->width = w;
 }
 
 /*!
@@ -268,14 +264,14 @@ void vpOpenCVGrabber::setWidth(const unsigned int width)
 
   \warning This function must be called after open() method.
 
-	\param height : The requested value of the captured image height.
+  \param h : The requested value of the captured image height.
 
 	\exception vpFrameGrabberException::initializationError If no
 	camera was found.
 */
-void vpOpenCVGrabber::setHeight(const unsigned int height)
+void vpOpenCVGrabber::setHeight(const unsigned int h)
 {
-	if ( cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, height))
+  if ( cvSetCaptureProperty(capture, CV_CAP_PROP_FRAME_HEIGHT, h))
 	{
 	  	close();
 		vpERROR_TRACE("Impossible to set the size of the grabber");
@@ -283,7 +279,7 @@ void vpOpenCVGrabber::setHeight(const unsigned int height)
 										"Impossible to set the size of the grabber") );
 	}
 
-	this->height = height;
+  this->height = h;
 }
 
 /*!

@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpMeSite.cpp 4062 2013-01-09 10:30:06Z fspindle $
+ * $Id: vpMeSite.cpp 4649 2014-02-07 14:57:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -100,15 +100,21 @@ vpMeSite::init()
 }
 
 vpMeSite::vpMeSite()
+  : i(0), j(0), i_1(0), j_1(0), ifloat(0), jfloat(0), v(0), mask_sign(1), alpha(0.),
+    convlt(0.), normGradient(0), weight(1), selectDisplay(NONE), state(NO_SUPPRESSION)
+#ifdef VISP_BUILD_DEPRECATED_FUNCTIONS
+    , suppress(0)
+#endif
 {
-  init() ;
 }
 
 vpMeSite::vpMeSite(double ip, double jp)
+  : i(0), j(0), i_1(0), j_1(0), ifloat(0), jfloat(0), v(0), mask_sign(1), alpha(0.),
+    convlt(0.), normGradient(0), weight(1), selectDisplay(NONE), state(NO_SUPPRESSION)
+#ifdef VISP_BUILD_DEPRECATED_FUNCTIONS
+    , suppress(0)
+#endif
 {
-  init() ;
-
-  selectDisplay = NONE ;
   i = vpMath::round(ip) ;
   j = vpMath::round(jp) ;
   ifloat = ip ;
@@ -119,6 +125,11 @@ vpMeSite::vpMeSite(double ip, double jp)
   Copy constructor.
 */
 vpMeSite::vpMeSite (const vpMeSite &mesite)
+  : i(0), j(0), i_1(0), j_1(0), ifloat(0), jfloat(0), v(0), mask_sign(1), alpha(0.),
+    convlt(0.), normGradient(0), weight(1), selectDisplay(NONE), state(NO_SUPPRESSION)
+#ifdef VISP_BUILD_DEPRECATED_FUNCTIONS
+    , suppress(0)
+#endif
 {
   *this = mesite;
 }
@@ -497,7 +508,7 @@ vpMeSite::track(const vpImage<unsigned char>& I,
   int  max_rank =-1 ;
   //   int max_rank1=-1 ;
   //   int max_rank2 = -1;
-  double  convolution = 0 ;
+  double  convolution_ = 0 ;
   double  max_convolution = 0 ;
   double max = 0 ;
   double contraste = 0;
@@ -530,21 +541,21 @@ vpMeSite::track(const vpImage<unsigned char>& I,
   for(unsigned int n = 0 ; n < 2 * range + 1 ; n++)
   {
     //   convolution results
-    convolution = list_query_pixels[n].convolution(I, me) ;
+    convolution_ = list_query_pixels[n].convolution(I, me) ;
 
     // luminance ratio of reference pixel to potential correspondent pixel
     // the luminance must be similar, hence the ratio value should
     // lay between, for instance, 0.5 and 1.5 (parameter tolerance)
     if( test_contraste )
     {
-      likelihood[n] = fabs(convolution + convlt );
+      likelihood[n] = fabs(convolution_ + convlt );
       if (likelihood[n]> threshold)
       {
-        contraste = convolution / convlt;
+        contraste = convolution_ / convlt;
         if((contraste > contraste_min) && (contraste < contraste_max) && fabs(1-contraste) < diff)
         {
           diff = fabs(1-contraste);
-          max_convolution= convolution;
+          max_convolution= convolution_;
           max = likelihood[n] ;
           max_rank = (int)n ;
           // 	    max_rank2 = max_rank1;
@@ -555,10 +566,10 @@ vpMeSite::track(const vpImage<unsigned char>& I,
 
     else
     {
-      likelihood[n] = fabs(2*convolution) ;
+      likelihood[n] = fabs(2*convolution_) ;
       if (likelihood[n] > max  && likelihood[n] > threshold)
       {
-        max_convolution= convolution;
+        max_convolution= convolution_;
         max = likelihood[n] ;
         max_rank = (int)n ;
         //           max_rank2 = max_rank1;
@@ -617,18 +628,18 @@ int vpMeSite::operator!=(const vpMeSite &m)
 
 }
 
-std::ostream& operator<<(std::ostream& os, vpMeSite& vpMeS)
+VISP_EXPORT std::ostream& operator<<(std::ostream& os, vpMeSite& vpMeS)
 {
 #ifdef VISP_BUILD_DEPRECATED_FUNCTIONS
   return (os << "Alpha: " << vpMeS.alpha
           << "  Convolution: " << vpMeS.convlt
           << "  Flag: " << vpMeS.suppress
           << "  Weight: " << vpMeS.weight );
-#endif
-  
+#else
   return (os << "Alpha: " << vpMeS.alpha
           << "  Convolution: " << vpMeS.convlt
           << "  Weight: " << vpMeS.weight );
+#endif
 }
 
 void vpMeSite::display(const vpImage<unsigned char>& I)
@@ -675,6 +686,7 @@ void vpMeSite::display(const vpImage<unsigned char>& I, const double &i, const d
 
     case TOO_NEAR:
       vpDisplay::displayCross(I,vpImagePoint(i,j),3,vpColor::cyan,1);
+      break;
 
     default:
       vpDisplay::displayCross(I,vpImagePoint(i,j),3,vpColor::yellow,1);
@@ -718,6 +730,7 @@ void vpMeSite::display(const vpImage<vpRGBa>& I, const double &i, const double &
 
     case TOO_NEAR:
       vpDisplay::displayCross(I,vpImagePoint(i,j),3,vpColor::cyan,1);
+      break;
 
     default:
       vpDisplay::displayCross(I,vpImagePoint(i,j),3,vpColor::yellow,1);

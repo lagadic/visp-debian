@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpDisplayGTK.h 4323 2013-07-18 09:24:01Z fspindle $
+ * $Id: vpDisplayGTK.h 4604 2014-01-21 14:15:23Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -44,10 +44,10 @@
 #define vpDisplayGTK_h
 
 #include <visp/vpConfig.h>
-#include <visp/vpDisplay.h>
 #if ( defined(VISP_HAVE_GTK) )
 
 #include <visp/vpImage.h>
+#include <visp/vpDisplay.h>
 
 #include <gtk/gtk.h>
 #include <gdk/gdkrgb.h>
@@ -83,10 +83,10 @@ int main()
   vpImage<unsigned char> I; // Grey level image
 
   // Read an image in PGM P5 format
-#ifdef UNIX
-  vpImageIo::read(I, "/local/soft/ViSP/ViSP-images/Klimt/Klimt.pgm");
-#elif WIN32
+#ifdef _WIN32
   vpImageIo::read(I, "C:/temp/ViSP-images/Klimt/Klimt.pgm");
+#else
+  vpImageIo::read(I, "/local/soft/ViSP/ViSP-images/Klimt/Klimt.pgm");
 #endif
 
   vpDisplayGTK d; 
@@ -154,7 +154,7 @@ private:
 	   purple, lightGray, gray, darkGray;
   GdkColormap  *colormap;
 
-  GdkFont *Police1,*Police2;
+  GdkFont *font;
   guchar  *vectgtk;
   GdkColor **col ;
   int ncol, nrow ;
@@ -208,7 +208,7 @@ public:
 
 protected:
 
-  void setFont( const char *font );
+  void setFont( const char *fontname );
   void setTitle(const char *title) ;
   void setWindowPosition(int winx, int winy);
 

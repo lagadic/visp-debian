@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: manGrabV4l2.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: manGrabV4l2.cpp 4574 2014-01-09 08:48:51Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -57,19 +57,24 @@
 
 int main()
 {
+  try {
+    vpImage<unsigned char> I; // Grey level image
 
-  vpImage<unsigned char> I; // Grey level image
-  
 #ifdef VISP_HAVE_V4L2
-  vpV4l2Grabber g;
-  g.setInput(2);    // Input 2 on the board
-  g.setWidth(768);  // Acquired images are 768 width
-  g.setHeight(576); // Acquired images are 576 height
-  g.setNBuffers(3); // 3 ring buffers to ensure real-time acquisition
-  g.open(I);        // Open the grabber
-  for ( ; ; )
-    g.acquire(I);     // Acquire a 768x576 grey image
+    vpV4l2Grabber g;
+    g.setInput(2);    // Input 2 on the board
+    g.setWidth(768);  // Acquired images are 768 width
+    g.setHeight(576); // Acquired images are 576 height
+    g.setNBuffers(3); // 3 ring buffers to ensure real-time acquisition
+    g.open(I);        // Open the grabber
+    for ( ; ; )
+      g.acquire(I);     // Acquire a 768x576 grey image
 #endif
 
-  return 0;
+    return 0;
+  }
+  catch(vpException e) {
+    std::cout << "Catch an exception: " << e << std::endl;
+    return 1;
+  }
 }

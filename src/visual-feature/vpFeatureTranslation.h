@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpFeatureTranslation.h 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpFeatureTranslation.h 5237 2015-01-30 13:52:04Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -306,7 +306,7 @@ public:
   // cdMc is the displacement that the camera has to realize
   vpFeatureTranslation(vpHomogeneousMatrix &f2Mf1, vpFeatureTranslationRepresentationType r) ;
   //! Destructor. Does nothing.
-  virtual ~vpFeatureTranslation() { if (flags != NULL) delete [] flags; }
+  virtual ~vpFeatureTranslation() {}
 
   // build from an homogeneous matrix
   // cdMc is the displacement that the camera has to realize

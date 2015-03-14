@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpFernClassifier.h 4201 2013-04-08 08:20:47Z fspindle $
+ * $Id: vpFernClassifier.h 5203 2015-01-24 09:33:54Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -47,7 +47,7 @@
 
 #include <string>
 
-#if (VISP_HAVE_OPENCV_VERSION >= 0x020000) // Require opencv >= 2.0.0
+#if (VISP_HAVE_OPENCV_VERSION >= 0x020000) && (VISP_HAVE_OPENCV_VERSION < 0x030000) // Require opencv >= 2.0.0 and < 3.0.0
 #if (VISP_HAVE_OPENCV_VERSION >= 0x020101) // Require opencv >= 2.1.1
 #  include <opencv2/imgproc/imgproc.hpp>
 #  include <opencv2/features2d/features2d.hpp>
@@ -65,7 +65,8 @@
   \brief Class that implements the Fern classifier and the YAPE detector thanks
   to the OpenCV library.
   
-  
+  \deprecated This class is deprecated with OpenCV 3.0.0 or more recent.
+
   This class provides a way to detect and match point using the YAPE and 
   a Fern Classifiers, thanks to the OpenCV library (version >= 2.0)
 
@@ -73,13 +74,8 @@
   image. The points of interests belonging to the model and the points detected
   in the current image are given in pixels thanks to the vpImagePoint class.
   
-  For more details about the Ferns Classifier and the point detector, see
-   - Mustafa Özuysal, Michael Calonder, Vincent Lepetit, Pascal Fua, "Fast 
-      KeyPoint Recognition Using Random Ferns", IEEE Transactions on Pattern 
-      Analysis and Machine Intelligence, 15 Jan. 2009.
-
-   - Vincent Lepetit, Pascal Fua, “Towards Recognizing Feature Points Using 
-      Classification Trees”, Technical Report IC/2004/74, EPFL, 2004.
+  For more details about the Ferns Classifier and the point detector,
+  see \cite Ozuysal10 and \cite Lepetit04c.
       
   To use this class, you first have to detect points in the model and train the 
   associated Fern classifier. Then, for each new grabbed image, You can detect
@@ -191,7 +187,6 @@ protected:
   //! The patch generator (OpenCV format).
   cv::PatchGenerator gen;
   
-  
   //! Flag to indicate whether the classifier has been trained or not.
   bool hasLearn;
   
@@ -227,7 +222,11 @@ protected:
   unsigned int nbMinPoint;
   
   //! The current image in the OpenCV format.
-  IplImage* curIplImg; 
+#if (VISP_HAVE_OPENCV_VERSION >= 0x020408)
+  cv::Mat curImg;
+#else
+  IplImage* curImg;
+#endif
   
   //! keypoints detected in the reference image.
   std::vector<cv::KeyPoint> objKeypoints;
@@ -248,29 +247,29 @@ public:
   vpFernClassifier(const std::string& _dataFile, const std::string& _objectName);
   virtual ~vpFernClassifier();
 
-    /* build reference */
+  /* build reference */
   virtual unsigned int buildReference(const vpImage<unsigned char> &I);
-  virtual unsigned int buildReference(const vpImage<unsigned char> &I, 
-                const vpImagePoint &iP,
-	        const unsigned int height, const unsigned int width);
-  virtual unsigned int buildReference(const vpImage<unsigned char> &I, 
-	        const vpRect& rectangle);
-    
-    /* matching */
-  virtual unsigned int matchPoint(const vpImage<unsigned char> &I);
-  virtual unsigned int matchPoint(const vpImage<unsigned char> &I, 
-            const vpImagePoint &iP,
-	    const unsigned int height, const unsigned int width);
-  virtual unsigned int matchPoint(const vpImage<unsigned char> &I, 
-	    const vpRect& rectangle);
+  virtual unsigned int buildReference(const vpImage<unsigned char> &I,
+                                      const vpImagePoint &iP,
+                                      const unsigned int height, const unsigned int width);
+  virtual unsigned int buildReference(const vpImage<unsigned char> &I,
+                                      const vpRect& rectangle);
 
-    /* display */
-  virtual void display(const vpImage<unsigned char> &Iref, 
+  /* matching */
+  virtual unsigned int matchPoint(const vpImage<unsigned char> &I);
+  virtual unsigned int matchPoint(const vpImage<unsigned char> &I,
+                                  const vpImagePoint &iP,
+                                  const unsigned int height, const unsigned int width);
+  virtual unsigned int matchPoint(const vpImage<unsigned char> &I,
+                                  const vpRect& rectangle);
+
+  /* display */
+  virtual void display(const vpImage<unsigned char> &Iref,
                        const vpImage<unsigned char> &Icurrent, unsigned int size=3);
   virtual void display(const vpImage<unsigned char> &Icurrent, unsigned int size=3,
                        const vpColor &color=vpColor::green);
   
-    /* io methods */
+  /* io methods */
   void load(const std::string& _dataFile, const std::string& /*_objectName*/);
   void record(const std::string& _objectName, const std::string& _dataFile);
   
@@ -329,7 +328,7 @@ public:
   cv::Rect getModelROI() const { return modelROI;}
 
 protected:
-  void setImage(const vpImage<unsigned char>& _I);
+  void setImage(const vpImage<unsigned char>& I);
   void train();
   virtual void init();
 };

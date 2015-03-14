@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpRobotAfma4.h 4317 2013-07-17 09:40:17Z fspindle $
+ * $Id: vpRobotAfma4.h 4574 2014-01-09 08:48:51Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -251,11 +251,11 @@ public:  /* Methode publiques */
   vpColVector getVelocity (const vpRobot::vpControlFrameType frame);
   vpColVector getVelocity (const vpRobot::vpControlFrameType frame, double &timestamp);
 
-  void get_cMe(vpHomogeneousMatrix &cMe) ;
-  void get_cVe(vpVelocityTwistMatrix &cVe) ;
-  void get_cVf(vpVelocityTwistMatrix &cVf) ;
-  void get_eJe(vpMatrix &eJe)  ;
-  void get_fJe(vpMatrix &fJe)  ;
+  void get_cMe(vpHomogeneousMatrix &cMe) const;
+  void get_cVe(vpVelocityTwistMatrix &cVe) const;
+  void get_cVf(vpVelocityTwistMatrix &cVf) const;
+  void get_eJe(vpMatrix &eJe);
+  void get_fJe(vpMatrix &fJe);
 
   void init (void);
 

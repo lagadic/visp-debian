@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpBSpline.h 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpBSpline.h 4649 2014-02-07 14:57:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -168,9 +168,9 @@ class VISP_EXPORT vpBSpline
 	/*!
 	  Sets the degree of the B-Spline.
 	  
-	  \param p : the degree of the B-Spline.
+    \param degree : the degree of the B-Spline.
 	*/
-	inline void set_p(unsigned int p) {this->p = p;}
+  inline void set_p(unsigned int degree) {this->p = degree;}
 
 
   /*!

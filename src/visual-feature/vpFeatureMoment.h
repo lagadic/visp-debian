@@ -1,9 +1,9 @@
 /****************************************************************************
 *
-* $Id: vpFeatureMoment.h 4276 2013-06-25 12:36:48Z fspindle $
+* $Id: vpFeatureMoment.h 4714 2014-03-28 18:16:13Z mbakthav $
 *
 * This file is part of the ViSP software.
-* Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+* Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
 *
 * This software is free software; you can redistribute it and/or
 * modify it under the terms of the GNU General Public License
@@ -145,8 +145,8 @@ return 0;
 */
 class VISP_EXPORT vpFeatureMoment : public vpBasicFeature{
 protected:
-  vpMoment* moment;
-  vpMoment& getMoment(){return *moment;}
+  const vpMoment* moment;
+  const vpMoment& getMoment() const {return *moment;}
   vpMomentDatabase& moments;
   vpFeatureMomentDatabase* featureMomentsDataBase;
   std::vector<vpMatrix> interaction_matrices;
@@ -155,22 +155,24 @@ protected:
   double B;
   double C;
   char _name[255];
+
 public:
   /*!
   Initializes the feature with information about the database of moment primitives, the object plane, feature database and matrix size.
-  \param moments : Moment database. The database of moment primitives (first parameter) is mandatory. It is used to access different moment values later used to compute the final matrix.
-  \param A : Plane coefficient in a \f$ A \times x+B \times y + C = \frac{1}{Z} \f$ plane.
-  \param B : Plane coefficient in a \f$ A \times x+B \times y + C = \frac{1}{Z} \f$ plane.
-  \param C : Plane coefficient in a \f$ A \times x+B \times y + C = \frac{1}{Z} \f$ plane.
+  \param data_base : Moment database. The database of moment primitives (first parameter) is mandatory. It is used to access different moment values later used to compute the final matrix.
+  \param A_ : Plane coefficient in a \f$ A \times x+B \times y + C = \frac{1}{Z} \f$ plane.
+  \param B_ : Plane coefficient in a \f$ A \times x+B \times y + C = \frac{1}{Z} \f$ plane.
+  \param C_ : Plane coefficient in a \f$ A \times x+B \times y + C = \frac{1}{Z} \f$ plane.
   \param featureMoments : Feature database
   \param nbmatrices : If you want to create a new vpFeatureMoment implementation, your feature will often have a matrix size of n lines. You can specify the number of lines by this parameter.
   */
-  vpFeatureMoment(vpMomentDatabase& moments,double A=0.0, double B=0.0, double C=0.0,vpFeatureMomentDatabase* featureMoments=NULL,unsigned int nbmatrices=1) :
-      moment(NULL),
-        moments(moments),
-        featureMomentsDataBase(featureMoments),
-        interaction_matrices(nbmatrices),
-        A(A),B(B),C(C) {}
+  vpFeatureMoment(vpMomentDatabase& data_base,double A_=0.0, double B_=0.0, double C_=0.0,
+                  vpFeatureMomentDatabase* featureMoments=NULL,unsigned int nbmatrices=1)
+    : moment(NULL),
+      moments(data_base),
+      featureMomentsDataBase(featureMoments),
+      interaction_matrices(nbmatrices),
+      A(A_),B(B_),C(C_) {}
       virtual ~vpFeatureMoment();
 
       virtual void 	compute_interaction (void);
@@ -182,28 +184,30 @@ public:
 
       int 	getDimension (unsigned int select=FEATURE_ALL) const;
       void 	init (void);
-      vpMatrix 	interaction (const unsigned int select=FEATURE_ALL);        
+      vpMatrix 	interaction (const unsigned int select=FEATURE_ALL) ;
       void linkTo(vpFeatureMomentDatabase& featureMoments);
 
       /*!
       Name of the moment corresponding to the feature. This allows to locate the moment
       associated with the feature in the provided database.
       */
-      virtual const char* momentName() = 0;
+      virtual const char* momentName() const = 0;
       /*!
       Name of the feature used to locate it in the database of features.
       */
-      virtual const char* name() = 0;
+      virtual const char* name() const = 0;
       void 	print (const unsigned int select=FEATURE_ALL) const ;
 
       void update (double A, double B, double C);
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-        void operator=(const vpFeatureMoment &){
+        vpFeatureMoment& operator=(const vpFeatureMoment &){
           throw vpException(vpException::functionNotImplementedError,"Not implemented!");
         }
 #endif
 
+      friend VISP_EXPORT std::ostream& operator<<(std::ostream & os, const vpFeatureMoment& featM);
+      virtual void printDependencies(std::ostream& os) const;
 };
 
 /*!
@@ -222,15 +226,17 @@ Duplication is mostly used internally in ViSP.
 */
 class VISP_EXPORT vpMomentGenericFeature : public vpFeatureMoment{
 public:
-  vpMomentGenericFeature(vpMomentDatabase& moments,double A, double B, double C,vpFeatureMomentDatabase* featureMoments, vpMoment* moment) : vpFeatureMoment(moments,A,B,C,featureMoments){this->moment = moment;}
+  vpMomentGenericFeature(vpMomentDatabase& data_base,double A_, double B_, double C_,
+                         vpFeatureMomentDatabase* featureMoments, const vpMoment* p_moment)
+    : vpFeatureMoment(data_base,A_,B_,C_,featureMoments){this->moment = p_moment;}
   /*!
   No specific moment name.
   */
-  const char* momentName() { return NULL;}
+  const char* momentName() const { return NULL;}
   /*!
   No specific feature name.
   */
-  virtual const char* name() { return NULL;}
+  virtual const char* name() const { return NULL;}
 };
 
 #endif

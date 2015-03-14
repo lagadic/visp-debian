@@ -1,9 +1,9 @@
 #############################################################################
 #
-# $Id: CMakeHeaderFileList.cmake 4056 2013-01-05 13:04:42Z fspindle $
+# $Id: CMakeHeaderFileList.cmake 5255 2015-02-03 14:52:43Z strinh $
 #
 # This file is part of the ViSP software.
-# Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+# Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
 # 
 # This software is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -66,12 +66,18 @@ SET (HEADER_DATA_STRUCTURE
   data-structure/vpList.h
   )
 
+set(HEADER_DETECTION
+  detection/vpDetectorBase.h
+  detection/barcode/vpDetectorDataMatrixCode.h
+  detection/barcode/vpDetectorQRCode.h
+  detection/face/vpDetectorFace.h
+)
+
 SET (HEADER_EXCEPTION
   exceptions/vpException.h
   )
 
 SET (HEADER_DEVICE_FRAMEGRABBER
-  device/framegrabber/1394/vp1394Grabber.h
   device/framegrabber/1394/vp1394TwoGrabber.h
   device/framegrabber/1394/vp1394CMUGrabber.h
   device/framegrabber/disk/vpDiskGrabber.h
@@ -103,6 +109,8 @@ SET (HEADER_KEY_POINT
   key-point/vpKeyPointSurf.h
   key-point/vpPlanarObjectDetector.h
   key-point/vpFernClassifier.h
+  key-point/vpKeyPoint.h
+  key-point/vpXmlConfigParserKeyPoint.h
   )
 
 SET (HEADER_DEVICE_KINECT
@@ -149,6 +157,7 @@ SET (HEADER_MATH
   math/transformation/vpRxyzVector.h
   math/transformation/vpRzyxVector.h
   math/transformation/vpRzyzVector.h
+  math/transformation/vpXmlParserHomogeneousMatrix.h
   math/transformation/vpThetaUVector.h
   math/transformation/vpTranslationVector.h
   math/transformation/vpVelocityTwistMatrix.h
@@ -166,7 +175,6 @@ SET (HEADER_ROBOT
   robot/real-robot/biclops/vpBiclops.h
   robot/real-robot/biclops/vpRobotBiclopsController.h
   robot/real-robot/biclops/vpRobotBiclops.h
-  robot/real-robot/cycab/vpRobotCycab.h
   robot/real-robot/pioneer/vpUnicycle.h
   robot/real-robot/pioneer/vpPioneer.h
   robot/real-robot/pioneer/vpPioneerPan.h
@@ -189,7 +197,6 @@ SET (HEADER_ROBOT
   )
 
 SET (HEADER_SERVO
-  servo/vpAdaptativeGain.h
   servo/vpAdaptiveGain.h
   servo/vpServoData.h
   servo/vpServoDisplay.h
@@ -222,6 +229,7 @@ SET (HEADER_SIMULATOR
   )
 
 SET (HEADER_TOOLS
+  tools/convert/vpConvert.h
   tools/geometry/vpPlane.h
   tools/geometry/vpRect.h
   tools/geometry/vpTriangle.h
@@ -265,19 +273,22 @@ SET (HEADER_TRACKING
   tracking/moving-edges/vpMeNurbs.h
 
   tracking/mbt/vpMbTracker.h
-  tracking/mbt/vpMbHiddenFaces.h 
+  tracking/mbt/vpMbHiddenFaces.h
+  tracking/mbt/vpMbXmlParser.h
+  tracking/mbt/vpMbtPolygon.h
+  tracking/mbt/edge/vpMbtDistanceCircle.h
+  tracking/mbt/edge/vpMbtDistanceCylinder.h
   tracking/mbt/edge/vpMbtDistanceLine.h
-  tracking/mbt/edge/vpMbtPolygon.h
+  tracking/mbt/edge/vpMbtMeEllipse.h
   tracking/mbt/edge/vpMbtMeLine.h
   tracking/mbt/edge/vpMbEdgeTracker.h
   tracking/mbt/edge/vpMbtXmlParser.h
-  tracking/mbt/edge/vpMbtDistanceCylinder.h
   tracking/mbt/hybrid/vpMbEdgeKltTracker.h
-  tracking/mbt/klt/vpMbtKltPolygon.h
+  tracking/mbt/hybrid/vpMbtEdgeKltXmlParser.h
+  tracking/mbt/klt/vpMbtDistanceKltPoints.h
   tracking/mbt/klt/vpMbKltTracker.h
   tracking/mbt/klt/vpMbtKltXmlParser.h
 
-  tracking/moments/vpMomentObject.h
   tracking/moments/vpMomentAlpha.h
   tracking/moments/vpMomentBasic.h
   tracking/moments/vpMomentCentered.h
@@ -290,6 +301,26 @@ SET (HEADER_TRACKING
   tracking/moments/vpMomentObject.h
   tracking/moments/vpMomentAreaNormalized.h
   tracking/moments/vpMomentArea.h
+
+  tracking/template-tracker/vpTemplateTracker.h
+  tracking/template-tracker/ssd/vpTemplateTrackerSSD.h
+  tracking/template-tracker/ssd/vpTemplateTrackerSSDESM.h
+  tracking/template-tracker/ssd/vpTemplateTrackerSSDForwardAdditional.h
+  tracking/template-tracker/ssd/vpTemplateTrackerSSDForwardCompositional.h
+  tracking/template-tracker/ssd/vpTemplateTrackerSSDInverseCompositional.h
+  tracking/template-tracker/zncc/vpTemplateTrackerZNCC.h
+  tracking/template-tracker/zncc/vpTemplateTrackerZNCCForwardAdditional.h
+  tracking/template-tracker/zncc/vpTemplateTrackerZNCCInverseCompositional.h
+  tracking/template-tracker/tools/vpTemplateTrackerBSpline.h
+  tracking/template-tracker/tools/vpTemplateTrackerHeader.h
+  tracking/template-tracker/tools/vpTemplateTrackerZone.h
+  tracking/template-tracker/tools/vpTemplateTrackerTriangle.h
+  tracking/template-tracker/warp/vpTemplateTrackerWarp.h
+  tracking/template-tracker/warp/vpTemplateTrackerWarpAffine.h
+  tracking/template-tracker/warp/vpTemplateTrackerWarpHomography.h
+  tracking/template-tracker/warp/vpTemplateTrackerWarpHomographySL3.h
+  tracking/template-tracker/warp/vpTemplateTrackerWarpSRT.h
+  tracking/template-tracker/warp/vpTemplateTrackerWarpTranslation.h
   )
 
 SET (HEADER_VIDEO
@@ -322,26 +353,24 @@ SET (HEADER_VISUAL_FEATURE
   visual-feature/vpFeatureEllipse.h
   visual-feature/vpFeatureException.h
   visual-feature/vpFeatureLine.h
+  visual-feature/vpFeatureLuminance.h
+  visual-feature/vpFeatureMoment.h
+  visual-feature/vpFeatureMomentAlpha.h
+  visual-feature/vpFeatureMomentArea.h
+  visual-feature/vpFeatureMomentAreaNormalized.h
+  visual-feature/vpFeatureMomentBasic.h
+  visual-feature/vpFeatureMomentCentered.h
+  visual-feature/vpFeatureMomentCInvariant.h
+  visual-feature/vpFeatureMomentCommon.h
+  visual-feature/vpFeatureMomentDatabase.h
+  visual-feature/vpFeatureMomentGravityCenter.h
+  visual-feature/vpFeatureMomentGravityCenterNormalized.h
   visual-feature/vpFeaturePoint3D.h
   visual-feature/vpFeaturePoint.h
   visual-feature/vpFeaturePointPolar.h
   visual-feature/vpFeatureThetaU.h
   visual-feature/vpFeatureTranslation.h
   visual-feature/vpFeatureVanishingPoint.h
-  visual-feature/vpFeatureMoment.h  
-  visual-feature/vpFeatureMomentDatabase.h
-  visual-feature/vpFeatureMomentCommon.h
-  visual-feature/vpFeatureMomentAlpha.h
-  visual-feature/vpFeatureMomentGravityCenter.h
-  visual-feature/vpFeatureMomentBasic.h
-  visual-feature/vpFeatureMomentGravityCenterNormalized.h
-  visual-feature/vpFeatureMomentCentered.h
-  visual-feature/vpFeatureMomentCInvariant.h
-  visual-feature/vpFeatureMomentCommon.h
-  visual-feature/vpFeatureMomentAreaNormalized.h
-  visual-feature/vpFeatureMomentArea.h
-
-  visual-feature/vpFeatureLuminance.h
   visual-feature/vpFeatureSegment.h
   visual-feature/vpGenericFeature.h
   )
@@ -357,6 +386,7 @@ SET (HEADER_ALL
   ${HEADER_CAMERA}
   ${HEADER_COMPUTER_VISION}
   ${HEADER_DATA_STRUCTURE}
+  ${HEADER_DETECTION}
   ${HEADER_DEVICE_DISPLAY}
   ${HEADER_DEVICE_FRAMEGRABBER}
   ${HEADER_DEVICE_KINECT}

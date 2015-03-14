@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: testPoseRansac.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: testPoseRansac.cpp 4574 2014-01-09 08:48:51Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -62,6 +62,7 @@
 int
 main()
 {
+  try {
     std::cout << "Pose computation with matched points" << std::endl;
     int size = 8;
     vpPoint *P = new vpPoint [size]  ;  //  Point to be tracked
@@ -81,7 +82,7 @@ main()
 
     vpHomogeneousMatrix cMo_ref(0, 0.2, 1, 0, 0, 0) ;
     for(int i=0 ; i < size ; i++)
-    {      
+    {
       P[i].project(cMo_ref) ;
       P[i].print() ;
       std::cout << std::endl;
@@ -131,4 +132,9 @@ main()
     std::cout << "Pose is " << (test_fail ? "badly" : "well") << " estimated" << std::endl;
     delete [] P;
     return test_fail;
+  }
+  catch(vpException e) {
+    std::cout << "Catch an exception: " << e << std::endl;
+    return 1;
+  }
 }

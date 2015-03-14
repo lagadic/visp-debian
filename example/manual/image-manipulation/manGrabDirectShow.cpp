@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: manGrabDirectShow.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: manGrabDirectShow.cpp 4574 2014-01-09 08:48:51Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -59,24 +59,31 @@
 
 int main()
 {
-  vpImage<unsigned char> I; // Grey level image
-  
+  try {
+    vpImage<unsigned char> I; // Grey level image
+
 #ifdef VISP_HAVE_DIRECTSHOW
-  vpDirectShowGrabber g; // Create the grabber
-  if(g.getDeviceNumber() == 0) //test if a camera is connected
-  {
-    g.close();
-    return -1;
-  }
-  
-  g.open(); // Initialize the grabber
-  
-  g.setImageSize(640,480); // If the camera supports 640x480 image size
-  g.setFramerate(30); // If the camera supports 30fps framerate
-  
-  for ( ; ; )
-    g.acquire(I); // Acquire an image
+    vpDirectShowGrabber g; // Create the grabber
+    if(g.getDeviceNumber() == 0) //test if a camera is connected
+    {
+      g.close();
+      return -1;
+    }
+
+    g.open(); // Initialize the grabber
+
+    g.setImageSize(640,480); // If the camera supports 640x480 image size
+    g.setFramerate(30); // If the camera supports 30fps framerate
+
+    for ( ; ; )
+      g.acquire(I); // Acquire an image
 #endif
 
-  return 0;
+    return 0;
+  }
+  catch(vpException e) {
+    std::cout << "Catch an exception: " << e << std::endl;
+    return 1;
+  }
+
 }

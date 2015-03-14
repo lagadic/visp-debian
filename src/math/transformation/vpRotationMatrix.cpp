@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpRotationMatrix.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpRotationMatrix.cpp 4900 2014-09-11 09:16:21Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -359,11 +359,18 @@ vpRotationMatrix::vpRotationMatrix() : vpMatrix()
 /*!
   \brief initialize a rotation matrix from another rotation matrix
 */
-
 vpRotationMatrix::vpRotationMatrix(const vpRotationMatrix &M) : vpMatrix()
 {
   init() ;
   (*this) = M ;
+}
+/*!
+  Initialize a rotation matrix from an homogenous matrix.
+*/
+vpRotationMatrix::vpRotationMatrix(const vpHomogeneousMatrix &M) : vpMatrix()
+{
+  init() ;
+  buildFrom(M);
 }
 
 //! Construction from  rotation (Theta U parameterization)
@@ -371,6 +378,12 @@ vpRotationMatrix::vpRotationMatrix(const vpThetaUVector &tu) : vpMatrix()
 {
   init() ;
   buildFrom(tu) ;
+}
+//! Construction from a pose vector.
+vpRotationMatrix::vpRotationMatrix(const vpPoseVector &p) : vpMatrix()
+{
+  init() ;
+  buildFrom(p) ;
 }
 
 
@@ -456,7 +469,7 @@ vpRotationMatrix::inverse(vpRotationMatrix &M) const
 
 
 //! std::cout an rotation matrix [thetaU]
-std::ostream &operator <<(std::ostream &s,const vpRotationMatrix &R)
+VISP_EXPORT std::ostream &operator <<(std::ostream &s,const vpRotationMatrix &R)
 {
   for (unsigned int i=0; i<3; i++)
   {
@@ -571,6 +584,32 @@ vpRotationMatrix::buildFrom(const vpThetaUVector &v)
 #endif
 
   return *this ;
+}
+
+/*!
+  Build a rotation matrix from an homogenous matrix.
+*/
+vpRotationMatrix
+vpRotationMatrix::buildFrom(const vpHomogeneousMatrix &M)
+{
+  for (unsigned int i=0 ; i < 3 ; i++)
+    for (unsigned int j=0 ; j < 3; j++)
+      (*this)[i][j] = M[i][j] ;
+
+  return *this ;
+}
+
+/*
+  \relates vpRotationMatrix
+  Transform a pose vector into a rotation matrix.
+
+  \sa buildFrom(const vpThetaUVector &)
+*/
+vpRotationMatrix
+vpRotationMatrix::buildFrom(const vpPoseVector &p)
+{
+  vpThetaUVector tu(p);
+  return buildFrom(tu);
 }
 
 /*!

@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpDirectShowDevice.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpDirectShowDevice.cpp 4620 2014-01-27 21:28:32Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -118,6 +118,11 @@ bool vpDirectShowDevice::operator==(vpDirectShowDevice& dev)
 	return name==dev.name
 		&& desc==dev.desc
 		&& devPath==dev.devPath;
+}
+
+VISP_EXPORT std::ostream& operator<<(std::ostream& os, vpDirectShowDevice& dev)
+{
+  return os<<dev.name<<std::endl<<dev.desc<<std::endl<<dev.devPath;
 }
 
 #endif

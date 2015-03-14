@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpMbtDistanceCylinder.h 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpMbtDistanceCylinder.h 4914 2014-10-02 13:25:47Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -56,6 +56,7 @@
 #include <visp/vpFeatureLine.h>
 #include <visp/vpCylinder.h>
 #include <visp/vpCircle.h>
+#include <visp/vpMbHiddenFaces.h>
 
 /*!
   \class vpMbtDistanceCylinder
@@ -111,6 +112,13 @@ class VISP_EXPORT vpMbtDistanceCylinder
     //! The cylinder
     vpCylinder *c;
     
+    //! Pointer to the list of faces
+    vpMbHiddenFaces<vpMbtPolygon> *hiddenface;
+    //! Index of the face which contains the cylinder
+    int index_polygon;
+    //! Indicates if the cylinder is visible or not
+    bool isvisible;
+
   public:
     vpMbtDistanceCylinder() ;
     ~vpMbtDistanceCylinder() ;
@@ -119,16 +127,16 @@ class VISP_EXPORT vpMbtDistanceCylinder
     
     void computeInteractionMatrixError(const vpHomogeneousMatrix &cMo, const vpImage<unsigned char> &I);
     
-    void display(const vpImage<unsigned char> &I, const vpHomogeneousMatrix &cMo, const vpCameraParameters &cam, const vpColor col, const unsigned int thickness = 1);
-    void display(const vpImage<vpRGBa> &I, const vpHomogeneousMatrix &cMo, const vpCameraParameters &cam, const vpColor col, const unsigned int thickness = 1);
+    void display(const vpImage<unsigned char> &I, const vpHomogeneousMatrix &cMo, const vpCameraParameters &cam, const vpColor col, const unsigned int thickness = 1, const bool displayFullModel = false);
+    void display(const vpImage<vpRGBa> &I, const vpHomogeneousMatrix &cMo, const vpCameraParameters &cam, const vpColor col, const unsigned int thickness = 1, const bool displayFullModel = false);
     void displayMovingEdges(const vpImage<unsigned char> &I);
     
     /*!
      Get the camera paramters.
    
-     \param cam : The vpCameraParameters used to store the camera parameters.
+     \param camera : The vpCameraParameters used to store the camera parameters.
     */
-    inline void getCameraParameters(vpCameraParameters& cam) {cam = this->cam;}
+    inline void getCameraParameters(vpCameraParameters& camera) {camera = this->cam;}
     
     /*!
       Get the index of the cylinder.
@@ -162,15 +170,22 @@ class VISP_EXPORT vpMbtDistanceCylinder
     
     void initInteractionMatrixError();
     
-    void initMovingEdge(const vpImage<unsigned char> &I, const vpHomogeneousMatrix &cMo);
+    bool initMovingEdge(const vpImage<unsigned char> &I, const vpHomogeneousMatrix &cMo);
     
+    /*!
+      Check if the cylinder is visible in the image or not.
+
+      \return Return true if the cylinder is visible
+    */
+    inline bool isVisible() const {return isvisible; }
+
     void reinitMovingEdge(const vpImage<unsigned char> &I, const vpHomogeneousMatrix &cMo);
     
     /*!
      Set the camera paramters.
-     \param cam : The camera parameters.
+     \param camera : The camera parameters.
     */
-    inline void setCameraParameters(const vpCameraParameters& cam) {this->cam = cam;}
+    inline void setCameraParameters(const vpCameraParameters& camera) {this->cam = camera;}
     
     /*!
       Set the index of the cylinder.
@@ -198,18 +213,24 @@ class VISP_EXPORT vpMbtDistanceCylinder
     /*!
       Set the name of the cylinder.
       
-      \param name : The name of the cylinder.
+      \param cyl_name : The name of the cylinder.
     */
-    inline void setName(const std::string& name) {this->name = name;}
+    inline void setName(const std::string& cyl_name) {this->name = cyl_name;}
     
     /*!
       Set the name of the cylinder.
       
-      \param name : The name of the cylinder
+      \param cyl_name : The name of the cylinder
     */
-    inline void setName(const char* name) {this->name = name;}
+    inline void setName(const char* cyl_name) {this->name = std::string(cyl_name);}
 
-    
+    /*!
+      Set a boolean parameter to indicates if the cylinder is visible in the image or not.
+
+      \param _isvisible : Set to true if the cylinder is visible
+    */
+    inline void setVisible(bool _isvisible) {isvisible = _isvisible ;}
+
     void trackMovingEdge(const vpImage<unsigned char> &I, const vpHomogeneousMatrix &cMo);
     
     void updateMovingEdge(const vpImage<unsigned char> &I, const vpHomogeneousMatrix &cMo);

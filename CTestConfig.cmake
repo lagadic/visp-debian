@@ -3,7 +3,7 @@
 # $Id: CTestConfig.cmake,v 1.9 2008-12-11 13:19:44 fspindle Exp $
 #
 # This file is part of the ViSP software.
-# Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+# Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
 # 
 # This software is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -59,6 +59,13 @@ ELSE(BUILDNAME)
   SET(BUILDNAME "${CMAKE_SYSTEM_NAME}")
 ENDIF(BUILDNAME)
 
+# Add i386 or amd64
+if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+  set(BUILDNAME "${BUILDNAME}-amd64")
+else()
+  set(BUILDNAME "${BUILDNAME}-i386")
+endif()
+
 # Add the compiler name, e.g. "g++, msvc7..."
 if(MSVC70)
   set(BUILDNAME "${BUILDNAME}-msvc70")
@@ -72,6 +79,8 @@ elseif(MSVC10)
   set(BUILDNAME "${BUILDNAME}-msvc10")
 elseif(MSVC11)
   set(BUILDNAME "${BUILDNAME}-msvc11")
+elseif(MSVC12)
+  set(BUILDNAME "${BUILDNAME}-msvc12")
 elseif(MSVC)
   set(BUILDNAME "${BUILDNAME}-msvc")
 elseif(BORLAND)
@@ -100,9 +109,9 @@ ENDIF(CMAKE_COMPILER_IS_GNUCC)
 
 # Add the type of library generation, e.g. "Dynamic or Static"
 IF(BUILD_SHARED_LIBS)
-  SET(BUILDNAME "${BUILDNAME}-Dynamic")
+  SET(BUILDNAME "${BUILDNAME}-Dyn")
 ELSE(BUILD_SHARED_LIBS)
-  SET(BUILDNAME "${BUILDNAME}-Static")
+  SET(BUILDNAME "${BUILDNAME}-Sta")
 ENDIF(BUILD_SHARED_LIBS)
 
 # Add the build type, e.g. "Debug, Release..."
@@ -139,19 +148,15 @@ endif()
 #---- Framegrabers ----
 # Firewire dc1394-2.x 
 IF(VISP_HAVE_DC1394_2)
-  SET(BUILDNAME "${BUILDNAME}-dc1394.2")
+  SET(BUILDNAME "${BUILDNAME}-dc1394")
 ENDIF(VISP_HAVE_DC1394_2)
-# Firewire dc1394-1.x 
-IF(VISP_HAVE_DC1394_1)
-  SET(BUILDNAME "${BUILDNAME}-dc1394.1")
-ENDIF(VISP_HAVE_DC1394_1)
 # Video 4 linux 2 (V4L2)
 IF(VISP_HAVE_V4L2)
   SET(BUILDNAME "${BUILDNAME}-v4l2")
 ENDIF(VISP_HAVE_V4L2)
 # Directshow
 IF(VISP_HAVE_DIRECTSHOW)
-  SET(BUILDNAME "${BUILDNAME}-Directshow")
+  SET(BUILDNAME "${BUILDNAME}-dshow")
 ENDIF(VISP_HAVE_DIRECTSHOW)
 IF(VISP_HAVE_CMU1394)
   SET(BUILDNAME "${BUILDNAME}-CMU1394")
@@ -160,9 +165,8 @@ IF(VISP_HAVE_LIBFREENECT)
   SET(BUILDNAME "${BUILDNAME}-freenect")
 ENDIF()
 IF(VISP_HAVE_LIBUSB_1)
-  SET(BUILDNAME "${BUILDNAME}-usb1")
+  SET(BUILDNAME "${BUILDNAME}-usb")
 ENDIF()
-
 
 #---- Video-devices ----
 # X11
@@ -182,9 +186,17 @@ IF(VISP_HAVE_D3D9)
   SET(BUILDNAME "${BUILDNAME}-Direct3D")
 ENDIF(VISP_HAVE_D3D9)
 # OpenCV
-IF(VISP_HAVE_OPENCV)
-  SET(BUILDNAME "${BUILDNAME}-OpenCV")
-ENDIF(VISP_HAVE_OPENCV)
+if(VISP_HAVE_OPENCV)
+  if(OpenCV_VERSION)
+    if(OPENCV_XFEATURES2D_FOUND OR OPENCV_XFEATURES2D_FOUND)
+      set(BUILDNAME "${BUILDNAME}-OpenCV_contrib${OpenCV_VERSION}")
+    else()
+      set(BUILDNAME "${BUILDNAME}-OpenCV${OpenCV_VERSION}")
+    endif()
+  else()
+    set(BUILDNAME "${BUILDNAME}-OpenCV")
+  endif()
+endif(VISP_HAVE_OPENCV)
 
 #---- Mathematics ----
 # Lapack (Linear Algebra PACKage)
@@ -230,10 +242,10 @@ IF(VISP_HAVE_FFMPEG)
   SET(BUILDNAME "${BUILDNAME}-ffmpeg")
 ENDIF(VISP_HAVE_FFMPEG)
 IF(VISP_HAVE_LIBJPEG)
-  SET(BUILDNAME "${BUILDNAME}-libjpeg")
+  SET(BUILDNAME "${BUILDNAME}-jpeg")
 ENDIF(VISP_HAVE_LIBJPEG)
 IF(VISP_HAVE_LIBPNG)
-  SET(BUILDNAME "${BUILDNAME}-libpng")
+  SET(BUILDNAME "${BUILDNAME}-png")
 ENDIF(VISP_HAVE_LIBPNG)
 IF(VISP_HAVE_ZLIB)
   SET(BUILDNAME "${BUILDNAME}-zlib")
@@ -241,16 +253,37 @@ ENDIF()
 
 #---- Misc ----
 # XML
-IF(VISP_HAVE_XML2)
-  SET(BUILDNAME "${BUILDNAME}-xml")
-ENDIF(VISP_HAVE_XML2)
+if(VISP_HAVE_XML2)
+  set(BUILDNAME "${BUILDNAME}-xml")
+endif()
 # PThread
-IF(VISP_HAVE_PTHREAD)
-  SET(BUILDNAME "${BUILDNAME}-pthread")
-ENDIF(VISP_HAVE_PTHREAD)
+if(VISP_HAVE_PTHREAD)
+  set(BUILDNAME "${BUILDNAME}-pthread")
+endif()
 # OpenMP
-IF(VISP_HAVE_OPENMP)
-  SET(BUILDNAME "${BUILDNAME}-OpenMP")
-ENDIF()
+if(VISP_HAVE_OPENMP)
+  set(BUILDNAME "${BUILDNAME}-OpenMP")
+endif()
+if(VISP_HAVE_DMTX)
+  set(BUILDNAME "${BUILDNAME}-dmtx")
+endif()
+if(VISP_HAVE_ZBAR)
+  set(BUILDNAME "${BUILDNAME}-zbar")
+endif()
+
+
+#---- Special compiler flags ----
+if(ACTIVATE_WARNING_STRICT_OVERFLOW)
+  SET(BUILDNAME "${BUILDNAME}-Wov")
+endif()
+if(ACTIVATE_WARNING_FLOAT_EQUAL)
+  SET(BUILDNAME "${BUILDNAME}-Weq")
+endif()
+if(USE_CPP11)
+  SET(BUILDNAME "${BUILDNAME}-c11")
+endif()
+if(MOMENTS_COMBINE_MATRICES)
+  SET(BUILDNAME "${BUILDNAME}-Moment")
+endif()
 
 #MESSAGE("BUILDNAME=${BUILDNAME}")

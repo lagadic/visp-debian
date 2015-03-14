@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpHomogeneousMatrix.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpHomogeneousMatrix.cpp 5130 2015-01-06 18:50:43Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -86,11 +86,11 @@ vpHomogeneousMatrix::init()
 
 }
 
-vpHomogeneousMatrix::vpHomogeneousMatrix(const vpTranslationVector &t, 
-					 const vpQuaternionVector &q) 
+vpHomogeneousMatrix::vpHomogeneousMatrix(const vpTranslationVector &tv,
+                                         const vpQuaternionVector &q) : vpMatrix()
 {
   init();
-  buildFrom(t,q);
+  buildFrom(tv,q);
 }
 
 /*!
@@ -111,19 +111,19 @@ vpHomogeneousMatrix::vpHomogeneousMatrix(const vpHomogeneousMatrix &M) : vpMatri
   *this = M ;
 }
 
-vpHomogeneousMatrix::vpHomogeneousMatrix(const vpTranslationVector &t,
+vpHomogeneousMatrix::vpHomogeneousMatrix(const vpTranslationVector &tv,
                                          const vpThetaUVector &tu) : vpMatrix()
 {
   init() ;
-  buildFrom(t,tu) ;
+  buildFrom(tv,tu) ;
 }
 
-vpHomogeneousMatrix::vpHomogeneousMatrix(const vpTranslationVector &t,
+vpHomogeneousMatrix::vpHomogeneousMatrix(const vpTranslationVector &tv,
                                          const vpRotationMatrix &R) : vpMatrix()
 {
   init() ;
   insert(R) ;
-  insert(t) ;
+  insert(tv) ;
 }
 
 vpHomogeneousMatrix::vpHomogeneousMatrix(const vpPoseVector &p) : vpMatrix()
@@ -131,6 +131,94 @@ vpHomogeneousMatrix::vpHomogeneousMatrix(const vpPoseVector &p) : vpMatrix()
 
   init() ;
   buildFrom(p[0],p[1],p[2],p[3],p[4],p[5]) ;
+}
+
+/*!
+  Creates an homogeneous matrix from a vector.
+  \param v : Vector of 12 or 16 values corresponding to the values of the homogeneous matrix.
+
+  The following example shows how to use this function:
+  \code
+#include <visp/vpHomogeneousMatrix.h>
+
+int main()
+{
+  std::vector<float> v(12, 0);
+  v[1]  = -1.; // ry=-90
+  v[4]  =  1.; // rx=90
+  v[10] = -1.; // rz=-90
+  v[3]  = 0.3; // tx
+  v[7]  = 0.4; // ty
+  v[11] = 0.5; // tz
+
+  std::cout << "v: ";
+  for(unsigned int i=0; i<v.size(); i++)
+    std::cout << v[i] << " ";
+  std::cout << std::endl;
+
+  vpHomogeneousMatrix M(v);
+  std::cout << "M:\n" << M << std::endl;
+}
+  \endcode
+
+  It produces the following printings:
+  \code
+v: 0 -1 0 0.3 1 0 0 0.4 0 0 -1 0.5
+M:
+0  -1  0  0.3000000119
+1  0  0  0.400000006
+0  0  -1  0.5
+0  0  0  1
+  \endcode
+  */
+vpHomogeneousMatrix::vpHomogeneousMatrix(const std::vector<float> &v) : vpMatrix()
+{
+  init() ;
+  buildFrom(v) ;
+}
+
+/*!
+  Creates an homogeneous matrix from a vector.
+  \param v : Vector of 12 or 16 values corresponding to the values of the homogeneous matrix.
+
+  The following example shows how to use this function:
+  \code
+#include <visp/vpHomogeneousMatrix.h>
+
+int main()
+{
+  std::vector<double> v(12, 0);
+  v[1]  = -1.; // ry=-90
+  v[4]  =  1.; // rx=90
+  v[10] = -1.; // rz=-90
+  v[3]  = 0.3; // tx
+  v[7]  = 0.4; // ty
+  v[11] = 0.5; // tz
+
+  std::cout << "v: ";
+  for(unsigned int i=0; i<v.size(); i++)
+    std::cout << v[i] << " ";
+  std::cout << std::endl;
+
+  vpHomogeneousMatrix M(v);
+  std::cout << "M:\n" << M << std::endl;
+}
+  \endcode
+
+  It produces the following printings:
+  \code
+v: 0 -1 0 0.3 1 0 0 0.4 0 0 -1 0.5
+M:
+0  -1  0  0.3
+1  0  0  0.4
+0  0  -1  0.5
+0  0  0  1
+  \endcode
+  */
+vpHomogeneousMatrix::vpHomogeneousMatrix(const std::vector<double> &v) : vpMatrix()
+{
+  init() ;
+  buildFrom(v) ;
 }
 
 vpHomogeneousMatrix::vpHomogeneousMatrix(const double tx,
@@ -145,20 +233,20 @@ vpHomogeneousMatrix::vpHomogeneousMatrix(const double tx,
 }
 
 void
-vpHomogeneousMatrix::buildFrom(const vpTranslationVector &t,
+vpHomogeneousMatrix::buildFrom(const vpTranslationVector &tv,
                                const vpThetaUVector &tu)
 {
   insert(tu) ;
-  insert(t) ;
+  insert(tv) ;
 }
 
 void
-vpHomogeneousMatrix::buildFrom(const vpTranslationVector &t,
+vpHomogeneousMatrix::buildFrom(const vpTranslationVector &tv,
                                const vpRotationMatrix &R)
 {
   init() ;
   insert(R) ;
-  insert(t) ;
+  insert(tv) ;
 }
 
 
@@ -166,17 +254,17 @@ void
 vpHomogeneousMatrix::buildFrom(const vpPoseVector &p)
 {
 
-  vpTranslationVector t(p[0],p[1],p[2]) ;
+  vpTranslationVector tv(p[0],p[1],p[2]) ;
   vpThetaUVector tu(p[3],p[4],p[5]) ;
 
   insert(tu) ;
-  insert(t) ;
+  insert(tv) ;
 }
 
-void vpHomogeneousMatrix::buildFrom(const vpTranslationVector &t, 
+void vpHomogeneousMatrix::buildFrom(const vpTranslationVector &tv,
 				    const vpQuaternionVector &q) 
 {
-  insert(t);
+  insert(tv);
   insert(q);
 }
 
@@ -189,10 +277,110 @@ vpHomogeneousMatrix::buildFrom(const double tx,
 			       const double tuz)
 {
   vpRotationMatrix R(tux, tuy, tuz) ;
-  vpTranslationVector t(tx, ty, tz) ;
+  vpTranslationVector tv(tx, ty, tz) ;
 
   insert(R) ;
-  insert(t) ;
+  insert(tv) ;
+}
+
+/*!
+  Converts a vector to an homogeneous matrix.
+  \param v : Vector of 12 or 16 values corresponding to the values of the homogeneous matrix.
+
+  The following example shows how to use this function:
+  \code
+#include <visp/vpHomogeneousMatrix.h>
+
+int main()
+{
+  std::vector<float> v(12, 0);
+  v[1]  = -1.; // ry=-90
+  v[4]  =  1.; // rx=90
+  v[10] = -1.; // rz=-90
+  v[3]  = 0.3; // tx
+  v[7]  = 0.4; // ty
+  v[11] = 0.5; // tz
+
+  std::cout << "v: ";
+  for(unsigned int i=0; i<v.size(); i++)
+    std::cout << v[i] << " ";
+  std::cout << std::endl;
+
+  vpHomogeneousMatrix M;
+  M.buildFrom(v);
+  std::cout << "M:\n" << M << std::endl;
+}
+  \endcode
+
+  It produces the following printings:
+  \code
+v: 0 -1 0 0.3 1 0 0 0.4 0 0 -1 0.5
+M:
+0  -1  0  0.3000000119
+1  0  0  0.400000006
+0  0  -1  0.5
+0  0  0  1
+  \endcode
+  */
+void
+vpHomogeneousMatrix::buildFrom(const std::vector<float> &v)
+{
+  if (v.size() != 12 && v.size() != 16) {
+    throw(vpException(vpException::dimensionError, "Cannot convert std::vector<float> to vpHomogeneousMatrix"));
+  }
+
+  for (unsigned int i=0; i < 12; i++)
+    this->data[i] = (double)v[i];
+}
+
+/*!
+  Converts a vector to an homogeneous matrix.
+  \param v : Vector of 12 or 16 values corresponding to the values of the homogeneous matrix.
+
+  The following example shows how to use this function:
+  \code
+#include <visp/vpHomogeneousMatrix.h>
+
+int main()
+{
+  std::vector<double> v(12, 0);
+  v[1]  = -1.; // ry=-90
+  v[4]  =  1.; // rx=90
+  v[10] = -1.; // rz=-90
+  v[3]  = 0.3; // tx
+  v[7]  = 0.4; // ty
+  v[11] = 0.5; // tz
+
+  std::cout << "v: ";
+  for(unsigned int i=0; i<v.size(); i++)
+    std::cout << v[i] << " ";
+  std::cout << std::endl;
+
+  vpHomogeneousMatrix M;
+  M.buildFrom(v);
+  std::cout << "M:\n" << M << std::endl;
+}
+  \endcode
+
+  It produces the following printings:
+  \code
+v: 0 -1 0 0.3 1 0 0 0.4 0 0 -1 0.5
+M:
+0  -1  0  0.3
+1  0  0  0.4
+0  0  -1  0.5
+0  0  0  1
+  \endcode
+  */
+void
+vpHomogeneousMatrix::buildFrom(const std::vector<double> &v)
+{
+  if (v.size() != 12 && v.size() != 16) {
+    throw(vpException(vpException::dimensionError, "Cannot convert std::vector<double> to vpHomogeneousMatrix"));
+  }
+
+  for (unsigned int i=0; i < 12; i++)
+    this->data[i] = v[i];
 }
 
 /*!
@@ -259,7 +447,7 @@ vpHomogeneousMatrix::operator*(const vpHomogeneousMatrix &M) const
 }
 
 vpColVector
-vpHomogeneousMatrix::operator*(vpColVector &v) const
+vpHomogeneousMatrix::operator*(const vpColVector &v) const
 {
   vpColVector p(rowNum);
 
@@ -308,11 +496,11 @@ vpHomogeneousMatrix::extract(vpRotationMatrix &R) const
   Extract the translation vector from the homogeneous matrix. 
 */
 void
-vpHomogeneousMatrix::extract(vpTranslationVector &t) const
+vpHomogeneousMatrix::extract(vpTranslationVector &tv) const
 {
-  t[0] = (*this)[0][3] ;
-  t[1] = (*this)[1][3] ;
-  t[2] = (*this)[2][3] ;
+  tv[0] = (*this)[0][3] ;
+  tv[1] = (*this)[1][3] ;
+  tv[2] = (*this)[2][3] ;
 }
 /*!
   Extract the rotation as a Theta U vector.
@@ -481,7 +669,7 @@ vpHomogeneousMatrix::inverse(vpHomogeneousMatrix &M) const
 void
 vpHomogeneousMatrix::save(std::ofstream &f) const
 {
-  if (f != NULL)
+  if (! f.fail())
   {
     f << *this ;
   }
@@ -514,12 +702,12 @@ vpHomogeneousMatrix::save(std::ofstream &f) const
 void
 vpHomogeneousMatrix::load(std::ifstream &f)
 {
-  if (f != NULL)
+  if (! f.fail())
   {
     for (unsigned int i=0 ; i < 4 ; i++)
       for (unsigned int j=0 ; j < 4 ; j++)
       {
-	f>>   (*this)[i][j] ;
+        f >> (*this)[i][j] ;
       }
   }
   else
@@ -543,9 +731,24 @@ vpHomogeneousMatrix::setIdentity()
   init() ;
 }
 
-
-/*
- * Local variables:
- * c-basic-offset: 2
- * End:
+/*!
+  Converts an homogenous matrix to a vector of 12 floats.
+  \param M : Converted matrix.
  */
+void vpHomogeneousMatrix::convert(std::vector<float> &M)
+{
+  M.resize(12);
+  for(unsigned int i=0; i < 12; i++)
+    M[i] = (float)(this->data[i]);
+}
+
+/*!
+  Converts an homogenous matrix to a vector of 12 doubles.
+  \param M : Converted matrix.
+ */
+void vpHomogeneousMatrix::convert(std::vector<double> &M)
+{
+  M.resize(12);
+  for(unsigned int i=0; i < 12; i++)
+    M[i] = this->data[i];
+}

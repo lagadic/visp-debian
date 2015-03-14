@@ -1,9 +1,9 @@
 #############################################################################
 #
-# $Id: FindMyPNG.cmake 4056 2013-01-05 13:04:42Z fspindle $
+# $Id: FindMyPNG.cmake 5316 2015-02-12 10:58:18Z fspindle $
 #
 # This file is part of the ViSP software.
-# Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+# Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
 # 
 # This software is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -46,36 +46,55 @@
 
 
 # detection of the Libpng headers location
-FIND_PATH(PNG_INCLUDE_DIR 
-  NAMES
-    png.h
-  PATHS
-    $ENV{LIBPNG_DIR}/include
-    $ENV{LIBPNG_DIR}
-    $ENV{LIBPNG_INCLUDE_DIR}
-    "/usr/include"
-    "/usr/local/include"
-    "C:/Program Files/libpng/include"
+if(MINGW)
+  find_path(PNG_INCLUDE_DIR 
+    NAMES
+      png.h
+    PATHS
+      "C:/mingw/include/libpng14"
+      "$ENV{MINGW_DIR}/include/libpng14"
   )
+else()
+  find_path(PNG_INCLUDE_DIR 
+    NAMES
+      png.h
+    PATHS
+      "$ENV{LIBPNG_DIR}/include"
+      "$ENV{LIBPNG_DIR}"
+      "$ENV{LIBPNG_INCLUDE_DIR}"
+      "/usr/include"
+      "/usr/local/include"
+      "C:/Program Files/libpng/include"
+  )
+endif()
 #MESSAGE("PNG_INCLUDE_DIR=${PNG_INCLUDE_DIR}")
 
-IF(UNIX)
+if(UNIX)
   # Detection of the Libpng library on Unix
-  FIND_LIBRARY(PNG_LIBRARY
+  find_library(PNG_LIBRARY
     NAMES
-      png15 libpng15 png12 libpng12 png libpng
+      png15 libpng15 libpng14 png12 libpng12 png libpng
     PATHS
-      $ENV{LIBPNG_DIR}/lib
-      $ENV{LIBPNG_DIR}/Release
-      $ENV{LIBPNG_DIR}
-      $ENV{LIBPNG_LIBRARY_DIR}
+      "$ENV{LIBPNG_DIR}/lib"
+      "$ENV{LIBPNG_DIR}/Release"
+      "$ENV{LIBPNG_DIR}"
+      "$ENV{LIBPNG_LIBRARY_DIR}"
       /usr/lib
       /usr/local/lib
       /lib
       "C:/Program Files/libpng/lib"
     )
+elseif(MINGW)
+  # Detection of the Libpng library on mingw
+  find_library(PNG_LIBRARY
+    NAMES
+      png15 libpng15 libpng14 png12 libpng12 png libpng
+    PATHS
+      "C:/mingw/lib64"
+      "$ENV{MINGW_DIR}/lib64"
+    )
   #MESSAGE("PNG_LIBRARY=${PNG_LIBRARY}")
-ELSE(UNIX)
+else()
   FIND_LIBRARY(PNG_LIBRARY_RELEASE
     NAMES
       png15 libpng15 png12 libpng12 png libpng
@@ -106,7 +125,7 @@ ELSE(UNIX)
   #MESSAGE("PNG_LIBRARY_DEBUG=${PNG_LIBRARY_DEBUG}")
 ENDIF(UNIX)
 ## --------------------------------
-  
+
 SET(PNG_FOUND FALSE)
 
 FIND_PACKAGE(ZLIB)

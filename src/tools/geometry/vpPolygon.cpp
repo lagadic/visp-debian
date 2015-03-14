@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpPolygon.cpp 4303 2013-07-04 14:14:00Z fspindle $
+ * $Id: vpPolygon.cpp 4632 2014-02-03 17:06:40Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -57,8 +57,8 @@
   \f$ (0,0) \f$, \f$ (1,0) \f$ and \f$ (0,1) \f$.
 */
 vpPolygon::vpPolygon()
+  : _corners(), _center(), _area(0.), _goodPoly(true), _bbox()
 {
-  _goodPoly = true;
   std::vector<vpImagePoint> corners;
   corners.push_back(vpImagePoint(0,0));
   corners.push_back(vpImagePoint(1,0));
@@ -74,6 +74,7 @@ vpPolygon::vpPolygon()
   \param corners : The Points defining the corners.
 */
 vpPolygon::vpPolygon(const std::vector<vpImagePoint>& corners)
+  : _corners(), _center(), _area(0.), _goodPoly(true), _bbox()
 {
   if(corners.size() < 3){
     _goodPoly = false;
@@ -87,11 +88,13 @@ vpPolygon::vpPolygon(const std::vector<vpImagePoint>& corners)
   \param poly : The polygon used for the initialisation.
 */
 vpPolygon::vpPolygon(const vpPolygon &poly)
+  : _corners(), _center(), _area(0.), _goodPoly(true), _bbox()
 {
   _corners = poly._corners;
   _center = poly._center;
   _area = poly._area;
   _goodPoly = poly._goodPoly;
+  _bbox = poly._bbox;
 }
 
 /*!
@@ -165,8 +168,8 @@ vpPolygon::initClick(const vpImage<unsigned char>& I)
   std::vector<vpImagePoint> cornersClick;
 
   while(button == vpMouseButton::button1){
-    vpDisplay::getClick(I, ip, button, true);
-    if(button == vpMouseButton::button1){
+    bool ret = vpDisplay::getClick(I, ip, button, true);
+    if(ret && button == vpMouseButton::button1){
       vpDisplay::displayCross(I, ip, 5, vpColor::red);
       cornersClick.push_back(ip);
       vpDisplay::flush(I);

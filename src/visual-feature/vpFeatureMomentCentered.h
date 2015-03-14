@@ -3,7 +3,7 @@
  * $Id: vpFeatureMomentImpl.h 3317 2011-09-06 14:14:47Z fnovotny $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -36,7 +36,7 @@
  *
  * Authors:
  * Filip Novotny
- *
+ * Manikandan Bakthavatchalam
  *****************************************************************************/
 /*!
   \file vpFeatureMomentCentered.h
@@ -45,7 +45,7 @@
 #ifndef __FEATUREMOMENTCENTERED_H__
 #define __FEATUREMOMENTCENTERED_H__
 #include <visp/vpFeatureMoment.h>
-#ifdef VISP_MOMENTS_COMBINE_MATRICES
+#include <visp/vpFeatureMomentBasic.h>
 class vpMomentDatabase;
 /*!
   \class vpFeatureMomentCentered
@@ -69,56 +69,18 @@ class vpMomentDatabase;
         - vpMomentGravityCenter
 */
 class VISP_EXPORT vpFeatureMomentCentered : public vpFeatureMoment{
-private:
+
+protected:
+    
     unsigned int order;
- public:
-        vpFeatureMomentCentered(vpMomentDatabase& moments,double A, double B, double C,vpFeatureMomentDatabase* featureMoments=NULL);
-        void compute_interaction();
-        /*!
-        Interaction matrix corresponding to \f$ \mu_{ij} \f$ moment
-        \param select_one : first index (i)
-        \param select_two : second index (j)
-        \return Interaction matrix corresponding to the moment
-        */
-        vpMatrix 	interaction (unsigned int select_one,unsigned int select_two);
+    /*!
+       Core computation of interaction matrix for moment m_pq
+    */
+    vpMatrix
+    compute_Lmu_pq(const unsigned int& p, const unsigned int& q, const double& xg, const double& yg,
+                   const vpMatrix& L_xg, const vpMatrix& L_yg,
+                   const vpMomentBasic& m, const vpFeatureMomentBasic& feature_moment_m) const;
 
-        /*!
-          associated moment name
-          */
-        const char* momentName(){ return "vpMomentCentered";}
-        /*!
-          feature name
-          */
-        const char* name(){ return "vpFeatureMomentCentered";}
-
-
-};
-
-#else
-class vpMomentDatabase;
-/*!
-  \class vpFeatureMomentCentered
-
-  \ingroup VsFeature2
-
-  \brief Functionality computation for centered moment feature. Computes the interaction matrix associated with vpMomentCentered.
-
-  The interaction matrix for the feature is defined in \cite Tahri05z, equation (17).
-  This vpFeatureMoment, as well as it's corresponding moment primitive is double-indexed.
-  The interaction matrix \f$ L_{\mu_{ij}} \f$ is obtained by calling vpFeatureMomentBasic::interaction (i,j) and is associated to \f$ \mu_{ij} \f$ obtained by vpFeatureMomentCentered::get (i,j).
-
-  vpFeatureMomentCentered computes interaction matrices all interaction matrices up to vpMomentObject::getOrder()-1.
-  \attention The maximum order reached by vpFeatureMomentBasic is NOT the maximum order of the vpMomentObject, it is one unit smaller.
-  For example if you define your vpMomentObject up to order n then vpFeatureMomentBasic will be able to compute interaction matrices up to order n-1 that is
-  \f$ L_{m_{ij}} \f$ with \f$ i+j<=n-1 \f$.
-
-    This feature depends on:
-      - vpMomentGravityCenter
-      - vpMomentCentered
-*/
-class VISP_EXPORT vpFeatureMomentCentered : public vpFeatureMoment{
-private:
-    unsigned int order;
  public:
         vpFeatureMomentCentered(vpMomentDatabase& moments,double A, double B, double C,vpFeatureMomentDatabase* featureMoments=NULL);
         void compute_interaction();
@@ -129,20 +91,24 @@ private:
           throw vpException(vpException::functionNotImplementedError,"Not implemented!");
         }
 #endif
-
-        vpMatrix 	interaction (unsigned int select_one,unsigned int select_two);
+        /*!
+        Interaction matrix corresponding to \f$ \mu_{ij} \f$ moment
+        \param select_one : first index (i)
+        \param select_two : second index (j)
+        \return Interaction matrix corresponding to the moment
+        */
+        vpMatrix 	interaction (unsigned int select_one,unsigned int select_two) const;
 
         /*!
           associated moment name
           */
-        const char* momentName(){ return "vpMomentCentered";}
+        const char* momentName() const { return "vpMomentCentered";}
         /*!
           feature name
           */
-        const char* name(){ return "vpFeatureMomentCentered";}
+        const char* name() const { return "vpFeatureMomentCentered";}
 
-
+friend VISP_EXPORT std::ostream & operator<<(std::ostream & os, const vpFeatureMomentCentered& v);
 };
 
-#endif
 #endif

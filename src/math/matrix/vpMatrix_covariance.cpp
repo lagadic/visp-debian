@@ -3,7 +3,7 @@
  * $Id: vpMatrix_lu.cpp 3530 2012-01-03 10:52:12Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -32,16 +32,21 @@
  *
  *
  * Description:
- * Matrix LU decomposition.
+ * Covariance matrix computation.
  *
  * Authors:
  * Aurelien Yol
  *
  *****************************************************************************/
 
+#include <limits> // numeric_limits
+#include <cmath>  // std::fabs()
+
 #include <visp/vpConfig.h>
 #include <visp/vpMatrix.h>
 #include <visp/vpColVector.h>
+#include <visp/vpMatrixException.h>
+
 
 /*!
   Compute the covariance matrix of the parameters x from a least squares minimisation defined as:
@@ -55,8 +60,18 @@
 */
 vpMatrix vpMatrix::computeCovarianceMatrix(const vpMatrix &A, const vpColVector &x, const vpColVector &b)
 {
-  double sigma2 = ( ((b.t())*b) - ( (b.t())*A*x ) );
-  return (A.t()*A).pseudoInverse()*sigma2;
+//  double denom = ((double)(A.getRows()) - (double)(A.getCols())); // To consider OLS Estimate for sigma
+  double denom = ((double)(A.getRows())); // To consider MLE Estimate for sigma
+
+  if(denom <= std::numeric_limits<double>::epsilon())
+      throw vpMatrixException(vpMatrixException::divideByZeroError, "Impossible to compute covariance matrix: not enough data");
+
+//  double sigma2 = ( ((b.t())*b) - ( (b.t())*A*x ) ); // Should be equivalent to line bellow.
+  double sigma2 = (b - (A * x)).t() * (b - (A * x));
+
+  sigma2 /= denom;
+
+  return (A.t()*A).pseudoInverse(A.getCols()*std::numeric_limits<double>::epsilon())*sigma2;
 }
 
 /*!
@@ -73,6 +88,19 @@ vpMatrix vpMatrix::computeCovarianceMatrix(const vpMatrix &A, const vpColVector 
 */
 vpMatrix vpMatrix::computeCovarianceMatrix(const vpMatrix &A, const vpColVector &x, const vpColVector &b, const vpMatrix &W)
 {
-  double sigma2 = ( ((W*b).t())*W*b - ( ((W*b).t())*W*A*x ) );
-  return (A.t()*W*A).pseudoInverse()*sigma2;
+  double denom = 0.0;
+  vpMatrix W2(W.getCols(),W.getCols());
+  for(unsigned int i = 0 ; i < W.getCols() ; i++){
+      denom += W[i][i];
+      W2[i][i] = W[i][i]*W[i][i];
+  }
+
+  if(denom <= std::numeric_limits<double>::epsilon())
+      throw vpMatrixException(vpMatrixException::divideByZeroError, "Impossible to compute covariance matrix: not enough data");
+
+//  double sigma2 = ( ((W*b).t())*W*b - ( ((W*b).t())*W*A*x ) ); // Should be equivalent to line bellow.
+  double sigma2 = (W * b - (W * A * x)).t() * (W*b - (W * A * x));
+  sigma2 /= denom;
+
+  return (A.t()*(W2)*A).pseudoInverse(A.getCols()*std::numeric_limits<double>::epsilon())*sigma2;
 }

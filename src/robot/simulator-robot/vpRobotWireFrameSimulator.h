@@ -3,7 +3,7 @@
  * $Id: vpRobotWireFrameSimulator.h 3530 2012-01-03 10:52:12Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -51,10 +51,10 @@
 
 
 
-#if defined(WIN32) || defined(VISP_HAVE_PTHREAD)
+#if defined(_WIN32) || defined(VISP_HAVE_PTHREAD)
 #include <cmath>    // std::fabs
 #include <limits>   // numeric_limits
-#if defined(WIN32)
+#if defined(_WIN32)
 #  include <windows.h>
 #elif defined(VISP_HAVE_PTHREAD)
 #  include <pthread.h>
@@ -121,14 +121,14 @@ class VISP_EXPORT vpRobotWireFrameSimulator : protected vpWireFrameSimulator, pu
     /*! The velocity in the current frame (articular, camera or reference)*/
     vpColVector velocity;
 
-	#if defined(WIN32)
-    HANDLE  hThread;
-	HANDLE mutex_fMi;
+#if defined(_WIN32)
+    HANDLE hThread;
+    HANDLE mutex_fMi;
     HANDLE mutex_artVel;
     HANDLE mutex_artCoord;
     HANDLE mutex_velocity;
     HANDLE mutex_display;
-    #elif defined(VISP_HAVE_PTHREAD)
+#elif defined(VISP_HAVE_PTHREAD)
     pthread_t thread;
     pthread_attr_t attr;
     pthread_mutex_t mutex_fMi;
@@ -136,7 +136,7 @@ class VISP_EXPORT vpRobotWireFrameSimulator : protected vpWireFrameSimulator, pu
     pthread_mutex_t mutex_artCoord;
     pthread_mutex_t mutex_velocity;
     pthread_mutex_t mutex_display;
-    #endif
+#endif
     
     bool displayBusy;
 
@@ -260,11 +260,11 @@ class VISP_EXPORT vpRobotWireFrameSimulator : protected vpWireFrameSimulator, pu
     /*!
       Set the desired position of the robot's camera relative to the object.
 
-      \param cdMo : The desired pose of the camera.
+      \param cdMo_ : The desired pose of the camera.
     */
-    void setDesiredCameraPosition(const vpHomogeneousMatrix cdMo)
+    void setDesiredCameraPosition(const vpHomogeneousMatrix cdMo_)
     {
-      this->vpWireFrameSimulator::setDesiredCameraPosition(cdMo);
+      this->vpWireFrameSimulator::setDesiredCameraPosition(cdMo_);
     }
 
     /*!
@@ -276,11 +276,11 @@ class VISP_EXPORT vpRobotWireFrameSimulator : protected vpWireFrameSimulator, pu
     /*!
       Set the external camera point of view.
 
-      \param camMf : The pose of the external camera relative to the world reference frame.
+      \param camMf_ : The pose of the external camera relative to the world reference frame.
     */
-    void setExternalCameraPosition(const vpHomogeneousMatrix camMf)
+    void setExternalCameraPosition(const vpHomogeneousMatrix camMf_)
     {
-      this->vpWireFrameSimulator::setExternalCameraPosition(camMf);
+      this->vpWireFrameSimulator::setExternalCameraPosition(camMf_);
     }
     /*!
       Specify the thickness of the graphics drawings.
@@ -321,15 +321,15 @@ class VISP_EXPORT vpRobotWireFrameSimulator : protected vpWireFrameSimulator, pu
     /*!
       Set the pose between the object and the fixed world frame.
       
-      \param fMo : The pose between the object and the fixed world frame.
+      \param fMo_ : The pose between the object and the fixed world frame.
     */
-    void set_fMo(const vpHomogeneousMatrix &fMo) {this->fMo = fMo;}
+    void set_fMo(const vpHomogeneousMatrix &fMo_) {this->fMo = fMo_;}
 
   protected:
     /*!
       Function used to launch the thread which moves the robot.
     */
-    #if defined(WIN32)
+    #if defined(_WIN32)
 	static DWORD WINAPI launcher( LPVOID lpParam ) 
 	{
     ((vpRobotWireFrameSimulator *)lpParam)->updateArticularPosition();
@@ -357,7 +357,7 @@ class VISP_EXPORT vpRobotWireFrameSimulator : protected vpWireFrameSimulator, pu
     void initDisplay() {;}
     virtual void initArms() = 0;
 
-	#if defined(WIN32)
+	#if defined(_WIN32)
     vpColVector get_artCoord() const {
       WaitForSingleObject(mutex_artCoord,INFINITE);
       vpColVector artCoordTmp (6);

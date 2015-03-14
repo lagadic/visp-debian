@@ -3,7 +3,7 @@
  * $Id: vpFeatureThetaU.cpp 3530 2012-01-03 10:52:12Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -62,7 +62,6 @@
   \brief class that defines the vpFeatureSegment visual feature
 */
 
-
 /*! 
 
   Initialise the memory space requested for segment visual
@@ -89,11 +88,9 @@ vpFeatureSegment::init()
   \param normalized : If true, use normalized features \f${\bf s} = (x_n, y_n, l_n, \alpha)\f$.
   If false, use non normalized features \f${\bf s} = (x_c, y_c, l_c, \alpha)\f$.
 */
-vpFeatureSegment::vpFeatureSegment(bool normalized):
-  vpBasicFeature()
+vpFeatureSegment::vpFeatureSegment(bool normalized)
+  : xc_(0), yc_(0), l_(0), alpha_(0), Z1_(0), Z2_(0), cos_a_(0), sin_a_(0), normalized_(normalized)
 {
-  this->normalized_ = normalized;
-
   init();
 }
 

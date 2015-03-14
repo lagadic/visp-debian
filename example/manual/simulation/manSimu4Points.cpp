@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: manSimu4Points.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: manSimu4Points.cpp 4574 2014-01-09 08:48:51Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -207,27 +207,34 @@ void *mainLoop (void *_simu)
 int
 main()
 {
-  vpSimulator simu ;
+  try {
+    vpSimulator simu ;
 
-  // Internal view initialization : view from the robot camera
-  simu.initInternalViewer(480, 360) ;
-  // External view initialization : view from an external camera
-  simu.initExternalViewer(300, 300) ; 
+    // Internal view initialization : view from the robot camera
+    simu.initInternalViewer(480, 360) ;
+    // External view initialization : view from an external camera
+    simu.initExternalViewer(300, 300) ;
 
-  // Inernal camera paramters initialization
-  vpCameraParameters cam(800,800,240,180) ;
-  simu.setInternalCameraParameters(cam) ;
+    // Inernal camera paramters initialization
+    vpCameraParameters cam(800,800,240,180) ;
+    simu.setInternalCameraParameters(cam) ;
 
-  vpTime::wait(1000) ;
-  // Load the scene
-  std::cout << "Load : ./4Points.iv" << std::endl
-            << "This file should be in the working directory" << std::endl;
-  simu.load("./4points.iv") ;
+    vpTime::wait(1000) ;
+    // Load the scene
+    std::cout << "Load : ./4Points.iv" << std::endl
+              << "This file should be in the working directory" << std::endl;
+    simu.load("./4points.iv") ;
 
-  // Run the main loop
-  simu.initApplication(&mainLoop) ;
-  // Run the simulator
-  simu.mainLoop() ;
+    // Run the main loop
+    simu.initApplication(&mainLoop) ;
+    // Run the simulator
+    simu.mainLoop() ;
+    return 0;
+  }
+  catch(vpException e) {
+    std::cout << "Catch an exception: " << e << std::endl;
+    return 1;
+  }
 }
 
 #else

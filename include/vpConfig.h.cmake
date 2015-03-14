@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpConfig.h.cmake 4308 2013-07-08 08:47:09Z fspindle $
+ * $Id: vpConfig.h.cmake 5324 2015-02-13 16:11:04Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -42,7 +42,7 @@
 #define vpConfig_h
 
 #if defined _MSC_VER && _MSC_VER >= 1200
-  #pragma warning( disable: 4100 4127 4251 4514 4668 4710 4820 )
+  #pragma warning( disable: 4100 4127 4251 4275 4514 4668 4710 4820 )
   #if _MSC_VER >= 1400 // 1400 = MSVC 8 2005
     #pragma warning( disable: 4548 )
   #endif
@@ -53,12 +53,36 @@
   // 4100 : undocumented ("unreferenced formal parameter")
   // 4127 : conditional expression is constant
   // 4251 : 'identifier' : class 'type' needs to have dll-interface to be used by clients of class 'type2', ie. disable warnings related to inline functions
+  // 4275 : non – DLL-interface classkey 'identifier' used as base for DLL-interface classkey 'identifier'
   // 4514 : 'function' : unreferenced inline function has been removed
   // 4548 : expression before comma has no effect
   // 4668 : 'symbol' is not defined as a preprocessor macro, replacing with '0' for 'directives'
   // 4710 : 'function' : function not inlined
   // 4820 : 'bytes' bytes padding added after construct 'member_name'
   // 4986 : undocumented
+#endif
+
+#if defined _MSC_VER && (_MSC_VER == 1500)
+// Visual Studio 9 2008 specific stuff
+// Fix running 64-bit OpenMP Debug Builds compiled with Visual Studio 2008 SP1
+// See discussion on https://gforge.inria.fr/forum/message.php?msg_id=149273&group_id=397
+// and the proposed fix: http://www.johanseland.com/2010/08/running-64-bit-openmp-debug-builds.html
+#  define _BIND_TO_CURRENT_OPENMP_VERSION 1
+#endif
+
+#if defined(__MINGW__) || defined(__MINGW32__) || defined(__MINGW64__)
+// Work arround to fix build issues that may occur with Mingw:
+// error: 'DBL_EPSILON' was not declared in this scope
+// error: 'FLT_EPSILON' was not declared in this scope
+
+#  include <float.h>
+
+#  ifndef DBL_EPSILON
+#    define DBL_EPSILON __DBL_EPSILON__
+#  endif
+#  ifndef FLT_EPSILON
+#    define FLT_EPSILON __FLT_EPSILON__
+#  endif
 #endif
 
 // ViSP major version.
@@ -104,8 +128,11 @@
 // Defined if OpenCV available.
 #cmakedefine VISP_HAVE_OPENCV
 
-// Defined if OpenCV_nonfree available.
+// Defined if OpenCV nonfree module available. Only with OpenCV < 3.0.0
 #cmakedefine VISP_HAVE_OPENCV_NONFREE
+
+// Defined if OpenCV xfeatures2d module available. Only since OpenCV >= 3.0.0
+#cmakedefine VISP_HAVE_OPENCV_XFEATURES2D
 
 // OpenCV version in hexadecimal (for example 2.1.0 gives 0x020100).
 #ifdef VISP_HAVE_OPENCV
@@ -203,9 +230,6 @@
 // Defined if ffmpeg library available.
 #cmakedefine VISP_HAVE_FFMPEG
 
-// Defined if raw1394 and dc1394-1.x libraries available.
-#cmakedefine VISP_HAVE_DC1394_1
-
 // Defined if raw1394 and dc1394-2.x libraries available.
 #cmakedefine VISP_HAVE_DC1394_2
 
@@ -247,25 +271,18 @@
 // Defined if Irisa's Viper S850 robot available.
 #cmakedefine VISP_HAVE_VIPER850
 
-// Defined if Irisa's Cycab car-like mobile robot is found. 
-// If found, either VISP_HAVE_CYCABTK_OLD nor VISP_HAVE_CYCABTK
-// is defined.  
-#cmakedefine VISP_HAVE_CYCAB
-
-// Defined if the old cycabtk library is found. CycabTk is used to
-// communicate with Irisa's Cycab car-like robot (obsolete).  
-#cmakedefine VISP_HAVE_CYCABTK_OLD
-
-// Defined if the last cycabtk library is found. CycabTk is used to
-// communicate with Irisa's Cycab car-like robot (to use).  
-#cmakedefine VISP_HAVE_CYCABTK
-
 // Defined if the Aria library and (pthread, rt, dl libraries under Unix) is found. 
 // These libraries are used to control Pioneer mobile robots.  
 #cmakedefine VISP_HAVE_PIONEER
 
 // Defined if linux/parport.h is available for parallel port usage.
 #cmakedefine VISP_HAVE_PARPORT
+
+// Defined if libzbar is available for bar code detection
+#cmakedefine VISP_HAVE_ZBAR
+
+// Defined if libdmtx is available for bar code detection
+#cmakedefine VISP_HAVE_DMTX
 
 // Defined if Inria's NAS server hosting /udd/ is available
 // Used for the moment in vpAfma6 class to check if config files are
@@ -298,7 +315,7 @@
 //
 // On Linux, set the visibility accordingly. If C++ symbol visibility
 // is handled by the compiler, see: http://gcc.gnu.org/wiki/Visibility
-# if defined _WIN32 || defined __CYGWIN__
+# if defined(_WIN32) || defined(__CYGWIN__)
 // On Microsoft Windows, use dllimport and dllexport to tag symbols.
 #  define VISP_DLLIMPORT __declspec(dllimport)
 #  define VISP_DLLEXPORT __declspec(dllexport)
@@ -315,7 +332,7 @@
 #   define VISP_DLLEXPORT
 #   define VISP_DLLLOCAL
 #  endif // __GNUC__ >= 4
-# endif // defined _WIN32 || defined __CYGWIN__
+# endif // defined(_WIN32) || defined(__CYGWIN__)
 
 // Under Windows, for shared libraries (DLL) we need to define export on
 // compilation or import on use (like a third party project).
@@ -339,7 +356,7 @@
 
 // Add the material to produce a warning when deprecated functions are used
 #ifndef vp_deprecated
-#  if defined (UNIX)
+#  if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
 #    define vp_deprecated __attribute__((deprecated))
 #  else
 #    define vp_deprecated __declspec(deprecated)

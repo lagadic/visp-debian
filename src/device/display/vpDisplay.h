@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpDisplay.h 4323 2013-07-18 09:24:01Z fspindle $
+ * $Id: vpDisplay.h 5089 2014-12-19 07:58:34Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -44,10 +44,10 @@
 #ifndef vpDisplay_h
 #define vpDisplay_h
 
-// image
-#include <visp/vpImage.h>
+#include <string>
+#include <sstream>
 
-//color
+#include <visp/vpImage.h>
 #include <visp/vpColor.h>
 #include <visp/vpMouseButton.h>
 #include <visp/vpRGBa.h>
@@ -89,11 +89,10 @@ int main()
   vpImage<unsigned char> I; // Grey level image
 
   // Read an image in PGM P5 format
-#ifdef UNIX
-  //vpImageIo::read(I, "/local/soft/ViSP/ViSP-images/Klimt/Klimt.pgm");
-  vpImageIo::read(I, "/tmp/Klimt.pgm");
-#elif WIN32
+#ifdef _WIN32
   vpImageIo::read(I, "C:/temp/ViSP-images/Klimt/Klimt.pgm");
+#else
+  vpImageIo::read(I, "/local/soft/ViSP/ViSP-images/Klimt/Klimt.pgm");
 #endif
 
   vpDisplay *d;
@@ -181,13 +180,9 @@ class VISP_EXPORT vpDisplay
   int windowXPosition ;
   //! display position
   int windowYPosition ;
-  //! display title
-  char *title ;
-  char *font;
   unsigned int width ;
   unsigned int height ;
-
-  vpDisplay() ;
+  std::string title_;
 
   /*!
     Display an arrow from image point \e ip1 to image point \e ip2.
@@ -252,10 +247,10 @@ class VISP_EXPORT vpDisplay
     \param color : Line color.
     \param thickness : Line thickness.
   */
-  virtual void displayLine(const vpImagePoint &ip1, 
-			   const vpImagePoint &ip2,
-			   const vpColor &color, 
-			   unsigned int thickness=1) =0;
+  virtual void displayLine(const vpImagePoint &ip1,
+         const vpImagePoint &ip2,
+         const vpColor &color,
+         unsigned int thickness=1) =0;
 
   /*!
     Display a point at the image point \e ip location.
@@ -316,6 +311,8 @@ class VISP_EXPORT vpDisplay
 				unsigned int thickness=1)=0 ;
 
  public:
+  vpDisplay() ;
+  vpDisplay(const vpDisplay& d) ;
   virtual ~vpDisplay();
 
   /*!
@@ -356,7 +353,16 @@ class VISP_EXPORT vpDisplay
   virtual void displayImageROI(const vpImage<unsigned char> &I,const vpImagePoint &iP, const unsigned int width, const unsigned int height) =0 ;
   virtual void displayImageROI(const vpImage<vpRGBa> &I,const vpImagePoint &iP, const unsigned int width, const unsigned int height) =0 ;
   
-  
+  /*!
+    Return the position (along the horizontal axis) on the screen of the display window.
+    \sa getWindowYPosition()
+   */
+  int getWindowXPosition() const {return windowXPosition;};
+  /*!
+    Return the position (along the vertical axis) on the screen of the display window.
+    \sa getWindowXPosition()
+   */
+  int getWindowYPosition() const {return windowYPosition;};
   /*!
     Flushes the display.
     It's necessary to use this function to see the results of any drawing.    
@@ -613,11 +619,11 @@ class VISP_EXPORT vpDisplay
                             double size, const vpColor &color,
                             unsigned int thickness)  ;
   static void displayCharString(const vpImage<unsigned char> &I,
-				const vpImagePoint &ip, const char *string,
-				const vpColor &color) ;
+                                const vpImagePoint &ip, const char *string,
+                                const vpColor &color) ;
   static void displayCharString(const vpImage<unsigned char> &I,
-				int i, int j, const char *string,
-				const vpColor &color) ;
+                                int i, int j, const char *string,
+                                const vpColor &color) ;
   static void displayCircle(const vpImage<unsigned char> &I,
 			    const vpImagePoint &center, unsigned int radius,
 			    const vpColor &color,
@@ -645,10 +651,22 @@ class VISP_EXPORT vpDisplay
 			     int i1, int j1, int i2, int j2,
 			     const vpColor &color, 
 			     unsigned int thickness=1) ;
+  static void displayEllipse(const vpImage<unsigned char> &I,
+                             const vpImagePoint &center,
+                             const double &coef1, const double &coef2, const double &coef3,
+                             bool use_centered_moments,
+                             const vpColor &color,
+                             unsigned int thickness=1);
+  static void displayEllipse(const vpImage<unsigned char> &I,
+                             const vpImagePoint &center,
+                             const double &coef1, const double &coef2, const double &coef3,
+                             const double &theta1, const double &theta2, bool use_centered_moments,
+                             const vpColor &color,
+                             unsigned int thickness=1);
   static void displayFrame(const vpImage<unsigned char> &I,
 			   const vpHomogeneousMatrix &cMo,
 			   const vpCameraParameters &cam,
-			   double size, const vpColor &color,
+         double size, const vpColor &color=vpColor::none,
 			   unsigned int thickness=1)  ;
   static void displayLine(const vpImage<unsigned char> &I,
 			  const vpImagePoint &ip1, 
@@ -660,11 +678,17 @@ class VISP_EXPORT vpDisplay
 			  const vpColor &color, 
 			  unsigned int thickness=1) ;
   static void displayPoint(const vpImage<unsigned char> &I,
-			   const vpImagePoint &ip,
-			   const vpColor &color) ;
+                           const vpImagePoint &ip,
+                           const vpColor &color,
+                           unsigned int thickness=1) ;
   static void displayPoint(const vpImage<unsigned char> &I,
-			   int i, int j,
-			   const vpColor &color) ;
+                           int i, int j,
+                           const vpColor &color,
+                           unsigned int thickness=1) ;
+  static void displayPolygon(const vpImage<unsigned char> &I,
+                             const std::vector<vpImagePoint> &vip,
+                             const vpColor &color,
+                             unsigned int thickness=1) ;
   static void displayRectangle(const vpImage<unsigned char> &I,
 			       const vpImagePoint &topLeft,
 			       unsigned int width, unsigned int height,
@@ -696,7 +720,12 @@ class VISP_EXPORT vpDisplay
 			       const vpColor &color, 
 			       unsigned int thickness=1);
   static void displayROI(const vpImage<unsigned char> &I,const vpRect &roi) ;
-
+  static void displayText(const vpImage<unsigned char> &I,
+                          const vpImagePoint &ip, const std::string &s,
+                          const vpColor &color) ;
+  static void displayText(const vpImage<unsigned char> &I,
+                          int i, int j, const std::string &s,
+                          const vpColor &color) ;
   static void flush(const vpImage<unsigned char> &I) ;
   static void flushROI(const vpImage<unsigned char> &I,const vpRect &roi) ;
 
@@ -704,13 +733,19 @@ class VISP_EXPORT vpDisplay
   static bool getClick(const vpImage<unsigned char> &I,
 		       vpImagePoint &ip, bool blocking=true) ;
   static bool getClick(const vpImage<unsigned char> &I,
-		       vpImagePoint &ip,
-		       vpMouseButton::vpMouseButtonType &button,
-		       bool blocking=true) ;
+           vpImagePoint &ip,
+           vpMouseButton::vpMouseButtonType &button,
+           bool blocking=true) ;
+  static bool getClick(const vpImage<unsigned char> &I,
+           vpMouseButton::vpMouseButtonType &button,
+           bool blocking=true) ;
   static bool getClickUp(const vpImage<unsigned char> &I,
-			 vpImagePoint &ip,
-			 vpMouseButton::vpMouseButtonType &button,
-			 bool blocking=true) ;
+       vpImagePoint &ip,
+       vpMouseButton::vpMouseButtonType &button,
+       bool blocking=true) ;
+  static bool getClickUp(const vpImage<unsigned char> &I,
+       vpMouseButton::vpMouseButtonType &button,
+       bool blocking=true) ;
   static void getImage(const vpImage<unsigned char> &Is, vpImage<vpRGBa> &Id) ;
 
   static bool getKeyboardEvent(const vpImage<unsigned char> &I, 
@@ -750,11 +785,11 @@ class VISP_EXPORT vpDisplay
                             double size, const vpColor &color,
                             unsigned int thickness)  ;
   static void displayCharString(const vpImage<vpRGBa> &I,
-				const vpImagePoint &ip, const char *string,
-				const vpColor &color) ;
+                                const vpImagePoint &ip, const char *string,
+                                const vpColor &color) ;
   static void displayCharString(const vpImage<vpRGBa> &I,
-				int i, int j, const char *string,
-				const vpColor &color) ;
+                                int i, int j, const char *string,
+                                const vpColor &color) ;
   static void displayCircle(const vpImage<vpRGBa> &I,
 			    const vpImagePoint &center, unsigned int radius,
 			    const vpColor &color,
@@ -785,8 +820,20 @@ class VISP_EXPORT vpDisplay
   static void displayFrame(const vpImage<vpRGBa> &I,
 			   const vpHomogeneousMatrix &cMo,
 			   const vpCameraParameters &cam,
-			   double size, const vpColor &color, 
+         double size, const vpColor &color=vpColor::none,
 			   unsigned int thickness=1)  ;
+  static void displayEllipse(const vpImage<vpRGBa> &I,
+                             const vpImagePoint &center,
+                             const double &coef1, const double &coef2, const double &coef3,
+                             bool use_centered_moments,
+                             const vpColor &color,
+                             unsigned int thickness=1);
+  static void displayEllipse(const vpImage<vpRGBa> &I,
+                             const vpImagePoint &center,
+                             const double &coef1, const double &coef2, const double &coef3,
+                             const double &angle1, const double &angle2, bool use_centered_moments,
+                             const vpColor &color,
+                             unsigned int thickness=1);
   static void displayLine(const vpImage<vpRGBa> &I,
 			  const vpImagePoint &ip1, 
 			  const vpImagePoint &ip2,
@@ -797,11 +844,17 @@ class VISP_EXPORT vpDisplay
 			  const vpColor &color, 
 			  unsigned int thickness=1) ;
   static void displayPoint(const vpImage<vpRGBa> &I,
-			   const vpImagePoint &ip,
-			   const vpColor &color) ;
+                           const vpImagePoint &ip,
+                           const vpColor &color,
+                           unsigned int thickness=1) ;
   static void displayPoint(const vpImage<vpRGBa> &I,
-			   int i, int j,
-			   const vpColor &color) ;
+                           int i, int j,
+                           const vpColor &color,
+                           unsigned int thickness=1) ;
+  static void displayPolygon(const vpImage<vpRGBa> &I,
+                             const std::vector<vpImagePoint> &vip,
+                             const vpColor &color,
+                             unsigned int thickness=1) ;
   static void displayRectangle(const vpImage<vpRGBa> &I,
 			       const vpImagePoint &topLeft,
 			       unsigned int width, unsigned int height,
@@ -834,6 +887,12 @@ class VISP_EXPORT vpDisplay
 			       const vpColor &color, 
 			       unsigned int thickness=1);
   static void displayROI(const vpImage<vpRGBa> &I, const vpRect &roi) ;
+  static void displayText(const vpImage<vpRGBa> &I,
+                          const vpImagePoint &ip, const std::string &s,
+                          const vpColor &color) ;
+  static void displayText(const vpImage<vpRGBa> &I,
+                          int i, int j, const std::string &s,
+                          const vpColor &color) ;
 
   static void flush(const vpImage<vpRGBa> &I) ;
   static void flushROI(const vpImage<vpRGBa> &I, const vpRect &roi) ;
@@ -841,13 +900,19 @@ class VISP_EXPORT vpDisplay
   static bool getClick(const vpImage<vpRGBa> &I,
 		       vpImagePoint &ip, bool blocking=true) ;
   static bool getClick(const vpImage<vpRGBa> &I,
-		       vpImagePoint &ip,
-		       vpMouseButton::vpMouseButtonType &button,
-		       bool blocking=true) ;
+           vpImagePoint &ip,
+           vpMouseButton::vpMouseButtonType &button,
+           bool blocking=true) ;
+  static bool getClick(const vpImage<vpRGBa> &I,
+           vpMouseButton::vpMouseButtonType &button,
+           bool blocking=true) ;
   static bool getClickUp(const vpImage<vpRGBa> &I,
-			 vpImagePoint &ip,
-			 vpMouseButton::vpMouseButtonType &button,
-			 bool blocking=true) ;
+       vpImagePoint &ip,
+       vpMouseButton::vpMouseButtonType &button,
+       bool blocking=true) ;
+  static bool getClickUp(const vpImage<vpRGBa> &I,
+       vpMouseButton::vpMouseButtonType &button,
+       bool blocking=true) ;
   static void getImage(const vpImage<vpRGBa> &Is, vpImage<vpRGBa> &Id) ;
 
   static bool getKeyboardEvent(const vpImage<vpRGBa> &I, 

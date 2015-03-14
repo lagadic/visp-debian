@@ -1,9 +1,9 @@
 @rem #############################################################################
 @rem #
-@rem # $Id: visp-config.bat.in 4057 2013-01-05 13:10:29Z fspindle $
+@rem # $Id: visp-config.bat.in 4961 2014-11-14 13:06:26Z fspindle $
 @rem #
 @rem # This file is part of the ViSP software.
-@rem # Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+@rem # Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
 @rem # 
 @rem # This software is free software; you can redistribute it and/or
 @rem # modify it under the terms of the GNU General Public License
@@ -55,11 +55,11 @@ set VERSION=${VISP_VERSION}
 
 set DEFS=${VISP_CONFIG_SCRIPT_DEFS}
 
-set INCLUDE=${VISP_CONFIG_SCRIPT_INC}
+set INCLUDE="${VISP_CONFIG_SCRIPT_INC}"
 
 set OPENMP_SUPPORT=${VISP_OPENMP_SUPPORT}
 
-set LIBDIR=${VISP_CONFIG_SCRIPT_LIBDIR}
+set LIBDIR="${VISP_CONFIG_SCRIPT_LIBDIR}"
 
 set LIBS_DEBUG=${VISP_CONFIG_SCRIPT_LIBS_DEBUG}
 
@@ -106,7 +106,7 @@ for %%a in (%*) do (
   if "%%a" == "--version" (
 	echo ViSP %VERSION% Visual Servoing Platform
 	echo.
-	echo Copyright 2005 - 2013 Inria. All rights reserved.
+	echo Copyright 2005 - 2014 Inria. All rights reserved.
 	goto END
   )
   if "%%a" == "--dumpversion" (
@@ -118,7 +118,7 @@ for %%a in (%*) do (
 
 :USAGE
 echo ViSP %VERSION% (Visual Servoing Platform)
-echo Copyright (C) 2005 - 2013 Inria. All rights reserved.
+echo Copyright (C) 2005 - 2014 Inria. All rights reserved.
 echo.
 echo Usage: %0 [--prefix] [--def] [--include] [--openmp] [--libpath] 
 echo [--libs-debug] [--libs-optimized] [--version] [--dumpversion] [--help]

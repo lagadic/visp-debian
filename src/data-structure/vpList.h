@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpList.h 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpList.h 4632 2014-02-03 17:06:40Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -64,10 +64,11 @@
 template <class type>
 class vpListElement
 {
- public:
-  vpListElement<type> *prev; //<! pointer to the previous element in the list
-  vpListElement<type> *next; //<! pointer to the next element in the list
-  type val;             //<! value of the element
+  public:
+    vpListElement() : prev(NULL), next(NULL), val() {};
+    vpListElement<type> *prev; //<! pointer to the previous element in the list
+    vpListElement<type> *next; //<! pointer to the next element in the list
+    type val;             //<! value of the element
 } ;
 
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */
@@ -173,7 +174,7 @@ class vpList
   inline unsigned int nbElement(void);       // returns the number of items currently in the list
   inline unsigned int nbElements(void);       // returns the number of items currently in the list
 
-  void operator=(const vpList<type>& l);
+  vpList<type>& operator=(const vpList<type>& l);
   inline void operator+=(vpList<type>& l);
   inline void operator+=(const type& l);
 
@@ -222,7 +223,7 @@ void vpList<type>::init()
   \sa init()
  */
 template<class type>
-vpList<type>::vpList()
+vpList<type>::vpList() : nb(0), first(NULL), last(NULL), cur(NULL)
 {
   init() ;
 }
@@ -236,13 +237,10 @@ vpList<type>::vpList()
 template<class type>
 vpList<type>::~vpList()
 {
-
   kill() ;
 
-  if (first != NULL) delete first ;
-  if (last != NULL) delete last ;
-
-
+  /*if (first != NULL) */ delete first ;
+  /*if (last != NULL)  */ delete last ;
 }
 
 /*!
@@ -741,7 +739,7 @@ void vpList<type>::suppress(void)
  */
 
 template<class type>
-void vpList<type>::operator=(const vpList<type>& l)
+vpList<type>& vpList<type>::operator=(const vpList<type>& l)
 {
   type x ;
   vpListElement<type> *e ;
@@ -758,6 +756,8 @@ void vpList<type>::operator=(const vpList<type>& l)
 
   nb = l.nb ;
   cur = first->next ;
+
+  return *this;
 }
 
 /*!
@@ -806,6 +806,7 @@ void vpList<type>::operator += (const type& l)
 */
 template<class type>
 vpList<type>::vpList(const vpList<type>& l)
+ : nb(0), first(NULL), last(NULL), cur(NULL)
 {
   init() ;
   *this = l;

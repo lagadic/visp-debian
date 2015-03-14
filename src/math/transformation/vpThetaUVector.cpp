@@ -1,9 +1,9 @@
 /****************************************************************************
 *
-* $Id: vpThetaUVector.cpp 4056 2013-01-05 13:04:42Z fspindle $
+* $Id: vpThetaUVector.cpp 4792 2014-07-18 11:56:02Z fspindle $
 *
 * This file is part of the ViSP software.
-* Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+* Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
 * 
 * This software is free software; you can redistribute it and/or
 * modify it under the terms of the GNU General Public License
@@ -55,33 +55,18 @@ rotation
 const double vpThetaUVector::minimum = 0.0001;
 
 /*!
-Affectation of two \f$\theta {\bf u}\f$ vector.
-*/
-vpThetaUVector &
-vpThetaUVector::operator=(const vpThetaUVector &m)
-{
-  for (int i=0; i<3; i++)
-  {
-    r[i] = m.r[i] ;
-  }
-  return *this;
-}
-
-
-/*!
-Copy constructor.
-*/
-vpThetaUVector::vpThetaUVector(const vpThetaUVector &m) : vpRotationVector()
-{
-  *this = m ;
-}
-
-/*!
 Initialize a \f$\theta {\bf u}\f$ vector from an homogeneous matrix.
 */
 vpThetaUVector::vpThetaUVector(const vpHomogeneousMatrix& M)
 {
   buildFrom(M) ;
+}
+/*!
+Initialize a \f$\theta {\bf u}\f$ vector from a pose vector.
+*/
+vpThetaUVector::vpThetaUVector(const vpPoseVector& p)
+{
+  buildFrom(p) ;
 }
 /*!
 Initialize a \f$\theta {\bf u}\f$ vector from a rotation matrix.
@@ -126,6 +111,17 @@ vpThetaUVector::buildFrom(const vpHomogeneousMatrix& M)
 
   M.extract(R);
   buildFrom(R);
+
+  return *this ;
+}
+/*!
+Converts a pose vector into a \f$\theta {\bf u}\f$ vector.
+*/
+vpThetaUVector
+vpThetaUVector::buildFrom(const vpPoseVector& p)
+{
+  for(unsigned int i=0; i<3; i++)
+    r[i] = p[i+3];
 
   return *this ;
 }
@@ -271,7 +267,7 @@ vpThetaUVector::buildFrom(const vpRxyzVector& rxyz)
   return *this ;
 }
 
-/*! 
+/*!
 
 Initialize each element of the \f$\theta {\bf u}\f$ vector to the
 same angle value \e v.
@@ -327,8 +323,3 @@ vpThetaUVector::extract(double &theta, vpColVector &u) const
 }
 
 #undef vpDEBUG_LEVEL1
-/*
-* Local variables:
-* c-basic-offset: 2
-* End:
-*/

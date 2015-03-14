@@ -1,9 +1,9 @@
 /****************************************************************************
 *
-* $Id: vpMatrix.cpp 4210 2013-04-16 08:57:46Z fspindle $
+* $Id: vpMatrix.cpp 5238 2015-01-30 13:52:25Z fspindle $
 *
 * This file is part of the ViSP software.
-* Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+* Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
 * 
 * This software is free software; you can redistribute it and/or
 * modify it under the terms of the GNU General Public License
@@ -56,6 +56,7 @@
 
 #include <visp/vpMatrix.h>
 #include <visp/vpMath.h>
+#include <visp/vpHomography.h>
 #include <visp/vpTranslationVector.h>
 
 // Exception
@@ -76,6 +77,10 @@
 #include <string>
 #include <cmath>    // std::fabs
 #include <limits>   // numeric_limits
+
+#ifdef VISP_HAVE_GSL
+#include <gsl/gsl_linalg.h>
+#endif
 
 #define DEBUG_LEVEL1 0
 #define DEBUG_LEVEL2 0
@@ -109,8 +114,8 @@ Construction of the object matrix.
 Number of columns and rows are zero.
 */
 vpMatrix::vpMatrix()
+  : rowNum(0), colNum(0), data(NULL), rowPtrs(NULL), dsize(0), trsize(0)
 {
-  init() ;
 }
 
 
@@ -123,9 +128,31 @@ Initialize a matrix with 0.
 \param c : Matrix number of columns.
 */
 vpMatrix::vpMatrix(unsigned int r, unsigned int c)
+  : rowNum(0), colNum(0), data(NULL), rowPtrs(NULL), dsize(0), trsize(0)
 {
-  init() ;
   resize(r, c);
+}
+
+/*!
+Constructor.
+
+Initialize a matrix with \e val.
+
+\param r : Matrix number of rows.
+\param c : Matrix number of columns.
+\param val : Each element of the matrix is set to \e val.
+*/
+vpMatrix::vpMatrix(unsigned int r, unsigned int c, double val)
+  : rowNum(0), colNum(0), data(NULL), rowPtrs(NULL), dsize(0), trsize(0)
+{
+  resize(r, c);
+  *this = val;
+}
+
+vpMatrix::vpMatrix(const vpHomography& H)
+  : rowNum(0), colNum(0), data(NULL), rowPtrs(NULL), dsize(0), trsize(0)
+{
+  (*this) = H;
 }
 
 /*!
@@ -134,9 +161,8 @@ vpMatrix::vpMatrix(unsigned int r, unsigned int c)
 vpMatrix::vpMatrix(const vpMatrix &m,
                    unsigned int r, unsigned int c, 
                    unsigned int nrows, unsigned int ncols)
+  : rowNum(0), colNum(0), data(NULL), rowPtrs(NULL), dsize(0), trsize(0)
 {
-  init() ;
-
   if (((r + nrows) > m.rowNum) || ((c + ncols) > m.colNum))
   {
     vpERROR_TRACE("\n\t\t SubvpMatrix larger than vpMatrix") ;
@@ -149,9 +175,8 @@ vpMatrix::vpMatrix(const vpMatrix &m,
 
 //! copie constructor
 vpMatrix::vpMatrix(const vpMatrix& m)
+  : rowNum(0), colNum(0), data(NULL), rowPtrs(NULL), dsize(0), trsize(0)
 {
-  init() ;
-
   resize(m.rowNum,m.colNum);
 
   memcpy(data,m.data,rowNum*colNum*sizeof(double)) ;
@@ -177,7 +202,7 @@ void vpMatrix::resize(const unsigned int nrows, const unsigned int ncols,
 
   if ((nrows == rowNum) && (ncols == colNum))
   {
-    if (flagNullify)
+    if (flagNullify && this->data != NULL)
     { memset(this->data,0,this->dsize*sizeof(double)) ;}
   }
   else
@@ -189,7 +214,7 @@ void vpMatrix::resize(const unsigned int nrows, const unsigned int ncols,
     vpDEBUG_TRACE (25, "Recopy case per case is required iff number of "
       "cols has changed (structure of double array is not "
       "the same in this case.");
-    if (recopyNeeded)
+    if (recopyNeeded && this->data != NULL)
     {
       copyTmp = new double[this->dsize];
       memcpy (copyTmp, this ->data, sizeof(double)*this->dsize);
@@ -222,8 +247,8 @@ void vpMatrix::resize(const unsigned int nrows, const unsigned int ncols,
 
     vpDEBUG_TRACE (25, "Recomputation this->trsize array values.");
     {
-      double **t= rowPtrs;
-      for (unsigned int i=0; i<dsize; i+=ncols)  { *t++ = this->data + i; }
+      double **t_= rowPtrs;
+      for (unsigned int i=0; i<dsize; i+=ncols)  { *t_++ = this->data + i; }
     }
 
     this->rowNum = nrows; this->colNum = ncols;
@@ -233,7 +258,7 @@ void vpMatrix::resize(const unsigned int nrows, const unsigned int ncols,
     { memset(this->data,0,this->dsize*sizeof(double)) ;}
     else
     {
-      if (recopyNeeded)
+      if (recopyNeeded && this->rowPtrs != NULL)
       {
         vpDEBUG_TRACE (25, "Recopy...");
         const unsigned int minRow = (this->rowNum<rowTmp)?this->rowNum:rowTmp;
@@ -258,25 +283,69 @@ void vpMatrix::resize(const unsigned int nrows, const unsigned int ncols,
 
 }
 
+/*!
+  Initialize the matrix from a part of an input matrix M.
 
-void
-vpMatrix::init(const vpMatrix &m,unsigned int r, unsigned int c, unsigned int nrows, unsigned int ncols)
+  \param M : Input matrix used for initialization.
+  \param r : row index in matrix M.
+  \param c : column index in matrix M.
+  \param nrows : Number of rows of the matrix that should be initialized.
+  \param ncols : Number of columns of the matrix that should be initialized.
+
+  The sub-matrix starting from M[r][c] element and ending on M[r+nrows-1][c+ncols-1] element
+  is used to initialize the matrix.
+
+  The following code shows how to use this function:
+\code
+#include <visp/vpMatrix.h>
+
+int main()
 {
-  try {
-    resize(nrows, ncols) ;
+  vpMatrix M(4,5);
+  int val = 0;
+  for(size_t i=0; i<M.getRows(); i++) {
+    for(size_t j=0; j<M.getCols(); j++) {
+      M[i][j] = val++;
+    }
   }
-  catch(vpException me)
-  {
-    vpERROR_TRACE("Error caught") ;
-    std::cout << me << std::endl ;
-    throw ;
-  }
+  M.print (std::cout, 4, "M ");
 
+  vpMatrix N;
+  N.init(M, 0, 1, 2, 3);
+  N.print (std::cout, 4, "N ");
+}
+\endcode
+  It produces the following output:
+  \code
+M [4,5]=
+   0  1  2  3  4
+   5  6  7  8  9
+  10 11 12 13 14
+  15 16 17 18 19
+N [2,3]=
+  1 2 3
+  6 7 8
+  \endcode
+ */
+void
+vpMatrix::init(const vpMatrix &M,unsigned int r, unsigned int c, unsigned int nrows, unsigned int ncols)
+{
   unsigned int rnrows = r+nrows ;
   unsigned int cncols = c+ncols ;
+
+  if (rnrows > M.getRows())
+    throw(vpException(vpException::dimensionError,
+                      "Bad row dimension (%d > %d) used to initialize vpMatrix", rnrows, M.getRows()));
+  if (cncols > M.getCols())
+    throw(vpException(vpException::dimensionError,
+                      "Bad column dimension (%d > %d) used to initialize vpMatrix", cncols, M.getCols()));
+  resize(nrows, ncols);
+
+  if (this->rowPtrs == NULL) // Fix coverity scan: explicit null dereferenced
+    return; // Noting to do
   for (unsigned int i=r ; i < rnrows; i++)
     for (unsigned int j=c ; j < cncols; j++)
-      (*this)[i-r][j-c] = m[i][j] ;
+      (*this)[i-r][j-c] = M[i][j] ;
 }
 
 /*!
@@ -328,6 +397,24 @@ vpMatrix::operator=(const vpMatrix &B)
   }
 
   memcpy(data,B.data,dsize*sizeof(double)) ;
+
+  return *this;
+}
+
+/*!
+\brief Copy operator.
+Allow operation such as A = H
+
+\param H : homography matrix to be copied.
+*/
+vpMatrix &
+vpMatrix::operator=(const vpHomography& H)
+{
+  init() ;
+  resize(3,3);
+  for(unsigned int i=0; i<3; i++)
+    for(unsigned int j=0; j<3; j++)
+      (*this)[i][j] = H[i][j];
 
   return *this;
 }
@@ -441,6 +528,28 @@ vpMatrix vpMatrix::operator*(const vpMatrix &B) const
 
   return C;
 }
+/*!
+  Allows to multiply a matrix by an homography.
+  Operation M = K * H (H is unchanged).
+
+*/
+vpMatrix vpMatrix::operator*(const vpHomography &H) const
+{
+  if (colNum != 3)
+    throw(vpException(vpMatrixException::dimensionError, "Cannot multiply the matrix by the homography; bad matrix size"));
+  vpMatrix M(rowNum, 3);
+
+  for (unsigned int i=0;i<rowNum;i++){
+    for (unsigned int j=0;j<3;j++) {
+      double s = 0;
+      for (unsigned int k=0;k<3;k++) s += (*this)[i][k] * H[k][j];
+      M[i][j] = s;
+    }
+  }
+
+  return M;
+}
+
 /*!
 Operation C = A*wA + B*wB 
 
@@ -755,11 +864,10 @@ vpMatrix vpMatrix::operator-() const //negate
   return C;
 }
 
-//!return sum of the Aij^2 (for all i, for all j)
 double
 vpMatrix::sumSquare() const
 {
-  double sum=0.0;
+  double sum_square=0.0;
   double x ;
 
   // 	double t0,t1;
@@ -770,28 +878,40 @@ vpMatrix::sumSquare() const
   // 	while (d < n )
   // 	{
   // 	  x = *d++ ;
-  // 	  sum += x*x ;
+  // 	  sum_square += x*x ;
   // 	}
   // 	t1=vpTime::measureTimeMicros();
   // 	std::cout<< t1-t0<<" "<< sum << " ";
   // 	
 
 
-  // 	sum= 0.0;
+  // 	sum_square= 0.0;
   // 	t0=vpTime::measureTimeMicros();
   for (unsigned int i=0;i<rowNum;i++)
     for(unsigned int j=0;j<colNum;j++)
     {
       x=rowPtrs[i][j];
-      sum+=x*x;
+      sum_square += x*x;
     }
     // 	t1=vpTime::measureTimeMicros();
     // 	std::cout<< t1-t0<<" "<< sum << std::endl;
 
+    return sum_square;
+}
 
+double
+vpMatrix::sum() const
+{
+  double s=0.0;
+  for (unsigned int i=0;i<rowNum;i++)
+  {
+    for(unsigned int j=0;j<colNum;j++)
+    {
+      s += rowPtrs[i][j];
+    }
+  }
 
-
-    return sum;
+  return s;
 }
 
 
@@ -859,7 +979,7 @@ vpMatrix::operator*(const vpTranslationVector &b) const
   if (rowNum != 3 || colNum != 3)
   {
     vpERROR_TRACE("vpMatrix mismatch in vpMatrix::operator*(const vpTranslationVector)") ;
-    throw(vpMatrixException::incorrectMatrixSizeError) ;
+    throw(vpMatrixException(vpMatrixException::incorrectMatrixSizeError, "vpMatrix mismatch in vpMatrix::operator*()")) ;
   }
 
   for (unsigned int j=0;j<3;j++) c[j]=0 ;
@@ -978,7 +1098,7 @@ vpMatrix  vpMatrix::operator/(double x) const
 
   //if (x == 0) {
   if (std::fabs(x) <= std::numeric_limits<double>::epsilon()) {
-    vpERROR_TRACE("Divide by zero in method /(double x)") ;
+    //vpERROR_TRACE("Divide by zero in method /(double x)") ;
     throw vpMatrixException(vpMatrixException::divideByZeroError, "Divide by zero in method /(double x)");
   }
 
@@ -1232,10 +1352,10 @@ void  vpMatrix::transpose(vpMatrix & At )const{
 
   for( unsigned int i = 0; i < colNum; i++ )
   {
-    double * row = AtRowPtrs[i];
+    double * row_ = AtRowPtrs[i];
     double * col = rowPtrs[0]+i;
     for( unsigned int j = 0; j < rowNum; j++, col+=A_step )
-      *(row++)=*col;   
+      *(row_++)=*col;
   }
 }
 
@@ -2153,7 +2273,7 @@ vpMatrix::pseudoInverse(vpMatrix &Ap,
   for (j = 0; j < ncols_orig ; j++)
   {
     //if ( cons.row(j+1).sumSquare() != 0)
-    if ( std::fabs(cons.row(j+1).sumSquare()) > std::numeric_limits<double>::epsilon())
+    if ( std::fabs(cons.getRow(j).sumSquare()) > std::numeric_limits<double>::epsilon())
     {
       for (i = 0; i < cons.getCols(); i++)
         Ker[k][i] = cons[j][i];
@@ -2215,27 +2335,29 @@ vpMatrix::pseudoInverse(vpMatrix &Ap,
   return rank ;
 }
 
-
+#ifdef VISP_BUILD_DEPRECATED_FUNCTIONS
 /*!
-\brief  Return the ith rows of the matrix
-\warning notice row(1) is the 0th row.
-*/
+  \deprecated This method is deprecated. You should use getRow().
 
+  Return the i-th row of the matrix.
+  \warning notice row(1) is the 0th row.
+*/
 vpRowVector
-vpMatrix::row(const unsigned int j)
+vpMatrix::row(const unsigned int i)
 {
   vpRowVector c(getCols()) ;
 
-  for (unsigned int i =0 ; i < getCols() ; i++)  c[i] = (*this)[j-1][i] ;
+  for (unsigned int j =0 ; j < getCols() ; j++)  c[j] = (*this)[i-1][j] ;
   return c ;
 }
 
-
 /*!
-\brief  Return the ith columns of the matrix
-\warning notice column(1) is the 0th column.
-*/
+  \deprecated This method is deprecated. You should use getCol().
 
+  Return the j-th columns of the matrix.
+  \warning notice column(1) is the 0-th column.
+  \param j : Index of the column to extract.
+*/
 vpColVector
 vpMatrix::column(const unsigned int j)
 {
@@ -2244,9 +2366,205 @@ vpMatrix::column(const unsigned int j)
   for (unsigned int i =0 ; i < getRows() ; i++)     c[i] = (*this)[i][j-1] ;
   return c ;
 }
+#endif
 
 
+/*!
+  Extract a column vector from a matrix.
+  \warning All the indexes start from 0 in this function.
+  \param j : Index of the column to extract. If col=0, the first column is extracted.
+  \param i_begin : Index of the row that gives the location of the first element of the column vector to extract.
+  \param column_size : Size of the column vector to extract.
+  \return The extracted column vector.
 
+  The following example shows how to use this function:
+  \code
+#include <visp/vpColVector.h>
+#include <visp/vpMatrix.h>
+
+int main()
+{
+  vpMatrix A(4,4);
+
+  for(unsigned int i=0; i < A.getRows(); i++)
+    for(unsigned int j=0; j < A.getCols(); j++)
+      A[i][j] = i*A.getCols()+j;
+
+  A.print(std::cout, 4);
+
+  vpColVector cv = A.getCol(1, 1, 3);
+  std::cout << "Column vector: \n" << cv << std::endl;
+}
+  \endcode
+It produces the following output:
+  \code
+[4,4]=
+   0  1  2  3
+   4  5  6  7
+   8  9 10 11
+  12 13 14 15
+column vector:
+5
+9
+13
+  \endcode
+ */
+vpColVector
+vpMatrix::getCol(const unsigned int j, const unsigned int i_begin, const unsigned int column_size) const
+{
+  if (i_begin + column_size > getRows() || j >= getCols())
+    throw(vpException(vpException::dimensionError, "Unable to extract a column vector from the matrix"));
+  vpColVector c(column_size);
+  for (unsigned int i=0 ; i < column_size ; i++)
+    c[i] = (*this)[i_begin+i][j];
+  return c;
+}
+
+/*!
+  Extract a column vector from a matrix.
+  \warning All the indexes start from 0 in this function.
+  \param j : Index of the column to extract. If j=0, the first column is extracted.
+  \return The extracted column vector.
+
+  The following example shows how to use this function:
+  \code
+#include <visp/vpColVector.h>
+#include <visp/vpMatrix.h>
+
+int main()
+{
+  vpMatrix A(4,4);
+
+  for(unsigned int i=0; i < A.getRows(); i++)
+    for(unsigned int j=0; j < A.getCols(); j++)
+      A[i][j] = i*A.getCols()+j;
+
+  A.print(std::cout, 4);
+
+  vpColVector cv = A.getCol(1);
+  std::cout << "Column vector: \n" << cv << std::endl;
+}
+  \endcode
+It produces the following output:
+  \code
+[4,4]=
+   0  1  2  3
+   4  5  6  7
+   8  9 10 11
+  12 13 14 15
+column vector:
+1
+5
+9
+13
+  \endcode
+ */
+vpColVector
+vpMatrix::getCol(const unsigned int j) const
+{
+  if (j >= getCols())
+    throw(vpException(vpException::dimensionError, "Unable to extract a column vector from the matrix"));
+  unsigned int nb_rows = getRows();
+  vpColVector c(nb_rows);
+  for (unsigned int i=0 ; i < nb_rows ; i++)
+    c[i] = (*this)[i][j];
+  return c;
+}
+
+/*!
+  Extract a row vector from a matrix.
+  \warning All the indexes start from 0 in this function.
+  \param i : Index of the row to extract. If i=0, the first row is extracted.
+  \return The extracted row vector.
+
+  The following example shows how to use this function:
+  \code
+#include <visp/vpMatrix.h>
+#include <visp/vpRowVector.h>
+
+int main()
+{
+  vpMatrix A(4,4);
+
+  for(unsigned int i=0; i < A.getRows(); i++)
+    for(unsigned int j=0; j < A.getCols(); j++)
+      A[i][j] = i*A.getCols()+j;
+
+  A.print(std::cout, 4);
+
+  vpRowVector rv = A.getRow(1);
+  std::cout << "Row vector: \n" << rv << std::endl;
+}  \endcode
+It produces the following output:
+  \code
+[4,4]=
+   0  1  2  3
+   4  5  6  7
+   8  9 10 11
+  12 13 14 15
+Row vector:
+4  5  6  7
+  \endcode
+ */
+vpRowVector
+vpMatrix::getRow(const unsigned int i) const
+{
+  if (i >= getRows())
+    throw(vpException(vpException::dimensionError, "Unable to extract a row vector from the matrix"));
+  unsigned int nb_cols = getCols();
+  vpRowVector r( nb_cols );
+  for (unsigned int j=0 ; j < nb_cols ; j++)
+    r[j] = (*this)[i][j];
+  return r;
+}
+
+/*!
+  Extract a row vector from a matrix.
+  \warning All the indexes start from 0 in this function.
+  \param i : Index of the row to extract. If i=0, the first row is extracted.
+  \param j_begin : Index of the column that gives the location of the first element of the row vector to extract.
+  \param row_size : Size of the row vector to extract.
+  \return The extracted row vector.
+
+  The following example shows how to use this function:
+  \code
+#include <visp/vpMatrix.h>
+#include <visp/vpRowVector.h>
+
+int main()
+{
+  vpMatrix A(4,4);
+
+  for(unsigned int i=0; i < A.getRows(); i++)
+    for(unsigned int j=0; j < A.getCols(); j++)
+      A[i][j] = i*A.getCols()+j;
+
+  A.print(std::cout, 4);
+
+  vpRowVector rv = A.getRow(1, 1, 3);
+  std::cout << "Row vector: \n" << rv << std::endl;
+}  \endcode
+It produces the following output:
+  \code
+[4,4]=
+   0  1  2  3
+   4  5  6  7
+   8  9 10 11
+  12 13 14 15
+Row vector:
+5  6  7
+  \endcode
+ */
+vpRowVector
+vpMatrix::getRow(const unsigned int i, const unsigned int j_begin, const unsigned int row_size) const
+{
+  if (j_begin + row_size > getCols() || i >= getRows())
+    throw(vpException(vpException::dimensionError, "Unable to extract a row vector from the matrix"));
+  vpRowVector r(row_size);
+  for (unsigned int j=0 ; j < row_size ; j++)
+    r[j] = (*this)[i][j_begin+i];
+  return r;
+}
 
 /*!
 \brief Stack matrices. "Stack" two matrices  C = [ A B ]^T
@@ -2380,7 +2698,7 @@ vpMatrix::insert(const vpMatrix &A, const vpMatrix &B, vpMatrix &C,
                  const unsigned int r, const unsigned int c)
 {
   if( ( (r + B.getRows()) <= A.getRows() ) && 
-    ( (c + B.getCols()) <= A.getRows() ) ){
+    ( (c + B.getCols()) <= A.getCols() ) ){
       try {
         C.resize(A.getRows(),A.getCols()  ) ;
       }
@@ -2573,8 +2891,10 @@ vpMatrix::createDiagonalMatrix(const vpColVector &A, vpMatrix &DA)
 /*!
 \brief std::cout a matrix
 */
-std::ostream &operator <<(std::ostream &s,const vpMatrix &m)
+VISP_EXPORT std::ostream &operator <<(std::ostream &s,const vpMatrix &m)
 {
+  std::ios_base::fmtflags original_flags = s.flags();
+
   s.precision(10) ;
   for (unsigned int i=0;i<m.getRows();i++) {
     for (unsigned int j=0;j<m.getCols();j++){
@@ -2584,6 +2904,8 @@ std::ostream &operator <<(std::ostream &s,const vpMatrix &m)
     if (i < m.getRows()-1)
       s << std::endl;
   }
+
+  s.flags(original_flags); // restore s to standard state
 
   return s;
 }
@@ -2622,6 +2944,8 @@ vpMatrix::print(std::ostream& s, unsigned int length, char const* intro)
   std::vector<std::string> values(m*n);
   std::ostringstream oss;
   std::ostringstream ossFixed;
+  std::ios_base::fmtflags original_flags = oss.flags();
+
   // ossFixed <<std::fixed;
   ossFixed.setf ( std::ios::fixed, std::ios::floatfield );
 
@@ -2660,7 +2984,7 @@ vpMatrix::print(std::ostream& s, unsigned int length, char const* intro)
   if (maxAfter==1) maxAfter=0;
 
   // the following line is useful for debugging
-  std::cerr <<totalLength <<" " <<maxBefore <<" " <<maxAfter <<"\n";
+  //std::cerr <<totalLength <<" " <<maxBefore <<" " <<maxAfter <<"\n";
 
   if (intro) s <<intro;
   s <<"["<<m<<","<<n<<"]=\n";
@@ -2690,6 +3014,8 @@ vpMatrix::print(std::ostream& s, unsigned int length, char const* intro)
     s <<std::endl;
   }
 
+  s.flags(original_flags); // restore s to standard state
+
   return (int)(maxBefore+maxAfter);
 }
 
@@ -2703,7 +3029,7 @@ d,e,f;
 g,h,i]
 */
 std::ostream & vpMatrix::
-matlabPrint(std::ostream & os)
+matlabPrint(std::ostream & os) const
 {
 
   unsigned int i,j;
@@ -2732,7 +3058,7 @@ Print using the following way so that this output can be directly copied into MA
 ])
 */
 std::ostream & vpMatrix::
-maplePrint(std::ostream & os)
+maplePrint(std::ostream & os) const
 {
   unsigned int i,j;
 
@@ -2746,6 +3072,32 @@ maplePrint(std::ostream & os)
     os << "]," << std::endl;
   }
    os << "])" << std::endl;
+  return os;
+};
+
+/*!
+\brief Print matrix in csv format.
+
+Print as comma separated values so that this output can be imported into any program which has a csv data import option:
+0.939846, 0.0300754, 0.340272
+0.0300788, 0.984961, -0.170136
+-0.340272, 0.170136, 0.924807
+*/
+std::ostream & vpMatrix::
+csvPrint(std::ostream & os) const
+{
+  unsigned int i,j;
+
+  for (i=0; i < this->getRows(); ++ i)
+  {
+    for (j=0; j < this->getCols(); ++ j)
+    {
+      os <<  (*this)[i][j];
+      if (!(j==(this->getCols()-1)))
+        os << ", ";
+    }
+    os << std::endl;
+  }
   return os;
 };
 
@@ -2765,7 +3117,7 @@ the line vpMatrix A(6,7) (see example).
 each bytes of the double array.
 */
 std::ostream & vpMatrix::
-cppPrint(std::ostream & os, const char * matrixName, bool octet)
+cppPrint(std::ostream & os, const char * matrixName, bool octet) const
 {
 
   unsigned int i,j;
@@ -2863,7 +3215,7 @@ See the Numerical Recipes in C page 43 for further explanations.
 
 double vpMatrix::detByLU() const
 {
-  double det(0);
+  double det_ = 0;
 
   // Test wether the matrix is squred
   if (rowNum == colNum)
@@ -2884,10 +3236,10 @@ double vpMatrix::detByLU() const
     delete[]perm;
 
     // compute the determinant that is the product of the eigen values
-    det = (double) d;
+    det_ = (double) d;
     for(unsigned int i=0;i<rowNum;i++)
     {
-      det*=tmp[i][i];
+      det_*=tmp[i][i];
     }
   }
 
@@ -2898,7 +3250,7 @@ double vpMatrix::detByLU() const
 
 
   }
-  return det ;
+  return det_ ;
 }
 
 
@@ -3336,10 +3688,10 @@ vpMatrix::kernel(vpMatrix &kerA, double svThreshold)
       }
       //   if (noyau == 1)
       {
-        double maxsv = 0 ;
+        maxsv = 0 ;
         for (i=0 ; i < ddl ; i++)
           if (fabs(sv[i]) > maxsv) maxsv = fabs(sv[i]) ;
-        unsigned int rank = 0 ;
+        rank = 0 ;
         for (i=0 ; i < ddl ; i++)
           if (fabs(sv[i]) > maxsv*svThreshold) rank++ ;
         vpMatrix cons(ddl,ddl) ;
@@ -3363,7 +3715,7 @@ vpMatrix::kernel(vpMatrix &kerA, double svThreshold)
           //    cout << cons.Row(j+1) << " = " << cons.Row(j+1).SumSquare() << endl ;
 
           //if (cons.row(j+1).sumSquare() !=0)
-          if (std::fabs(cons.row(j+1).sumSquare()) > std::numeric_limits<double>::epsilon())
+          if (std::fabs(cons.getRow(j).sumSquare()) > std::numeric_limits<double>::epsilon())
           {
             for (i=0 ; i < cons.getCols() ; i++)
               Ker[k][i] = cons[j][i] ;
@@ -3412,14 +3764,14 @@ A.det(vpMatrix::LU_DECOMPOSITION ) << std::endl;
 */
 double vpMatrix::det(vpDetMethod method) const
 {
-  double det = 0;
+  double det_ = 0;
 
   if ( method == LU_DECOMPOSITION )
   {
-    det = this->detByLU();
+    det_ = this->detByLU();
   }
 
-  return (det);
+  return (det_);
 }
 
 
@@ -3429,7 +3781,7 @@ Save a matrix to a file.
 \param filename : Absolute file name.
 \param M : Matrix to be saved.
 \param binary : If true the matrix is saved in a binary file, else a text file.
-\param Header : Optional line that will be saved at the beginning of the file.
+\param header : Optional line that will be saved at the beginning of the file.
 
 \return Returns true if no problem happened.
 
@@ -3438,7 +3790,7 @@ less than if you save it in a binary file.
 */
 bool
 vpMatrix::saveMatrix(const char *filename, const vpMatrix &M, 
-                     const bool binary, const char *Header)
+                     const bool binary, const char *header)
 {
   std::fstream file;
 
@@ -3459,10 +3811,10 @@ vpMatrix::saveMatrix(const char *filename, const vpMatrix &M,
     {
       unsigned int i = 0;
       file << "# ";
-      while (Header[i] != '\0')
+      while (header[i] != '\0')
       {
-        file << Header[i];
-        if (Header[i] == '\n')
+        file << header[i];
+        if (header[i] == '\n')
           file << "# ";
         i++;
       }
@@ -3474,8 +3826,8 @@ vpMatrix::saveMatrix(const char *filename, const vpMatrix &M,
     else
     {
       int headerSize = 0;
-      while (Header[headerSize] != '\0') headerSize++;
-      file.write(Header,headerSize+1);
+      while (header[headerSize] != '\0') headerSize++;
+      file.write(header,headerSize+1);
       unsigned int matrixSize;
       matrixSize = M.getRows();
       file.write((char*)&matrixSize,sizeof(int));
@@ -3497,21 +3849,119 @@ vpMatrix::saveMatrix(const char *filename, const vpMatrix &M,
   return true;
 }
 
+/*!
+  Save a matrix in a YAML-formatted file.
+
+  \param filename : absolute file name.
+  \param M : matrix to be saved in the file.
+  \param header : optional lines that will be saved at the beginning of the file. Should be YAML-formatted and will adapt to the indentation if any.
+
+  \return Returns true if success.
+
+  Here is an example of outputs.
+\code
+vpMatrix M(3,4);
+vpMatrix::saveMatrixYAML("matrix.yml", M, "example: a YAML-formatted header");
+vpMatrix::saveMatrixYAML("matrixIndent.yml", M, "example:\n    - a YAML-formatted header\n    - with inner indentation");
+\endcode
+Content of matrix.yml:
+\code
+example: a YAML-formatted header
+rows: 3
+cols: 4
+data:
+  - [0, 0, 0, 0]
+  - [0, 0, 0, 0]
+  - [0, 0, 0, 0]
+\endcode
+Content of matrixIndent.yml:
+\code
+example:
+    - a YAML-formatted header
+    - with inner indentation
+rows: 3
+cols: 4
+data:
+    - [0, 0, 0, 0]
+    - [0, 0, 0, 0]
+    - [0, 0, 0, 0]
+\endcode
+
+  \sa loadMatrixYAML()
+*/
+bool vpMatrix::saveMatrixYAML(const char *filename, const vpMatrix &M, const char *header)
+{
+    std::fstream file;
+
+    file.open(filename, std::fstream::out);
+
+    if(!file)
+    {
+        file.close();
+        return false;
+    }
+
+    unsigned int i = 0;
+    bool inIndent = false;
+    std::string indent = "";
+    bool checkIndent = true;
+    while (header[i] != '\0')
+    {
+        file << header[i];
+        if(checkIndent)
+        {
+            if (inIndent)
+            {
+                if(header[i] == ' ')
+                    indent +=  " ";
+                else if (indent.length() > 0)
+                    checkIndent = false;
+            }
+            if (header[i] == '\n' || (inIndent && header[i] == ' '))
+                inIndent = true;
+            else
+                inIndent = false;
+        }
+        i++;
+    }
+
+    if(i != 0)
+        file << std::endl;
+    file << "rows: " << M.getRows() << std::endl;
+    file << "cols: " << M.getCols() << std::endl;
+
+    if(indent.length() == 0)
+        indent = "  ";
+
+    file << "data: " << std::endl;
+    unsigned int j;
+    for(i=0;i<M.getRows();++i)
+    {
+        file << indent << "- [";
+        for(j=0;j<M.getCols()-1;++j)
+            file << M[i][j] << ", ";
+        file << M[i][j] << "]" << std::endl;
+    }
+
+    file.close();
+    return true;
+}
+
 
 /*!
-  Load a matrix to a file.
+  Load a matrix from a file.
 
   \param filename : Absolute file name.
   \param M : Matrix to be loaded.
   \param binary : If true the matrix is loaded from a binary file, 
   else from a text file.
-  \param Header : Header of the file loaded in this parameter.
+  \param header : header of the file loaded in this parameter.
 
   \return Returns true if no problem happened.
 */
 bool
 vpMatrix::loadMatrix(const char *filename, vpMatrix &M, const bool binary, 
-                     char *Header)
+                     char *header)
 {
   std::fstream file;
 
@@ -3537,12 +3987,17 @@ vpMatrix::loadMatrix(const char *filename, vpMatrix &M, const bool binary,
         file.read(&c,1);
         h+=c;
       }
-      if (Header != NULL)
-        strncpy(Header, h.c_str(), h.size() + 1);
+      if (header != NULL)
+        strncpy(header, h.c_str(), h.size() + 1);
 
       unsigned int rows, cols;
       file >> rows;
       file >> cols;
+
+      if (rows > std::numeric_limits<unsigned int>::max()
+          || cols > std::numeric_limits<unsigned int>::max())
+        throw vpException(vpException::badValue, "Matrix exceed the max size.");
+
       M.resize(rows,cols);
 
       double value;
@@ -3564,8 +4019,8 @@ vpMatrix::loadMatrix(const char *filename, vpMatrix &M, const bool binary,
         file.read(&c,1);
         h+=c;
       }
-      if (Header != NULL)
-        strncpy(Header, h.c_str(), h.size() + 1);
+      if (header != NULL)
+        strncpy(header, h.c_str(), h.size() + 1);
 
       unsigned int rows, cols;
       file.read((char*)&rows,sizeof(unsigned int));
@@ -3590,6 +4045,88 @@ vpMatrix::loadMatrix(const char *filename, vpMatrix &M, const bool binary,
 
 
 /*!
+  Load a matrix from a YAML-formatted file.
+
+  \param filename : absolute file name.
+  \param M : matrix to be loaded from the file.
+  \param header : header of the file is loaded in this parameter.
+
+  \return Returns true on success.
+
+  \sa saveMatrixYAML()
+
+*/
+bool
+vpMatrix::loadMatrixYAML(const char *filename, vpMatrix &M, char *header)
+{
+    std::fstream file;
+
+    file.open(filename, std::fstream::in);
+
+    if(!file)
+    {
+        file.close();
+        return false;
+    }
+
+    unsigned int rows = 0,cols = 0;
+    std::string h;
+    std::string line,subs;
+    bool inheader = true;
+    unsigned int i=0, j;
+    unsigned int lineStart = 0;
+
+    while ( getline (file,line) )
+    {
+        if(inheader)
+        {
+            if(rows == 0 && line.compare(0,5,"rows:") == 0)
+            {
+                std::stringstream ss(line);
+                ss >> subs;
+                ss >> rows;
+            }
+            else if (cols == 0 && line.compare(0,5,"cols:") == 0)
+            {
+                std::stringstream ss(line);
+                ss >> subs;
+                ss >> cols;
+            }
+            else if (line.compare(0,5,"data:") == 0)
+                inheader = false;
+            else
+                h += line + "\n";
+        }
+        else
+        {
+            // if i == 0, we just got out of the header: initialize matrix dimensions
+            if(i == 0)
+            {
+                if(rows == 0 || cols == 0)
+                {
+                    file.close();
+                    return false;
+                }
+                M.resize(rows, cols);
+                // get indentation level which is common to all lines
+				lineStart = (unsigned int)line.find("[") + 1;
+            }
+            std::stringstream ss(line.substr(lineStart, line.find("]") - lineStart));
+            j = 0;
+            while(getline(ss, subs, ','))
+                M[i][j++] = atof(subs.c_str());
+            i++;
+        }
+    }
+
+    if (header != NULL)
+      strncpy(header, h.substr(0,h.length()-1).c_str(), h.size());
+
+    file.close();
+    return true;
+}
+
+/*!
 
 Compute the exponential matrix of a square matrix.
 
@@ -3607,6 +4144,21 @@ vpMatrix::expm()
   }
   else
   {
+#ifdef VISP_HAVE_GSL
+    size_t size_ = rowNum * colNum;
+    double *b = new double [size_];
+    for (size_t i=0; i< size_; i++)
+      b[i] = 0.;
+    gsl_matrix_view m  = gsl_matrix_view_array(this->data, rowNum, colNum);
+    gsl_matrix_view em = gsl_matrix_view_array(b, rowNum, colNum);
+    gsl_linalg_exponential_ss(&m.matrix, &em.matrix, 0);
+    //gsl_matrix_fprintf(stdout, &em.matrix, "%g");
+    vpMatrix expA(rowNum, colNum);
+    memcpy(expA.data, b, size_ * sizeof(double));
+
+    delete [] b;
+    return expA;
+#else
     vpMatrix _expE(rowNum, colNum);
     vpMatrix _expD(rowNum, colNum);
     vpMatrix _expX(rowNum, colNum);
@@ -3664,6 +4216,7 @@ vpMatrix::expm()
       exp=_expE;
     }
     return exp;
+#endif
   }
 }
 
@@ -3734,6 +4287,56 @@ vpMatrix subblock(const vpMatrix &M, unsigned int col, unsigned int row)
       M_comp[i-1][j-1]=M[i][j];
   }
   return M_comp;
+}
+
+/*!
+   \return The condition number, the ratio of the largest singular value of the matrix to the smallest.
+ */
+double vpMatrix::cond()
+{
+  vpMatrix v;
+  vpColVector w;
+
+  vpMatrix M;
+  M = *this;
+
+  M.svd(w, v);
+  double min=w[0];
+  double max=w[0];
+  for(unsigned int i=0;i<M.getCols();i++)
+  {
+    if(min>w[i])min=w[i];
+    if(max<w[i])max=w[i];
+  }
+  return max/min;
+}
+
+/*!
+  Compute \f${\bf H} + \alpha * diag({\bf H})\f$
+  \param H : input Matrix \f${\bf H}\f$. This matrix should be square.
+  \param alpha : Scalar \f$\alpha\f$
+  \param HLM : Resulting operation.
+ */
+void vpMatrix::computeHLM(const vpMatrix &H, const double &alpha, vpMatrix &HLM)
+{
+  if(H.getCols() != H.getRows())
+  {
+    vpTRACE("The matrix must be square");
+    throw(vpMatrixException(vpMatrixException::incorrectMatrixSizeError,
+                            "The matrix must be square" ));
+  }
+  HLM.resize(H.getRows(), H.getCols());
+
+  for(unsigned int i=0;i<H.getCols();i++)
+  {
+    for(unsigned int j=0;j<H.getCols();j++)
+    {
+      HLM[i][j]=H[i][j];
+      if(i==j)
+        HLM[i][j]+= alpha*H[i][j];
+    }
+  }
+
 }
 
 #undef DEBUG_LEVEL1

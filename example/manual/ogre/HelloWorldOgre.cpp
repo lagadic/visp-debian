@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: HelloWorldOgre.cpp 4111 2013-02-06 17:27:14Z fspindle $
+ * $Id: HelloWorldOgre.cpp 5128 2015-01-06 11:46:58Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -49,7 +49,6 @@
 #include <visp/vpOpenCVGrabber.h>
 #include <visp/vpV4l2Grabber.h>
 #include <visp/vp1394TwoGrabber.h>
-#include <visp/vpDirectShowGrabber.h>
 #include <visp/vpHomogeneousMatrix.h>
 #include <visp/vpImage.h>
 #include <visp/vpCameraParameters.h>
@@ -57,89 +56,109 @@
 
 int main()
 {
+  try {
 #if defined(VISP_HAVE_OGRE) 
-#if defined(VISP_HAVE_V4L2) || defined(VISP_HAVE_DC1394_2) || defined(VISP_HAVE_DIRECTSHOW) || defined(VISP_HAVE_OPENCV)
+#if defined(VISP_HAVE_V4L2) || defined(VISP_HAVE_DC1394_2) || (VISP_HAVE_OPENCV_VERSION >= 0x020100)
 
-  // Now we try to find an available framegrabber
+	// Image to stock gathered data
+    // Here we acquire a color image. The consequence will be that
+    // the background texture used in Ogre renderer will be also in color.
+    vpImage<vpRGBa> I;
+
+    // Now we try to find an available framegrabber
 #if defined(VISP_HAVE_V4L2)
-  // Video for linux 2 grabber
-  vpV4l2Grabber grabber;
-#elif defined(VISP_HAVE_DC1394_2)
-  // libdc1394-2
-  vp1394TwoGrabber grabber;
-#elif defined(VISP_HAVE_DIRECTSHOW)
-  // OpenCV to gather images
-  vpOpenCVGrabber grabber;
-#elif defined(VISP_HAVE_OPENCV)
-  // OpenCV to gather images
-  vpOpenCVGrabber grabber;
-#endif
-
-  // Image to stock gathered data
-  // Here we acquire a color image. The consequence will be that
-  // the background texture used in Ogre renderer will be also in color.
-  vpImage<vpRGBa> I;
-  // Open frame grabber
-  // Here we acquire an image from an available framegrabber to update
-  // the image size
-  grabber.open(I);
-
-  // Parameters of our camera
-  double px = 565;
-  double py = 565;
-  double u0 = grabber.getWidth() / 2;
-  double v0 = grabber.getHeight() / 2;
-  vpCameraParameters cam(px,py,u0,v0);
-  // The matrix with our pose
-  // Defines the pose of the object in the camera frame
-  vpHomogeneousMatrix cMo;
-
-  // Our object
-  // A simulator with the camera parameters defined above, 
-  // a grey level background image and of the good size
-  vpAROgre ogre(cam, (unsigned int)grabber.getWidth(), (unsigned int)grabber.getHeight());
-  // Initialisation
-  // Here we load the requested plugins specified in the "plugins.cfg" file 
-  // and the resources specified in the "resources.cfg" file
-  // These two files can be found respectively in ViSP_HAVE_OGRE_PLUGINS_PATH 
-  // and ViSP_HAVE_OGRE_RESOURCES_PATH folders  
-  ogre.init(I);
-
-  // Create a basic scene
-  // -----------------------------------
-  //  	      Loading things
-  // -----------------------------------
-  //  As you will see in section 5, our
-  //  application knows locations where 
-  //  it can search for medias.
-  //  Here we use a mesh included in
-  //  the installation files : a robot.
-  // -----------------------------------
-  // Here we load the "robot.mesh" model that is found thanks to the resources locations
-  // specified in the "resources.cfg" file
-  ogre.load("Robot", "robot.mesh");
-  ogre.setPosition("Robot", vpTranslationVector(0, 0.05, 0.5));
-  ogre.setScale("Robot", 0.001f,0.001f,0.001f);
-  ogre.setRotation("Robot", vpRotationMatrix(vpRxyzVector(M_PI, -M_PI/4, 0)));
-
-
-  // Rendering loop, ended with on escape
-  while(ogre.continueRendering()){
-    // Image Acquisition
-    // Acquire a new image
+    // Video for linux 2 grabber
+    vpV4l2Grabber grabber;
+	grabber.open(I);
     grabber.acquire(I);
-    //Pose computation
-    // ...
-    // cMo updated
-    // Display the robot at the position specified by cMo with vpAROgre
-    ogre.display(I,cMo);
+#elif defined(VISP_HAVE_DC1394_2)
+    // libdc1394-2
+    vp1394TwoGrabber grabber;
+	grabber.open(I);
+    grabber.acquire(I);
+#elif defined(VISP_HAVE_OPENCV)
+    // OpenCV to gather images
+    cv::VideoCapture grabber(0); // open the default camera
+    if(!grabber.isOpened()) { // check if we succeeded
+      std::cout << "Failed to open the camera" << std::endl;
+      return -1;
+    }
+    cv::Mat frame;
+    grabber >> frame; // get a new frame from camera
+    vpImageConvert::convert(frame, I);
+#endif
+
+    // Parameters of our camera
+    double px = 565;
+    double py = 565;
+    double u0 = I.getWidth() / 2;
+    double v0 = I.getHeight() / 2;
+    vpCameraParameters cam(px,py,u0,v0);
+    // The matrix with our pose
+    // Defines the pose of the object in the camera frame
+    vpHomogeneousMatrix cMo;
+
+    // Our object
+    // A simulator with the camera parameters defined above,
+    // a grey level background image and of the good size
+    vpAROgre ogre(cam, I.getWidth(), I.getHeight());
+    // Initialisation
+    // Here we load the requested plugins specified in the "plugins.cfg" file
+    // and the resources specified in the "resources.cfg" file
+    // These two files can be found respectively in ViSP_HAVE_OGRE_PLUGINS_PATH
+    // and ViSP_HAVE_OGRE_RESOURCES_PATH folders
+    ogre.init(I);
+
+    // Create a basic scene
+    // -----------------------------------
+    //  	      Loading things
+    // -----------------------------------
+    //  As you will see in section 5, our
+    //  application knows locations where
+    //  it can search for medias.
+    //  Here we use a mesh included in
+    //  the installation files : a robot.
+    // -----------------------------------
+    // Here we load the "robot.mesh" model that is found thanks to the resources locations
+    // specified in the "resources.cfg" file
+    ogre.load("Robot", "robot.mesh");
+    ogre.setPosition("Robot", vpTranslationVector(-0.3, 0.2, 0));
+    ogre.setScale("Robot", 0.001f,0.001f,0.001f);
+    ogre.setRotation("Robot", vpRotationMatrix(vpRxyzVector(M_PI, 0, 0)));
+
+    cMo[2][3] = 1.; // Z = 1 meter
+
+    std::cout << "cMo:\n" << cMo << std::endl;
+
+    // Rendering loop, ended with on escape
+    while(ogre.continueRendering()){
+      // Acquire a new image
+#if defined(VISP_HAVE_V4L2) || defined(VISP_HAVE_DC1394_2)
+      grabber.acquire(I);
+#elif defined(VISP_HAVE_OPENCV)
+	  grabber >> frame;
+      vpImageConvert::convert(frame, I);
+#endif
+      //Pose computation
+      // ...
+      // cMo updated
+      // Display the robot at the position specified by cMo with vpAROgre
+      ogre.display(I,cMo);
+    }
+#else
+    std::cout << "You need an available framegrabber to run this example" << std::endl;
+#endif
+#else
+    std::cout << "You need Ogre3D to run this example" << std::endl;
+#endif
+    return 0;
   }
-  // Release video device
-  grabber.close();
-#else
-  std::cout << "You need an available framegrabber to run this example" << std::endl;
-#endif
-#else
-  std::cout << "You Ogre3D to run this example" << std::endl;
-#endif
+  catch(vpException e) {
+    std::cout << "Catch an exception: " << e << std::endl;
+    return 1;
+  }
+  catch(...) {
+    std::cout << "Catch an exception " << std::endl;
+    return 1;
+  }
 }

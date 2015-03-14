@@ -1,10 +1,10 @@
 /****************************************************************************
  *
- * $Id: vpAROgre.cpp 4251 2013-05-14 12:19:56Z fspindle $
+ * $Id: vpAROgre.cpp 5234 2015-01-30 13:51:02Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
- * 
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
+ *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * ("GPL") version 2 as published by the Free Software Foundation.
@@ -12,11 +12,11 @@
  * distribution for additional information about the GNU GPL.
  *
  * For using ViSP with software that can not be combined with the GNU
- * GPL, please contact INRIA about acquiring a ViSP Professional 
+ * GPL, please contact INRIA about acquiring a ViSP Professional
  * Edition License.
  *
  * See http://www.irisa.fr/lagadic/visp/visp.html for more information.
- * 
+ *
  * This software was developed at:
  * INRIA Rennes - Bretagne Atlantique
  * Campus Universitaire de Beaulieu
@@ -26,7 +26,7 @@
  *
  * If you have questions regarding the use of this file, please contact
  * INRIA at visp@inria.fr
- * 
+ *
  * This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
  * WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
@@ -72,36 +72,24 @@
   telling Ogre where to look for renderer plugins.
 
 */
-vpAROgre::vpAROgre(const vpCameraParameters &cam, 
-		   unsigned int width, unsigned int height, 
+vpAROgre::vpAROgre(const vpCameraParameters &cam,
+		   unsigned int width, unsigned int height,
 		   const char *resourcePath, const char *pluginsPath)
-  : mRoot(0), mCamera(0), mSceneMgr(0), mWindow(0)
+    : name("ViSP - Augmented Reality"),mRoot(0), mCamera(0), mSceneMgr(0), mWindow(0),
+      mResourcePath(resourcePath), mPluginsPath(pluginsPath),
 #ifdef VISP_HAVE_OIS
-  , mInputManager(0), mKeyboard(0)
+      mInputManager(0), mKeyboard(0),
 #endif
+      keepOn(true), // When created no reason to stop displaying
+      mImageRGBA(), mImage(), mPixelBuffer(NULL), mBackground(NULL), mBackgroundHeight(0),
+      mBackgroundWidth(0), mWindowHeight(height), mWindowWidth(width), windowHidden(false),
+      mNearClipping(0.001), mFarClipping(200), mcam(cam), mshowConfigDialog(true),
+      mOptionnalResourceLocation()
 {
-  // Get resources.cfg path
-  mResourcePath = resourcePath;
-  //std::cout << "mResourcePath: " << mResourcePath<< std::endl;
-  // Get plugins.cfg path
-  mPluginsPath = pluginsPath;
-  //std::cout << "mPluginsPath: " << mPluginsPath<< std::endl;
-  // Set intrinsic camera parameters
-  mcam = cam;
-  // When created no reason to stop displaying
-  keepOn = true;
-  // Set Dimensions
-  mWindowWidth = width;
-  mWindowHeight = height;
-  windowHidden = false;
-  mshowConfigDialog = true;
-  mOptionnalResourceLocation.clear();
-  
-  name = "ViSP - Augmented Reality";
 }
 
 /*!
-  Initialisation of Ogre with a grey level background. 
+  Initialisation of Ogre with a grey level background.
 
   Load the plugins that are specified in the plugins.cfg or
   plugins_d.cfg files. These files are located in
@@ -109,27 +97,27 @@ vpAROgre::vpAROgre(const vpCameraParameters &cam,
   Note that plugins.cfg file is always considered under Unix
   platforms. The file plugins_d.cfg is only considered under Windows
   when the build type is Debug.
-  
+
   Load also the resources that are defined in the resources.cfg
   file. This file is located in VISP_HAVE_OGRE_RESOURCES_PATH folder
   that is defined in vpConfig.h.
-  
-  Create also the grey level background used to display the image. 
+
+  Create also the grey level background used to display the image.
 
   \param I : Image that is displayed in the background.
 
   \param bufferedKeys : If true, use of buffered input for the keyboard (see
   Ogre documentation). Note that this parameter is only useful if OIS is used.
-  
-  \param hidden : If true, the created window will be hidden. 
+
+  \param hidden : If true, the created window will be hidden.
   Note that this functionnality requires Ogre3D 1.8.1 at least.
- 
+
   \exception vpException::ioError : If the required plugins.cfg /
   plugins_d.cfg or resources.cfg files are not accessible.
 
 */
 void vpAROgre::init(vpImage<unsigned char> &I,
-		    bool 
+		    bool
 #ifdef VISP_HAVE_OIS
 		    bufferedKeys
 #endif
@@ -138,21 +126,21 @@ void vpAROgre::init(vpImage<unsigned char> &I,
 {
   mBackgroundWidth = I.getWidth();
   mBackgroundHeight = I.getHeight();
-  
+
   init(
 #ifdef VISP_HAVE_OIS
        bufferedKeys,
 #else
       false,
 #endif
-      hidden 
+      hidden
        );
   // Create the background image which will come from the grabber
   createBackground(I);
 }
 
 /*!
-  Initialisation of Ogre with a color background. 
+  Initialisation of Ogre with a color background.
 
   Load the plugins that are specified in the plugins.cfg or
   plugins_d.cfg files. These files are located in
@@ -160,27 +148,27 @@ void vpAROgre::init(vpImage<unsigned char> &I,
   Note that plugins.cfg file is always considered under Unix
   platforms. The file plugins_d.cfg is only considered under Windows
   when the build type is Debug.
-  
+
   Load also the resources that are defined in the resources.cfg
   file. This file is located in VISP_HAVE_OGRE_RESOURCES_PATH folder
   that is defined in vpConfig.h.
-  
-  Create also a color background used to display the image. 
+
+  Create also a color background used to display the image.
 
   \param I : Image that is displayed in the background.
 
   \param bufferedKeys : If true, use of buffered input for the keyboard (see
   Ogre documentation). Note that this parameter is only useful if OIS is used.
-  
-  \param hidden : If true, the created window will be hidden. 
+
+  \param hidden : If true, the created window will be hidden.
   Note that this functionnality requires Ogre3D 1.8.1 at least.
- 
+
   \exception vpException::ioError : If the required plugins.cfg /
   plugins_d.cfg or resources.cfg files are not accessible.
 
 */
 void vpAROgre::init(vpImage<vpRGBa> &I,
-		    bool 
+		    bool
 #ifdef VISP_HAVE_OIS
 		    bufferedKeys
 #endif
@@ -189,7 +177,7 @@ void vpAROgre::init(vpImage<vpRGBa> &I,
 {
   mBackgroundWidth = I.getWidth();
   mBackgroundHeight = I.getHeight();
-  
+
   init(
 #ifdef VISP_HAVE_OIS
        bufferedKeys,
@@ -203,7 +191,7 @@ void vpAROgre::init(vpImage<vpRGBa> &I,
 }
 
 /*!
-  Initialisation of Ogre. 
+  Initialisation of Ogre.
 
   Load the plugins that are specified in the plugins.cfg or
   plugins_d.cfg files. These files are located in
@@ -211,22 +199,22 @@ void vpAROgre::init(vpImage<vpRGBa> &I,
   Note that plugins.cfg file is always considered under Unix
   platforms. The file plugins_d.cfg is only considered under Windows
   when the build type is Debug.
-  
+
   Load also the resources that are defined in the resources.cfg
   file. This file is located in VISP_HAVE_OGRE_RESOURCES_PATH folder
   that is defined in vpConfig.h.
-  
+
   \param bufferedKeys : If true, use of buffered input for the keyboard (see
   Ogre documentation). Note that this parameter is only useful if OIS is used.
-  
-  \param hidden : If true, the created window will be hidden. 
+
+  \param hidden : If true, the created window will be hidden.
   Note that this functionnality requires Ogre3D 1.8.1 at least.
- 
+
   \exception vpException::ioError : If the required plugins.cfg /
   plugins_d.cfg or resources.cfg files are not accessible.
 
 */
-void vpAROgre::init(bool 
+void vpAROgre::init(bool
 #ifdef VISP_HAVE_OIS
 		    bufferedKeys
 #endif
@@ -234,20 +222,20 @@ void vpAROgre::init(bool
 		    )
 {
   // Create the root
-#if defined(NDEBUG) || !defined(WIN32)
+#if defined(NDEBUG) || !defined(_WIN32)
   std::string pluginFile = mPluginsPath+"/plugins.cfg";
 #else
   std::string pluginFile = mPluginsPath+"/plugins_d.cfg";
 #endif
   if(!vpIoTools::checkFilename(pluginFile)){
-    std::string errorMsg = "Error: the requested plugins file \"" 
+    std::string errorMsg = "Error: the requested plugins file \""
       + pluginFile + "\" doesn't exist.";
     std::cout << errorMsg << std::endl;
 
     throw (vpException(vpException::ioError, errorMsg));
   }
   std::cout << "######################### Load plugin file: " << pluginFile << std::endl;
-  
+
   if(Ogre::Root::getSingletonPtr() == NULL)
     mRoot = new Ogre::Root(pluginFile, "ogre.cfg", "Ogre.log");
   else
@@ -266,7 +254,7 @@ void vpAROgre::init(bool
   Ogre::ConfigFile cf;
   std::string resourceFile = mResourcePath+"/resources.cfg";
   if(!vpIoTools::checkFilename(resourceFile)){
-    std::string errorMsg = "Error: the requested resource file \"" 
+    std::string errorMsg = "Error: the requested resource file \""
       + resourceFile + "\" doesn't exist.";
     std::cout << errorMsg << std::endl;
 
@@ -297,7 +285,7 @@ void vpAROgre::init(bool
   for(std::list<std::string>::const_iterator iter = mOptionnalResourceLocation.begin(); iter != mOptionnalResourceLocation.end(); ++iter){
     Ogre::ResourceGroupManager::getSingleton().addResourceLocation(*iter, "FileSystem", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
   }
-    
+
   // Create the window
   bool canInit = true;
   if(mshowConfigDialog){
@@ -309,33 +297,36 @@ void vpAROgre::init(bool
     if(!mRoot->restoreConfig())
       canInit = false;
   }
-      
+
   if(!mRoot->isInitialised()){
     if(!canInit){ //We set the default renderer system
       const Ogre::RenderSystemList& lRenderSystemList = mRoot->getAvailableRenderers();
       if( lRenderSystemList.size() == 0 )
-        throw "ConfigDialog aborted"; // Exit the application on cancel 
-        
+        throw "ConfigDialog aborted"; // Exit the application on cancel
+
       Ogre::RenderSystem *lRenderSystem = lRenderSystemList.at(0);
       std::cout << "Using " << lRenderSystem->getName() << " as renderer." << std::endl;
       mRoot->setRenderSystem(lRenderSystem);
     }
-  
-    mRoot->initialise(false); 
+
+    mRoot->initialise(false);
   }
-  
-  bool fullscreen = false;  
+
+  bool fullscreen = false;
   Ogre::NameValuePairList misc;
   Ogre::ConfigOptionMap config = mRoot->getRenderSystem()->getConfigOptions();
   Ogre::ConfigOptionMap::const_iterator it = config.begin();
-  
+
   while( it != config.end() ){
     Ogre::String leftconf = (*it).first;
     Ogre::String rightconf = (*it).second.currentValue;
-    
+
     if(leftconf == "Video Mode"){
-      if(canInit)
-        sscanf(rightconf.c_str(), "%d %*s %d", &mWindowWidth, &mWindowHeight);
+      if(canInit) {
+        int ret = sscanf(rightconf.c_str(), "%d %*s %d", &mWindowWidth, &mWindowHeight);
+        if (ret == 0)
+          std::cout << "Cannot read Ogre video mode" << std::endl;
+      }
       else{
         if(mWindowWidth == 0 && mWindowHeight == 0){
           mWindowWidth = mBackgroundWidth;
@@ -350,19 +341,19 @@ void vpAROgre::init(bool
     }
     else
       misc[leftconf] = rightconf;
-    
+
     it++;
   }
-  
+
   // With Ogre version >= 1.8.1 we hide the window
-  if( hidden && ((OGRE_VERSION_MAJOR << 16 | OGRE_VERSION_MINOR << 8 | OGRE_VERSION_PATCH) >= (1 << 16 | 8 << 8 | 1)) ){
+  if( hidden ){
+#if ( OGRE_VERSION >= (1 << 16 | 8 << 8 | 1) )
     misc["hidden"] = "true";
     windowHidden = true;
-    mWindow = mRoot->createRenderWindow(name, mWindowWidth, mWindowHeight, fullscreen, &misc);  
+#endif
   }
-  else
-    mWindow = mRoot->createRenderWindow(name, mWindowWidth, mWindowHeight, fullscreen, &misc);
-      
+  mWindow = mRoot->createRenderWindow(name, mWindowWidth, mWindowHeight, fullscreen, &misc);
+
   // Initialise resources
   Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups();
   //-----------------------------------------------------
@@ -374,12 +365,12 @@ void vpAROgre::init(bool
   //		ST_EXTERIOR_REAL_FAR = paging landscape
   //		ST_INTERIOR = Quake3 BSP
   //-----------------------------------------------------
-  
+
   mSceneMgr = mRoot->createSceneManager(Ogre::ST_GENERIC);
-  
+
   // Create the camera
   createCamera();
-  
+
   // Create a viewport
   Ogre::Viewport* viewPort = mWindow->addViewport(mCamera);
 //   Ogre::Viewport* viewPort = mCamera->getViewport();
@@ -408,7 +399,7 @@ void vpAROgre::init(bool
   windowHndStr << windowHnd;
   pl.insert(std::make_pair(std::string("WINDOW"), windowHndStr.str()));
   // Let the user use the keyboard elsewhere
-#if defined (UNIX)
+#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
   pl.insert(std::make_pair(std::string("x11_keyboard_grab"), std::string("false")));
 #endif
 
@@ -420,12 +411,12 @@ void vpAROgre::init(bool
   if ( !bufferedKeys ) mKeyboard->setEventCallback ( this);
 #endif
 
-  // Initialise a render to texture to be able to retrieve a screenshot  
+  // Initialise a render to texture to be able to retrieve a screenshot
   Ogre::TexturePtr Texture = Ogre::TextureManager::getSingleton().createManual("rtf", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,Ogre::TEX_TYPE_2D,
                                                                                mWindow->getWidth(),mWindow->getHeight(), 0, Ogre::PF_R8G8B8A8, Ogre::TU_RENDERTARGET);
-  
-  
-  
+
+
+
 //   Ogre::TexturePtr Texture = Ogre::TextureManager::getSingleton().createManual("rtf", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,Ogre::TEX_TYPE_2D,
 //                                                                                640,480, 0, Ogre::PF_R8G8B8A8, Ogre::TU_RENDERTARGET);
   Ogre::RenderTexture* RTarget = Texture->getBuffer()->getRenderTarget();
@@ -507,7 +498,7 @@ bool vpAROgre::frameEnded(const Ogre::FrameEvent& evt)
   else return result;
 }
 
-/*!  
+/*!
 
   Function telling what to do before each frame. This method is called
   before every frame rendered by Ogre.
@@ -558,7 +549,7 @@ void vpAROgre::windowClosed(Ogre::RenderWindow* rw)
   \param I : Grey level image to show in background.
   \param cMw : Camera pose as an homogeneous matrix.
 */
-bool vpAROgre::renderOneFrame(const vpImage<unsigned char> &I, 
+bool vpAROgre::renderOneFrame(const vpImage<unsigned char> &I,
            const vpHomogeneousMatrix &cMw)
 {
   // Update the background to match the situation
@@ -576,7 +567,7 @@ bool vpAROgre::renderOneFrame(const vpImage<unsigned char> &I,
   \param I : RGBa image to show in background.
   \param cMw : Camera pose as an homogeneous matrix.
 */
-bool vpAROgre::renderOneFrame(const vpImage<vpRGBa> &I, 
+bool vpAROgre::renderOneFrame(const vpImage<vpRGBa> &I,
            const vpHomogeneousMatrix &cMw)
 {
   // Update the background to match the situation
@@ -594,7 +585,7 @@ bool vpAROgre::renderOneFrame(const vpImage<vpRGBa> &I,
   \param I : Grey level image to show in background.
   \param cMw : Camera pose as an homogeneous matrix.
 */
-void vpAROgre::display(const vpImage<unsigned char> &I, 
+void vpAROgre::display(const vpImage<unsigned char> &I,
            const vpHomogeneousMatrix &cMw)
 {
   // Display on Ogre Window
@@ -635,7 +626,7 @@ bool vpAROgre::continueRendering(void)
   Set the camera intrinsic parameters
 */
 void vpAROgre::setCameraParameters(const vpCameraParameters &cameraP )
-{	
+{
   mcam = cameraP;
 }
 
@@ -657,7 +648,7 @@ void vpAROgre::load(const std::string &name, const std::string &model)
   \param wTo : New position of the node (translation between object frame and
     world frame).
 */
-void vpAROgre::setPosition(const std::string &name, 
+void vpAROgre::setPosition(const std::string &name,
          const vpTranslationVector &wTo)
 {
   // Reset the position
@@ -686,7 +677,7 @@ void vpAROgre::setRotation(const std::string &name, const vpRotationMatrix &wRo)
   // Get the node in its original position
   mSceneMgr->getSceneNode(name)->resetOrientation();
   // Apply the new rotation
-  Ogre::Matrix3 rotationOgre 
+  Ogre::Matrix3 rotationOgre
     = Ogre::Matrix3( (Ogre::Real)wRo[0][0], (Ogre::Real)wRo[0][1], (Ogre::Real)wRo[0][2],
          (Ogre::Real)wRo[1][0], (Ogre::Real)wRo[1][1], (Ogre::Real)wRo[1][2],
          (Ogre::Real)wRo[2][0], (Ogre::Real)wRo[2][1], (Ogre::Real)wRo[2][2]);
@@ -699,18 +690,18 @@ void vpAROgre::setRotation(const std::string &name, const vpRotationMatrix &wRo)
   \param name : Name of the SceneNode to rotate.
   \param wRo : The rotation matrix representing the rotation to apply.
 */
-void vpAROgre::addRotation(const std::string &name, 
+void vpAROgre::addRotation(const std::string &name,
          const vpRotationMatrix &wRo)
 {
-  // Apply the new rotation 
-  Ogre::Matrix3 rotationOgre 
+  // Apply the new rotation
+  Ogre::Matrix3 rotationOgre
     = Ogre::Matrix3( (Ogre::Real)wRo[0][0], (Ogre::Real)wRo[0][1], (Ogre::Real)wRo[0][2],
          (Ogre::Real)wRo[1][0], (Ogre::Real)wRo[1][1], (Ogre::Real)wRo[1][2],
          (Ogre::Real)wRo[2][0], (Ogre::Real)wRo[2][1], (Ogre::Real)wRo[2][2]);
   Ogre::Quaternion q(rotationOgre);
   mSceneMgr->getSceneNode(name)->rotate(q);
-	 
-  
+
+
 }
 
 /*!
@@ -721,7 +712,7 @@ void vpAROgre::addRotation(const std::string &name,
   translation to apply.
 
 */
-void vpAROgre::setPosition(const std::string &name, 
+void vpAROgre::setPosition(const std::string &name,
          const vpHomogeneousMatrix &wMo)
 {
   // Extract the position and orientation data
@@ -808,14 +799,22 @@ void vpAROgre::createBackground(vpImage<unsigned char> & /* I */)
 
   // Pointer to the dynamic texture
   Ogre::TexturePtr dynTexPtr = Ogre::TextureManager::getSingleton().getByName("BackgroundTexture");
-
-  // Get the pixel buffer
+//#if ( OGRE_VERSION >= (1 << 16 | 9 << 8 | 0) )
+//    .dynamicCast<Ogre::Texture>();// Get the pixel buffer
+//#else
+//      ;
+//#endif
   mPixelBuffer = dynTexPtr->getBuffer();
 
   // Material to apply the texture to the background
-  Ogre::MaterialPtr Backgroundmaterial 
+  Ogre::MaterialPtr Backgroundmaterial
     = Ogre::MaterialManager::getSingleton().create("BackgroundMaterial",
-						   Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+               Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+//#if ( OGRE_VERSION >= (1 << 16 | 9 << 8 | 0) )
+//      .dynamicCast<Ogre::Material>();
+//#else
+//      ;
+//#endif
   Ogre::Technique *Backgroundtechnique = Backgroundmaterial->createTechnique();
   Backgroundtechnique->createPass();
   Backgroundmaterial->getTechnique(0)->getPass(0)->setLightingEnabled(false);
@@ -873,15 +872,26 @@ void vpAROgre::createBackground(vpImage<vpRGBa> & /* I */)
 
 
   // Pointer to the dynamic texture
-  Ogre::TexturePtr dynTexPtr = Ogre::TextureManager::getSingleton().getByName("BackgroundTexture");
+  Ogre::TexturePtr dynTexPtr =
+    Ogre::TextureManager::getSingleton().getByName("BackgroundTexture");
+//#if ( OGRE_VERSION >= (1 << 16 | 9 << 8 | 0) )
+//      .dynamicCast<Ogre::Texture>();// Get the pixel buffer
+//#else
+//      ;
+//#endif
 
   // Get the pixel buffer
   mPixelBuffer = dynTexPtr->getBuffer();
 
   // Material to apply the texture to the background
-  Ogre::MaterialPtr Backgroundmaterial 
+  Ogre::MaterialPtr Backgroundmaterial
     = Ogre::MaterialManager::getSingleton().create("BackgroundMaterial",
-						   Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+               Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+//#if ( OGRE_VERSION >= (1 << 16 | 9 << 8 | 0) )
+//      .dynamicCast<Ogre::Material>();
+//#else
+//      ;
+//#endif
   Ogre::Technique *Backgroundtechnique = Backgroundmaterial->createTechnique();
   Backgroundtechnique->createPass();
   Backgroundmaterial->getTechnique(0)->getPass(0)->setLightingEnabled(false);
@@ -919,23 +929,27 @@ void vpAROgre::closeOIS(void)
 /*!
   Update the projection parameters of the camera.
 */
+// Note: equation taken from:
+// http://strawlab.org/2011/11/05/augmented-reality-with-OpenGL/
 void vpAROgre::updateCameraProjection(void)
 {
-  Ogre::Real f,n,f_m_n,f_p_n,px,py,u0,v0;
-  f = (Ogre::Real)200.0; // Far clip distance
-  n = (Ogre::Real)0.001; // Near clip distance
-  f_m_n = (Ogre::Real)(f-n);
-  f_p_n = (Ogre::Real)(f+n);
-  px = (Ogre::Real)mcam.get_px();
-  py = (Ogre::Real)mcam.get_py();
-  u0 = (Ogre::Real)mcam.get_u0();
-  v0 = (Ogre::Real)mcam.get_v0();
-  Ogre::Matrix4 Projection 
-    = Ogre::Matrix4( (Ogre::Real)(2.0*px/mBackgroundWidth), 0,  (Ogre::Real)(2.0*(u0/mBackgroundWidth)-1.0), 0, 
-		     0, (Ogre::Real)(2.0*py/mBackgroundHeight), (Ogre::Real)(2.0*(v0/mBackgroundHeight)-1.0),0,
-		     0, 0, (Ogre::Real)(-1.0*f_p_n/f_m_n), (Ogre::Real)(-2.0*f*n/f_m_n),
-		     0, 0, -1.0, 0);
-  mCamera->setCustomProjectionMatrix(true, Projection);
+  if(mCamera != 0){
+      Ogre::Real f,n,f_m_n,f_p_n,px,py,u0,v0;
+      f = (Ogre::Real)(mFarClipping); // Far clip distance
+      n = (Ogre::Real)(mNearClipping); // Near clip distance
+      f_m_n = (Ogre::Real)(f-n);
+      f_p_n = (Ogre::Real)(f+n);
+      px = (Ogre::Real)mcam.get_px();
+      py = (Ogre::Real)mcam.get_py();
+      u0 = (Ogre::Real)mcam.get_u0();
+      v0 = (Ogre::Real)mcam.get_v0();
+      Ogre::Matrix4 Projection
+        = Ogre::Matrix4( (Ogre::Real)(2.0*px/mBackgroundWidth), 0,  (Ogre::Real)(1.0 - 2.0*(u0/mBackgroundWidth)), 0,
+                 0, (Ogre::Real)(2.0*py/mBackgroundHeight), (Ogre::Real)(-1.0 + 2.0*(v0/mBackgroundHeight)),0,
+                 0, 0, (Ogre::Real)(-1.0*f_p_n/f_m_n), (Ogre::Real)(-2.0*f*n/f_m_n),
+                 0, 0, -1.0, 0);
+      mCamera->setCustomProjectionMatrix(true, Projection);
+  }
 }
 
 /*!
@@ -944,7 +958,7 @@ void vpAROgre::updateCameraProjection(void)
 void vpAROgre::updateBackgroundTexture(const vpImage<unsigned char> &I)
 {
   // Inspired from Ogre wiki : http://www.ogre3d.org/tikiwiki/Creating+dynamic+textures
-  // Lock the pixel buffer and get a pixel box. HBL_DISCARD is to use for best 
+  // Lock the pixel buffer and get a pixel box. HBL_DISCARD is to use for best
   // performance than HBL_NORMAL
   mPixelBuffer->lock(Ogre::HardwareBuffer::HBL_DISCARD); // Lock the buffer
   const Ogre::PixelBox& pixelBox = mPixelBuffer->getCurrentLock();
@@ -963,7 +977,7 @@ void vpAROgre::updateBackgroundTexture(const vpImage<unsigned char> &I)
 void vpAROgre::updateBackgroundTexture(const vpImage<vpRGBa> &I)
 {
   // Inspired from Ogre wiki : http://www.ogre3d.org/tikiwiki/Creating+dynamic+textures
-  // Lock the pixel buffer and get a pixel box. HBL_DISCARD is to use for best 
+  // Lock the pixel buffer and get a pixel box. HBL_DISCARD is to use for best
   // performance than HBL_NORMAL
   mPixelBuffer->lock(Ogre::HardwareBuffer::HBL_DISCARD); // Lock the buffer
   const Ogre::PixelBox& pixelBox = mPixelBuffer->getCurrentLock();
@@ -977,18 +991,18 @@ void vpAROgre::updateBackgroundTexture(const vpImage<vpRGBa> &I)
 //      *pDest++=I[i][mBackgroundWidth-j].B; // Blue component
 //      *pDest++=I[i][mBackgroundWidth-j].G; // Green component
 //      *pDest++=I[i][mBackgroundWidth-j].R; // Red component
-      
+
       *pDest++=I[i][j].B; // Blue component
       *pDest++=I[i][j].G; // Green component
       *pDest++=I[i][j].R; // Red component
-      
+
       *pDest++ = 255;     // Alpha component
     }
   }
 #else // if texture in RGBa format which is the format of the input image
   memcpy(pDest, I.bitmap, mBackgroundHeight*mBackgroundWidth*sizeof(vpRGBa));
 #endif
-  
+
   // Unlock the pixel buffer
   mPixelBuffer->unlock();
 }
@@ -999,7 +1013,7 @@ void vpAROgre::updateBackgroundTexture(const vpImage<vpRGBa> &I)
 void vpAROgre::updateCameraParameters (const vpHomogeneousMatrix &cMw)
 {
   // The matrix is given to Ogre with some changes to fit with the world projection
-  Ogre::Matrix4 ModelView 
+  Ogre::Matrix4 ModelView
 //    = Ogre::Matrix4( (Ogre::Real)-cMo[0][0],  (Ogre::Real)-cMo[0][1],  (Ogre::Real)-cMo[0][2],  (Ogre::Real)-cMo[0][3],
     = Ogre::Matrix4( (Ogre::Real)cMw[0][0],  (Ogre::Real)cMw[0][1],  (Ogre::Real)cMw[0][2],  (Ogre::Real)cMw[0][3],
          (Ogre::Real)-cMw[1][0], (Ogre::Real)-cMw[1][1], (Ogre::Real)-cMw[1][2], (Ogre::Real)-cMw[1][3],
@@ -1018,6 +1032,11 @@ void vpAROgre::getRenderingOutput(vpImage<vpRGBa> &I, const vpHomogeneousMatrix 
 {
     updateCameraParameters(cMo);
     Ogre::TexturePtr dynTexPtr = Ogre::TextureManager::getSingleton().getByName("rtf");
+//#if ( OGRE_VERSION >= (1 << 16 | 9 << 8 | 0) )
+//        .dynamicCast<Ogre::Texture>();
+//#else
+//        ;
+//#endif
     Ogre::RenderTexture* RTarget = dynTexPtr->getBuffer()->getRenderTarget();
     mWindow->update();
     RTarget->update();
@@ -1032,7 +1051,7 @@ void vpAROgre::getRenderingOutput(vpImage<vpRGBa> &I, const vpHomogeneousMatrix 
 #if 1 // if texture in BGRa format
     for(unsigned int i=0; i<I.getHeight(); i++){
       for(unsigned int j=0; j<I.getWidth(); j++){
-	// Color Image	
+	// Color Image
 	I[i][j].B = *pDest++; // Blue component
 	I[i][j].G = *pDest++; // Green component
 	I[i][j].R = *pDest++; // Red component

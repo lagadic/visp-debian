@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpMeNurbs.h 4062 2013-01-09 10:30:06Z fspindle $
+ * $Id: vpMeNurbs.h 4649 2014-02-07 14:57:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -160,16 +160,16 @@ class VISP_EXPORT vpMeNurbs : public vpMeTracker
     /*!
       Sets the number of control points used to compute the Nurbs.
 
-      \param nbControlPoints : The number of control points used to compute the Nurbs.
+      \param nb_point : The number of control points used to compute the Nurbs.
     */
-    void setNbControlPoints(const unsigned int nbControlPoints) {this->nbControlPoints = nbControlPoints;}
+    void setNbControlPoints(const unsigned int nb_point) {this->nbControlPoints = nb_point;}
     
     /*!
       Enables or disables the canny detection used during the extremities search.
 
-      \param enableCannyDetection : if true it enables the canny detection.
+      \param enable_canny : if true it enables the canny detection.
     */
-    void setEnableCannyDetection(const bool enableCannyDetection) {this->enableCannyDetection =enableCannyDetection;}
+    void setEnableCannyDetection(const bool enable_canny) {this->enableCannyDetection =enable_canny;}
     
     /*!
       Enables to set the two thresholds use by the canny detection.

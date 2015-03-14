@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpFeatureEllipse.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpFeatureEllipse.cpp 4649 2014-02-07 14:57:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -97,7 +97,7 @@ vpFeatureEllipse::init()
 
 }
 
-vpFeatureEllipse::vpFeatureEllipse() : vpBasicFeature()
+vpFeatureEllipse::vpFeatureEllipse() : A(0), B(0), C(0)
 {
     init() ;
 }
@@ -343,7 +343,7 @@ void
 vpFeatureEllipse::buildFrom(const double x, const double y,
 			    const double mu20, const double mu11,
 			    const double mu02,
-			    const double A, const double B, const double C)
+          const double a, const double b, const double c)
 {
 
   s[0] = x ;
@@ -352,9 +352,9 @@ vpFeatureEllipse::buildFrom(const double x, const double y,
   s[3] = mu11 ;
   s[4] = mu02 ;
 
-  this->A = A ;
-  this->B = B ;
-  this->C = C ;
+  this->A = a ;
+  this->B = b ;
+  this->C = c ;
 
   for( unsigned int i = 0; i < nbParameters; i++) flags[i] = true;
 }
@@ -382,11 +382,11 @@ vpFeatureEllipse::set_xy(const double x,const double y)
 }
 
 void
-vpFeatureEllipse::setABC(const double A, const double B, const double C)
+vpFeatureEllipse::setABC(const double a, const double b, const double c)
 {
-  this->A = A ;
-  this->B = B ;
-  this->C = C ;
+  this->A = a ;
+  this->B = b ;
+  this->C = c ;
   for( unsigned int i = 5; i < nbParameters; i++) flags[i] = true;
 }
 

@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: grabV4l2.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: grabV4l2.cpp 5126 2015-01-05 22:07:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -184,29 +184,29 @@ bool getOptions(int argc, const char **argv, unsigned &fps, unsigned &input,
                 vpV4l2Grabber::vpV4l2PixelFormatType &pixelformat,
                 vpImage_type &image_type, bool &save, std::string &opath)
 {
-  const char *optarg;
+  const char *optarg_;
   int	c;
-  while ((c = vpParseArgv::parse(argc, argv, GETOPTARGS, &optarg)) > 1) {
+  while ((c = vpParseArgv::parse(argc, argv, GETOPTARGS, &optarg_)) > 1) {
 
     switch (c) {
     case 'd': display = false; break;
-    case 'f': fps = (unsigned) atoi(optarg); break;
-    case 'i': input = (unsigned) atoi(optarg); break;
-    case 'n': niter = atol(optarg); break;
+    case 'f': fps = (unsigned) atoi(optarg_); break;
+    case 'i': input = (unsigned) atoi(optarg_); break;
+    case 'n': niter = atol(optarg_); break;
     case 'o':
       save = true;
-      opath = optarg; break;
-    case 'p': pixelformat = (vpV4l2Grabber::vpV4l2PixelFormatType) atoi(optarg); break;
-    case 's': scale = (unsigned) atoi(optarg); break;
-    case 't': image_type = (vpImage_type) atoi(optarg); break;
-    case 'v': sprintf(device, "%s", optarg); break;
+      opath = optarg_; break;
+    case 'p': pixelformat = (vpV4l2Grabber::vpV4l2PixelFormatType) atoi(optarg_); break;
+    case 's': scale = (unsigned) atoi(optarg_); break;
+    case 't': image_type = (vpImage_type) atoi(optarg_); break;
+    case 'v': sprintf(device, "%s", optarg_); break;
     case 'x': verbose = true; break;
     case 'h': usage(argv[0], NULL, fps, input, scale, niter, 
                     device, pixelformat, image_type, opath);
       return false; break;
 
     default:
-      usage(argv[0], optarg, fps, input, scale, niter, 
+      usage(argv[0], optarg_, fps, input, scale, niter,
             device, pixelformat, image_type, opath); return false; break;
     }
   }
@@ -216,7 +216,7 @@ bool getOptions(int argc, const char **argv, unsigned &fps, unsigned &input,
     usage(argv[0], NULL, fps, input, scale, niter, 
           device, pixelformat, image_type, opath);
     std::cerr << "ERROR: " << std::endl;
-    std::cerr << "  Bad argument " << optarg << std::endl << std::endl;
+    std::cerr << "  Bad argument " << optarg_ << std::endl << std::endl;
     return false;
   }
 
@@ -235,39 +235,39 @@ bool getOptions(int argc, const char **argv, unsigned &fps, unsigned &input,
 int
 main(int argc, const char ** argv)
 {
-  unsigned int opt_fps = 25;
-  unsigned int opt_input = 0;
-  unsigned int opt_scale = 1;
-  vpV4l2Grabber::vpV4l2PixelFormatType opt_pixelformat = vpV4l2Grabber::V4L2_YUYV_FORMAT;
-  long opt_iter = 100;
-  bool opt_verbose = false;
-  bool opt_display = true;
-  char opt_device[20];
-  bool opt_save = false;
-  sprintf(opt_device, "/dev/video0");
-  // Default output path for image saving
-  std::string opt_opath = "/tmp/I%04d.ppm";
+  try {
+    unsigned int opt_fps = 25;
+    unsigned int opt_input = 0;
+    unsigned int opt_scale = 1;
+    vpV4l2Grabber::vpV4l2PixelFormatType opt_pixelformat = vpV4l2Grabber::V4L2_YUYV_FORMAT;
+    long opt_iter = 100;
+    bool opt_verbose = false;
+    bool opt_display = true;
+    char opt_device[20];
+    bool opt_save = false;
+    sprintf(opt_device, "/dev/video0");
+    // Default output path for image saving
+    std::string opt_opath = "/tmp/I%04d.ppm";
 
-  vpImage_type opt_image_type = color_image;
+    vpImage_type opt_image_type = color_image;
 
-  // Read the command line options
-  if (getOptions(argc, argv, opt_fps, opt_input, opt_scale, opt_display, 
-                 opt_verbose, opt_iter, opt_device,
-                 opt_pixelformat, opt_image_type, opt_save, opt_opath) == false) {
-    exit (-1);
-  }
+    // Read the command line options
+    if (getOptions(argc, argv, opt_fps, opt_input, opt_scale, opt_display,
+                   opt_verbose, opt_iter, opt_device,
+                   opt_pixelformat, opt_image_type, opt_save, opt_opath) == false) {
+      exit (-1);
+    }
 
-  // Declare an image, this is a gray level image (unsigned char) and
-  // an other one that is a color image. There size is not defined
-  // yet. It will be defined when the image will acquired the first
-  // time.
-  vpImage<unsigned char> Ig ; // grey level image
-  vpImage<vpRGBa> Ic ; // color image
+    // Declare an image, this is a gray level image (unsigned char) and
+    // an other one that is a color image. There size is not defined
+    // yet. It will be defined when the image will acquired the first
+    // time.
+    vpImage<unsigned char> Ig ; // grey level image
+    vpImage<vpRGBa> Ic ; // color image
 
-  // Creates the grabber
-  vpV4l2Grabber g;
+    // Creates the grabber
+    vpV4l2Grabber g;
 
-  try{
     // Initialize the grabber
     g.setVerboseMode(opt_verbose);
     g.setDevice(opt_device);
@@ -294,28 +294,17 @@ main(int argc, const char ** argv)
       std::cout << "Color image size: width : " << Ic.getWidth() <<  " height: "
                 << Ic.getHeight() << std::endl;
     }
-  }
-  catch (vpException e) {
-    std::cout << "Catched exception: " << e.getMessage() << std::endl;
-    return 0;
-  }
-  catch(...)
-  {
-    vpERROR_TRACE("Cannot acquire an image...") ;
-    return 0;
-  }
 
 
-  // We open a window using either X11 or GTK.
-  // Its size is automatically defined by the image (I) size
+    // We open a window using either X11 or GTK.
+    // Its size is automatically defined by the image (I) size
 #if defined VISP_HAVE_X11
-  vpDisplayX display;
+    vpDisplayX display;
 #elif defined VISP_HAVE_GTK
-  vpDisplayGTK display;
+    vpDisplayGTK display;
 #endif
 
-  if (opt_display) {
-    try{
+    if (opt_display) {
       // Display the image
       // The image class has a member that specify a pointer toward
       // the display that has been initialized in the display declaration
@@ -331,18 +320,7 @@ main(int argc, const char ** argv)
         vpDisplay::display(Ic) ;
         vpDisplay::flush(Ic) ;
       }
-
     }
-    catch (vpException e) {
-      std::cout << "Exception: " << e.getMessage() << std::endl;
-    }
-    catch(...)
-    {
-      vpERROR_TRACE("Error while displaying the image") ;
-      exit(-1);
-    }
-  }
-  try {
     // Acquisition loop
     long cpt = 1;
     while(cpt ++ < opt_iter)
@@ -387,12 +365,12 @@ main(int argc, const char ** argv)
     }
 
     g.close();
+    return 0;
   }
-  catch (vpException e) {
-    std::cout << "Exception: " << e.getMessage() << std::endl;
-    g.close();
+  catch(vpException e) {
+    std::cout << "Catch an exception: " << e << std::endl;
+    return 1;
   }
-
 }
 #else
 int

@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpRotationVector.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpRotationVector.cpp 4649 2014-02-07 14:57:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -97,8 +97,9 @@ Rxyz rotation vector:
 0
   \endcode
 */
-std::ostream &operator <<(std::ostream &s,const vpRotationVector &m)
+VISP_EXPORT std::ostream &operator <<(std::ostream &s,const vpRotationVector &m)
 {
+  std::ios::fmtflags original_flags( s.flags() );
   s.precision(10) ;
 
   for (unsigned int i=0; i < m.size(); i++)
@@ -106,12 +107,15 @@ std::ostream &operator <<(std::ostream &s,const vpRotationVector &m)
 
   s << std::endl;
 
+  // Restore ostream format
+  s.flags(original_flags);
+
   return s;
 }
 
 
-void vpRotationVector::init(const unsigned int size){
-	this->_size = size;
+void vpRotationVector::init(const unsigned int vector_size){
+  this->_size = vector_size;
 	r = new double[this->_size];
 	std::fill(r,r+this->_size,0.);
 }
@@ -119,9 +123,3 @@ void vpRotationVector::init(const unsigned int size){
 vpRotationVector::~vpRotationVector(){
 	delete[] r;
 }
-
-/*
- * Local variables:
- * c-basic-offset: 2
- * End:
- */

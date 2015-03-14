@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpProjectionDisplay.h 4238 2013-05-06 13:29:30Z fspindle $
+ * $Id: vpProjectionDisplay.h 4632 2014-02-03 17:06:40Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -96,8 +96,25 @@ public:
   static int internalView() { return 0x01 ; }
   static int externalView() { return 0x02 ; }
 
-  vpProjectionDisplay() { init() ;}
-  vpProjectionDisplay(int select) { init(select) ;}
+  /*! Default constructor. */
+  vpProjectionDisplay()
+    : Icam(), Iext(),
+#if defined (VISP_HAVE_DISPLAY)
+      dIcam(), dIext(),
+#endif
+      listFp(), o(), x(), y(), z(), traj()
+  {
+    init();
+  }
+  vpProjectionDisplay(int select)
+    : Icam(), Iext(),
+#if defined (VISP_HAVE_DISPLAY)
+      dIcam(), dIext(),
+#endif
+      listFp(), o(), x(), y(), z(), traj()
+  {
+    init(select) ;
+  }
 
   void insert( vpForwardProjection &fp) ;
   void display(vpImage<unsigned char> &I,

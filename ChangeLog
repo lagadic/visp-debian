@@ -2,10 +2,131 @@
                      Visual Servoing Platform
                      Resume of the change log
 
-     Copyright Projet Lagadic / IRISA-INRIA Rennes, 2005-2013
-                    http://www.irisa.fr/lagadic
+     Copyright Projet Lagadic / IRISA-INRIA Rennes, 2005 - 2015
+                    http://team.inria.fr/lagadic
 
 
+ViSP 2.10.0 (released February 13th, 2015)
+  - New features
+    . New object detection and localisation capabilities that allow to
+      initialize for instance the model-based tracker (see tutorial).
+    . New bar code detectors that uses libdmtx and libzbar (see tutorial):
+      + vpDetectorQRcode class allows to detect QR codes
+      + vpDetectorDataMatrixCode class allows to detect data matrices
+    . New vpDetectorFace class that allows face detection based on OpenCV
+      Haar cascade classifier capabilities (see tutorial)
+    . New vpConvert class for type conversions from OpenCV to ViSP.
+    . Model-based tracker:
+      + Introduction of 3D circles that project as ellipses.
+      + In *.cao files comments are allowed on lines starting with # character.
+      + New functions getError() and getRobustWeights() useful to compute
+        tracking quality indicators.
+      + Introduction of setLod() for "level of detail" that checks if the size
+        of the feature is large enough to be considered by the tracker.
+      + Based on the rank of the interaction matrix turn off automatically the
+        degrees of freedom that cannot be estimated. Especially useful when
+        considering 3D objets with only cylinders and circles.
+      + and many other improvements and fixes.
+    . Video reader and writer support mpeg4. ffmpeg is no more requested
+      in vpVideoReader and vpVideoWriter. If ffmpeg is not detected or installed
+      we use OpenCV.
+    . New vpXmlParserHomogeneousMatrix class to read/write homogeneous
+      transformations from/to xml files
+    . Auto detection of visp-images-data Debian or Ubuntu package that allows
+      testing without setting VISP_INPUT_IMAGE_PATH
+    . If OpenCV version >= 2.4.8 use only OpenCV C++ api. Classes that use
+      IplImages as input are deprecated.
+    . Compat with RaspberryPi architecture
+    . Compat with OpenCV 3.x
+    . Compat with Yarp 2.3.63
+    . Compat with CMake 3.x
+    . Compat with MinGW w64 from http://mingw-w64.sourceforge.net/
+  - Tutorials
+    . New tutorial to show how to install ViSP from Ubuntu official packages.
+    . New tutorial to show how to install ViSP on CentOS.
+    . New tutorial to show how to install ViSP on openSUSE.
+    . New tutorial to show how to install ViSP on Raspberry Pi.
+    . New tutorial to show how to install ViSP on Windows 8.1 with msvc.
+    . New tutorial to show how to install ViSP on Windows 8.1 with mingw.
+    . New keypoints matching tutorial.
+    . New bar code detection tutorial.
+    . New face detection tutorial.
+    . New object detection and localization tutorial
+    . Update KLT tracker tutorial to show how to initialize the tracker online.
+    . Update blob tracker tutorial to show how to use v4l2 live camera.
+    . Update model-based tracking tutorial for advanced usage.
+  - Bug fixed
+    . [17112] Error after second call to track() in vpMbEdgeTracker
+    . [17212] vp1394TwoGrabber: unable to select a camera from its guid
+    . [17457] Cannot apply a secondary task to a 7dof robot
+    . [17550] Build error with ffmpeg libraries
+    . [17620] vpXmlParserCamera::save() doesn't save the camera name and
+      image size
+    . [17644] vpDisplayX doesn't work on RaspberryPi
+    . [17659] ViSP+Ogre3D+boost: libboost_chrono cannot be opened
+    . [17705] Bad endianness support in vpDisplayX
+    . [17766] Compat with cmake 3.0.0: failed due to new CMP0026 policy
+    . [17972] Ogre examples are not working with Fedora 20
+    . [17983] Unable to build ViSP when an older version was previously
+      installed
+    . [18258] Stack overflow when using vpDot under Windows
+    . [16895] undefined reference to `vpGaussRand::gaussianDraw()'
+    . [18406] Infinite loop in `vpPose::poseRansac()'
+    . [18446] Bad KLT points detection in vpMbKtlTracker and vpMbEdgeKltTracker.
+    . [18451] Infinite loop in vpSimulatorViper850::stopMotion()
+    . [18452] Empty filename check in vpImageIo, vpVideoReader, vpVideoWriter is erroneous
+    . [18459] Error when initializing KLT related trackers but no key point is deteted.
+    . [18471] Bad fov computation in vpCameraParameters.
+    . [18550] Linking error with Homebrew install of OpenCV on MacOS
+
+----------------------------------------------
+ViSP 2.9.0 (released February 18th, 2014)
+  - New features
+    . Introduction of a new template tracker using SSD (vpTemplateTrackerSSD
+      classes) or ZNCC (vpTemplateTrackerZNCC classes). These trackers are able
+      to estimate 2D transformations such as translation, SRT (scale, rotation
+      and translation), affine and homography. A video
+      illustrating this tracker capabilities is available on:
+      http://team.inria.fr/lagadic/visp/computer-vision.html
+    . In vpServo introduction of a new controller able to ensure continuous
+      sequencing
+  - Improvements
+    . Add missing const to member functions and arguments passed by reference.
+    . Introduction of a new option BUILD_WITH_STATIC_CRT that allows to set
+      /MT (default) or /MD msvc build option
+    . Compatibility with mingw, msvc11 (2012), msvc12 (2013)
+      and open solaris 11
+    . Trace and debug can now be enabled/disabled using CMake
+      ACTIVATE_DEBUG_TRACE option
+    . Fix errors detected by Covery Scan static code analyser
+    . Fix warnings detected with Gnu g++ -Weffc++ -Wshadow compiler flags
+    . Improve a lot of classes
+  - New examples
+    . New example that shows how to use the template tracker
+    . A lot of new sample code provided in tutorial folder
+  - New tutorials
+    . Installation from source on Linux Fedora
+    . Image filtering
+    . Template tracking
+    . Homography estimation from points
+    . Keypoint matching
+    . How to boost your visual servo control law
+    . Debug and trace printings
+  - Bug fixed
+    . [16263] libopencv_nonfree for Surf not detected by CMake.
+    . [16307] vpVideoReader::setLastFrameIndex() doesn't work.
+    . [16371] No convergence in SVDcmp
+    . [16465] FTBFS on armhf, ppc, s390: Errors while running CTest
+    . [16696] Build with OpenCV fails with msvc (/MT conflicts with /MD)
+    . [16781] Unable to open .pgm saved with Matlab imwrite
+    . [16823] Problems with camera calibration code
+    . [16889] Link error with CMU 1394 on win x64 arch
+    . [16895] undefined reference to `vpGaussRand::gaussianDraw()'
+    . [16919] Unable to link with OpenCV 2.4.8 under Windows
+    . [16924] MinGW: unable to build ViSP as a shared library
+    . [16928] vpVideoReader is unable to find the number of the first image
+	      from a generic sequence of images
+----------------------------------------------
 ViSP 2.8.0 (released July 24th, 2013)
   - New features
     . New camera calibration tool: example/camera_calibration.cpp

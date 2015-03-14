@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpFrameGrabber.h 4323 2013-07-18 09:24:01Z fspindle $
+ * $Id: vpFrameGrabber.h 4632 2014-02-03 17:06:40Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -121,6 +121,7 @@ public:
   inline  unsigned int getWidth() const { return width ; }
 
 public:
+  vpFrameGrabber() : init(false), height(0), width(0) {};
   virtual ~vpFrameGrabber() { ; }
 
   virtual void open(vpImage<unsigned char> &I) =0 ;

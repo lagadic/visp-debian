@@ -3,7 +3,7 @@
  * $Id: vpPose.h 2453 2010-01-07 10:01:10Z nmelchio $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -152,9 +152,10 @@ class VISP_EXPORT vpImageSimulator
     
   private:
     vpColVector X[4];
-    vpPoint pt[4];
     vpHomogeneousMatrix cMt;
     vpColVector X2[4];
+    std::vector<vpPoint> pt;
+    std::vector<vpPoint> ptClipped;
     
     vpInterpolationType interp;
 
@@ -187,7 +188,7 @@ class VISP_EXPORT vpImageSimulator
     double *Xinter_optim;
 
     //triangles de projection du plan
-    vpTriangle T1,T2;
+    std::vector<vpTriangle> listTriangle;
     
     //image de texture
     vpColorPlan colorI;
@@ -200,6 +201,9 @@ class VISP_EXPORT vpImageSimulator
     vpColor bgColor;
     
     vpColVector focal;
+
+    //boolean to tell if the points in the camera frame have to be clipped
+    bool needClipping;
     
   public:
     vpImageSimulator(const vpColorPlan &col = COLORED);
@@ -210,17 +214,17 @@ class VISP_EXPORT vpImageSimulator
 
     
     //creation du plan a partir de ses coordonnees 3D ds repere objet et de son image texture
-    void init(const vpImage<unsigned char> &I,vpColVector* _X);
-    void init(const vpImage<vpRGBa> &I,vpColVector* _X);
-    void init(const char* file_image,vpColVector* _X);
-    void init(const vpImage<unsigned char> &I, const std::vector<vpPoint>& _X);
-    void init(const vpImage<vpRGBa> &I, const std::vector<vpPoint>& _X);
-    void init(const char* file_image, const std::vector<vpPoint>& _X);
+    void init(const vpImage<unsigned char> &I,vpColVector* X);
+    void init(const vpImage<vpRGBa> &I,vpColVector* X);
+    void init(const char* file_image,vpColVector* X);
+    void init(const vpImage<unsigned char> &I, const std::vector<vpPoint>& X);
+    void init(const vpImage<vpRGBa> &I, const std::vector<vpPoint>& X);
+    void init(const char* file_image, const std::vector<vpPoint>& X);
 
     //projection du plan par cMo => creation des deux triangles definissant projection du plan sur plan image (coord en metre)
-    void setCameraPosition(const vpHomogeneousMatrix &_cMt);
+    void setCameraPosition(const vpHomogeneousMatrix &cMt);
     
-    void setInterpolationType (const vpInterpolationType interp) {this->interp = interp;}
+    void setInterpolationType (const vpInterpolationType interplt) {this->interp = interplt;}
     
     void getImage(vpImage<unsigned char> &I, const vpCameraParameters &cam);
     void getImage(vpImage<vpRGBa> &I, const vpCameraParameters &cam);
@@ -241,6 +245,10 @@ class VISP_EXPORT vpImageSimulator
     static void getImage(vpImage<vpRGBa> &I,
                          std::list <vpImageSimulator> &list,
                          const vpCameraParameters &cam);
+
+    std::vector<vpColVector> get3DcornersTextureRectangle();
+
+    friend VISP_EXPORT std::ostream& operator<< (std::ostream &os, const vpImageSimulator& /*ip*/);
 
     /*!
       As it can be time consuming to reset all the image to a default baground value, this function enable to reset only the pixel which changed the previous time.
@@ -278,11 +286,11 @@ class VISP_EXPORT vpImageSimulator
 #endif
     
   private:
-    void initPlan(vpColVector* _X);
+    void initPlan(vpColVector* X);
     
     //result = plan est visible.
     //ie: un plan est oriente dans si normal_plan.focal < 0 => plan est visible sinon invisible.
-    bool isVisible() {return visible;};
+    bool isVisible() {return visible;}
     
     //function that project a point x,y on the plane, return true if the projection is on the limited plane
     // and in this case return the corresponding image pixel Ipixelplan
@@ -304,14 +312,8 @@ class VISP_EXPORT vpImageSimulator
     void getCoordFromHomog(const vpColVector &_vH, vpColVector &_v);
     
     void getRoi(const unsigned int &Iwidth, const unsigned int &Iheight, 
-		const vpCameraParameters &cam, vpPoint* pt, vpRect &rect);
+        const vpCameraParameters &cam, const std::vector<vpPoint> &point, vpRect &rect);
 };
-
-VISP_EXPORT inline std::ostream& operator<< (std::ostream &os, const vpImageSimulator& /*ip*/)
-{
-  os << "";
-  return os;
-}
 
 
 #endif

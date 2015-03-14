@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpMomentGravityCenter.h 4220 2013-04-17 10:03:36Z mbakthav $
+ * $Id: vpMomentGravityCenter.h 4713 2014-03-28 18:02:26Z mbakthav $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -115,7 +115,7 @@ class VISP_EXPORT vpMomentGravityCenter : public vpMoment {
 
         vpMomentGravityCenter();        
 	void compute();
-        std::vector<double>& get();
+        const std::vector<double>& get() const;
         /*!
           Shortcut function to retrieve \f$x_g\f$.
           \return The first gravity center coordinate.
@@ -129,8 +129,9 @@ class VISP_EXPORT vpMomentGravityCenter : public vpMoment {
         /*!
           The class's string name.
           */
-	const char* name(){return "vpMomentGravityCenter";}
+  const char* name() const {return "vpMomentGravityCenter";}
   friend VISP_EXPORT std::ostream & operator<<(std::ostream & os, const vpMomentGravityCenter& v);
+  void  printDependencies(std::ostream& os) const;
 };
 
 #endif

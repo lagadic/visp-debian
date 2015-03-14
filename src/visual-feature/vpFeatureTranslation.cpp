@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpFeatureTranslation.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpFeatureTranslation.cpp 4649 2014-02-07 14:57:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -92,11 +92,10 @@ vpFeatureTranslation::init()
   \param r : Type of considered 3D translation feature. 
 
 */
-vpFeatureTranslation::vpFeatureTranslation(vpFeatureTranslationRepresentationType r) : vpBasicFeature()
+vpFeatureTranslation::vpFeatureTranslation(vpFeatureTranslationRepresentationType r)
+  : f2Mf1(), translation(r)
 {
   init() ;
-
-  translation = r;
 }
 
 
@@ -105,31 +104,30 @@ vpFeatureTranslation::vpFeatureTranslation(vpFeatureTranslationRepresentationTyp
   Constructor that build a 3D visual feature from an homogeneous
   matrix \f$ ^{{\cal{F}}_2}M_{{\cal{F}}_1} \f$ that represent the 3D transformation between two frames \f${\cal{F}}_1\f$ and \f${\cal{F}}_2\f$.
 
-  \param f2Mf1 [in] : 3D displacement that the camera has to achieve to
+  \param f2Mf1_ [in] : 3D displacement that the camera has to achieve to
   move from the frame \f${\cal{F}}_2\f$ to the frame \f${\cal{F}}_1\f$ (\f$ ^{{\cal{F}}_2}M_{{\cal{F}}_1} \f$).
   \param r : type of feature. It can be vpFeature::cdMc or vpFeature::cMo.
 
 */
-vpFeatureTranslation::vpFeatureTranslation(vpHomogeneousMatrix &f2Mf1, vpFeatureTranslationRepresentationType r) : vpBasicFeature()
+vpFeatureTranslation::vpFeatureTranslation(vpHomogeneousMatrix &f2Mf1_, vpFeatureTranslationRepresentationType r)
+  : f2Mf1(), translation(r)
 {
   init() ;
 
-  translation = r;
-
-  buildFrom(f2Mf1) ;
+  buildFrom(f2Mf1_) ;
 }
 
 /*!
   Build a 3D translation visual feature from an homogeneous
   matrix \f$ ^{{\cal{F}}_2}M_{{\cal{F}}_1} \f$ that represent the 3D transformation between two frames \f${\cal{F}}_1\f$ and \f${\cal{F}}_2\f$.
 
-  \param f2Mf1 [in] : 3D displacement that the camera has to achieve to
+  \param f2Mf1_ [in] : 3D displacement that the camera has to achieve to
   move from the frame \f${\cal{F}}_2\f$ to the frame \f${\cal{F}}_1\f$ (\f$ ^{{\cal{F}}_2}M_{{\cal{F}}_1} \f$).
 */
 void
-vpFeatureTranslation::buildFrom(const vpHomogeneousMatrix &f2Mf1)
+vpFeatureTranslation::buildFrom(const vpHomogeneousMatrix &f2Mf1_)
 {
-  this->f2Mf1 = f2Mf1 ;
+  this->f2Mf1 = f2Mf1_ ;
   s[0] = f2Mf1[0][3] ;
   s[1] = f2Mf1[1][3] ;
   s[2] = f2Mf1[2][3] ;

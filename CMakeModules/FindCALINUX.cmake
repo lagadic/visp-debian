@@ -1,9 +1,9 @@
 #############################################################################
 #
-# $Id: FindCALINUX.cmake 4056 2013-01-05 13:04:42Z fspindle $
+# $Id: FindCALINUX.cmake 5309 2015-02-11 11:08:15Z fspindle $
 #
 # This file is part of the ViSP software.
-# Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+# Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
 # 
 # This software is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -50,6 +50,7 @@ ELSE(NOT UNIX)
   FIND_PATH(CALINUX_INCLUDE_DIR calinux.h
     $ENV{CALINUX_HOME}/include
     /local/soft/Cerebellum/CALinux/current/include
+    /home/soft/Cerebellum/CALinux/current/include
     )
   #MESSAGE("DBG CALINUX_INCLUDE_DIR=${CALINUX_INCLUDE_DIR}")  
   
@@ -58,6 +59,7 @@ ELSE(NOT UNIX)
     PATHS 
     $ENV{CALINUX_HOME}/lib
     /local/soft/Cerebellum/CALinux/current/lib
+    /home/soft/Cerebellum/CALinux/current/lib
     )
 
   #MESSAGE("DBG CALINUX_LIBRARY=${CALINUX_LIBRARY}")

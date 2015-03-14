@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpKeyboard.cpp 4267 2013-06-14 18:07:13Z fspindle $
+ * $Id: vpKeyboard.cpp 4632 2014-02-03 17:06:40Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -41,7 +41,7 @@
 
 
 
-#if ( defined(UNIX) && !defined(WIN32) )
+#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__)))
 #  include <stdio.h>
 #  include <visp/vpKeyboard.h>
 
@@ -54,7 +54,7 @@
 /*!
   Activates the raw mode to read keys in an non blocking way.
 */
-vpKeyboard::vpKeyboard()
+vpKeyboard::vpKeyboard() : initial_settings(), new_settings()
 {
   init();
 }

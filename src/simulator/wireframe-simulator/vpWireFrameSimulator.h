@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpWireFrameSimulator.h 4334 2013-07-22 19:13:05Z fspindle $
+ * $Id: vpWireFrameSimulator.h 5297 2015-02-10 11:19:24Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -55,7 +55,6 @@
 #include <list>
 #include <string>
 
-extern "C" {
 #include <visp/vpMy.h>
 #include <visp/vpArit.h>
 #include <visp/vpBound.h>
@@ -66,26 +65,25 @@ extern "C" {
 #include <visp/vpRfstack.h>
 #include <visp/vpArit.h>
 
-int open_display();
-int close_display();
-int open_clipping();
-int close_clipping();
-int open_keyword (Keyword *kwp);
-int open_lex (void);
-int open_source (FILE *fd, const char *str);
-int malloc_Bound_scene (Bound_scene *bsp, const char *name,Index bn);
-int free_Bound_scene (Bound_scene *bsp);
-int parser (Bound_scene *bsp);
-int close_source (void);
-int close_lex (void);
-int close_keyword (void);
+void open_display();
+void close_display();
+void open_clipping();
+void close_clipping();
+void open_keyword (Keyword *kwp);
+void open_lex (void);
+void open_source (FILE *fd, const char *str);
+void malloc_Bound_scene (Bound_scene *bsp, const char *name,Index bn);
+void free_Bound_scene (Bound_scene *bsp);
+void parser (Bound_scene *bsp);
+void close_source (void);
+void close_lex (void);
+void close_keyword (void);
 void display_scene(Matrix mat, Bound_scene sc);
-int View_to_Matrix (View_parameters *vp, Matrix m);
+void View_to_Matrix (View_parameters *vp, Matrix m);
 Bound *clipping_Bound (Bound *bp, Matrix m);
-int set_Bound_face_display (Bound *bp, Byte b);
-int point_3D_2D (Point3f *p3, Index size, unsigned int xsize, unsigned int ysize, Point2i *p2);
-int wireframe_Face (Face *fp, Point2i *pp);
-}
+void set_Bound_face_display (Bound *bp, Byte b);
+void point_3D_2D (Point3f *p3, Index size, int xsize, int ysize, Point2i *p2);
+void wireframe_Face (Face *fp, Point2i *pp);
 
 #include <visp/vpConfig.h>
 #include <visp/vpImage.h>
@@ -447,16 +445,16 @@ public:
   /*!
       Set the position of the camera relative to the object.
       
-      \param cMo : The pose of the camera.
+      \param cMo_ : The pose of the camera.
     */
-  void setCameraPositionRelObj(const vpHomogeneousMatrix &cMo) {this->cMo = rotz * cMo; fMc = fMo*this->cMo.inverse();}
+  void setCameraPositionRelObj(const vpHomogeneousMatrix &cMo_) {this->cMo = rotz * cMo_; fMc = fMo*this->cMo.inverse();}
 
   /*!
       Set the position of the the world reference frame relative to the camera.
       
-      \param fMc : The pose of the camera.
+      \param fMc_ : The pose of the camera.
     */
-  void setCameraPositionRelWorld(const vpHomogeneousMatrix &fMc) {this->fMc = fMc*rotz; cMo = this->fMc.inverse()*fMo;}
+  void setCameraPositionRelWorld(const vpHomogeneousMatrix &fMc_) {this->fMc = fMc_*rotz; cMo = this->fMc.inverse()*fMo;}
 
   /*!
       Set the parameter which enables to choose the size of the main camera in the external camera views. By default this parameter is set to 1.
@@ -475,9 +473,9 @@ public:
   /*!
       Set the way to display the history of the main camera trajectory in the main external view. The choice is given between displaying lines and points.
 
-      \param camTrajType : The chosen way to display the camera trajectory.
+      \param camTraj_type : The chosen way to display the camera trajectory.
     */
-  inline void setCameraTrajectoryDisplayType (const vpCameraTrajectoryDisplayType &camTrajType) {this->camTrajType = camTrajType;}
+  inline void setCameraTrajectoryDisplayType (const vpCameraTrajectoryDisplayType &camTraj_type) {this->camTrajType = camTraj_type;}
 
   /*!
       Set the color used to display the object at the current position.
@@ -488,9 +486,9 @@ public:
   /*!
       Set the desired position of the camera relative to the object.
       
-      \param cdMo : The desired pose of the camera.
+      \param cdMo_ : The desired pose of the camera.
     */
-  void setDesiredCameraPosition(const vpHomogeneousMatrix &cdMo) {this->cdMo = rotz * cdMo;}
+  void setDesiredCameraPosition(const vpHomogeneousMatrix &cdMo_) {this->cdMo = rotz * cdMo_;}
   /*!
       Set the color used to display the object at the desired position.
 
@@ -502,9 +500,9 @@ public:
 
       By default the trajectory is displayed.
 
-      \param displayCameraTrajectory : Set to true to display the camera trajectory.
+      \param do_display : Set to true to display the camera trajectory.
     */
-  void setDisplayCameraTrajectory (const bool &displayCameraTrajectory) {this->displayCameraTrajectory = displayCameraTrajectory;}
+  void setDisplayCameraTrajectory (const bool &do_display) {this->displayCameraTrajectory = do_display;}
 
   /*!
       Set the internal camera parameters.
@@ -518,11 +516,11 @@ public:
   /*!
       Set the external camera point of view.
       
-      \param camMf : The pose of the external camera relative to the world reference frame.
+      \param cam_Mf : The pose of the external camera relative to the world reference frame.
     */
-  void setExternalCameraPosition(const vpHomogeneousMatrix &camMf)
+  void setExternalCameraPosition(const vpHomogeneousMatrix &cam_Mf)
   {
-    this->camMf = rotz * camMf;
+    this->camMf = rotz * cam_Mf;
     vpTranslationVector T;
     this->camMf.extract (T);
     this->camMf2.buildFrom(0,0,T[2],0,0,0);
@@ -558,9 +556,9 @@ public:
   /*!
       Set the pose between the object and the fixed world frame.
       
-      \param fMo : The pose between the object and the fixed world frame.
+      \param fMo_ : The pose between the object and the fixed world frame.
     */
-  void set_fMo(const vpHomogeneousMatrix &fMo) {this->fMo = fMo;/*this->cMo = fMc.inverse()*fMo;*/}
+  void set_fMo(const vpHomogeneousMatrix &fMo_) {this->fMo = fMo_;/*this->cMo = fMc.inverse()*fMo;*/}
 
 protected:
   void display_scene(Matrix mat, Bound_scene &sc, const vpImage<vpRGBa> &I, const vpColor &color);

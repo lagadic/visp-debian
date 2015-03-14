@@ -1,9 +1,9 @@
- /****************************************************************************
+/****************************************************************************
   *
   * $Id: vpDot2.h 2135 2009-04-29 13:51:31Z fspindle $
   *
   * This file is part of the ViSP software.
-  * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
   * 
   * This software is free software; you can redistribute it and/or
   * modify it under the terms of the GNU General Public License
@@ -52,10 +52,6 @@
 #include <visp/vpTracker.h>
 #include <visp/vpColor.h>
 #include <visp/vpImagePoint.h>
-
-#ifdef VISP_BUILD_DEPRECATED_FUNCTIONS
-#  include <visp/vpList.h>
-#endif
 
 #include <vector>
 #include <list>
@@ -109,11 +105,11 @@
     is used when there was a problem performing basic tracking of the dot, but
     can also be used to find a certain type of dots in the full image.
 
-  The following sample code available in tutorial-blob-tracker.cpp shows how to
+  The following sample code available in tutorial-blob-tracker-live-firewire.cpp shows how to
   grab images from a firewire camera, track a blob and display the tracking
   results.
 
-  \include tutorial-blob-tracker.cpp
+  \include tutorial-blob-tracker-live-firewire.cpp
   A line by line explanation of the previous example is provided in
   \ref tutorial-tracking-blob.
 
@@ -139,7 +135,7 @@ public:
   static vpMatrix defineDots(vpDot2 dot[], const unsigned int &n, const std::string &dotFile, vpImage<unsigned char> &I, vpColor col = vpColor::blue, bool trackDot = true);
 
   void display(const vpImage<unsigned char>& I, vpColor color = vpColor::red,
-               unsigned int thickness=1);
+               unsigned int thickness=1) const;
 
   double getArea() const;
   /*!
@@ -149,7 +145,7 @@ public:
     \sa getWidth(), getHeight()
 
   */
-  inline vpRect getBBox() {
+  inline vpRect getBBox() const {
     vpRect bbox;
 
     bbox.setRect(this->bbox_u_min,
@@ -178,8 +174,20 @@ public:
     border. This list is update after a call to track().
 
   */
-  void getEdges(std::list<vpImagePoint> &edges_list) {
+  void getEdges(std::list<vpImagePoint> &edges_list) const {
     edges_list = this->ip_edges_list;
+  };
+  /*!
+
+    Return the list of all the image points on the dot
+    border.
+
+    \return The list of all the images points on the dot
+    border. This list is update after a call to track().
+
+  */
+  std::list<vpImagePoint> getEdges() const {
+    return(this->ip_edges_list);
   };
   /*!
     Get the percentage of sampled points that are considered non conform
@@ -187,15 +195,15 @@ public:
 
     \sa setEllipsoidBadPointsPercentage()
     */
-  double getEllipsoidBadPointsPercentage()
+  double getEllipsoidBadPointsPercentage() const
   {
     return allowedBadPointsPercentage_;
   }
 
   double getEllipsoidShapePrecision() const;
-  void getFreemanChain(std::list<unsigned int> &freeman_chain) ;
+  void getFreemanChain(std::list<unsigned int> &freeman_chain) const;
 
-  inline double getGamma() {return this->gamma;};
+  inline double getGamma() const {return this->gamma;};
   /*!
     Return the color level of pixels inside the dot.
 
@@ -219,29 +227,21 @@ public:
   /*!
   \return The mean gray level value of the dot.
   */
-  double getMeanGrayLevel() {
+  double getMeanGrayLevel() const {
     return (this->mean_gray_level);
   };
   double getSizePrecision() const;
-  double getSurface() const;
   double getWidth() const;
 
   void initTracking(const vpImage<unsigned char>& I, unsigned int size = 0);
   void initTracking(const vpImage<unsigned char>& I, const vpImagePoint &ip,
-        unsigned int size = 0);
+                    unsigned int size = 0);
   void initTracking(const vpImage<unsigned char>& I, const vpImagePoint &ip,
-        unsigned int gray_level_min, unsigned int gray_level_max,
-        unsigned int size = 0 );
+                    unsigned int gray_lvl_min, unsigned int gray_lvl_max,
+                    unsigned int size = 0 );
 
-  void operator=(const vpDot2& twinDot );
-  /*!
-    Writes the dot center of gravity coordinates in the frame (i,j) (For more details
-    about the orientation of the frame see the vpImagePoint documentation) to the stream \e os,
-    and returns a reference to the stream.
-  */
-  friend VISP_EXPORT std::ostream& operator<< (std::ostream& os, vpDot2& d) {
-    return (os << "(" << d.getCog() << ")" ) ;
-  } ;
+  vpDot2& operator=(const vpDot2& twinDot );
+  friend VISP_EXPORT std::ostream& operator<< (std::ostream& os, vpDot2& d);
 
   void print(std::ostream& os) { os << *this << std::endl ; }
   void searchDotsInArea(const vpImage<unsigned char>& I,
@@ -252,10 +252,10 @@ public:
 
   void setArea( const double & area );
   /*!
-    Initialize the dot coordinates with \e cog. 
+    Initialize the dot coordinates with \e ip.
   */
-  inline void setCog(const vpImagePoint &cog) {
-    this->cog = cog; 
+  inline void setCog(const vpImagePoint &ip) {
+    this->cog = ip;
   }
   /*!
 
@@ -315,7 +315,7 @@ public:
 
     \sa setGraphics()
     */
-  void setGraphicsThickness(unsigned int thickness) {this->thickness = thickness;};
+  void setGraphicsThickness(unsigned int t) {this->thickness = t;};
   /*!
 
   Set the color level of the dot to search a dot in a region of interest. This level will be
@@ -354,7 +354,6 @@ public:
   void setHeight( const double & height );
   void setMaxSizeSearchDistancePrecision(const double & maxSizeSearchDistancePrecision);
   void setSizePrecision( const double & sizePrecision );
-  void setSurface( const double & surface );
   void setWidth( const double & width );
 
   void track(const vpImage<unsigned char> &I);
@@ -362,6 +361,14 @@ public:
 
   static void trackAndDisplay(vpDot2 dot[], const unsigned int &n, vpImage<unsigned char> &I,
                               std::vector<vpImagePoint> &cogs, vpImagePoint* cogStar = NULL);
+
+#ifdef VISP_BUILD_DEPRECATED_FUNCTIONS
+  /*!
+    @name Deprecated functions
+  */
+  vp_deprecated double getSurface() const;
+  vp_deprecated void setSurface( const double & surface );
+#endif
 
 public:
   double m00; /*!< Considering the general distribution moments for \f$ N \f$
@@ -428,37 +435,6 @@ public:
 		
 		\sa setComputeMoments()
 	      */
-
-#ifdef VISP_BUILD_DEPRECATED_FUNCTIONS
-  /*!
-    @name Deprecated functions
-  */
-  /*!
-
-    \deprecated This method is deprecated. You should use
-    getEdges(std::list<vpImagePoint> &) instead.\n \n
-    Return the list of all the image points on the dot
-    border.
-
-    \param edges_list : The list of all the images points on the dot
-    border. This list is update after a call to track().
-
-  */
-  vp_deprecated void getEdges(vpList<vpImagePoint> &edges_list) {
-    // convert a vpList in a std::list
-    edges_list.kill();
-    std::list<vpImagePoint>::const_iterator it;
-    for (it = ip_edges_list.begin(); it != ip_edges_list.end(); ++it) {
-      edges_list += *it;
-    }
-  };
-  vp_deprecated void getFreemanChain(vpList<unsigned int> &freeman_chain) ;
-  vp_deprecated vpList<vpDot2>* searchDotsInArea(const vpImage<unsigned char>& I,
-            int area_u, int area_v,
-            unsigned int area_w, unsigned int area_h );
-
-  /* vp_deprecated */ vpList<vpDot2>* searchDotsInArea(const vpImage<unsigned char>& I );
-#endif
 
 private:
   virtual bool isValid(const vpImage<unsigned char>& I, const vpDot2& wantedDot);

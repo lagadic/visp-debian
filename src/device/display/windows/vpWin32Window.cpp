@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpWin32Window.cpp 4304 2013-07-04 14:29:24Z fspindle $
+ * $Id: vpWin32Window.cpp 5285 2015-02-09 14:32:54Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -62,7 +62,11 @@
 
 //declares the window as thread local
 //allows multiple displays
+#ifdef __MINGW32__
+vpWin32Window * window;
+#else
 _declspec(thread) vpWin32Window * window;
+#endif
 
 bool vpWin32Window::registered = false; 
 /*!

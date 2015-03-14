@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpCalibration.h 4317 2013-07-17 09:40:17Z fspindle $
+ * $Id: vpCalibration.h 4921 2014-10-09 08:19:29Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -105,36 +105,30 @@ public:
   vpHomogeneousMatrix eMc_dist;
 
 public:
-  int init() ;
+  // Constructor
+  vpCalibration() ;
+  vpCalibration(const vpCalibration& c) ;
 
-  //! Suppress all the point in the array of point
-  int clearPoint() ;
+  // Destructor
+  virtual ~vpCalibration() ;
+
   // Add a new point in this array
   int addPoint(double X, double Y, double Z, vpImagePoint &ip) ;
 
-  //! Constructor
-  vpCalibration() ;
-
-  //! Destructor
-  virtual ~vpCalibration() ;
-  //! = operator
-  void operator=(vpCalibration& twinCalibration );
-
-  //!get the residual in pixels
-  double getResidual(void) const {return residual;}
-  //!get the residual for perspective projection with distortion (in pixels)
-  double getResidual_dist(void) const {return residual_dist;}
-  //!get the number of points
-  unsigned int get_npt() const {return npt;}
+  // = operator
+  vpCalibration& operator=(const vpCalibration& twinCalibration);
 
   static void calibrationTsai(std::vector<vpHomogeneousMatrix> &cMo,
                               std::vector<vpHomogeneousMatrix> &rMe,
                               vpHomogeneousMatrix &eMc);
 
+  //! Suppress all the point in the array of point
+  int clearPoint() ;
+
   void computeStdDeviation(double &deviation, double &deviation_dist);
   int computeCalibration(vpCalibrationMethodType method,
-                         vpHomogeneousMatrix &cMo,
-                         vpCameraParameters &cam,
+                         vpHomogeneousMatrix &cMo_est,
+                         vpCameraParameters &cam_est,
                          bool verbose = false) ;
   static int computeCalibrationMulti(vpCalibrationMethodType method,
                                      std::vector<vpCalibration> &table_cal,
@@ -145,17 +139,27 @@ public:
   static int computeCalibrationTsai(std::vector<vpCalibration> &table_cal,
                                     vpHomogeneousMatrix &eMc,
                                     vpHomogeneousMatrix &eMc_dist);
-  double computeStdDeviation(vpHomogeneousMatrix &cMo,
-                             vpCameraParameters &cam);
-  double computeStdDeviation_dist(vpHomogeneousMatrix &cMo,
-                                  vpCameraParameters &cam);
+  double computeStdDeviation(const vpHomogeneousMatrix &cMo_est,
+                             const vpCameraParameters &camera);
+  double computeStdDeviation_dist(const vpHomogeneousMatrix &cMo,
+                                  const vpCameraParameters &cam);
   int displayData(vpImage<unsigned char> &I, vpColor color=vpColor::red,
-                  unsigned int thickness=1) ;
+                  unsigned int thickness=1, int subsampling_factor=1) ;
   int displayGrid(vpImage<unsigned char> &I, vpColor color=vpColor::yellow,
-                  unsigned int thickness=1) ;
+                  unsigned int thickness=1, int subsampling_factor=1) ;
 
-  //!set the gain for the virtual visual servoing algorithm
+  //! Set the gain for the virtual visual servoing algorithm.
   static double getLambda(){return gain;}
+
+  //!get the residual in pixels
+  double getResidual(void) const {return residual;}
+  //!get the residual for perspective projection with distortion (in pixels)
+  double getResidual_dist(void) const {return residual_dist;}
+  //!get the number of points
+  unsigned int get_npt() const {return npt;}
+
+  int init() ;
+
   int readData(const char *filename) ;
   static int readGrid(const char *filename,unsigned int &n,
                       std::list<double> &oX, std::list<double> &oY, std::list<double> &oZ,

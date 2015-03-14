@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpRobot.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpRobot.cpp 5238 2015-01-30 13:52:25Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -53,14 +53,65 @@ const double vpRobot::maxRotationVelocityDefault = 0.7;
 
 vpRobot::vpRobot (void)
   :
+  stateRobot(vpRobot::STATE_STOP), frameRobot(vpRobot::CAMERA_FRAME),
   maxTranslationVelocity (maxTranslationVelocityDefault),
-  maxRotationVelocity (maxRotationVelocityDefault)
+  maxRotationVelocity (maxRotationVelocityDefault),
+  nDof(0),
+  eJe(), eJeAvailable(false), fJe(), fJeAvailable(false), areJointLimitsAvailable(false),
+  qmin(NULL), qmax(NULL), verbose_(true)
 {
-  frameRobot = vpRobot::CAMERA_FRAME;
-  stateRobot = vpRobot::STATE_STOP ;
-  verbose_ = true;
 }
 
+vpRobot::vpRobot (const vpRobot &robot)
+  :
+  stateRobot(vpRobot::STATE_STOP), frameRobot(vpRobot::CAMERA_FRAME),
+  maxTranslationVelocity (maxTranslationVelocityDefault),
+  maxRotationVelocity (maxRotationVelocityDefault),
+  nDof(0),
+  eJe(), eJeAvailable(false), fJe(), fJeAvailable(false), areJointLimitsAvailable(false),
+  qmin(NULL), qmax(NULL), verbose_(true)
+{
+  *this = robot;
+}
+
+/*!
+   Destructor that free allocated memory.
+ */
+vpRobot::~vpRobot()
+{
+  if (qmin != NULL) {
+    delete [] qmin;
+    qmin = NULL;
+  }
+  if (qmax != NULL) {
+    delete [] qmax;
+    qmax = NULL;
+  }
+}
+
+/*! Copy operator. */
+vpRobot & vpRobot::operator=(const vpRobot &robot)
+{
+  stateRobot = robot.stateRobot;
+  frameRobot = robot.frameRobot;
+  maxTranslationVelocity = robot.maxTranslationVelocity;
+  maxRotationVelocity = robot.maxRotationVelocity;
+  nDof = robot.nDof;
+  eJe = robot.eJe;
+  eJeAvailable = robot.eJeAvailable;
+  fJe= robot.fJe;
+  fJeAvailable = robot.fJeAvailable;
+  areJointLimitsAvailable = robot.areJointLimitsAvailable;
+  qmin = new double [nDof];
+  qmax = new double [nDof];
+  for (int i = 0; i< nDof; i++) {
+    qmin[i] = robot.qmin[i];
+    qmax[i] = robot.qmax[i];
+  }
+  verbose_ = robot.verbose_;
+
+  return (*this);
+}
 /*!
   Saturate velocities.
 

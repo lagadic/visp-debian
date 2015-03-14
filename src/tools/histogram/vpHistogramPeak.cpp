@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpHistogramPeak.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpHistogramPeak.cpp 4649 2014-02-07 14:57:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -52,27 +52,21 @@
 /*!
   Defaut constructor for a gray level histogram peak.
 */
-vpHistogramPeak::vpHistogramPeak()
-{
-  level = 0;
-  value = 0;
-}
+vpHistogramPeak::vpHistogramPeak() : level(0), value(0) {}
 
 /*!
   Defaut constructor for a gray level histogram peak.
 */
-vpHistogramPeak::vpHistogramPeak(unsigned char level, unsigned value)
-{
-  setLevel(level);
-  setValue(value);
-}
+vpHistogramPeak::vpHistogramPeak(unsigned char lvl, unsigned val)
+  : level(lvl), value(val) {}
+
 /*!
   Copy constructor of a gray level histogram peak.
 */
 vpHistogramPeak::vpHistogramPeak(const vpHistogramPeak &p)
+  : level(0), value(0)
 {
-  setLevel(p.level);
-  setValue(p.value);
+  *this = p;
 }
 
 /*!
@@ -110,7 +104,7 @@ vpHistogramPeak::operator==(const vpHistogramPeak &p) const
 /*!
   \brief std::cout a peak
 */
-std::ostream &operator <<(std::ostream &s,const vpHistogramPeak &p)
+VISP_EXPORT std::ostream &operator <<(std::ostream &s,const vpHistogramPeak &p)
 {
   
   s << (int)p.getLevel() << " " << p.getValue();

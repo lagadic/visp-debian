@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpDisplayOpenCV.h 4323 2013-07-18 09:24:01Z fspindle $
+ * $Id: vpDisplayOpenCV.h 5023 2014-12-03 16:07:48Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -44,9 +44,9 @@
 #define vpDisplayOpenCV_h
 
 #include <visp/vpConfig.h>
-#include <visp/vpDisplay.h>
-#if ( defined(VISP_HAVE_OPENCV) )
+#if defined(VISP_HAVE_OPENCV)
 
+#include <visp/vpDisplay.h>
 #include <visp/vpImage.h>
 #include <visp/vpImageConvert.h>
 
@@ -144,11 +144,21 @@ int main()
 class VISP_EXPORT vpDisplayOpenCV: public vpDisplay
 {
 private:
+#if (VISP_HAVE_OPENCV_VERSION < 0x020408)
   //! true if OpenCV display is ready to use
   IplImage* background;
   CvScalar *col ;
   CvScalar cvcolor;
   CvFont *font;
+#else
+  cv::Mat background;
+  cv::Scalar *col ;
+  cv::Scalar cvcolor;
+  int font;
+  float fontScale;
+#endif
+  static std::vector<std::string> m_listTitles;
+  static unsigned int m_nbWindows ;
   int fontHeight;  
   int ncol, nrow ;
   int x_move;
@@ -272,9 +282,3 @@ protected:
 
 #endif
 #endif
-
-/*
- * Local variables:
- * c-basic-offset: 2
- * End:
- */

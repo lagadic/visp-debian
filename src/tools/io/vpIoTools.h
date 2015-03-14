@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpIoTools.h 4275 2013-06-25 12:35:42Z fspindle $
+ * $Id: vpIoTools.h 5197 2015-01-23 17:24:22Z strinh $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -159,8 +159,9 @@ public:
   static void getUserName(std::string &username);
   static std::string getUserName();
   static std::string getenv(const char *env);
-  static std::string getenv(std::string &env);
-  static void getVersion(const std::string &version, unsigned int &major, unsigned int &minor, unsigned int &patch);  
+  static std::string getenv(const std::string &env);
+  static std::string getViSPImagesDataPath();
+  static void getVersion(const std::string &version, unsigned int &major, unsigned int &minor, unsigned int &patch);
   static bool checkDirectory(const char *dirname);
   static bool checkDirectory(const std::string &dirname);
   static bool checkFilename(const char *filename);
@@ -172,12 +173,29 @@ public:
   static bool remove(const char *filename);
   static bool remove(const std::string &filename);
   static bool rename(const char *oldfilename, const char *newfilename);
-  static bool rename(const std::string &oldfilename, 
-		     const std::string &newfilename);
+  static bool rename(const std::string &oldfilename, const std::string &newfilename);
   
   static std::string path(const char * pathname);
   static std::string path(const std::string &pathname);
   
+  /*!
+   	 Define the directory separator character, backslash ('\') for windows platform or slash ('/') otherwise.
+   */
+  static const char separator =
+  #if defined(_WIN32)
+  	'\\';
+  #else
+  	'/';
+  #endif
+
+  static std::string getFileExtension(const std::string &pathname, const bool checkFile=false);
+  static std::string getName(const std::string &pathname);
+  static std::string getNameWE(const std::string &pathname);
+  static std::string getParent(const std::string& pathname);
+  static std::string createFilePath(const std::string& parent, const std::string child);
+  static bool isAbsolutePathname(const std::string& pathname);
+  static std::pair<std::string, std::string> splitDrive(const std::string& pathname);
+
   // read configuration file
   static bool loadConfigFile(const std::string &confFile);
   static bool readConfigVar(const std::string &var, float &value);
@@ -224,7 +242,7 @@ public:
   // write files
   static void saveConfigFile(const bool &actuallySave = true);
   static void createBaseNamePath(const bool &empty = false);
-  
+
  protected:
   static std::string baseName;
   static std::string baseDir;

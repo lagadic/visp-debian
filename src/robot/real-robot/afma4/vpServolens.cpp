@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpServolens.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpServolens.cpp 4649 2014-02-07 14:57:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -49,7 +49,7 @@
 
 */
 
-#if defined(UNIX)
+#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
 
 #include <unistd.h>
 #include <termios.h>
@@ -71,9 +71,8 @@
   \sa open()
 
 */
-vpServolens::vpServolens()
+vpServolens::vpServolens() : remfd(0), isinit(false)
 {
-  isinit = false;
 }
 
 /*! 
@@ -84,10 +83,8 @@ vpServolens::vpServolens()
 
   \sa open()
 */
-vpServolens::vpServolens(const char *port)
+vpServolens::vpServolens(const char *port) : remfd(0), isinit(false)
 {
-  isinit = false;
-
   this->open(port);
 }
 
@@ -131,7 +128,7 @@ vpServolens::open(const char *port)
 			      "Cannot open Servolens serial port.");
     }
 
-    // Lecture des paramètres courants de la liaison série.
+    // Lecture des parametres courants de la liaison serie.
     if (tcgetattr(this->remfd, &info) < 0) {
       ::close(this->remfd);
       vpERROR_TRACE ("Error using TCGETS in ioctl.");
@@ -144,11 +141,11 @@ vpServolens::open(const char *port)
     // 9600 bauds, 1 bit de stop, parite paire, 7 bits de donnee
     //
 
-    // Traitement sur les caractères recus
+    // Traitement sur les caracteres recus
     info.c_iflag = 0;
     info.c_iflag |= INLCR;
 
-    // Traitement sur les caractères envoyés sur la RS232.
+    // Traitement sur les caracteres envoyes sur la RS232.
     info.c_oflag = 0;  // idem
 
     // Traitement des lignes
@@ -159,7 +156,7 @@ vpServolens::open(const char *port)
     info.c_cflag |= CREAD;		// Validation reception
     info.c_cflag |= B9600 | CS7 | PARENB; // 9600 baus, 7 data, parite paire
 
-    // Caractères immédiatement disponibles.
+    // Caracteres immediatement disponibles.
     //  info.c_cc[VMIN] = 1;
     //  info.c_cc[VTIME] = 0;
 
@@ -210,7 +207,7 @@ vpServolens::close()
   with Servolens.
 */
 void
-vpServolens::reset()
+vpServolens::reset() const
 {
   if (!isinit) {
     vpERROR_TRACE ("Cannot dial with Servolens.");
@@ -248,7 +245,7 @@ vpServolens::reset()
   \sa open()
 */
 void
-vpServolens::init()
+vpServolens::init() const
 {
   if (!isinit) {
     vpERROR_TRACE ("Cannot dial with Servolens.");
@@ -283,7 +280,7 @@ vpServolens::init()
 
 */
 void 
-vpServolens::enableCmdComplete(vpServoType servo, bool active)
+vpServolens::enableCmdComplete(vpServoType servo, bool active) const
 {
   if (!isinit) {
     vpERROR_TRACE ("Cannot dial with Servolens.");
@@ -331,7 +328,7 @@ vpServolens::enableCmdComplete(vpServoType servo, bool active)
 
 */
 void 
-vpServolens::enablePrompt(bool active)
+vpServolens::enablePrompt(bool active) const
 {
   if (!isinit) {
     vpERROR_TRACE ("Cannot dial with Servolens.");
@@ -358,7 +355,7 @@ vpServolens::enablePrompt(bool active)
   with Servolens.
 */
 void 
-vpServolens::setController(vpControllerType controller)
+vpServolens::setController(vpControllerType controller) const
 {
   if (!isinit) {
     vpERROR_TRACE ("Cannot dial with Servolens.");
@@ -399,7 +396,7 @@ vpServolens::setController(vpControllerType controller)
 
 */
 void 
-vpServolens::setAutoIris(bool enable)
+vpServolens::setAutoIris(bool enable) const
 {
   if (!isinit) {
     vpERROR_TRACE ("Cannot dial with Servolens.");
@@ -427,7 +424,7 @@ vpServolens::setAutoIris(bool enable)
 
 */
 void
-vpServolens::setPosition(vpServoType servo, unsigned int position)
+vpServolens::setPosition(vpServoType servo, unsigned int position) const
 {
   if (!isinit) {
     vpERROR_TRACE ("Cannot dial with Servolens.");
@@ -442,15 +439,15 @@ vpServolens::setPosition(vpServoType servo, unsigned int position)
   this->wait();
   */
 
-#if FINSERVO
+#ifdef FINSERVO
   /* envoie des commandes pour qu'en fin de mouvement servolens renvoie */
   /* une commande de fin de mouvement (ex: ZF, FF, DF). */
   this->enableCommandComplete();
 #endif	/* FINSERVO */
 
   // 08/08/00 Fabien S. - Correction de la consigne demandee
-  // pour prendre en compte l'erreur entre la consigne demandée
-  // et la consigne mesurée.
+  // pour prendre en compte l'erreur entre la consigne demandee
+  // et la consigne mesuree.
   // A la consigne du zoom on retranche 1.
   // A la consigne du focus on ajoute 1.
   // A la consigne du iris on ajoute 1.
@@ -488,13 +485,13 @@ vpServolens::setPosition(vpServoType servo, unsigned int position)
       break;
     }
   /* envoie de la commande */
-#if PRINT
+#ifdef PRINT
   printf("\ncommande: %s", commande);
 #endif
 
   this->write(commande);
 
-#if FINSERVO
+#ifdef FINSERVO
   /* on attend la fin du mouvement des objectifs */
   this->wait(servo);  /* on attend les codes ZF, FF, DF */
 #endif
@@ -511,7 +508,7 @@ vpServolens::setPosition(vpServoType servo, unsigned int position)
 
 */
 bool
-vpServolens::getPosition(vpServoType servo, unsigned int &position)
+vpServolens::getPosition(vpServoType servo, unsigned int &position) const
 {
   if (!isinit) {
     vpERROR_TRACE ("Cannot dial with Servolens.");
@@ -634,7 +631,7 @@ vpServolens::getPosition(vpServoType servo, unsigned int &position)
   
   int main()
   {
-#ifdef UNIX
+#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
     vpServolens servolens("/dev/ttyS0");
     
     vpImage<unsigned char> I(240, 320);
@@ -649,7 +646,7 @@ vpServolens::getPosition(vpServoType servo, unsigned int &position)
   
  */
 vpCameraParameters 
-vpServolens::getCameraParameters(vpImage<unsigned char> &I)
+vpServolens::getCameraParameters(vpImage<unsigned char> &I) const
 {
   if (!isinit) {
     vpERROR_TRACE ("Cannot dial with Servolens.");
@@ -697,7 +694,7 @@ vpServolens::getCameraParameters(vpImage<unsigned char> &I)
   with Servolens.
 */
 char 
-vpServolens::wait()
+vpServolens::wait() const
 {
   if (!isinit) {
     vpERROR_TRACE ("Cannot dial with Servolens.");
@@ -732,7 +729,7 @@ vpServolens::wait()
 
 */
 void
-vpServolens::wait(vpServoType servo)
+vpServolens::wait(vpServoType servo) const
 {
   if (!isinit) {
     vpERROR_TRACE ("Cannot dial with Servolens.");
@@ -798,7 +795,7 @@ vpServolens::wait(vpServoType servo)
   with Servolens.
 */
 bool 
-vpServolens::read(char *c, long timeout_s)
+vpServolens::read(char *c, long timeout_s) const
 {
   if (!isinit) {
     vpERROR_TRACE ("Cannot dial with Servolens.");
@@ -835,7 +832,7 @@ vpServolens::read(char *c, long timeout_s)
   with Servolens.
 */
 void 
-vpServolens::write(const char *s)
+vpServolens::write(const char *s) const
 {
   if (!isinit) {
     vpERROR_TRACE ("Cannot dial with Servolens.");
@@ -874,7 +871,7 @@ vpServolens::write(const char *s)
 
 */
 bool 
-vpServolens::clean(const char *in, char *out)
+vpServolens::clean(const char *in, char *out) const
 {
   short nb_car, i=0;
   bool error = false;

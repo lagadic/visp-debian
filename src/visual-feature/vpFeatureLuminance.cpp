@@ -15,11 +15,7 @@
   \file vpFeatureLuminance.cpp
   \brief Class that defines the image luminance visual feature
 
-  for more details see
-  C. Collewet, E. Marchand, F. Chaumette. Visual
-  servoing set free from image processing. In IEEE Int. Conf. on
-  Robotics and Automation, ICRA'08, Pages 81-86, Pasadena, Californie,
-  Mai 2008.
+  For more details see \cite Collewet08c.
 */
 
 
@@ -39,6 +35,7 @@ vpFeatureLuminance::init()
 
     firstTimeIn =0 ;
 
+    nbr = nbc = 0;
 }
 
 
@@ -70,37 +67,61 @@ vpFeatureLuminance::init(unsigned int _nbr, unsigned int _nbc, double _Z)
 /*! 
   Default constructor that build a visual feature.
 */
-vpFeatureLuminance::vpFeatureLuminance() : vpBasicFeature()
+vpFeatureLuminance::vpFeatureLuminance()
+  : Z(1), nbr(0), nbc(0), bord(10), pixInfo(NULL), firstTimeIn(0), cam()
 {
     nbParameters = 1;
     dim_s = 0 ;
-    bord = 10 ;
     flags = NULL;
-    pixInfo = NULL;
 
     init() ;
 }
 
+/*!
+ Copy constructor.
+ */
+vpFeatureLuminance::vpFeatureLuminance(const vpFeatureLuminance& f)
+  : vpBasicFeature(f), Z(1), nbr(0), nbc(0), bord(10), pixInfo(NULL), firstTimeIn(0), cam()
+{
+  *this = f;
+}
+
+/*!
+ Copy operator.
+ */
+vpFeatureLuminance &vpFeatureLuminance::operator=(const vpFeatureLuminance& f)
+{
+  Z = f.Z;
+  nbr = f.nbr;
+  nbc = f.nbc;
+  bord = f.bord;
+  firstTimeIn = f.firstTimeIn;
+  cam = f.cam;
+  if (pixInfo)
+    delete [] pixInfo;
+  pixInfo = new vpLuminance[dim_s] ;
+  for(unsigned int i=0; i< dim_s; i++)
+    pixInfo[i] = f.pixInfo[i];
+  return (*this);
+}
+
 /*! 
-  Default destructor.
+  Destructor that free allocated memory.
 */
 vpFeatureLuminance::~vpFeatureLuminance() 
 {
   if (pixInfo != NULL) delete [] pixInfo ;
-  if (flags != NULL) delete [] flags;
 }
-
-
 
 /*!
   Set the value of \f$ Z \f$ which represents the depth in the 3D camera frame.
 
-  \param Z : \f$ Z \f$ value to set.
+  \param Z_ : \f$ Z \f$ value to set.
 */
 void
-vpFeatureLuminance::set_Z(const double Z)
+vpFeatureLuminance::set_Z(const double Z_)
 {
-    this->Z = Z ;
+    this->Z = Z_ ;
     flags[0] = true;
 }
 
