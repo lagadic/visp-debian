@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpWireFrameSimulator.cpp 4649 2014-02-07 14:57:11Z fspindle $
+ * $Id: vpWireFrameSimulator.cpp 5297 2015-02-10 11:19:24Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -73,8 +73,8 @@
 #include <Inventor/VRMLnodes/SoVRMLShape.h>
 #endif
 
-extern "C"{extern Point2i *point2i;}
-extern "C"{extern Point2i *listpoint2i;}
+extern Point2i *point2i;
+extern Point2i *listpoint2i;
 
 typedef enum
 {
@@ -158,8 +158,9 @@ void set_scene (const char* str, Bound_scene *sc, float factor)
 #if defined(VISP_HAVE_COIN)
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
-typedef struct
+typedef struct indexFaceSet
 {
+  indexFaceSet() : nbPt(0), pt(), nbIndex(0), index() {};
   int nbPt;
   std::vector<vpPoint> pt;
   int nbIndex;

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpAROgre.h 4574 2014-01-09 08:48:51Z fspindle $
+ * $Id: vpAROgre.h 4931 2014-10-09 14:02:52Z ayol $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -140,6 +140,20 @@ class VISP_EXPORT vpAROgre : public Ogre::FrameListener, public Ogre::WindowEven
            const vpHomogeneousMatrix &cMw);
   
   inline Ogre::Camera* getCamera(){ return mCamera; }
+
+  /*!
+    Get the far distance for clipping.
+
+    \return Far clipping value.
+  */
+  inline double getFarClippingDistance() const { return mFarClipping; }
+
+  /*!
+    Get the near distance for clipping.
+
+    \return Near clipping value.
+  */
+  inline double getNearClippingDistance() const { return mNearClipping; }
   
   vpTranslationVector getPosition(const std::string &name)const;
   
@@ -175,6 +189,26 @@ class VISP_EXPORT vpAROgre : public Ogre::FrameListener, public Ogre::WindowEven
   bool renderOneFrame(const vpImage<vpRGBa> &I, const vpHomogeneousMatrix &cMw);
   
   void setCameraParameters(const vpCameraParameters &cameraP);
+
+  /*!
+    Set the far distance for clipping.
+
+    \param dist : Far clipping value.
+  */
+  void setFarClippingDistance(const double &dist){
+    mFarClipping = dist;
+    updateCameraProjection();
+  }
+
+  /*!
+    Set the near distance for clipping.
+
+    \param dist : Near clipping value.
+  */
+  void setNearClippingDistance(const double &dist){
+    mNearClipping = dist;
+    updateCameraProjection();
+  }
   
   /*!
     Set the plugins path used to locate the plugins.cfg file.
@@ -287,7 +321,15 @@ class VISP_EXPORT vpAROgre : public Ogre::FrameListener, public Ogre::WindowEven
     
     \return Always true.
   */
-  virtual bool destroyScene(void) {return true;};
+  virtual bool destroyScene(void) {
+      if(!mSceneMgr)
+           return false;
+
+      mSceneMgr->destroyAllCameras ();
+      mSceneMgr->clearScene();
+      mRoot->destroySceneManager(mSceneMgr);
+      return true;
+  }
   
   virtual void updateCameraParameters (const vpHomogeneousMatrix &cMo);
 
@@ -340,6 +382,8 @@ class VISP_EXPORT vpAROgre : public Ogre::FrameListener, public Ogre::WindowEven
   bool windowHidden;                                     /** Is window hidden */
 
   // Camera calculations
+  double mNearClipping;                          /** Near Clipping Distance **/
+  double mFarClipping;                           /** Far Clipping Distance **/
   vpCameraParameters mcam;                       /** The intrinsic camera parameters */
   
   bool mshowConfigDialog;                         /** if true, shows the dialog window (used to set the display options) */

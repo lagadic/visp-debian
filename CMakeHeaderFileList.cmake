@@ -1,6 +1,6 @@
 #############################################################################
 #
-# $Id: CMakeHeaderFileList.cmake 4617 2014-01-25 10:13:21Z fspindle $
+# $Id: CMakeHeaderFileList.cmake 5255 2015-02-03 14:52:43Z strinh $
 #
 # This file is part of the ViSP software.
 # Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -66,6 +66,13 @@ SET (HEADER_DATA_STRUCTURE
   data-structure/vpList.h
   )
 
+set(HEADER_DETECTION
+  detection/vpDetectorBase.h
+  detection/barcode/vpDetectorDataMatrixCode.h
+  detection/barcode/vpDetectorQRCode.h
+  detection/face/vpDetectorFace.h
+)
+
 SET (HEADER_EXCEPTION
   exceptions/vpException.h
   )
@@ -102,6 +109,8 @@ SET (HEADER_KEY_POINT
   key-point/vpKeyPointSurf.h
   key-point/vpPlanarObjectDetector.h
   key-point/vpFernClassifier.h
+  key-point/vpKeyPoint.h
+  key-point/vpXmlConfigParserKeyPoint.h
   )
 
 SET (HEADER_DEVICE_KINECT
@@ -148,6 +157,7 @@ SET (HEADER_MATH
   math/transformation/vpRxyzVector.h
   math/transformation/vpRzyxVector.h
   math/transformation/vpRzyzVector.h
+  math/transformation/vpXmlParserHomogeneousMatrix.h
   math/transformation/vpThetaUVector.h
   math/transformation/vpTranslationVector.h
   math/transformation/vpVelocityTwistMatrix.h
@@ -219,6 +229,7 @@ SET (HEADER_SIMULATOR
   )
 
 SET (HEADER_TOOLS
+  tools/convert/vpConvert.h
   tools/geometry/vpPlane.h
   tools/geometry/vpRect.h
   tools/geometry/vpTriangle.h
@@ -264,15 +275,17 @@ SET (HEADER_TRACKING
   tracking/mbt/vpMbTracker.h
   tracking/mbt/vpMbHiddenFaces.h
   tracking/mbt/vpMbXmlParser.h
+  tracking/mbt/vpMbtPolygon.h
+  tracking/mbt/edge/vpMbtDistanceCircle.h
+  tracking/mbt/edge/vpMbtDistanceCylinder.h
   tracking/mbt/edge/vpMbtDistanceLine.h
-  tracking/mbt/edge/vpMbtPolygon.h
+  tracking/mbt/edge/vpMbtMeEllipse.h
   tracking/mbt/edge/vpMbtMeLine.h
   tracking/mbt/edge/vpMbEdgeTracker.h
   tracking/mbt/edge/vpMbtXmlParser.h
-  tracking/mbt/edge/vpMbtDistanceCylinder.h
   tracking/mbt/hybrid/vpMbEdgeKltTracker.h
   tracking/mbt/hybrid/vpMbtEdgeKltXmlParser.h
-  tracking/mbt/klt/vpMbtKltPolygon.h
+  tracking/mbt/klt/vpMbtDistanceKltPoints.h
   tracking/mbt/klt/vpMbKltTracker.h
   tracking/mbt/klt/vpMbtKltXmlParser.h
 
@@ -373,6 +386,7 @@ SET (HEADER_ALL
   ${HEADER_CAMERA}
   ${HEADER_COMPUTER_VISION}
   ${HEADER_DATA_STRUCTURE}
+  ${HEADER_DETECTION}
   ${HEADER_DEVICE_DISPLAY}
   ${HEADER_DEVICE_FRAMEGRABBER}
   ${HEADER_DEVICE_KINECT}

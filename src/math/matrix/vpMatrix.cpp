@@ -1,6 +1,6 @@
 /****************************************************************************
 *
-* $Id: vpMatrix.cpp 4649 2014-02-07 14:57:11Z fspindle $
+* $Id: vpMatrix.cpp 5238 2015-01-30 13:52:25Z fspindle $
 *
 * This file is part of the ViSP software.
 * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -133,6 +133,22 @@ vpMatrix::vpMatrix(unsigned int r, unsigned int c)
   resize(r, c);
 }
 
+/*!
+Constructor.
+
+Initialize a matrix with \e val.
+
+\param r : Matrix number of rows.
+\param c : Matrix number of columns.
+\param val : Each element of the matrix is set to \e val.
+*/
+vpMatrix::vpMatrix(unsigned int r, unsigned int c, double val)
+  : rowNum(0), colNum(0), data(NULL), rowPtrs(NULL), dsize(0), trsize(0)
+{
+  resize(r, c);
+  *this = val;
+}
+
 vpMatrix::vpMatrix(const vpHomography& H)
   : rowNum(0), colNum(0), data(NULL), rowPtrs(NULL), dsize(0), trsize(0)
 {
@@ -186,7 +202,7 @@ void vpMatrix::resize(const unsigned int nrows, const unsigned int ncols,
 
   if ((nrows == rowNum) && (ncols == colNum))
   {
-    if (flagNullify)
+    if (flagNullify && this->data != NULL)
     { memset(this->data,0,this->dsize*sizeof(double)) ;}
   }
   else
@@ -198,7 +214,7 @@ void vpMatrix::resize(const unsigned int nrows, const unsigned int ncols,
     vpDEBUG_TRACE (25, "Recopy case per case is required iff number of "
       "cols has changed (structure of double array is not "
       "the same in this case.");
-    if (recopyNeeded)
+    if (recopyNeeded && this->data != NULL)
     {
       copyTmp = new double[this->dsize];
       memcpy (copyTmp, this ->data, sizeof(double)*this->dsize);
@@ -242,7 +258,7 @@ void vpMatrix::resize(const unsigned int nrows, const unsigned int ncols,
     { memset(this->data,0,this->dsize*sizeof(double)) ;}
     else
     {
-      if (recopyNeeded)
+      if (recopyNeeded && this->rowPtrs != NULL)
       {
         vpDEBUG_TRACE (25, "Recopy...");
         const unsigned int minRow = (this->rowNum<rowTmp)?this->rowNum:rowTmp;
@@ -267,25 +283,69 @@ void vpMatrix::resize(const unsigned int nrows, const unsigned int ncols,
 
 }
 
+/*!
+  Initialize the matrix from a part of an input matrix M.
 
-void
-vpMatrix::init(const vpMatrix &m,unsigned int r, unsigned int c, unsigned int nrows, unsigned int ncols)
+  \param M : Input matrix used for initialization.
+  \param r : row index in matrix M.
+  \param c : column index in matrix M.
+  \param nrows : Number of rows of the matrix that should be initialized.
+  \param ncols : Number of columns of the matrix that should be initialized.
+
+  The sub-matrix starting from M[r][c] element and ending on M[r+nrows-1][c+ncols-1] element
+  is used to initialize the matrix.
+
+  The following code shows how to use this function:
+\code
+#include <visp/vpMatrix.h>
+
+int main()
 {
-  try {
-    resize(nrows, ncols) ;
+  vpMatrix M(4,5);
+  int val = 0;
+  for(size_t i=0; i<M.getRows(); i++) {
+    for(size_t j=0; j<M.getCols(); j++) {
+      M[i][j] = val++;
+    }
   }
-  catch(vpException me)
-  {
-    vpERROR_TRACE("Error caught") ;
-    std::cout << me << std::endl ;
-    throw ;
-  }
+  M.print (std::cout, 4, "M ");
 
+  vpMatrix N;
+  N.init(M, 0, 1, 2, 3);
+  N.print (std::cout, 4, "N ");
+}
+\endcode
+  It produces the following output:
+  \code
+M [4,5]=
+   0  1  2  3  4
+   5  6  7  8  9
+  10 11 12 13 14
+  15 16 17 18 19
+N [2,3]=
+  1 2 3
+  6 7 8
+  \endcode
+ */
+void
+vpMatrix::init(const vpMatrix &M,unsigned int r, unsigned int c, unsigned int nrows, unsigned int ncols)
+{
   unsigned int rnrows = r+nrows ;
   unsigned int cncols = c+ncols ;
+
+  if (rnrows > M.getRows())
+    throw(vpException(vpException::dimensionError,
+                      "Bad row dimension (%d > %d) used to initialize vpMatrix", rnrows, M.getRows()));
+  if (cncols > M.getCols())
+    throw(vpException(vpException::dimensionError,
+                      "Bad column dimension (%d > %d) used to initialize vpMatrix", cncols, M.getCols()));
+  resize(nrows, ncols);
+
+  if (this->rowPtrs == NULL) // Fix coverity scan: explicit null dereferenced
+    return; // Noting to do
   for (unsigned int i=r ; i < rnrows; i++)
     for (unsigned int j=c ; j < cncols; j++)
-      (*this)[i-r][j-c] = m[i][j] ;
+      (*this)[i-r][j-c] = M[i][j] ;
 }
 
 /*!
@@ -804,11 +864,10 @@ vpMatrix vpMatrix::operator-() const //negate
   return C;
 }
 
-//!return sum of the Aij^2 (for all i, for all j)
 double
 vpMatrix::sumSquare() const
 {
-  double sum=0.0;
+  double sum_square=0.0;
   double x ;
 
   // 	double t0,t1;
@@ -819,28 +878,40 @@ vpMatrix::sumSquare() const
   // 	while (d < n )
   // 	{
   // 	  x = *d++ ;
-  // 	  sum += x*x ;
+  // 	  sum_square += x*x ;
   // 	}
   // 	t1=vpTime::measureTimeMicros();
   // 	std::cout<< t1-t0<<" "<< sum << " ";
   // 	
 
 
-  // 	sum= 0.0;
+  // 	sum_square= 0.0;
   // 	t0=vpTime::measureTimeMicros();
   for (unsigned int i=0;i<rowNum;i++)
     for(unsigned int j=0;j<colNum;j++)
     {
       x=rowPtrs[i][j];
-      sum+=x*x;
+      sum_square += x*x;
     }
     // 	t1=vpTime::measureTimeMicros();
     // 	std::cout<< t1-t0<<" "<< sum << std::endl;
 
+    return sum_square;
+}
 
+double
+vpMatrix::sum() const
+{
+  double s=0.0;
+  for (unsigned int i=0;i<rowNum;i++)
+  {
+    for(unsigned int j=0;j<colNum;j++)
+    {
+      s += rowPtrs[i][j];
+    }
+  }
 
-
-    return sum;
+  return s;
 }
 
 
@@ -1027,7 +1098,7 @@ vpMatrix  vpMatrix::operator/(double x) const
 
   //if (x == 0) {
   if (std::fabs(x) <= std::numeric_limits<double>::epsilon()) {
-    vpERROR_TRACE("Divide by zero in method /(double x)") ;
+    //vpERROR_TRACE("Divide by zero in method /(double x)") ;
     throw vpMatrixException(vpMatrixException::divideByZeroError, "Divide by zero in method /(double x)");
   }
 
@@ -2202,7 +2273,7 @@ vpMatrix::pseudoInverse(vpMatrix &Ap,
   for (j = 0; j < ncols_orig ; j++)
   {
     //if ( cons.row(j+1).sumSquare() != 0)
-    if ( std::fabs(cons.row(j+1).sumSquare()) > std::numeric_limits<double>::epsilon())
+    if ( std::fabs(cons.getRow(j).sumSquare()) > std::numeric_limits<double>::epsilon())
     {
       for (i = 0; i < cons.getCols(); i++)
         Ker[k][i] = cons[j][i];
@@ -2264,27 +2335,29 @@ vpMatrix::pseudoInverse(vpMatrix &Ap,
   return rank ;
 }
 
-
+#ifdef VISP_BUILD_DEPRECATED_FUNCTIONS
 /*!
-\brief  Return the ith rows of the matrix
-\warning notice row(1) is the 0th row.
-*/
+  \deprecated This method is deprecated. You should use getRow().
 
+  Return the i-th row of the matrix.
+  \warning notice row(1) is the 0th row.
+*/
 vpRowVector
-vpMatrix::row(const unsigned int j)
+vpMatrix::row(const unsigned int i)
 {
   vpRowVector c(getCols()) ;
 
-  for (unsigned int i =0 ; i < getCols() ; i++)  c[i] = (*this)[j-1][i] ;
+  for (unsigned int j =0 ; j < getCols() ; j++)  c[j] = (*this)[i-1][j] ;
   return c ;
 }
 
-
 /*!
-\brief  Return the ith columns of the matrix
-\warning notice column(1) is the 0th column.
-*/
+  \deprecated This method is deprecated. You should use getCol().
 
+  Return the j-th columns of the matrix.
+  \warning notice column(1) is the 0-th column.
+  \param j : Index of the column to extract.
+*/
 vpColVector
 vpMatrix::column(const unsigned int j)
 {
@@ -2293,9 +2366,205 @@ vpMatrix::column(const unsigned int j)
   for (unsigned int i =0 ; i < getRows() ; i++)     c[i] = (*this)[i][j-1] ;
   return c ;
 }
+#endif
 
 
+/*!
+  Extract a column vector from a matrix.
+  \warning All the indexes start from 0 in this function.
+  \param j : Index of the column to extract. If col=0, the first column is extracted.
+  \param i_begin : Index of the row that gives the location of the first element of the column vector to extract.
+  \param column_size : Size of the column vector to extract.
+  \return The extracted column vector.
 
+  The following example shows how to use this function:
+  \code
+#include <visp/vpColVector.h>
+#include <visp/vpMatrix.h>
+
+int main()
+{
+  vpMatrix A(4,4);
+
+  for(unsigned int i=0; i < A.getRows(); i++)
+    for(unsigned int j=0; j < A.getCols(); j++)
+      A[i][j] = i*A.getCols()+j;
+
+  A.print(std::cout, 4);
+
+  vpColVector cv = A.getCol(1, 1, 3);
+  std::cout << "Column vector: \n" << cv << std::endl;
+}
+  \endcode
+It produces the following output:
+  \code
+[4,4]=
+   0  1  2  3
+   4  5  6  7
+   8  9 10 11
+  12 13 14 15
+column vector:
+5
+9
+13
+  \endcode
+ */
+vpColVector
+vpMatrix::getCol(const unsigned int j, const unsigned int i_begin, const unsigned int column_size) const
+{
+  if (i_begin + column_size > getRows() || j >= getCols())
+    throw(vpException(vpException::dimensionError, "Unable to extract a column vector from the matrix"));
+  vpColVector c(column_size);
+  for (unsigned int i=0 ; i < column_size ; i++)
+    c[i] = (*this)[i_begin+i][j];
+  return c;
+}
+
+/*!
+  Extract a column vector from a matrix.
+  \warning All the indexes start from 0 in this function.
+  \param j : Index of the column to extract. If j=0, the first column is extracted.
+  \return The extracted column vector.
+
+  The following example shows how to use this function:
+  \code
+#include <visp/vpColVector.h>
+#include <visp/vpMatrix.h>
+
+int main()
+{
+  vpMatrix A(4,4);
+
+  for(unsigned int i=0; i < A.getRows(); i++)
+    for(unsigned int j=0; j < A.getCols(); j++)
+      A[i][j] = i*A.getCols()+j;
+
+  A.print(std::cout, 4);
+
+  vpColVector cv = A.getCol(1);
+  std::cout << "Column vector: \n" << cv << std::endl;
+}
+  \endcode
+It produces the following output:
+  \code
+[4,4]=
+   0  1  2  3
+   4  5  6  7
+   8  9 10 11
+  12 13 14 15
+column vector:
+1
+5
+9
+13
+  \endcode
+ */
+vpColVector
+vpMatrix::getCol(const unsigned int j) const
+{
+  if (j >= getCols())
+    throw(vpException(vpException::dimensionError, "Unable to extract a column vector from the matrix"));
+  unsigned int nb_rows = getRows();
+  vpColVector c(nb_rows);
+  for (unsigned int i=0 ; i < nb_rows ; i++)
+    c[i] = (*this)[i][j];
+  return c;
+}
+
+/*!
+  Extract a row vector from a matrix.
+  \warning All the indexes start from 0 in this function.
+  \param i : Index of the row to extract. If i=0, the first row is extracted.
+  \return The extracted row vector.
+
+  The following example shows how to use this function:
+  \code
+#include <visp/vpMatrix.h>
+#include <visp/vpRowVector.h>
+
+int main()
+{
+  vpMatrix A(4,4);
+
+  for(unsigned int i=0; i < A.getRows(); i++)
+    for(unsigned int j=0; j < A.getCols(); j++)
+      A[i][j] = i*A.getCols()+j;
+
+  A.print(std::cout, 4);
+
+  vpRowVector rv = A.getRow(1);
+  std::cout << "Row vector: \n" << rv << std::endl;
+}  \endcode
+It produces the following output:
+  \code
+[4,4]=
+   0  1  2  3
+   4  5  6  7
+   8  9 10 11
+  12 13 14 15
+Row vector:
+4  5  6  7
+  \endcode
+ */
+vpRowVector
+vpMatrix::getRow(const unsigned int i) const
+{
+  if (i >= getRows())
+    throw(vpException(vpException::dimensionError, "Unable to extract a row vector from the matrix"));
+  unsigned int nb_cols = getCols();
+  vpRowVector r( nb_cols );
+  for (unsigned int j=0 ; j < nb_cols ; j++)
+    r[j] = (*this)[i][j];
+  return r;
+}
+
+/*!
+  Extract a row vector from a matrix.
+  \warning All the indexes start from 0 in this function.
+  \param i : Index of the row to extract. If i=0, the first row is extracted.
+  \param j_begin : Index of the column that gives the location of the first element of the row vector to extract.
+  \param row_size : Size of the row vector to extract.
+  \return The extracted row vector.
+
+  The following example shows how to use this function:
+  \code
+#include <visp/vpMatrix.h>
+#include <visp/vpRowVector.h>
+
+int main()
+{
+  vpMatrix A(4,4);
+
+  for(unsigned int i=0; i < A.getRows(); i++)
+    for(unsigned int j=0; j < A.getCols(); j++)
+      A[i][j] = i*A.getCols()+j;
+
+  A.print(std::cout, 4);
+
+  vpRowVector rv = A.getRow(1, 1, 3);
+  std::cout << "Row vector: \n" << rv << std::endl;
+}  \endcode
+It produces the following output:
+  \code
+[4,4]=
+   0  1  2  3
+   4  5  6  7
+   8  9 10 11
+  12 13 14 15
+Row vector:
+5  6  7
+  \endcode
+ */
+vpRowVector
+vpMatrix::getRow(const unsigned int i, const unsigned int j_begin, const unsigned int row_size) const
+{
+  if (j_begin + row_size > getCols() || i >= getRows())
+    throw(vpException(vpException::dimensionError, "Unable to extract a row vector from the matrix"));
+  vpRowVector r(row_size);
+  for (unsigned int j=0 ; j < row_size ; j++)
+    r[j] = (*this)[i][j_begin+i];
+  return r;
+}
 
 /*!
 \brief Stack matrices. "Stack" two matrices  C = [ A B ]^T
@@ -2715,7 +2984,7 @@ vpMatrix::print(std::ostream& s, unsigned int length, char const* intro)
   if (maxAfter==1) maxAfter=0;
 
   // the following line is useful for debugging
-  std::cerr <<totalLength <<" " <<maxBefore <<" " <<maxAfter <<"\n";
+  //std::cerr <<totalLength <<" " <<maxBefore <<" " <<maxAfter <<"\n";
 
   if (intro) s <<intro;
   s <<"["<<m<<","<<n<<"]=\n";
@@ -3446,7 +3715,7 @@ vpMatrix::kernel(vpMatrix &kerA, double svThreshold)
           //    cout << cons.Row(j+1) << " = " << cons.Row(j+1).SumSquare() << endl ;
 
           //if (cons.row(j+1).sumSquare() !=0)
-          if (std::fabs(cons.row(j+1).sumSquare()) > std::numeric_limits<double>::epsilon())
+          if (std::fabs(cons.getRow(j).sumSquare()) > std::numeric_limits<double>::epsilon())
           {
             for (i=0 ; i < cons.getCols() ; i++)
               Ker[k][i] = cons[j][i] ;
@@ -3876,16 +4145,16 @@ vpMatrix::expm()
   else
   {
 #ifdef VISP_HAVE_GSL
-    size_t size = rowNum * colNum;
-    double *b = new double [size];
-    for (size_t i=0; i< size; i++)
+    size_t size_ = rowNum * colNum;
+    double *b = new double [size_];
+    for (size_t i=0; i< size_; i++)
       b[i] = 0.;
     gsl_matrix_view m  = gsl_matrix_view_array(this->data, rowNum, colNum);
     gsl_matrix_view em = gsl_matrix_view_array(b, rowNum, colNum);
     gsl_linalg_exponential_ss(&m.matrix, &em.matrix, 0);
     //gsl_matrix_fprintf(stdout, &em.matrix, "%g");
     vpMatrix expA(rowNum, colNum);
-    memcpy(expA.data, b, size * sizeof(double));
+    memcpy(expA.data, b, size_ * sizeof(double));
 
     delete [] b;
     return expA;

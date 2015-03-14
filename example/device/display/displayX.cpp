@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: displayX.cpp 4658 2014-02-09 09:50:14Z fspindle $
+ * $Id: displayX.cpp 5004 2014-11-24 08:24:18Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -198,11 +198,8 @@ main(int argc, const char ** argv)
     bool opt_click_allowed = true;
     bool opt_display = true;
 
-    // Get the VISP_IMAGE_PATH environment variable value
-    char *ptenv = getenv("VISP_INPUT_IMAGE_PATH");
-    if (ptenv != NULL)
-      env_ipath = ptenv;
-    //  std::cout << "env_ipath: " << env_ipath << std::endl;
+    // Get the visp-images-data package path or VISP_INPUT_IMAGE_PATH environment variable value
+    env_ipath = vpIoTools::getViSPImagesDataPath();
 
     // Set the default input path
     if (! env_ipath.empty())
@@ -231,7 +228,7 @@ main(int argc, const char ** argv)
       opath = opt_opath;
 
     // Append to the output path string, the login name of the user
-    std::string odirname = opath +  vpIoTools::path("/") + username;
+    std::string odirname = vpIoTools::createFilePath(opath, username);
 
     // Test if the output path exist. If no try to create it
     if (vpIoTools::checkDirectory(odirname) == false) {
@@ -278,7 +275,7 @@ main(int argc, const char ** argv)
     vpImagePoint ip, ip1, ip2;
 
     // Load a grey image from the disk
-    filename = ipath +  vpIoTools::path("/ViSP-images/Klimt/Klimt.pgm");
+    filename = vpIoTools::createFilePath(ipath, "ViSP-images/Klimt/Klimt.pgm");
     vpImageIo::read(I, filename) ;
 
     // Create a display using X11
@@ -353,9 +350,9 @@ main(int argc, const char ** argv)
       // Display in overlay a yellow string
       ip.set_i( 85 );
       ip.set_j( 100 );
-      vpDisplay::displayCharString(I, ip,
-                                   "ViSP is a marvelous software",
-                                   vpColor::yellow) ;
+      vpDisplay::displayText(I, ip,
+                             "ViSP is a marvelous software",
+                             vpColor::yellow) ;
       //Flush the display
       vpDisplay::flush(I);
 
@@ -365,7 +362,7 @@ main(int argc, const char ** argv)
       vpDisplay::getImage(I, Ioverlay) ;
 
       // Write the color image on the disk
-      filename = odirname +  vpIoTools::path("/Klimt_grey.overlay.ppm");
+      filename = vpIoTools::createFilePath(odirname, "Klimt_grey.overlay.ppm");
       vpImageIo::write(Ioverlay, filename) ;
 
       // If click is allowed, wait for a mouse click to close the display
@@ -383,7 +380,7 @@ main(int argc, const char ** argv)
     vpImage<vpRGBa> Irgba ;
 
     // Load a grey image from the disk and convert it to a color image
-    filename = ipath +  vpIoTools::path("/ViSP-images/Klimt/Klimt.pgm");
+    filename = vpIoTools::createFilePath(ipath, "ViSP-images/Klimt/Klimt.ppm");
     vpImageIo::read(Irgba, filename) ;
 
     // Create a new display
@@ -421,6 +418,15 @@ main(int argc, const char ** argv)
       // Flush the display. Sometimes the display content is
       // bufferized. Force to display the content that has been bufferized.
       vpDisplay::flush(Irgba);
+
+      // Create a color image
+      vpImage<vpRGBa> Ioverlay ;
+      // Updates the color image with the original loaded image and the overlay
+      vpDisplay::getImage(Irgba, Ioverlay) ;
+
+      // Write the color image on the disk
+      filename = vpIoTools::createFilePath(odirname, "Klimt_color.overlay.ppm");
+      vpImageIo::write(Ioverlay, filename) ;
 
       // If click is allowed, wait for a blocking mouse click to exit.
       if (opt_click_allowed) {

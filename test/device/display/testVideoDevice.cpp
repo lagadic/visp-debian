@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: testVideoDevice.cpp 4658 2014-02-09 09:50:14Z fspindle $
+ * $Id: testVideoDevice.cpp 5023 2014-12-03 16:07:48Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -240,10 +240,8 @@ main(int argc, const char ** argv)
     opt_dtype = vpCV;  
 #endif
 
-    // Get the VISP_IMAGE_PATH environment variable value
-    char *ptenv = getenv("VISP_INPUT_IMAGE_PATH");
-    if (ptenv != NULL)
-      env_ipath = ptenv;
+    // Get the visp-images-data package path or VISP_INPUT_IMAGE_PATH environment variable value
+    env_ipath = vpIoTools::getViSPImagesDataPath();
 
     // Set the default input path
     if (! env_ipath.empty())
@@ -285,7 +283,6 @@ main(int argc, const char ** argv)
       return (0);
     }
 
-
     // Get the option values
     if (!opt_ipath.empty())
       ipath = opt_ipath;
@@ -320,12 +317,12 @@ main(int argc, const char ** argv)
     vpImage<vpRGBa> Irgba ;
 
     // Load a grey image from the disk
-    filename = ipath +  vpIoTools::path("/ViSP-images/Klimt/Klimt.pgm");
+    filename = vpIoTools::createFilePath(ipath, "ViSP-images/Klimt/Klimt.pgm");
     vpCTRACE << "Load " <<  filename << std::endl;
     vpImageIo::read(I, filename) ;
 
     // Load a color image from the disk
-    filename = ipath +  vpIoTools::path("/ViSP-images/Klimt/Klimt.ppm");
+    filename = vpIoTools::createFilePath(ipath, "ViSP-images/Klimt/Klimt.ppm");
     vpCTRACE << "Load " <<  filename << std::endl;
     vpImageIo::read(Irgba, filename) ;
 
@@ -380,7 +377,7 @@ main(int argc, const char ** argv)
       break;
     case vpCV:
       std::cout << "Requested OpenCV display functionnalities..." << std::endl;
-#if defined VISP_HAVE_OPENCV
+#if defined(VISP_HAVE_OPENCV)
       display = new vpDisplayOpenCV;
 #else
       std::cout << "  Sorry, OpenCV video device is not available.\n";

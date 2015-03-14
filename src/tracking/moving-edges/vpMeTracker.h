@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpMeTracker.h 4649 2014-02-07 14:57:11Z fspindle $
+ * $Id: vpMeTracker.h 4797 2014-07-23 15:52:28Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -114,6 +114,8 @@ public:
   int outOfImage( int i , int j , int half , int rows , int cols) ;
   int outOfImage( vpImagePoint iP , int half , int rows , int cols) ;
   
+  void reset();
+
   //!Sample pixels at a given interval
   virtual void sample(const vpImage<unsigned char> &image)=0;
   

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpTemplateTrackerZone.h 4661 2014-02-10 19:34:58Z fspindle $
+ * $Id: vpTemplateTrackerZone.h 4781 2014-07-15 13:03:11Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -83,6 +83,7 @@ class VISP_EXPORT vpTemplateTrackerZone
     //colorie le tieme triangle
     void fillTriangle(vpImage<unsigned char>& I, unsigned int id, unsigned char gray_level);
 
+    double getArea() const;
     vpImagePoint getCenter() const;
     vpImagePoint getCenter(int borne_x, int borne_y) const;
     //get bounds of the area
@@ -93,7 +94,7 @@ class VISP_EXPORT vpTemplateTrackerZone
     vpRect getBoundingBox() const;
 
     /*! Return the number of triangles that define the zone. \sa getTriangle() */
-	unsigned int getNbTriangle() const { return (unsigned int)Zone.size(); }
+    unsigned int getNbTriangle() const { return (unsigned int)Zone.size(); }
     vpTemplateTrackerZone getPyramidDown() const;
     //renvoie le ieme triangle de la zone
     void getTriangle(unsigned int i, vpTemplateTrackerTriangle &T) const;

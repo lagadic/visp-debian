@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: grabDisk.cpp 4659 2014-02-09 14:11:51Z fspindle $
+ * $Id: grabDisk.cpp 4814 2014-07-31 11:38:39Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -47,12 +47,13 @@
 #if (defined (VISP_HAVE_X11) || defined(VISP_HAVE_GDI))
 
 #include <visp/vpDiskGrabber.h>
-#include <visp/vpImage.h>
 #include <visp/vpDisplay.h>
 #include <visp/vpDisplayX.h>
 #include <visp/vpDisplayGDI.h>
-#include <visp/vpTime.h>
+#include <visp/vpImage.h>
+#include <visp/vpIoTools.h>
 #include <visp/vpParseArgv.h>
+#include <visp/vpTime.h>
 
 /*!
   \file grabDisk.cpp
@@ -226,10 +227,8 @@ int main(int argc, const char ** argv)
     int opt_step = 1;
     unsigned int opt_nzero = 4;
 
-    // Get the VISP_IMAGE_PATH environment variable value
-    char *ptenv = getenv("VISP_INPUT_IMAGE_PATH");
-    if (ptenv != NULL)
-      env_ipath = ptenv;
+    // Get the visp-images-data package path or VISP_INPUT_IMAGE_PATH environment variable value
+    env_ipath = vpIoTools::getViSPImagesDataPath();
 
     // Set the default input path
     if (! env_ipath.empty())

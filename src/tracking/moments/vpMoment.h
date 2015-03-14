@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpMoment.h 4583 2014-01-14 17:06:37Z fspindle $
+ * $Id: vpMoment.h 4708 2014-03-28 17:36:46Z mbakthav $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -116,9 +116,7 @@ class VISP_EXPORT vpMoment{
         Returns the linked moment database.
         \return the moment database
         */
-        inline vpMomentDatabase& getMoments(){ return *moments; }
-
-
+        inline vpMomentDatabase& getMoments() const { return *moments; }
  public:
         inline const vpMomentObject& getObject() const { return *object;}
         vpMoment();
@@ -132,6 +130,7 @@ class VISP_EXPORT vpMoment{
         virtual void compute()=0;
         virtual const char* name() const = 0;
         friend VISP_EXPORT std::ostream & operator<<(std::ostream & os, const vpMoment& m);
+        virtual void printDependencies(std::ostream& os) const;
 
         /*!
         Virtual destructor.

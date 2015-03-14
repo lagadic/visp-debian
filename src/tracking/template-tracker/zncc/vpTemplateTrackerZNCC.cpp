@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpTemplateTrackerZNCC.cpp 4666 2014-02-16 16:21:33Z fspindle $
+ * $Id: vpTemplateTrackerZNCC.cpp 4682 2014-02-24 07:56:27Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -126,7 +126,7 @@ double vpTemplateTrackerZNCC::getCost(const vpImage<unsigned char> &I, vpColVect
       Nbpoint++;
     }
   }
-  if(Nbpoint==0)return 10e10;
+  // if(Nbpoint==0)return 10e10; // cannot occur
   //return -nom/sqrt(denom);
   return -nom/sqrt(var1*var2);
 }

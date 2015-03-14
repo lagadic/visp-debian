@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpCalibration.cpp 4663 2014-02-14 10:32:11Z fspindle $
+ * $Id: vpCalibration.cpp 5233 2015-01-30 13:50:39Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -473,11 +473,11 @@ int vpCalibration::computeCalibrationMulti(vpCalibrationMethodType method,
       if(table_cal[i].get_npt()>3)
         table_cal[i].computePose(cam_est,table_cal[i].cMo);
     }
-    switch (method) {   
-    case CALIB_LAGRANGE :
+    switch (method) {
+    case CALIB_LAGRANGE : {
       if(nbPose > 1){
         std::cout << "this calibration method is not available in" << std::endl
-            << "vpCalibration::computeCalibrationMulti()" << std::endl;
+                  << "vpCalibration::computeCalibrationMulti()" << std::endl;
         return -1 ;
       }
       else {
@@ -487,12 +487,13 @@ int vpCalibration::computeCalibrationMulti(vpCalibrationMethodType method,
         table_cal[0].cMo_dist = table_cal[0].cMo ;
       }
       break;
+    }
     case CALIB_LAGRANGE_VIRTUAL_VS :
-    case CALIB_LAGRANGE_VIRTUAL_VS_DIST :
+    case CALIB_LAGRANGE_VIRTUAL_VS_DIST : {
       if(nbPose > 1){
         std::cout << "this calibration method is not available in" << std::endl
-            << "vpCalibration::computeCalibrationMulti()" << std::endl
-            << "with several images." << std::endl;
+                  << "vpCalibration::computeCalibrationMulti()" << std::endl
+                  << "with several images." << std::endl;
         return -1 ;
       }
       else {
@@ -501,12 +502,14 @@ int vpCalibration::computeCalibrationMulti(vpCalibrationMethodType method,
         table_cal[0].cam_dist = cam_est ;
         table_cal[0].cMo_dist = table_cal[0].cMo ;
       }
-    case CALIB_VIRTUAL_VS:
-    case CALIB_VIRTUAL_VS_DIST:
-      {
-        calibVVSMulti(table_cal, cam_est, globalReprojectionError, verbose);
-      }
+      calibVVSMulti(table_cal, cam_est, globalReprojectionError, verbose);
       break ;
+    }
+    case CALIB_VIRTUAL_VS:
+    case CALIB_VIRTUAL_VS_DIST: {
+      calibVVSMulti(table_cal, cam_est, globalReprojectionError, verbose);
+      break ;
+    }
     }
     //Print camera parameters
     if(verbose){
@@ -739,14 +742,22 @@ int vpCalibration::readGrid(const char* filename, unsigned int &n,
   \param I : Image where to display data.
   \param color : Color of the data.
   \param thickness : Thickness of the displayed data.
+  \param subsampling_factor : Subsampling factor. Default value is 1.
+  Admissible values are multiple of 2. Divide by this parameter the
+  coordinates of the data points resulting from image processing.
 
 */
 int vpCalibration::displayData(vpImage<unsigned char> &I, vpColor color,
-                               unsigned int thickness)
+                               unsigned int thickness, int subsampling_factor)
 {
 
   for (std::list<vpImagePoint>::const_iterator it = Lip.begin(); it != Lip.end(); ++ it) {
-    vpDisplay::displayCross(I, *it, 12, color, thickness) ;
+    vpImagePoint ip = *it;
+    if (subsampling_factor > 1.) {
+      ip.set_u( ip.get_u() / subsampling_factor);
+      ip.set_v( ip.get_v() / subsampling_factor);
+    }
+    vpDisplay::displayCross(I, ip, 12, color, thickness) ;
   }
   return 0 ;
 }
@@ -757,14 +768,17 @@ int vpCalibration::displayData(vpImage<unsigned char> &I, vpColor color,
   \param I : Image where to display grid data.
   \param color : Color of the data.
   \param thickness : Thickness of the displayed data.
+  \param subsampling_factor : Subsampling factor. Default value is 1.
+  Admissible values are multiple of 2. Divide by this parameter the
+  values of the camera parameters.
 */
 int vpCalibration::displayGrid(vpImage<unsigned char> &I, vpColor color,
-                               unsigned int thickness)
+                               unsigned int thickness, int subsampling_factor)
 {
-  double u0_dist = cam_dist.get_u0() ;
-  double v0_dist = cam_dist.get_v0() ;
-  double px_dist = cam_dist.get_px() ;
-  double py_dist = cam_dist.get_py() ;
+  double u0_dist = cam_dist.get_u0() / subsampling_factor;
+  double v0_dist = cam_dist.get_v0() / subsampling_factor;
+  double px_dist = cam_dist.get_px() / subsampling_factor;
+  double py_dist = cam_dist.get_py() / subsampling_factor;
   double kud_dist = cam_dist.get_kud() ;
   //  double kdu_dist = cam_dist.get_kdu() ;
 
@@ -850,10 +864,10 @@ int vpCalibration::computeCalibrationMulti(vpCalibrationMethodType method,
         table_cal[i].computePose(cam_est,table_cal[i].cMo);
     }
     switch (method) {
-    case CALIB_LAGRANGE :
+    case CALIB_LAGRANGE : {
       if(nbPose > 1){
         std::cout << "this calibration method is not available in" << std::endl
-            << "vpCalibration::computeCalibrationMulti()" << std::endl;
+                  << "vpCalibration::computeCalibrationMulti()" << std::endl;
         return -1 ;
       }
       else {
@@ -863,12 +877,13 @@ int vpCalibration::computeCalibrationMulti(vpCalibrationMethodType method,
         table_cal[0].cMo_dist = table_cal[0].cMo ;
       }
       break;
+    }
     case CALIB_LAGRANGE_VIRTUAL_VS :
-    case CALIB_LAGRANGE_VIRTUAL_VS_DIST :
+    case CALIB_LAGRANGE_VIRTUAL_VS_DIST : {
       if(nbPose > 1){
         std::cout << "this calibration method is not available in" << std::endl
-            << "vpCalibration::computeCalibrationMulti()" << std::endl
-            << "with several images." << std::endl;
+                  << "vpCalibration::computeCalibrationMulti()" << std::endl
+                  << "with several images." << std::endl;
         return -1 ;
       }
       else {
@@ -877,12 +892,14 @@ int vpCalibration::computeCalibrationMulti(vpCalibrationMethodType method,
         table_cal[0].cam_dist = cam_est ;
         table_cal[0].cMo_dist = table_cal[0].cMo ;
       }
-    case CALIB_VIRTUAL_VS:
-    case CALIB_VIRTUAL_VS_DIST:
-      {
-        calibVVSMulti(nbPose, table_cal, cam_est, verbose);
-      }
+      calibVVSMulti(nbPose, table_cal, cam_est, verbose);
       break ;
+    }
+    case CALIB_VIRTUAL_VS:
+    case CALIB_VIRTUAL_VS_DIST: {
+      calibVVSMulti(nbPose, table_cal, cam_est, verbose);
+      break ;
+    }
     }
     //Print camera parameters
     if(verbose){

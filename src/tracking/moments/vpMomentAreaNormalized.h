@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpMomentAreaNormalized.h 4574 2014-01-09 08:48:51Z fspindle $
+ * $Id: vpMomentAreaNormalized.h 4713 2014-03-28 18:02:26Z mbakthav $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -150,6 +150,7 @@ class VISP_EXPORT vpMomentAreaNormalized : public vpMoment {
         */
         const char* name() const {return "vpMomentAreaNormalized";}
         friend VISP_EXPORT std::ostream & operator<<(std::ostream & os, const vpMomentAreaNormalized& v);
+        void printDependencies(std::ostream& os) const;
 };
 
 #endif

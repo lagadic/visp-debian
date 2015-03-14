@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpHomographyDLT.cpp 4661 2014-02-10 19:34:58Z fspindle $
+ * $Id: vpHomographyDLT.cpp 5052 2014-12-11 14:18:49Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -417,7 +417,7 @@ void vpHomography::DLT(unsigned int n,
       if ((D[i] < smallestSv) ){ smallestSv = D[i] ;indexSmallestSv = i ; }
 
 
-    h=V.column(indexSmallestSv+1);
+    h=V.getCol(indexSmallestSv);
 
     // build the homography
     for(unsigned int i =0;i<3;i++)
@@ -599,7 +599,7 @@ void vpHomography::DLT(const std::vector<double> &xb, const std::vector<double> 
     for (unsigned int i=0 ; i < 9 ; i++)
       if ((D[i] < smallestSv) ){ smallestSv = D[i] ;indexSmallestSv = i ; }
 
-    h=V.column(indexSmallestSv+1);
+    h=V.getCol(indexSmallestSv);
 
     // build the homography
     for(unsigned int i =0;i<3;i++)

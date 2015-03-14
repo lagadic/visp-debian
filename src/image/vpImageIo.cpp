@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpImageIo.cpp 4574 2014-01-09 08:48:51Z fspindle $
+ * $Id: vpImageIo.cpp 5249 2015-02-03 13:04:27Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -66,7 +66,7 @@ vpImageIo::openFileRead(const char *filename)
   FILE *fd ;
 
   // Lecture du nom du fichier image.
-  if (filename == '\0')   {
+  if (!filename || *filename == '\0')   {
     vpERROR_TRACE("filename empty ") ;
     throw (vpImageException(vpImageException::noFileNameError,
 			    "filename empty ")) ;
@@ -100,7 +100,7 @@ vpImageIo::openFileWrite(const char *filename, const char *mode)
   FILE *fd ;
 
  // Lecture du nom du fichier image.
-  if (filename == '\0')
+  if (!filename || *filename == '\0')
   {
     vpERROR_TRACE("filename empty ") ;
     throw (vpImageException(vpImageException::noFileNameError,
@@ -315,9 +315,21 @@ vpImageIo::read(vpImage<unsigned char> &I, const char *filename)
   }
 
   if (try_opencv_reader) {
-#if VISP_HAVE_OPENCV_VERSION >= 0x020100
+#if VISP_HAVE_OPENCV_VERSION >= 0x030000
+    //std::cout << "Use opencv to read the image" << std::endl;
+    cv::Mat cvI = cv::imread(filename, cv::IMREAD_GRAYSCALE);
+    if (cvI.cols == 0 && cvI.rows == 0) {
+      std::string message = "Cannot read file \"" + std::string(filename) + "\": Image format not supported";
+      throw (vpImageException(vpImageException::ioError, message)) ;
+    }
+    vpImageConvert::convert(cvI, I);
+#elif VISP_HAVE_OPENCV_VERSION >= 0x020100
     //std::cout << "Use opencv to read the image" << std::endl;
     cv::Mat cvI = cv::imread(filename, CV_LOAD_IMAGE_GRAYSCALE);
+    if (cvI.cols == 0 && cvI.rows == 0) {
+      std::string message = "Cannot read file \"" + std::string(filename) + "\": Image format not supported";
+      throw (vpImageException(vpImageException::ioError, message)) ;
+    }
     vpImageConvert::convert(cvI, I);
 #else
     std::string message = "Cannot read file \"" + std::string(filename) + "\": Image format not supported";
@@ -404,9 +416,21 @@ vpImageIo::read(vpImage<vpRGBa> &I, const char *filename)
   }
 
   if (try_opencv_reader) {
-#if VISP_HAVE_OPENCV_VERSION >= 0x020100
+#if VISP_HAVE_OPENCV_VERSION >= 0x030000
+    // std::cout << "Use opencv to read the image" << std::endl;
+    cv::Mat cvI = cv::imread(filename, cv::IMREAD_COLOR);
+    if (cvI.cols == 0 && cvI.rows == 0) {
+      std::string message = "Cannot read file \"" + std::string(filename) + "\": Image format not supported";
+      throw (vpImageException(vpImageException::ioError, message)) ;
+    }
+    vpImageConvert::convert(cvI, I);
+#elif VISP_HAVE_OPENCV_VERSION >= 0x020100
     // std::cout << "Use opencv to read the image" << std::endl;
     cv::Mat cvI = cv::imread(filename, CV_LOAD_IMAGE_COLOR);
+    if (cvI.cols == 0 && cvI.rows == 0) {
+      std::string message = "Cannot read file \"" + std::string(filename) + "\": Image format not supported";
+      throw (vpImageException(vpImageException::ioError, message)) ;
+    }
     vpImageConvert::convert(cvI, I);
 #else
     std::string message = "Cannot read file \"" + std::string(filename) + "\": Image format not supported";
@@ -611,7 +635,7 @@ vpImageIo::writePFM(const vpImage<float> &I,
   FILE* fd;
 
   // Test the filename
-  if (filename == '\0')   {
+  if (!filename || *filename == '\0')   {
      vpERROR_TRACE("no filename\n");
     throw (vpImageException(vpImageException::ioError,
            "no filename")) ;
@@ -667,7 +691,7 @@ vpImageIo::writePGM(const vpImage<unsigned char> &I,
   FILE* fd;
 
   // Test the filename
-  if (filename == '\0')   {
+  if (!filename || *filename == '\0')   {
      vpERROR_TRACE("no filename\n");
     throw (vpImageException(vpImageException::ioError,
            "no filename")) ;
@@ -742,7 +766,7 @@ vpImageIo::writePGM(const vpImage<vpRGBa> &I, const char *filename)
   FILE* fd;
 
   // Test the filename
-  if (filename == '\0')   {
+  if (!filename || *filename == '\0')   {
      vpERROR_TRACE("no filename\n");
     throw (vpImageException(vpImageException::ioError,
            "no filename")) ;
@@ -811,7 +835,7 @@ vpImageIo::readPFM(vpImage<float> &I, const char *filename)
   unsigned int   w, h;
 
   // Test the filename
-  if (filename == '\0')
+  if (!filename || *filename == '\0')
   {
     vpERROR_TRACE("no filename") ;
     throw (vpImageException(vpImageException::ioError,
@@ -978,7 +1002,7 @@ vpImageIo::readPGM(vpImage<unsigned char> &I, const char *filename)
   unsigned int magic=5, w=0, h=0, maxval=255;
 
   // Test the filename
-  if (filename == '\0') {
+  if (!filename || *filename == '\0') {
     throw (vpImageException(vpImageException::ioError,
           "No filename")) ;
   }
@@ -1258,7 +1282,7 @@ vpImageIo::readPPM(vpImage<vpRGBa> &I, const char *filename)
   unsigned int magic=5, w=0, h=0, maxval=255;
 
   // Test the filename
-  if (filename == '\0') {
+  if (!filename || *filename == '\0') {
     throw (vpImageException(vpImageException::ioError,
           "No filename")) ;
   }
@@ -1493,7 +1517,7 @@ vpImageIo::writePPM(const vpImage<vpRGBa> &I, const char *filename)
 
 
   // Test the filename
-  if (filename == '\0')   {
+  if (!filename || *filename == '\0')   {
      vpERROR_TRACE("no filename\n");
     throw (vpImageException(vpImageException::ioError,
            "no filename")) ;
@@ -1743,7 +1767,7 @@ vpImageIo::writeJPEG(const vpImage<unsigned char> &I, const char *filename)
   jpeg_create_compress(&cinfo);
 
   // Test the filename
-  if (filename == '\0')   {
+  if (!filename || *filename == '\0')   {
      vpERROR_TRACE("no filename\n");
     throw (vpImageException(vpImageException::ioError,
            "no filename")) ;
@@ -1822,7 +1846,7 @@ vpImageIo::writeJPEG(const vpImage<vpRGBa> &I, const char *filename)
   jpeg_create_compress(&cinfo);
 
   // Test the filename
-  if (filename == '\0')   {
+  if (!filename || *filename == '\0')   {
      vpERROR_TRACE("no filename\n");
     throw (vpImageException(vpImageException::ioError,
            "no filename")) ;
@@ -1912,7 +1936,7 @@ vpImageIo::readJPEG(vpImage<unsigned char> &I, const char *filename)
   jpeg_create_decompress(&cinfo);
 
   // Test the filename
-  if (filename == '\0')   {
+  if (!filename || *filename == '\0')   {
      vpERROR_TRACE("no filename\n");
     throw (vpImageException(vpImageException::ioError,
            "no filename")) ;
@@ -2025,7 +2049,7 @@ vpImageIo::readJPEG(vpImage<vpRGBa> &I, const char *filename)
   jpeg_create_decompress(&cinfo);
 
   // Test the filename
-  if (filename == '\0')   {
+  if (!filename || *filename == '\0')   {
      vpERROR_TRACE("no filename\n");
     throw (vpImageException(vpImageException::ioError,
            "no filename")) ;
@@ -2127,12 +2151,18 @@ vpImageIo::readJPEG(vpImage<vpRGBa> &I, const std::string filename)
 void
 vpImageIo::writeJPEG(const vpImage<unsigned char> &I, const char *filename)
 {
+#if (VISP_HAVE_OPENCV_VERSION >= 0x020408)
+  cv::Mat Ip;
+  vpImageConvert::convert(I, Ip);
+  cv::imwrite(filename, Ip);
+#else
   IplImage* Ip = NULL;
   vpImageConvert::convert(I, Ip);
 
   cvSaveImage(filename, Ip);
 
   cvReleaseImage(&Ip);
+#endif
 }
 
 
@@ -2160,12 +2190,18 @@ vpImageIo::writeJPEG(const vpImage<unsigned char> &I, const std::string filename
 void
 vpImageIo::writeJPEG(const vpImage<vpRGBa> &I, const char *filename)
 {
+#if (VISP_HAVE_OPENCV_VERSION >= 0x020408)
+  cv::Mat Ip;
+  vpImageConvert::convert(I, Ip);
+  cv::imwrite(filename, Ip);
+#else
   IplImage* Ip = NULL;
   vpImageConvert::convert(I, Ip);
 
   cvSaveImage(filename, Ip);
 
   cvReleaseImage(&Ip);
+#endif
 }
 
 
@@ -2202,6 +2238,19 @@ vpImageIo::writeJPEG(const vpImage<vpRGBa> &I, const std::string filename)
 void
 vpImageIo::readJPEG(vpImage<unsigned char> &I, const char *filename)
 {
+#if (VISP_HAVE_OPENCV_VERSION >= 0x030000)
+  cv::Mat Ip = cv::imread(filename, cv::IMREAD_GRAYSCALE);
+  if ( ! Ip.empty())
+    vpImageConvert::convert(Ip, I);
+  else
+    throw (vpImageException(vpImageException::ioError, "Can't read the image")) ;
+#elif (VISP_HAVE_OPENCV_VERSION >= 0x020408)
+  cv::Mat Ip = cv::imread(filename, CV_LOAD_IMAGE_GRAYSCALE);
+  if ( ! Ip.empty())
+    vpImageConvert::convert(Ip, I);
+  else
+    throw (vpImageException(vpImageException::ioError, "Can't read the image")) ;
+#else
   IplImage* Ip = NULL;
   Ip = cvLoadImage(filename, CV_LOAD_IMAGE_GRAYSCALE);
   if (Ip != NULL)
@@ -2210,6 +2259,7 @@ vpImageIo::readJPEG(vpImage<unsigned char> &I, const char *filename)
     throw (vpImageException(vpImageException::ioError,
            "Can't read the image")) ;
   cvReleaseImage(&Ip);
+#endif
 }
 
 
@@ -2257,14 +2307,27 @@ vpImageIo::readJPEG(vpImage<unsigned char> &I, const std::string filename)
 void
 vpImageIo::readJPEG(vpImage<vpRGBa> &I, const char *filename)
 {
+#if (VISP_HAVE_OPENCV_VERSION >= 0x030000)
+  cv::Mat Ip = cv::imread(filename, cv::IMREAD_GRAYSCALE);
+  if ( ! Ip.empty())
+    vpImageConvert::convert(Ip, I);
+  else
+    throw (vpImageException(vpImageException::ioError, "Can't read the image")) ;
+#elif (VISP_HAVE_OPENCV_VERSION >= 0x020408)
+  cv::Mat Ip = cv::imread(filename, CV_LOAD_IMAGE_GRAYSCALE);
+  if ( ! Ip.empty())
+    vpImageConvert::convert(Ip, I);
+  else
+    throw (vpImageException(vpImageException::ioError, "Can't read the image")) ;
+#else
   IplImage* Ip = NULL;
   Ip = cvLoadImage(filename, CV_LOAD_IMAGE_COLOR);
   if (Ip != NULL)
     vpImageConvert::convert(Ip, I);
   else
-    throw (vpImageException(vpImageException::ioError,
-           "Can't read the image")) ;
+    throw (vpImageException(vpImageException::ioError, "Can't read the image")) ;
   cvReleaseImage(&Ip);
+#endif
 }
 
 
@@ -2318,7 +2381,7 @@ vpImageIo::writePNG(const vpImage<unsigned char> &I, const char *filename)
   FILE *file;
 
   // Test the filename
-  if (filename == '\0')   {
+  if (!filename || *filename == '\0')   {
      vpERROR_TRACE("no filename\n");
     throw (vpImageException(vpImageException::ioError,
            "no filename")) ;
@@ -2470,7 +2533,7 @@ vpImageIo::writePNG(const vpImage<vpRGBa> &I, const char *filename)
   FILE *file;
 
   // Test the filename
-  if (filename == '\0')   {
+  if (!filename || *filename == '\0')   {
      vpERROR_TRACE("no filename\n");
     throw (vpImageException(vpImageException::ioError,
            "no filename")) ;
@@ -2632,7 +2695,7 @@ vpImageIo::readPNG(vpImage<unsigned char> &I, const char *filename)
   FILE *file;
   png_byte magic[8];
   // Test the filename
-  if (filename == '\0')   {
+  if (!filename || *filename == '\0')   {
      vpERROR_TRACE("no filename\n");
     throw (vpImageException(vpImageException::ioError,
            "no filename")) ;
@@ -2851,7 +2914,7 @@ vpImageIo::readPNG(vpImage<vpRGBa> &I, const char *filename)
   png_byte magic[8];
 
   // Test the filename
-  if (filename == '\0')   {
+  if (!filename || *filename == '\0')   {
      vpERROR_TRACE("no filename\n");
     throw (vpImageException(vpImageException::ioError,
            "no filename")) ;
@@ -3058,12 +3121,18 @@ vpImageIo::readPNG(vpImage<vpRGBa> &I, const std::string filename)
 void
 vpImageIo::writePNG(const vpImage<unsigned char> &I, const char *filename)
 {
+#if (VISP_HAVE_OPENCV_VERSION >= 0x020408)
+  cv::Mat Ip;
+  vpImageConvert::convert(I, Ip);
+  cv::imwrite(filename, Ip);
+#else
   IplImage* Ip = NULL;
   vpImageConvert::convert(I, Ip);
 
   cvSaveImage(filename, Ip);
 
   cvReleaseImage(&Ip);
+#endif
 }
 
 
@@ -3091,12 +3160,18 @@ vpImageIo::writePNG(const vpImage<unsigned char> &I, const std::string filename)
 void
 vpImageIo::writePNG(const vpImage<vpRGBa> &I, const char *filename)
 {
+#if (VISP_HAVE_OPENCV_VERSION >= 0x020408)
+  cv::Mat Ip;
+  vpImageConvert::convert(I, Ip);
+  cv::imwrite(filename, Ip);
+#else
   IplImage* Ip = NULL;
   vpImageConvert::convert(I, Ip);
 
   cvSaveImage(filename, Ip);
 
   cvReleaseImage(&Ip);
+#endif
 }
 
 
@@ -3133,6 +3208,19 @@ vpImageIo::writePNG(const vpImage<vpRGBa> &I, const std::string filename)
 void
 vpImageIo::readPNG(vpImage<unsigned char> &I, const char *filename)
 {
+#if (VISP_HAVE_OPENCV_VERSION >= 0x030000)
+  cv::Mat Ip = cv::imread(filename, cv::IMREAD_GRAYSCALE);
+  if ( ! Ip.empty())
+    vpImageConvert::convert(Ip, I);
+  else
+    throw (vpImageException(vpImageException::ioError, "Can't read the image")) ;
+#elif (VISP_HAVE_OPENCV_VERSION >= 0x020408)
+  cv::Mat Ip = cv::imread(filename, CV_LOAD_IMAGE_GRAYSCALE);
+  if ( ! Ip.empty())
+    vpImageConvert::convert(Ip, I);
+  else
+    throw (vpImageException(vpImageException::ioError, "Can't read the image")) ;
+#else
   IplImage* Ip = NULL;
   Ip = cvLoadImage(filename, CV_LOAD_IMAGE_GRAYSCALE);
   if (Ip != NULL)
@@ -3141,6 +3229,7 @@ vpImageIo::readPNG(vpImage<unsigned char> &I, const char *filename)
     throw (vpImageException(vpImageException::ioError,
            "Can't read the image")) ;
   cvReleaseImage(&Ip);
+#endif
 }
 
 
@@ -3188,6 +3277,19 @@ vpImageIo::readPNG(vpImage<unsigned char> &I, const std::string filename)
 void
 vpImageIo::readPNG(vpImage<vpRGBa> &I, const char *filename)
 {
+#if (VISP_HAVE_OPENCV_VERSION >= 0x030000)
+  cv::Mat Ip = cv::imread(filename, cv::IMREAD_GRAYSCALE);
+  if ( ! Ip.empty())
+    vpImageConvert::convert(Ip, I);
+  else
+    throw (vpImageException(vpImageException::ioError, "Can't read the image")) ;
+#elif (VISP_HAVE_OPENCV_VERSION >= 0x020408)
+  cv::Mat Ip = cv::imread(filename, CV_LOAD_IMAGE_GRAYSCALE);
+  if ( ! Ip.empty())
+    vpImageConvert::convert(Ip, I);
+  else
+    throw (vpImageException(vpImageException::ioError, "Can't read the image")) ;
+#else
   IplImage* Ip = NULL;
   Ip = cvLoadImage(filename, CV_LOAD_IMAGE_COLOR);
   if (Ip != NULL)
@@ -3196,6 +3298,7 @@ vpImageIo::readPNG(vpImage<vpRGBa> &I, const char *filename)
     throw (vpImageException(vpImageException::ioError,
            "Can't read the image")) ;
   cvReleaseImage(&Ip);
+#endif
 }
 
 

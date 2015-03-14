@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpV4l2Grabber.h 4574 2014-01-09 08:48:51Z fspindle $
+ * $Id: vpV4l2Grabber.h 5126 2015-01-05 22:07:11Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -200,9 +200,9 @@ public:
   vpV4l2Grabber(bool verbose);
   vpV4l2Grabber(unsigned input, unsigned scale = vpV4l2Grabber::DEFAULT_SCALE);
   vpV4l2Grabber(vpImage<unsigned char> &I,
-		unsigned input, unsigned scale = vpV4l2Grabber::DEFAULT_SCALE);
+                unsigned input, unsigned scale = vpV4l2Grabber::DEFAULT_SCALE);
   vpV4l2Grabber(vpImage<vpRGBa> &I,
-		unsigned input, unsigned scale = vpV4l2Grabber::DEFAULT_SCALE);
+                unsigned input, unsigned scale = vpV4l2Grabber::DEFAULT_SCALE);
   virtual ~vpV4l2Grabber() ;
 
 public:
@@ -224,14 +224,14 @@ public:
   */  
   inline vpV4l2PixelFormatType getPixelFormat() 
   {
-    return (this->pixelformat);
+    return (this->m_pixelformat);
   }
   /*!
     Activates the verbose mode to print additional information on stdout.
     \param verbose : If true activates the verbose mode.
   */
   void setVerboseMode(bool verbose) {
-    this->verbose = verbose;
+    this->m_verbose = verbose;
   };
   void setFramerate(vpV4l2FramerateType framerate);
 
@@ -241,17 +241,17 @@ public:
     Set image width to acquire.
 
   */
-  inline void setWidth(unsigned width)
+  inline void setWidth(unsigned w)
   {
-    this->_width = width;
+    this->width = w;
   }
   /*!
     Set image height to acquire.
 
   */
-  inline void setHeight(unsigned height)
+  inline void setHeight(unsigned h)
   {
-    this->_height = height;
+    this->height = h;
   }
 
   void setScale(unsigned scale = vpV4l2Grabber::DEFAULT_SCALE) ;
@@ -269,7 +269,7 @@ public:
   */
   inline void setNBuffers(unsigned nbuffers)
   {
-    this->nbuffers = nbuffers;
+    this->m_nbuffers = nbuffers;
   }
 
   /*!
@@ -278,9 +278,9 @@ public:
     \param devname : Device name (like /dev/video0).
 
   */
-  inline void setDevice(const char *devname)
+  inline void setDevice(const std::string &devname)
   {
-    sprintf(device, "%s", devname);
+    sprintf(device, "%s", devname.c_str());
   }
   /*!
 
@@ -292,9 +292,9 @@ public:
   */  
   inline void setPixelFormat(vpV4l2PixelFormatType pixelformat) 
   {
-    this->pixelformat = pixelformat;
-    if (this->pixelformat >= V4L2_MAX_FORMAT) 
-      this->pixelformat = V4L2_RGB24_FORMAT;
+    this->m_pixelformat = pixelformat;
+    if (this->m_pixelformat >= V4L2_MAX_FORMAT)
+      this->m_pixelformat = V4L2_RGB24_FORMAT;
   }
 
   void close();
@@ -311,7 +311,7 @@ private:
   */
   inline void setFrameFormat(vpV4l2FrameFormatType frameformat)
   {
-    this->frameformat = frameformat;
+    this->m_frameformat = frameformat;
   }
   void open();
   void getCapabilities();
@@ -344,17 +344,15 @@ private:
   unsigned int                  waiton_cpt;
   __u32				index_buffer; //!< index of the buffer in use
 
-  bool		verbose;
-  unsigned	nbuffers;
+  bool		m_verbose;
+  unsigned	m_nbuffers;
   unsigned int field;
   bool		streaming;
 
-  unsigned      input;
-  unsigned      _width;
-  unsigned      _height;
-  vpV4l2FramerateType framerate;
-  vpV4l2FrameFormatType frameformat;
-  vpV4l2PixelFormatType pixelformat;
+  unsigned      m_input;
+  vpV4l2FramerateType m_framerate;
+  vpV4l2FrameFormatType m_frameformat;
+  vpV4l2PixelFormatType m_pixelformat;
 } ;
 
 #endif

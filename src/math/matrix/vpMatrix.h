@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpMatrix.h 4574 2014-01-09 08:48:51Z fspindle $
+ * $Id: vpMatrix.h 5238 2015-01-30 13:52:25Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -130,7 +130,7 @@ protected:
   vpMatrix() ;
   //! Constructor. Initialization of A as an r x c matrix with 0.
   vpMatrix(unsigned int r, unsigned int c) ;
-
+  vpMatrix(unsigned int r, unsigned int c, double val);
   //! sub vpMatrix constructor
   vpMatrix(const vpMatrix &m, unsigned int r, unsigned int c, 
 	   unsigned int nrows, unsigned int ncols) ;
@@ -161,6 +161,8 @@ protected:
   inline unsigned int getRows() const { return rowNum ;}
   //! Return the number of columns of the matrix
   inline unsigned int getCols() const { return colNum; }
+  //! Return the number of elements of the matrix.
+  inline unsigned int size() const { return colNum*rowNum; }
 
   // Set the size of the matrix A, initialization with a zero matrix
   void resize(const unsigned int nrows, const unsigned int ncols, 
@@ -369,7 +371,17 @@ protected:
   // Cij = Aij / x (A is unchanged)
   vpMatrix operator/(const double x) const;
 
-  //!return sum of the Aij^2 (for all i, for all j)
+  /*!
+    Return the sum of all the \f$a_{ij}\f$ elements of the matrix.
+
+    \return \f$\sum a_{ij}\f$
+    */
+  double sum() const;
+  /*!
+    Return the sum square of all the \f$a_{ij}\f$ elements of the matrix.
+
+    \return \f$\sum a_{ij}^{2}\f$
+    */
   double sumSquare() const;
 
   // return the determinant of the matrix.
@@ -383,13 +395,11 @@ protected:
   //-------------------------------------------------
   /** @name Columns, Rows extraction, Submatrix  */
   //@{
-  //! Row extraction
-  vpRowVector row(const unsigned int i);
-  //! Column extraction
-  vpColVector column(const unsigned int j);
-  //! subvpMatrix extraction
-  void init(const vpMatrix &m, unsigned int r, unsigned int c, 
-	    unsigned int nrows, unsigned int ncols);
+  vpRowVector getRow(const unsigned int i) const;
+  vpRowVector getRow(const unsigned int i, const unsigned int j_begin, const unsigned int size) const;
+  vpColVector getCol(const unsigned int j) const;
+  vpColVector getCol(const unsigned int j, const unsigned int i_begin, const unsigned int size) const;
+  void init(const vpMatrix &M, unsigned int r, unsigned int c, unsigned int nrows, unsigned int ncols);
   //@}
 
   //-------------------------------------------------
@@ -543,6 +553,14 @@ protected:
   // Infinity norm ||x||=max(sum(fabs(x_i)))
   double infinityNorm () const;
   //@}
+
+#ifdef VISP_BUILD_DEPRECATED_FUNCTIONS
+  /*!
+    @name Deprecated functions
+  */
+  vp_deprecated vpRowVector row(const unsigned int i);
+  vp_deprecated vpColVector column(const unsigned int j);
+#endif
 
  private:
   double detByLU() const;

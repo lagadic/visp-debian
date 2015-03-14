@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpCylinder.cpp 4649 2014-02-07 14:57:11Z fspindle $
+ * $Id: vpCylinder.cpp 4908 2014-09-19 06:55:24Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -240,7 +240,7 @@ vpCylinder::projection(const vpColVector &cP_, vpColVector &p_)
   s = X0*X0 + Y0*Y0 + Z0*Z0 - R*R - zero*zero;
   if (s < 0) 
     {
-      printf("The camera is inside the cylinder!\n");
+      printf("The camera is inside the cylinder with s=%f !\n", s);
       throw vpException(vpException::fatalError, "The camera is inside the cylinder!");
     }
   s = 1.0/sqrt(s);

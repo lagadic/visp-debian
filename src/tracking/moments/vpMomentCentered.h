@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpMomentCentered.h 4574 2014-01-09 08:48:51Z fspindle $
+ * $Id: vpMomentCentered.h 4712 2014-03-28 17:55:43Z mbakthav $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -90,7 +90,9 @@ public:
   */
   inline const char* name() const {return "vpMomentCentered";}
 
-  friend VISP_EXPORT std::ostream & operator<<(std::ostream & os, vpMomentCentered& v);
+  friend VISP_EXPORT std::ostream & operator<<(std::ostream & os, const vpMomentCentered& v);
+  void printWithIndices(std::ostream& os) const;
+  void printDependencies(std::ostream& os) const;
 
 protected:
 

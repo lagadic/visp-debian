@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: testClick.cpp 4658 2014-02-09 09:50:14Z fspindle $
+ * $Id: testClick.cpp 5230 2015-01-30 06:55:59Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -244,10 +244,8 @@ main(int argc, const char ** argv)
     opt_dtype = vpCV;  
 #endif
 
-    // Get the VISP_IMAGE_PATH environment variable value
-    char *ptenv = getenv("VISP_INPUT_IMAGE_PATH");
-    if (ptenv != NULL)
-      env_ipath = ptenv;
+    // Get the visp-images-data package path or VISP_INPUT_IMAGE_PATH environment variable value
+    env_ipath = vpIoTools::getViSPImagesDataPath();
 
     // Set the default input path
     if (! env_ipath.empty())
@@ -322,7 +320,7 @@ main(int argc, const char ** argv)
     vpImage<unsigned char> I ;
 
     // Load a grey image from the disk
-    filename = ipath +  vpIoTools::path("/ViSP-images/Klimt/Klimt.pgm");
+    filename = vpIoTools::createFilePath(ipath, "ViSP-images/Klimt/Klimt.pgm");
     vpCTRACE << "Load " <<  filename << std::endl;
     vpImageIo::read(I, filename) ;
 
@@ -376,7 +374,7 @@ main(int argc, const char ** argv)
       break;
     case vpCV:
       std::cout << "Requested OpenCV display functionnalities..." << std::endl;
-#if defined VISP_HAVE_OPENCV
+#if defined(VISP_HAVE_OPENCV)
       display = new vpDisplayOpenCV;
 #else
       std::cout << "  Sorry, OpenCV video device is not available.\n";
@@ -411,6 +409,7 @@ main(int argc, const char ** argv)
         case vpMouseButton::button1: std::cout << "with left button.\n"; break;
         case vpMouseButton::button2: std::cout << "with middle button.\n"; break;
         case vpMouseButton::button3: std::cout << "with right button.\n"; break;
+        case vpMouseButton::none: break;
         }
         vpDisplay::getClickUp(I, ip, button);
         std::cout << "  You click up on pixel (" << ip <<") ";
@@ -418,6 +417,7 @@ main(int argc, const char ** argv)
         case vpMouseButton::button1: std::cout << "with left button.\n"; break;
         case vpMouseButton::button2: std::cout << "with middle button.\n"; break;
         case vpMouseButton::button3: std::cout << "with right button.\n"; break;
+        case vpMouseButton::none: break;
         }
         vpDisplay::getPointerPosition(I,ip);
         std::cout << "  Pointer poisition : " << ip << std::endl;

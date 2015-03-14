@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: histogram.cpp 4658 2014-02-09 09:50:14Z fspindle $
+ * $Id: histogram.cpp 4814 2014-07-31 11:38:39Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -173,11 +173,8 @@ main(int argc, const char ** argv)
     std::string filename;
     std::string username;
 
-    // Get the VISP_IMAGE_PATH environment variable value
-    char *ptenv = getenv("VISP_INPUT_IMAGE_PATH");
-    if (ptenv != NULL)
-      env_ipath = ptenv;
-    //  std::cout << "env_ipath: " << env_ipath << std::endl;
+    // Get the visp-images-data package path or VISP_INPUT_IMAGE_PATH environment variable value
+    env_ipath = vpIoTools::getViSPImagesDataPath();
 
     // Set the default input path
     if (! env_ipath.empty())
@@ -205,7 +202,7 @@ main(int argc, const char ** argv)
       opath = opt_opath;
 
     // Append to the output path string, the login name of the user
-    std::string dirname = opath +  vpIoTools::path("/") + username;
+    std::string dirname = vpIoTools::createFilePath(opath, username);
 
     // Test if the output path exist. If no try to create it
     if (vpIoTools::checkDirectory(dirname) == false) {
@@ -253,7 +250,7 @@ main(int argc, const char ** argv)
     // Load a grey image from the disk
     filename = ipath;
     if (opt_ipath.empty())
-      filename +=  vpIoTools::path("/ViSP-images/Klimt/Klimt.pgm");
+      filename = vpIoTools::createFilePath(ipath, "ViSP-images/Klimt/Klimt.pgm");
 
     std::cout << "Read: " << filename << std::endl;
     vpImageIo::read(I, filename) ;

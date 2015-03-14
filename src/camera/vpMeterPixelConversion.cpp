@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpMeterPixelConversion.cpp 4574 2014-01-09 08:48:51Z fspindle $
+ * $Id: vpMeterPixelConversion.cpp 4740 2014-05-26 07:15:44Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -51,7 +51,7 @@
 #include <visp/vpMath.h>
 #include <visp/vpDebug.h>
 
-//! line coordinates conversion (rho,theta)
+//! Line coordinates conversion (rho,theta).
 void
 vpMeterPixelConversion::convertLine(const vpCameraParameters &cam,
 				    const double &rho_m, const double &theta_m,
@@ -71,14 +71,46 @@ vpMeterPixelConversion::convertLine(const vpCameraParameters &cam,
   theta_p = atan2(cam.px*si, cam.py*co) ;
   rho_p = (cam.px*cam.py*rho_m + cam.u0*cam.py*co + cam.v0*cam.px*si) ;
   rho_p /= d ;
-
-
 }
 
+/*!
+  Converts an ellipse with parameters expressed in meter in the image
+  plane in parameters expressed in the image in pixels.
 
-/*
- * Local variables:
- * c-basic-offset: 2
- * End:
+  The ellipse is here represented by its parameters \f$x_c,y_c,\mu_{20}, \mu_{11}, \mu_{02}\f$.
+
+  \param cam [in]: Intrinsic camera parameters.
+  \param circle [in]: 3D circle with parameters circle.p[] expressed in meters in the image plane.
+  \param center [out]: Center of the corresponding ellipse in the image with coordinates
+  expressed in pixels.
+  \param mu20_p,mu11_p,mu02_p [out]: Centered moments expressed in pixels.
+
+  The following code shows how to use this function:
+  \code
+  vpCircle circle;
+  double mu20_p, mu11_p, mu02_p;
+  circle.changeFrame(cMo);
+  circle.projection();
+  vpMeterPixelConversion::convertEllipse(cam, circle, center_p, mu20_p, mu11_p, mu02_p);
+  vpDisplay::displayEllipse(I, center_p, mu20_p, mu11_p, mu02_p);
+  \endcode
  */
+void
+vpMeterPixelConversion::convertEllipse(const vpCameraParameters &cam,
+                                       const vpCircle &circle, vpImagePoint &center,
+                                       double &mu20_p, double &mu11_p, double &mu02_p)
+{
+  // Get the parameters of the ellipse in the image plane
+  double xc_m = circle.p[0];
+  double yc_m = circle.p[1];
+  double mu20_m = circle.p[2];
+  double mu11_m = circle.p[3];
+  double mu02_m = circle.p[4];
+
+  // Convert from meter to pixels
+  vpMeterPixelConversion::convertPoint(cam, xc_m, yc_m, center);
+  mu20_p = mu20_m*vpMath::sqr(cam.get_px());
+  mu11_p = mu11_m*cam.get_px()*cam.get_py();
+  mu02_p = mu02_m*vpMath::sqr(cam.get_py());
+}
 

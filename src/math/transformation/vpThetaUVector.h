@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpThetaUVector.h 4632 2014-02-03 17:06:40Z fspindle $
+ * $Id: vpThetaUVector.h 4792 2014-07-18 11:56:02Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -155,6 +155,8 @@ public:
 
   // constructor initialize a Theta U vector from a homogeneous matrix
   vpThetaUVector(const vpHomogeneousMatrix & M) ;
+  // constructor initialize a Theta U vector from a pose vector
+  vpThetaUVector(const vpPoseVector & p) ;
   // constructor initialize a Theta U vector from a rotation matrix
   vpThetaUVector(const vpRotationMatrix& R) ;
   // constructor initialize a Theta U vector from a RzyxVector
@@ -172,6 +174,8 @@ public:
 
   // convert an homogeneous matrix into Theta U vector
   vpThetaUVector buildFrom(const vpHomogeneousMatrix& M) ;
+  // convert a pose vector into Theta U vector
+  vpThetaUVector buildFrom(const vpPoseVector& p) ;
   // convert a rotation matrix into Theta U vector
   vpThetaUVector buildFrom(const vpRotationMatrix& R) ;
   // convert an Rzyx vector into Theta U vector

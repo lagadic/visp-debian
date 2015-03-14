@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpScale.cpp 4649 2014-02-07 14:57:11Z fspindle $
+ * $Id: vpScale.cpp 5126 2015-01-05 22:07:11Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -72,7 +72,7 @@ vpScale::vpScale()
 }
 
 //! Constructor
-vpScale::vpScale(double kernel_bandwidth, int dim=1, int type=EPANECHNIKOV)
+vpScale::vpScale(double kernel_bandwidth, unsigned int dim, int type)
   : bandwidth(kernel_bandwidth), dimension(dim), kernel_type(type)
 
 {

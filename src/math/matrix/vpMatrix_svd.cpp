@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpMatrix_svd.cpp 4574 2014-01-09 08:48:51Z fspindle $
+ * $Id: vpMatrix_svd.cpp 4896 2014-09-10 16:41:23Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -596,6 +596,9 @@ void vpMatrix::svdLapack(vpColVector& W, vpMatrix& V){
 
   if( info > 0 ) {
    vpTRACE("The algorithm computing SVD failed to converge.");
+   throw(vpMatrixException(vpMatrixException::fatalError,
+         "The algorithm computing SVD failed to converge.")) ;
+
   }
 
   V=V.transpose();

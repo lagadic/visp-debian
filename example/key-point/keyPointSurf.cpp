@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: keyPointSurf.cpp 4658 2014-02-09 09:50:14Z fspindle $
+ * $Id: keyPointSurf.cpp 5202 2015-01-24 09:29:06Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -59,7 +59,7 @@
 #include <stdio.h>
 #include <sstream>
 #include <iomanip>
-#if ((defined (VISP_HAVE_X11) || defined(VISP_HAVE_GTK) || defined(VISP_HAVE_GDI)) && defined(VISP_HAVE_OPENCV_NONFREE) && (VISP_HAVE_OPENCV_VERSION >= 0x010100))
+#if ((defined (VISP_HAVE_X11) || defined(VISP_HAVE_GTK) || defined(VISP_HAVE_GDI)) && defined(VISP_HAVE_OPENCV_NONFREE) && (VISP_HAVE_OPENCV_VERSION < 0x030000))
 
 #include <visp/vpKeyPointSurf.h>
 
@@ -175,10 +175,8 @@ main(int argc, const char ** argv)
     bool opt_click_allowed = true;
     bool opt_display = true;
 
-    // Get the VISP_IMAGE_PATH environment variable value
-    char *ptenv = getenv("VISP_INPUT_IMAGE_PATH");
-    if (ptenv != NULL)
-      env_ipath = ptenv;
+    // Get the visp-images-data package path or VISP_INPUT_IMAGE_PATH environment variable value
+    env_ipath = vpIoTools::getViSPImagesDataPath();
 
     // Set the default input path
     if (! env_ipath.empty())
@@ -225,14 +223,14 @@ main(int argc, const char ** argv)
     vpImage<unsigned char> Icur ;
 
     // Set the path location of the image sequence
-    dirname = ipath +  vpIoTools::path("/ViSP-images/cube/");
+    dirname = vpIoTools::createFilePath(ipath, "ViSP-images/cube");
 
     // Build the name of the image file
     unsigned int iter = 0; // Image number
     std::ostringstream s;
     s.setf(std::ios::right, std::ios::adjustfield);
     s << "image." << std::setw(4) << std::setfill('0') << iter << ".pgm";
-    filename = dirname + s.str();
+    filename = vpIoTools::createFilePath(dirname, s.str());
 
     // Read the PGM image named "filename" on the disk, and put the
     // bitmap into the image structure I.  I is initialized to the
@@ -345,7 +343,7 @@ main(int argc, const char ** argv)
       // set the new image name
       s.str("");
       s << "image." << std::setw(4) << std::setfill('0') << iter << ".pgm";
-      filename = dirname + s.str();
+      filename = vpIoTools::createFilePath(dirname, s.str());
       // read the image
       vpImageIo::read(Icur, filename);
       if (opt_display) {
@@ -381,7 +379,7 @@ main()
 #if ( ! (defined (VISP_HAVE_X11) || defined(VISP_HAVE_GTK) || defined(VISP_HAVE_GDI)) ) 
   vpERROR_TRACE("You do not have X11, GTK or GDI display functionalities...");
 #else
-  vpERROR_TRACE("You do not have OpenCV-1.1.0 or a more recent release that contains opencv_nonfree component...");
+  vpERROR_TRACE("You do not have 1.1.0 <= OpenCV < 3.0.0 that contains opencv_nonfree component...");
 #endif
 }
 

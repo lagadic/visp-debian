@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: servoViper850Point2DArtVelocity-jointAvoidance-gpa.cpp 4664 2014-02-16 16:17:54Z fspindle $
+ * $Id: servoViper850Point2DArtVelocity-jointAvoidance-gpa.cpp 4698 2014-03-26 06:55:37Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -59,7 +59,7 @@
 #include <fstream>
 #include <sstream>
 
-#if (defined (VISP_HAVE_VIPER850) && defined (VISP_HAVE_DC1394_2))
+#if (defined (VISP_HAVE_VIPER850) && defined (VISP_HAVE_DC1394_2) && defined(VISP_HAVE_DISPLAY))
 
 #include <visp/vp1394TwoGrabber.h>
 #include <visp/vpImage.h>

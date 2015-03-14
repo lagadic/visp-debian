@@ -186,10 +186,8 @@ main(int argc, const char ** argv)
     std::cout << std::endl ;
 
 
-    // Get the VISP_IMAGE_PATH environment variable value
-    char *ptenv = getenv("VISP_INPUT_IMAGE_PATH");
-    if (ptenv != NULL)
-      env_ipath = ptenv;
+    // Get the visp-images-data package path or VISP_INPUT_IMAGE_PATH environment variable value
+    env_ipath = vpIoTools::getViSPImagesDataPath();
 
     // Set the default input path
     if (! env_ipath.empty())
@@ -241,7 +239,7 @@ main(int argc, const char ** argv)
 
     if (opt_ppath.empty())
     {
-      filename = ipath +  vpIoTools::path("/ViSP-images/video/cube.mpeg");
+      filename = vpIoTools::createFilePath(ipath, "ViSP-images/video/cube.mpeg");
     }
     else
     {
@@ -249,7 +247,8 @@ main(int argc, const char ** argv)
     }
 
     //Initialize the reader and get the first frame.
-    reader.setFileName(filename.c_str());
+    std::cout << "Process video in " << filename << std::endl;
+    reader.setFileName(filename);
     reader.open(I);
 
     // We open a window using either X11, GTK, GDI or OpenCV.
@@ -290,12 +289,8 @@ main(int argc, const char ** argv)
       vpDisplay::getClick(I);
     }
 
-    int lastFrame = reader.getLastFrameIndex();
-    //To go to the beginning of the video
-    reader.getFrame(I,0);
-
-    for (int i = 0; i <= lastFrame; i++)
-    {
+    while (! reader.end() ) {
+      std::cout << "Read frame: " << reader.getFrameIndex() << std::endl;
       reader.acquire(I);
       if (opt_display)
       {
@@ -306,7 +301,7 @@ main(int argc, const char ** argv)
 
     if (opt_display && opt_click_allowed)
     {
-      std::cout << "Click to exit the test" << std::endl;
+      std::cout << "Click to exit this example" << std::endl;
       vpDisplay::getClick(I);
     }
   }

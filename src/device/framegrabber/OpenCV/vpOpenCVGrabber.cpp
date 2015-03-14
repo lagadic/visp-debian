@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpOpenCVGrabber.cpp 4649 2014-02-07 14:57:11Z fspindle $
+ * $Id: vpOpenCVGrabber.cpp 5023 2014-12-03 16:07:48Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -46,7 +46,7 @@
 
 #include <visp/vpOpenCVGrabber.h>
 
-#if defined(VISP_HAVE_OPENCV)
+#if ( defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION < 0x020408))
 
 #include <visp/vpImageConvert.h>
 #include <visp/vpFrameGrabberException.h>

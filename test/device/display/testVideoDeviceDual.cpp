@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: testVideoDeviceDual.cpp 4659 2014-02-09 14:11:51Z fspindle $
+ * $Id: testVideoDeviceDual.cpp 5023 2014-12-03 16:07:48Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -311,7 +311,7 @@ int main(int argc, const char ** argv)
       break;
     case vpCV:
       std::cout << "Requested OpenCV display functionnalities..." << std::endl;
-#if defined VISP_HAVE_OPENCV
+#if defined(VISP_HAVE_OPENCV)
       d1 = new vpDisplayOpenCV;
       d2 = new vpDisplayOpenCV;
 #else

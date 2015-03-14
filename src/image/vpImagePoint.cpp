@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpImagePoint.cpp 4640 2014-02-05 12:41:38Z fspindle $
+ * $Id: vpImagePoint.cpp 5244 2015-02-03 06:44:17Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -397,7 +397,19 @@ Image point with coordinates: 10, 11.1
   \endverbatim
 */
 VISP_EXPORT std::ostream& operator<< (std::ostream &os, const vpImagePoint& ip)
- {
+{
   os << ip.get_i() << ", " << ip.get_j();
   return os;
+}
+
+/**
+ * Computes and returns the bounding box.
+ * @param ipVec : Vector of input image points.
+ * @return Bounding box of the points.
+ */
+vpRect vpImagePoint::getBBox(const std::vector<vpImagePoint>& ipVec)
+{
+  vpRect rec(ipVec);
+
+  return rec;
 }

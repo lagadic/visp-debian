@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpNetwork.cpp 4632 2014-02-03 17:06:40Z fspindle $
+ * $Id: vpNetwork.cpp 4794 2014-07-21 17:43:22Z ayol $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -576,7 +576,7 @@ int vpNetwork::_handleFirstRequest()
   size_t indEndParam = currentMessageReceived.find(param_sep,indDebParam);
   
   std::string param;
-  while(indEndParam != std::string::npos)
+  while(indEndParam != std::string::npos || indEndParam < indEnd)
   {
     param = currentMessageReceived.substr((unsigned)indDebParam,(unsigned)(indEndParam - indDebParam));
     request_list[(unsigned)indRequest]->addParameter(param);

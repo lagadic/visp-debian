@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpFeatureMomentDatabase.h 4632 2014-02-03 17:06:40Z fspindle $
+ * $Id: vpFeatureMomentDatabase.h 5126 2015-01-05 22:07:11Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -164,7 +164,7 @@ class VISP_EXPORT vpFeatureMomentDatabase{
   /*!
     Default constructor.
   */
-  vpFeatureMomentDatabase() {}
+  vpFeatureMomentDatabase() : featureMomentsDataBase() {}
   /*!
     Virtual destructor that does nothing.
   */
@@ -173,7 +173,7 @@ class VISP_EXPORT vpFeatureMomentDatabase{
 
   vpFeatureMoment& get(const char* type, bool& found);
 
-  //friend std::ostream & operator<<(ostream & os, const vpFeatureMomentDatabase& v);
+  friend VISP_EXPORT std::ostream & operator<<(std::ostream& os, const vpFeatureMomentDatabase& m);
   friend class vpFeatureMoment;
 };
 

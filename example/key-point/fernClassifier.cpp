@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: fernClassifier.cpp 4658 2014-02-09 09:50:14Z fspindle $
+ * $Id: fernClassifier.cpp 5023 2014-12-03 16:07:48Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -53,14 +53,13 @@
 #include <visp/vpConfig.h>
 #include <visp/vpDebug.h>
 
-#if ((defined (VISP_HAVE_X11) || defined(VISP_HAVE_GTK) || defined(VISP_HAVE_GDI)) && (VISP_HAVE_OPENCV_VERSION >= 0x020000))
+#if ((defined (VISP_HAVE_X11) || defined(VISP_HAVE_GTK) || defined(VISP_HAVE_GDI)) && (VISP_HAVE_OPENCV_VERSION >= 0x020000) && (VISP_HAVE_OPENCV_VERSION < 0x030000))
 
 #include <iostream>
 #include <stdlib.h>
 #include <visp/vpFernClassifier.h>
 #include <visp/vpParseArgv.h>
 #include <visp/vpConfig.h>
-#include <visp/vpOpenCVGrabber.h>
 #include <visp/vpImage.h>
 #include <visp/vpDisplayX.h>
 #include <visp/vpDisplayGTK.h>
@@ -71,11 +70,11 @@
 #include <visp/vpTime.h>
 #include <iomanip>
 
-#define GETOPTARGS  "hlcdb:i:sp"
+#define GETOPTARGS  "hlcdb:i:p"
 
 void usage(const char *name, const char *badparam);
 bool getOptions(int argc, const char **argv, bool &isLearning, std::string& dataFile, bool& click_allowed,
-                bool& display, bool& displayPoints, bool& useSequence, std::string& ipath);
+                bool& display, bool& displayPoints, std::string& ipath);
 
 /*!
 
@@ -93,7 +92,7 @@ object needs first to be learned (-l option). This learning process will create\
 a file used to detect the object.\n\
 \n\
 SYNOPSIS\n\
-  %s [-l] [-h] [-b] [-c] [-d] [-p] [-i] [-s]\n", name);
+  %s [-l] [-h] [-b] [-c] [-d] [-p] [-i]\n", name);
 
   fprintf(stdout, "\n\
 OPTIONS:                                               \n\
@@ -118,9 +117,6 @@ OPTIONS:                                               \n\
   -d \n\
      Turn off the display.\n\
 \n\
-  -s \n\
-     Turn off the use of the sequence and use a webcam.\n\
-\n\
   -p \n\
      display points of interest.\n\
 \n\
@@ -143,14 +139,13 @@ OPTIONS:                                               \n\
   \param click_allowed : Mouse click activation.
   \param display : Display activation.
   \param displayPoints : Display points of interests activation.
-  \param useSequence : sequence of image de activation. 
   \param ipath : Input image path.
 
   \return false if the program has to be stopped, true otherwise.
 
 */
 bool getOptions(int argc, const char **argv, bool &isLearning, std::string& dataFile, bool& click_allowed,
-                bool& display, bool& displayPoints, bool& useSequence, std::string& ipath)
+                bool& display, bool& displayPoints, std::string& ipath)
 {
   const char *optarg_;
   int   c;
@@ -163,7 +158,6 @@ bool getOptions(int argc, const char **argv, bool &isLearning, std::string& data
     case 'h': usage(argv[0], NULL); return false; break;
     case 'b': dataFile = optarg_; break;
     case 'p': displayPoints = true; break;
-    case 's': useSequence = false; break;
     case 'i': ipath = optarg_; break;
     default:
       usage(argv[0], optarg_);
@@ -194,18 +188,14 @@ main(int argc, const char** argv)
     bool opt_display = true;
     std::string objectName("object");
     bool displayPoints = false;
-    bool useSequence = true;
     std::string opt_ipath;
     std::string ipath;
     std::string env_ipath;
     std::string dirname;
     std::string filename;
 
-    // Get the VISP_IMAGE_PATH environment variable value
-    char *ptenv = getenv("VISP_INPUT_IMAGE_PATH");
-    if (ptenv != NULL){
-      env_ipath = ptenv;
-    }
+    // Get the visp-images-data package path or VISP_INPUT_IMAGE_PATH environment variable value
+    env_ipath = vpIoTools::getViSPImagesDataPath();
 
     // Set the default input path
     if (! env_ipath.empty()){
@@ -214,18 +204,18 @@ main(int argc, const char** argv)
 
     // Read the command line options
     if (getOptions(argc, argv,
-                   isLearning, dataFile, opt_click_allowed, opt_display, displayPoints, useSequence, opt_ipath) == false) {
+                   isLearning, dataFile, opt_click_allowed, opt_display, displayPoints, opt_ipath) == false) {
       exit (-1);
     }
 
     // Get the option values
-    if (useSequence && !opt_ipath.empty()){
+    if (!opt_ipath.empty()){
       ipath = opt_ipath;
     }
 
     // Compare ipath and env_ipath. If they differ, we take into account
     // the input path comming from the command line option
-    if (useSequence && !opt_ipath.empty() && !env_ipath.empty()) {
+    if (!opt_ipath.empty() && !env_ipath.empty()) {
       if (ipath != env_ipath) {
         std::cout << std::endl
                   << "WARNING: " << std::endl;
@@ -236,7 +226,7 @@ main(int argc, const char** argv)
     }
 
     // Test if an input path is set
-    if (useSequence && opt_ipath.empty() && env_ipath.empty()){
+    if (opt_ipath.empty() && env_ipath.empty()){
       usage(argv[0], NULL);
       std::cerr << std::endl
                 << "ERROR:" << std::endl;
@@ -254,14 +244,14 @@ main(int argc, const char** argv)
 
 
     // Set the path location of the image sequence
-    dirname = ipath +  vpIoTools::path("/ViSP-images/cube/");
+    dirname = vpIoTools::createFilePath(ipath, "ViSP-images/cube");
 
     // Build the name of the image file
     unsigned iter = 0; // Image number
     std::ostringstream s;
     s.setf(std::ios::right, std::ios::adjustfield);
     s << "image." << std::setw(4) << std::setfill('0') << iter << ".pgm";
-    filename = dirname + s.str();
+    filename = vpIoTools::createFilePath(dirname, s.str());
 
     // Read the PGM image named "filename" on the disk, and put the
     // bitmap into the image structure I.  I is initialized to the
@@ -270,11 +260,9 @@ main(int argc, const char** argv)
     // exception readPGM may throw various exception if, for example,
     // the file does not exist, or if the memory cannot be allocated
     try{
-      if(useSequence){
-        vpCTRACE << "Load: " << filename << std::endl;
-        vpImageIo::read(Iref, filename) ;
-        I = Iref;
-      }
+      std::cout << "Load: " << filename << std::endl;
+      vpImageIo::read(Iref, filename) ;
+      I = Iref;
     }
     catch(...)
     {
@@ -289,22 +277,6 @@ main(int argc, const char** argv)
                 << "  or VISP_INPUT_IMAGE_PATH environment variable."
                 << std::endl;
       exit(-1);
-    }
-
-
-    // Declare a framegrabber
-    vpOpenCVGrabber g;
-    if(!useSequence){
-      try{
-        g.open(I);
-      }
-      catch(...){
-        std::cout << "problem to initialise the framegrabber" << std::endl;
-        exit(-1);
-      }
-      g.acquire(I);
-      // initialise the reference image
-      g.acquire(Iref);
     }
 
 #if defined VISP_HAVE_X11
@@ -408,28 +380,23 @@ main(int argc, const char** argv)
 
     if (opt_display && opt_click_allowed){
       std::cout << "Click on the current image to continue" << std::endl;
-      vpDisplay::displayCharString (I, vpImagePoint(15,15),
-                                    (char*)"Click on the current image to continue", vpColor::red);
+      vpDisplay::displayText(I, vpImagePoint(15,15),
+                             "Click on the current image to continue", vpColor::red);
       vpDisplay::flush(I);
       vpDisplay::getClick(I);
     }
 
     for ( ; ; ) {
       // acquire a new image
-      if(useSequence){
-        iter++;
-        if(iter >= 80){
-          break;
-        }
-        s.str("");
-        s << "image." << std::setw(4) << std::setfill('0') << iter << ".pgm";
-        filename = dirname + s.str();
-        // read the image
-        vpImageIo::read(I, filename);
+      iter++;
+      if(iter >= 80){
+        break;
       }
-      else{
-        g.acquire(I);
-      }
+      s.str("");
+      s << "image." << std::setw(4) << std::setfill('0') << iter << ".pgm";
+      filename = vpIoTools::createFilePath(dirname, s.str());
+      // read the image
+      vpImageIo::read(I, filename);
 
       if(opt_display){
         vpDisplay::display(I);

@@ -1,6 +1,6 @@
 @rem #############################################################################
 @rem #
-@rem # $Id: visp-config.bat.in 4574 2014-01-09 08:48:51Z fspindle $
+@rem # $Id: visp-config.bat.in 4961 2014-11-14 13:06:26Z fspindle $
 @rem #
 @rem # This file is part of the ViSP software.
 @rem # Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -55,11 +55,11 @@ set VERSION=${VISP_VERSION}
 
 set DEFS=${VISP_CONFIG_SCRIPT_DEFS}
 
-set INCLUDE=${VISP_CONFIG_SCRIPT_INC}
+set INCLUDE="${VISP_CONFIG_SCRIPT_INC}"
 
 set OPENMP_SUPPORT=${VISP_OPENMP_SUPPORT}
 
-set LIBDIR=${VISP_CONFIG_SCRIPT_LIBDIR}
+set LIBDIR="${VISP_CONFIG_SCRIPT_LIBDIR}"
 
 set LIBS_DEBUG=${VISP_CONFIG_SCRIPT_LIBS_DEBUG}
 

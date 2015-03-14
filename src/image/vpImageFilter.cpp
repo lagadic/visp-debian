@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpImageFilter.cpp 4661 2014-02-10 19:34:58Z fspindle $
+ * $Id: vpImageFilter.cpp 5200 2015-01-24 08:34:54Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -41,10 +41,12 @@
 
 #include <visp/vpImageFilter.h>
 #include <visp/vpImageConvert.h>
-#if defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION >= 0x020101)
-#include <opencv2/imgproc/imgproc_c.h>
+#if defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION >= 0x020408)
+#  include <opencv2/imgproc/imgproc.hpp>
+#elif defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION >= 0x020101)
+#  include <opencv2/imgproc/imgproc_c.h>
 #elif defined(VISP_HAVE_OPENCV)
-#include <cv.h>
+#  include <cv.h>
 #endif
 
 /*!
@@ -145,7 +147,7 @@ vpImageFilter::filter(const vpImage<double> &I,
 
 int main()
 {
-#if VISP_HAVE_OPENCV_VERSION >= 0x020100 // Cany uses OpenCV v>=2.1.0
+#if VISP_HAVE_OPENCV_VERSION >= 0x020100 // Canny uses OpenCV >=2.1.0
   // Constants for the Canny operator.
   const unsigned int gaussianFilterSize = 5;
   const double thresholdCanny = 15;
@@ -174,11 +176,12 @@ int main()
 */
 void
 vpImageFilter:: canny(const vpImage<unsigned char>& Isrc,
-                  vpImage<unsigned char>& Ires,
-                  const unsigned int gaussianFilterSize,
-                  const double thresholdCanny,
-                  const unsigned int apertureSobel)
+                      vpImage<unsigned char>& Ires,
+                      const unsigned int gaussianFilterSize,
+                      const double thresholdCanny,
+                      const unsigned int apertureSobel)
 {
+#if (VISP_HAVE_OPENCV_VERSION < 0x020408)
   IplImage* img_ipl = NULL;
   vpImageConvert::convert(Isrc, img_ipl);
   IplImage* edges_ipl;
@@ -190,6 +193,13 @@ vpImageFilter:: canny(const vpImage<unsigned char>& Isrc,
   vpImageConvert::convert(edges_ipl, Ires);
   cvReleaseImage(&img_ipl);
   cvReleaseImage(&edges_ipl);
+#else
+  cv::Mat img_cvmat, edges_cvmat;
+  vpImageConvert::convert(Isrc, img_cvmat);
+  cv::GaussianBlur(img_cvmat, img_cvmat, cv::Size((int)gaussianFilterSize, (int)gaussianFilterSize), 0, 0);
+  cv::Canny(img_cvmat, edges_cvmat, thresholdCanny, thresholdCanny, (int)apertureSobel);
+  vpImageConvert::convert(edges_cvmat, Ires);
+#endif
 }
 #endif
 
@@ -589,7 +599,17 @@ void vpImageFilter::getGradYGauss2D(const vpImage<unsigned char> &I, vpImage<dou
 void vpImageFilter::getGaussPyramidal(const vpImage<unsigned char> &I, vpImage<unsigned char>& GI)
 {
   vpImage<unsigned char> GIx;
-#ifdef VISP_HAVE_OPENCV
+#if defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION >= 0x030000)
+  cv::Mat imgsrc, imgdest;
+  vpImageConvert::convert(I, imgsrc);
+  cv::pyrDown( imgsrc, imgdest, cv::Size((int)I.getWidth()/2,(int)I.getHeight()/2));
+  vpImageConvert::convert(imgdest, GI);
+#elif defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION >= 0x020408)
+  cv::Mat imgsrc, imgdest;
+  vpImageConvert::convert(I, imgsrc);
+  cv::pyrDown( imgsrc, imgdest, cvSize((int)I.getWidth()/2,(int)I.getHeight()/2));
+  vpImageConvert::convert(imgdest, GI);
+#elif defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION >= 0x020100)
   IplImage* imgsrc = NULL;//cvCreateImage(cvGetSize(imgign), IPL_DEPTH_8U, 1);
   IplImage* imgdest = NULL;//cvCreateImage(cvGetSize(imgign), IPL_DEPTH_8U, 1);
   imgsrc = cvCreateImage(cvSize((int)I.getWidth(),(int)I.getHeight()), IPL_DEPTH_8U, 1);

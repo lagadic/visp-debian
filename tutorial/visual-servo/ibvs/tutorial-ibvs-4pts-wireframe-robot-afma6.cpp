@@ -1,5 +1,6 @@
 /*! \example tutorial-ibvs-4pts-wireframe-robot-afma6.cpp */
 #include <visp/vpDisplayGDI.h>
+#include <visp/vpDisplayOpenCV.h>
 #include <visp/vpDisplayX.h>
 #include <visp/vpFeatureBuilder.h>
 #include <visp/vpServo.h>
@@ -110,6 +111,8 @@ int main()
     vpDisplayX displayInt(Iint, 700, 0, "Internal view");
 #elif defined(VISP_HAVE_GDI)
     vpDisplayGDI displayInt(Iint, 700, 0, "Internal view");
+#elif defined(VISP_HAVE_OPENCV)
+    vpDisplayOpenCV displayInt(Iint, 700, 0, "Internal view");
 #else
     std::cout << "No image viewer is available..." << std::endl;
 #endif
@@ -131,7 +134,7 @@ int main()
       robot.getInternalView(Iint);
       if (!start) {
         display_trajectory(Iint, point, cMo, cam);
-        vpDisplay::displayCharString(Iint, 40, 120, "Click to stop the servo...", vpColor::red);
+        vpDisplay::displayText(Iint, 40, 120, "Click to stop the servo...", vpColor::red);
       }
       vpDisplay::flush(Iint);
 
@@ -146,7 +149,7 @@ int main()
         start = false;
         v = 0;
         robot.setVelocity(vpRobot::CAMERA_FRAME, v);
-        vpDisplay::displayCharString(Iint, 40, 120, "Click to start the servo...", vpColor::blue);
+        vpDisplay::displayText(Iint, 40, 120, "Click to start the servo...", vpColor::blue);
         vpDisplay::flush(Iint);
         vpDisplay::getClick(Iint);
       }

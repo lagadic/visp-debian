@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpSimulatorViper850.cpp 4649 2014-02-07 14:57:11Z fspindle $
+ * $Id: vpSimulatorViper850.cpp 5171 2015-01-15 15:11:54Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -2268,7 +2268,7 @@ vpSimulatorViper850::stopMotion()
   stop = 0;
   set_artVel(stop);
   set_velocity(stop);
-  setRobotState (vpRobot::STATE_STOP);
+  vpRobot::setRobotState (vpRobot::STATE_STOP);
 }
 
 

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpMomentObject.cpp 4653 2014-02-07 15:38:09Z mbakthav $
+ * $Id: vpMomentObject.cpp 5301 2015-02-10 16:36:52Z mbakthav $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -143,11 +143,11 @@ void vpMomentObject::cacheValues(std::vector<double>& cache,double x, double y){
  */
 void vpMomentObject::cacheValues(std::vector<double>& cache,double x, double y, double IntensityNormalized) {
 
-	cache[0]=IntensityNormalized;
+    cache[0]=IntensityNormalized;
 
-	double invIntensityNormalized = 0.;
-	if (std::fabs(IntensityNormalized)>=std::numeric_limits<double>::epsilon())
-		 invIntensityNormalized = 1.0/IntensityNormalized;
+    double invIntensityNormalized = 0.;
+    if (std::fabs(IntensityNormalized)>=std::numeric_limits<double>::epsilon())
+         invIntensityNormalized = 1.0/IntensityNormalized;
 
     for(register unsigned int i=1;i<order;i++)
         cache[i]=cache[i-1]*x;
@@ -460,11 +460,11 @@ void vpMomentObject::fromImage(const vpImage<unsigned char>& image, const vpCame
  */
 void
 vpMomentObject::init(unsigned int orderinp) {
-	order = orderinp + 1;
-	type = vpMomentObject::DENSE_FULL_OBJECT;
-	flg_normalize_intensity = true;                 // By default, the intensity values are normalized
-	values.resize((order+1)*(order+1));
-	values.assign((order+1)*(order+1),0);
+    order = orderinp + 1;
+    type = vpMomentObject::DENSE_FULL_OBJECT;
+    flg_normalize_intensity = true;                 // By default, the intensity values are normalized
+    values.resize((order+1)*(order+1));
+    values.assign((order+1)*(order+1),0);
 }
 
 /*!
@@ -472,11 +472,11 @@ vpMomentObject::init(unsigned int orderinp) {
  */
 void
 vpMomentObject::init(const vpMomentObject& objin){
-	order = objin.getOrder()+1;
-	type = objin.getType();
-	flg_normalize_intensity = objin.flg_normalize_intensity;
-	values.resize(objin.values.size());
-	values = objin.values;
+    order = objin.getOrder()+1;
+    type = objin.getType();
+    flg_normalize_intensity = objin.flg_normalize_intensity;
+    values.resize(objin.values.size());
+    values = objin.values;
 }
 
 /*!
@@ -503,7 +503,7 @@ vpMomentObject::vpMomentObject(unsigned int max_order)
   Copy constructor
  */
 vpMomentObject::vpMomentObject(const vpMomentObject& srcobj)
-  : flg_normalize_intensity(true), order(order+1), type(vpMomentObject::DENSE_FULL_OBJECT),
+  : flg_normalize_intensity(true), order(1), type(vpMomentObject::DENSE_FULL_OBJECT),
     values()
 {
     init(srcobj);
@@ -559,7 +559,7 @@ void vpMomentObject::set(unsigned int i, unsigned int j, const double& value_ij)
 }
 
 /*!
-  Outputs the basic moment's values \f$m_{ij}\f$ to a stream presented as a matrix.    
+  Outputs the basic moment's values \f$m_{ij}\f$ to a stream presented as a matrix.
   The first line corresponds to \f$m_{0[0:order]}\f$, the second one to \f$m_{1[0:order]}\f$
   Values in table corresponding to a higher order are marked with an "x" and not computed.
 
@@ -589,4 +589,72 @@ VISP_EXPORT std::ostream & operator<<(std::ostream & os, const vpMomentObject& m
     }
 
     return os;
+}
+
+/*!
+  Outputs the raw moment values \f$m_{ij}\f$ in indexed form.
+  The moment values are same as provided by the operator << which outputs x for uncalculated moments.
+ */
+void
+vpMomentObject::printWithIndices(const vpMomentObject& momobj, std::ostream& os) {
+    std::vector<double> moment = momobj.get();
+    os << std::endl <<"Order of vpMomentObject: "<<momobj.getOrder()<<std::endl;
+    // Print out values. This is same as printing using operator <<
+    for(unsigned int k=0; k<=momobj.getOrder(); k++) {
+            for(unsigned int l=0; l<(momobj.getOrder()+1)-k; l++){
+                    os << "m[" << l << "," << k << "] = " << moment[k*(momobj.getOrder()+1)+ l] << "\t";
+            }
+            os << std::endl;
+    }
+    os <<std::endl;
+}
+
+/*!
+ This function returns a vpMatrix of size (order+1, order+1).
+\code
+ vpMomentObject obj(8);
+ obj.setType(vpMomentObject::DENSE_FULL_OBJECT);
+ obj.fromImageWeighted(I, cam, vpMomentObject::BLACK); // cam should have the camera parameters
+ vpMatrix Mpq = vpMomentObject::convertTovpMatrix(obj);
+\endcode
+ Instead of accessing the moment m21 as obj.get(2,1), you can now do Mpq[2][1].
+ This is useful when you want to use the functions available in vpMatrix.
+ One use case i see now is to copy the contents of the matrix to a file or std::cout.
+ For instance, like
+ \code
+ // Print to console
+ Mpq.maplePrint(std::cout);
+ // Or write to a file
+ std::ofstream fileMpq("Mpq.csv");
+ Mpq.maplePrint(fileMpq);
+\endcode
+
+The output can be copied and pasted to MAPLE as a matrix.
+
+\warning
+The moments that are not calculated have zeros. For instance, for a vpMomentObject of order 8,
+the moment m[7,2] is not calculated. It will have 0 by default. User discretion is advised.
+*/
+vpMatrix
+vpMomentObject::convertTovpMatrix(const vpMomentObject& momobj) {
+    std::vector<double> moment = momobj.get();
+    unsigned int order = momobj.getOrder();
+    vpMatrix M(order+1, order+1);
+    for(unsigned int k=0; k<=order; k++) {
+        for(unsigned int l=0; l<(order+1)-k; l++){
+            M[l][k] = moment[k*(order+1)+ l];
+        }
+    }
+    return M;
+}
+
+/*!
+  Nothing to destruct. This will allow for a polymorphic usage
+  For instance,
+  \code
+  vpMomentObject* obj = new vpWeightedMomentObject(weightfunc,ORDER); where vpWeightedMomentObject is child class of vpMomentObject
+  \endcode
+ */
+vpMomentObject::~vpMomentObject(){
+// deliberate empty
 }

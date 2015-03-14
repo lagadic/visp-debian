@@ -3,15 +3,9 @@
 \page tutorial-install-ubuntu Tutorial: Installation from source on Linux Ubuntu
 \tableofcontents
 
-In this tutorial you will learn how to install ViSP from source on Linux Ubuntu. These steps have been tested for Ubuntu 13.04 (64 bit) distribution, but should work with any other distribution as well. 
+In this tutorial you will learn how to install ViSP from source on Linux Ubuntu. These steps have been tested for Ubuntu 14.04 (64 bit) distribution, but should work with any other distribution as well. 
 
-Concerning ViSP installation, we provide also other tutorials
-- \ref tutorial-install-fedora
-- \ref tutorial-install-win
-- \ref tutorial-install-iOS
-
-ViSP can also be installed on other platforms including OSX, CentOS, openSUZE (see <a href="http://www.irisa.fr/lagadic/visp/install.html">Install from source page</a>).
-
+\note Concerning ViSP installation, we provide also other \ref tutorial.
 
 \section install_ubuntu_required Required packages
 
@@ -33,16 +27,16 @@ There are different ways to get ViSP source code:
 
 - You can download the <a href="http://www.irisa.fr/lagadic/visp/download.html#latest">latest stable release</a> as a zip or a tarball. Once downloaded, uncompress the file using either
 \code
-tar xvzf ViSP-2.9.0.tar.gz 
+tar xvzf ViSP-2.10.0.tar.gz 
 \endcode
 or
 \code
-unzip ViSP-2.9.0.zip
+unzip ViSP-2.10.0.zip
 \endcode
 
 - You can also download a more <a href="http://www.irisa.fr/lagadic/visp/download.html#snapshot">recent snapshot</a>. Once downloaded, uncompress the file using
 \code
-unzip ViSP-2.y.z-snapshot-2014.mm.dd.zip
+unzip ViSP-2.y.z-snapshot-2015.mm.dd.zip
 \endcode
 - Or you get the cutting-edge ViSP from Subversion repository. To this end you have first to install subversion
 \code
@@ -53,7 +47,7 @@ and then use the following command
 svn checkout svn://scm.gforge.inria.fr/svn/visp/trunk/ViSP ViSP-trunk
 \endcode
 
-We suppose now that ViSP source is in a directory denoted  \<source_dir\>, for example \c $HOME/ViSP-2.9.0
+We suppose now that ViSP source is in a directory denoted  \<source_dir\>, for example \c $HOME/ViSP-2.10.0
 
 \section install_ubuntu_config Configuring ViSP from source
 
@@ -69,16 +63,16 @@ cmake [<optional parameters>] <source_dir>
 For example:
 \code
 cd $HOME/ViSP-build-release
-cmake -D CMAKE_BUILD_TYPE=RELEASE -D BUILD_SHARED_LIBS=ON ../ViSP-2.9.0
+cmake -DCMAKE_BUILD_TYPE=RELEASE -DBUILD_SHARED_LIBS=ON ../ViSP-2.10.0
 \endcode
 A more versatile way to configure the build is to use \c ccmake, the CMake GUI:
 \code
-ccmake ../ViSP-2.9.0
+ccmake ../ViSP-2.10.0
 \endcode
-The following image shows that this command allows to configure (just by pressing [c] key) the build in a more advanced way where some options could be easily turned On/Off. It allows also to see which are the 3rd party that will be used.
-\image html img-ccmake-ubuntu.png Snapshot of the ccmake \c ../ViSP-2.9.0 command used to configure ViSP.
+The following image shows that this command allows to configure (just by pressing [c] key) the build in a more advanced way where some options could be easily turned On/Off. It allows also to see which are the 3rd parties that will be used.
+\image html img-ccmake-ubuntu.png Snapshot of the ccmake \c ../ViSP-2.10.0 command used to configure ViSP.
 
-- There is an other way to see which are the 3rd party that are found during the configuration stage and that will be used by ViSP during the build. To this end you can have a look to the text file named ViSP-third-party.txt and located in \<binary_dir\>. We provide hereafter an example of a possible content of this file:
+- There is an other way to see which are the 3rd parties that are found during the configuration stage and that will be used by ViSP during the build. To this end you can have a look to the text file named ViSP-third-party.txt and located in \<binary_dir\>. We provide hereafter an example of a possible content of this file:
 \code
                     ViSP third-party libraries
 
@@ -107,7 +101,6 @@ Robots
   Pioneer                     : no
   Viper S650                  : no
   Viper S850                  : no
-  Cycab                       : no
 Video devices (display)                  
   X11                         : no
   GTK                         : no 
@@ -135,16 +128,18 @@ Misc:
   XML2                        : no
   pthread                     : yes
   OpenMP                      : yes
+  zbar                        : no
+  dmtx                        : no
 Documentation:
   Doxygen                     : no
   Graphviz dot                : no
 ViSP built with C++11 features: no
 \endcode
-In our case, only \c pthread an OpenMP 3rd party are detected.  
+In our case, only \c pthread an OpenMP 3rd parties are detected.  
 
 \subsection install_ubuntu_3rdparty Optional 3rd party packages
 
-As mentioned previously, ViSP is interfaced with some 3rd party libraries. The <a href="http://www.irisa.fr/lagadic/visp/libraries.html">complete list is provided here</a>. We recommand to install the following:
+As mentioned previously, ViSP is interfaced with some 3rd party libraries. The <a href="http://www.irisa.fr/lagadic/visp/libraries.html">complete list is provided here</a>. We recommend to install the following:
 
 - OpenCV
 \code
@@ -168,7 +163,7 @@ sudo apt-get install libv4l-dev
 \endcode
 - Coin, to be able to support vrml cad model used by the model-based trackers
 \code
-sudo apt-get install libCoin60-dev
+sudo apt-get install libCoin80-dev
 \endcode
 - libxml2 to be able to configure the model-based trackers from xml files
 \code
@@ -184,16 +179,20 @@ sudo apt-get install libswscale-dev libavutil-dev libavformat-dev libavcodec-dev
 \endcode
 - Ogre 3D if you want to do augmented reality or simulation
 \code
-sudo apt-get install libogre-dev libois-dev
+sudo apt-get install libogre-1.9-dev libois-dev
+\endcode
+- Bar code detection
+\code
+sudo apt-get install libzbar-dev libdmtx-dev
 \endcode
 
 Once installed, if you want that ViSP exploit the new 3rd party, you have to configure ViSP again.
 
 \code
-ccmake ../ViSP-2.9.0
+ccmake ../ViSP-2.10.0
 \endcode
-The following image shows now that all the previous optional 3rd party are detected.
-\image html img-ccmake-ubuntu-all.png Snapshot of the ccmake \c ../ViSP-2.9.0 command used to configure ViSP after installation of optional 3rd party libraries.
+The following image shows now that all the previous optional 3rd parties are detected.
+\image html img-ccmake-ubuntu-all.png Snapshot of the ccmake \c ../ViSP-2.10.0 command used to configure ViSP after installation of optional 3rd party libraries.
 
 \subsection install_ubuntu_generate Generating Makefiles
 
@@ -205,7 +204,7 @@ Now we can build ViSP.
 
 - To build ViSP proceed with:
 \code
-make
+make -j4
 \endcode
 
 - To install ViSP proceed with:
@@ -219,7 +218,7 @@ sudo apt-get install doxygen graphviz texlive-latex-base
 \endcode
 Then you can proceed with:
 \code
-make html-doc
+make visp_doc
 \endcode
 
 You are now ready to see the next \ref tutorial-getting-started that will show you how to use ViSP as a 3rd party to build your own project.

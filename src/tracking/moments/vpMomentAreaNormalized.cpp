@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpMomentAreaNormalized.cpp 4649 2014-02-07 14:57:11Z fspindle $
+ * $Id: vpMomentAreaNormalized.cpp 4713 2014-03-28 18:02:26Z mbakthav $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -84,7 +84,33 @@ vpMomentAreaNormalized::vpMomentAreaNormalized(double desired_surface, double de
   Outputs the moment's values to a stream.
 */
 VISP_EXPORT std::ostream & operator<<(std::ostream & os, const vpMomentAreaNormalized& m){
-    os << "An:" << m.values[0] ;
-
+    os << (__FILE__) << std::endl;
+    os << "An = " << m.values[0] << std::endl ;
     return os;    
+}
+
+/*!
+Prints dependencies namely,
+1. Depth at desired pose Z*
+2. Area moment at desired pose
+   m00* if DENSE moment object, (mu20* + mu02*) if DISCRETE moment object
+3. Area moment at current pose
+   m00 if DENSE moment object, (mu20 + mu02) if DISCRETE moment object
+*/
+void vpMomentAreaNormalized::printDependencies(std::ostream& os) const{
+    os << (__FILE__) << std::endl;
+    os << "Desired depth Z* = " << desiredDepth << std::endl;
+    os << "Desired area m00* = " << desiredSurface << std::endl;
+
+    bool found_moment_centered;
+    const vpMomentCentered& momentCentered = static_cast<const vpMomentCentered&>(getMoments().get("vpMomentCentered",found_moment_centered));
+    if(!found_moment_centered)
+        throw vpException(vpException::notInitialized,"vpMomentCentered not found");
+
+    double a;
+    if(getObject().getType()==vpMomentObject::DISCRETE)
+        a = momentCentered.get(2,0)+momentCentered.get(0,2);
+    else
+        a = getObject().get(0,0);
+    os << "a = " << a << std::endl;
 }

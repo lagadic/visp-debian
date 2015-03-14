@@ -13,7 +13,7 @@ int main(int argc, char** argv)
     device = atoi(argv[1]);
   std::cout << "Use device: " << device << std::endl;
 
-#if defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION >= 0x020100)
+#if (VISP_HAVE_OPENCV_VERSION >= 0x020100)
   try {
     cv::VideoCapture cap(device); // open the default camera
     if(!cap.isOpened()) { // check if we succeeded
@@ -27,7 +27,9 @@ int main(int argc, char** argv)
     //vpImage<vpRGBa> I; // for color images
     vpImage<unsigned char> I; // for gray images
     vpImageConvert::convert(frame, I);
+
     vpDisplayOpenCV d(I);
+
     for(;;) {
       cap >> frame; // get a new frame from camera
       // Convert the image in ViSP format and display it

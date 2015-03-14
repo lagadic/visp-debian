@@ -1,6 +1,6 @@
 /****************************************************************************
 *
-* $Id: vpFeatureMoment.h 4649 2014-02-07 14:57:11Z fspindle $
+* $Id: vpFeatureMoment.h 4714 2014-03-28 18:16:13Z mbakthav $
 *
 * This file is part of the ViSP software.
 * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -206,6 +206,8 @@ public:
         }
 #endif
 
+      friend VISP_EXPORT std::ostream& operator<<(std::ostream & os, const vpFeatureMoment& featM);
+      virtual void printDependencies(std::ostream& os) const;
 };
 
 /*!

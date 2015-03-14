@@ -672,7 +672,8 @@ INPUT                  = "@VISP_SOURCE_DIR@/src" \
                          "@VISP_SOURCE_DIR@/tutorial" \
                          "@VISP_SOURCE_DIR@/demo" \
                          "@VISP_SOURCE_DIR@/test" \
-                         "@VISP_SOURCE_DIR@/doc"
+                         "@VISP_SOURCE_DIR@/doc" \
+                         "@VISP_BINARY_DIR@/doc"
 
 # This tag can be used to specify the character encoding of the source files
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding, which is
@@ -1552,7 +1553,7 @@ PREDEFINED             = DOXYGEN_SHOULD_SKIP_THIS \
                          VISP_HAVE_LAPACK \
                          VISP_HAVE_OPENCV \
                          VISP_HAVE_OPENCV_NONFREE \
-                         VISP_HAVE_OPENCV_VERSION=0x111111 \
+                         VISP_HAVE_OPENCV_VERSION=0x020408 \
                          VISP_HAVE_OGRE \
                          VISP_HAVE_OGRE_PLUGINS_PATH \
                          VISP_HAVE_OGRE_RESOURCES_PATH \
@@ -1584,6 +1585,8 @@ PREDEFINED             = DOXYGEN_SHOULD_SKIP_THIS \
                          VISP_HAVE_LIBFREENECT \
                          VISP_HAVE_LIBUSB_1 \
                          VISP_HAVE_YARP \
+                         VISP_HAVE_ZBAR \
+                         VISP_HAVE_DMTX \
                          VISP_HAVE_ACCESS_TO_NAS \
                          VISP_HAVE_CPP11_COMPATIBILITY \
                          VISP_BUILD_DEPRECATED_FUNCTIONS \

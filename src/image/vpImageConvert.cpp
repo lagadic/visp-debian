@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpImageConvert.cpp 4661 2014-02-10 19:34:58Z fspindle $
+ * $Id: vpImageConvert.cpp 5204 2015-01-24 13:18:18Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -165,8 +165,12 @@ vpImageConvert::convert(const vpImage<unsigned char> &src, vpImage<double> &dest
 }
 
 #ifdef VISP_HAVE_OPENCV
+// Deprecated: will be removed with OpenCV transcient from C to C++ api
 /*!
-  Convert a IplImage to a vpImage\<vpRGBa\>
+  \deprecated Rather then using OpenCV IplImage you should use cv::Mat images.
+  IplImage structure will be removed with OpenCV transcient from C to C++ api.
+
+  Convert an IplImage to a vpImage\<vpRGBa\>.
 
   An IplImage is an OpenCV (Intel's Open source Computer Vision Library)
   image structure. See http://opencvlibrary.sourceforge.net/ for general
@@ -188,7 +192,7 @@ vpImageConvert::convert(const vpImage<unsigned char> &src, vpImage<double> &dest
 
 int main()
 {
-#ifdef VISP_HAVE_OPENCV
+#if defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION < 0x020408)
   vpImage<vpRGBa> Ic; // A color image
   IplImage* Ip;
 
@@ -269,7 +273,10 @@ vpImageConvert::convert(const IplImage* src, vpImage<vpRGBa> & dest, bool flip)
 }
 
 /*!
-  Convert a IplImage to a vpImage\<unsigned char\>
+  \deprecated Rather then using OpenCV IplImage you should use cv::Mat images.
+  IplImage structure will be removed with OpenCV transcient from C to C++ api.
+
+  Convert an IplImage to a vpImage\<unsigned char\>.
 
   An IplImage is an OpenCV (Intel's Open source Computer Vision Library)
   image structure. See http://opencvlibrary.sourceforge.net/ for general
@@ -291,7 +298,7 @@ vpImageConvert::convert(const IplImage* src, vpImage<vpRGBa> & dest, bool flip)
 
 int main()
 {
-#ifdef VISP_HAVE_OPENCV
+#if defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION < 0x020408)
   vpImage<unsigned char> Ig; // A grayscale image
   IplImage* Ip;
 
@@ -369,7 +376,10 @@ vpImageConvert::convert(const IplImage* src, vpImage<unsigned char> &dest, bool 
 }
 
 /*!
-  Convert a vpImage\<vpRGBa\> to a IplImage
+  \deprecated Rather then using OpenCV IplImage you should use cv::Mat images.
+  IplImage structure will be removed with OpenCV transcient from C to C++ api.
+
+  Convert a vpImage\<vpRGBa\> to a IplImage.
 
   An IplImage is an OpenCV (Intel's Open source Computer Vision Library)
   image structure. See http://opencvlibrary.sourceforge.net/ for general
@@ -390,7 +400,7 @@ vpImageConvert::convert(const IplImage* src, vpImage<unsigned char> &dest, bool 
 
 int main()
 {
-#ifdef VISP_HAVE_OPENCV
+#if defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION < 0x020408)
   vpImage<vpRGBa> Ic; // A color image
   IplImage* Ip = NULL;
 
@@ -454,7 +464,10 @@ vpImageConvert::convert(const vpImage<vpRGBa> & src, IplImage *&dest)
 }
 
 /*!
-  Convert a vpImage\<unsigned char\> to a IplImage
+  \deprecated Rather then using OpenCV IplImage you should use cv::Mat images.
+  IplImage structure will be removed with OpenCV transcient from C to C++ api.
+
+  Convert a vpImage\<unsigned char\> to a IplImage.
 
   An IplImage is an OpenCV (Intel's Open source Computer Vision Library)
   image structure. See http://opencvlibrary.sourceforge.net/ for general
@@ -475,7 +488,7 @@ vpImageConvert::convert(const vpImage<vpRGBa> & src, IplImage *&dest)
 
 int main()
 {
-#ifdef VISP_HAVE_OPENCV
+#if defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION < 0x020408)
   vpImage<unsigned char> Ig; // A greyscale image
   IplImage* Ip = NULL;
 
@@ -527,7 +540,7 @@ vpImageConvert::convert(const vpImage<unsigned char> & src, IplImage* &dest)
 
 #if VISP_HAVE_OPENCV_VERSION >= 0x020100
 /*!
-  Convert a cv::Mat to a vpImage\<vpRGBa\>
+  Convert a cv::Mat to a vpImage\<vpRGBa\>.
 
   A cv::Mat is an OpenCV image class. See http://opencv.willowgarage.com for
   the general OpenCV documentation, or
@@ -580,7 +593,7 @@ vpImageConvert::convert(const cv::Mat& src, vpImage<vpRGBa>& dest, const bool fl
         rgbaVal.R = tmp[2];
         rgbaVal.G = tmp[1];
         rgbaVal.B = tmp[0];
-	rgbaVal.A = tmp[3];
+        rgbaVal.A = tmp[3];
         if(flip)
           dest[dest.getRows()-i-1][j] = rgbaVal;
         else
@@ -620,7 +633,7 @@ vpImageConvert::convert(const cv::Mat& src, vpImage<vpRGBa>& dest, const bool fl
 }
 
 /*!
-  Convert a cv::Mat to a vpImage\<unsigned char\>
+  Convert a cv::Mat to a vpImage\<unsigned char\>.
 
   A cv::Mat is an OpenCV image class. See http://opencv.willowgarage.com for
   the general OpenCV documentation, or
@@ -705,7 +718,7 @@ vpImageConvert::convert(const cv::Mat& src, vpImage<unsigned char>& dest, const 
 
 
 /*!
-  Convert a vpImage\<unsigned char\> to a cv::Mat
+  Convert a vpImage\<unsigned char\> to a cv::Mat.
 
   A cv::Mat is an OpenCV image class. See http://opencv.willowgarage.com for
   the general OpenCV documentation, or
@@ -757,7 +770,7 @@ vpImageConvert::convert(const vpImage<vpRGBa> & src, cv::Mat& dest)
 }
 
 /*!
-  Convert a vpImage\<unsigned char\> to a cv::Mat
+  Convert a vpImage\<unsigned char\> to a cv::Mat.
 
   A cv::Mat is an OpenCV image class. See http://opencv.willowgarage.com for
   the general OpenCV documentation, or
@@ -788,10 +801,10 @@ int main()
   vpImageIo::read(Ig, "image.pgm");
   // Convert the vpImage<unsigned char> in to greyscale cv::Mat
   vpImageConvert::convert(Ig, Ip);
-  // Treatments on cv::MatIp
+  // Treatments on cv::Mat Ip
   //...
   // Save the cv::Mat on the disk
-  cv::imwrite("image.pgm", Ip);
+  cv::imwrite("image-cv.pgm", Ip);
 #endif
 }
 

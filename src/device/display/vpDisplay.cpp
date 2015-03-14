@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpDisplay.cpp 4632 2014-02-03 17:06:40Z fspindle $
+ * $Id: vpDisplay.cpp 5008 2014-11-25 17:59:43Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -39,6 +39,8 @@
  * Fabien Spindler
  *
  *****************************************************************************/
+
+#include <limits>
 
 #include <visp/vpDisplay.h>
 #include <visp/vpDisplayException.h>
@@ -115,6 +117,8 @@ vpDisplay::setFont ( const vpImage<unsigned char> &I,
 }
 /*!
   Set the windows title.
+  \note This functionality is not implemented when vpDisplayOpenCV is used.
+
   \param I : Image associated to the display window.
   \param windowtitle : Window title.
 */
@@ -725,6 +729,7 @@ vpDisplay::displayArrow ( const vpImage<vpRGBa> &I,
 /*! 
 
   Display a string at the image point \e ip location.
+  Use rather displayText() that does the same.
     
   To select the font used to display the string, use setFont().
     
@@ -733,7 +738,7 @@ vpDisplay::displayArrow ( const vpImage<vpRGBa> &I,
   \param string : String to display in overlay.
   \param color : String color.
   
-  \sa setFont()
+  \sa setFont(), displayText()
 
 */
 void
@@ -758,7 +763,8 @@ vpDisplay::displayCharString ( const vpImage<unsigned char> &I,
 /*! 
 
   Display a string at the image point \e ip location.
-    
+  Use rather displayText() that does the same.
+
   To select the font used to display the string, use setFont().
     
   \param I : Image associated to the display.
@@ -766,7 +772,7 @@ vpDisplay::displayCharString ( const vpImage<unsigned char> &I,
   \param string : String to display in overlay.
   \param color : String color.
   
-  \sa setFont()
+  \sa setFont(), displayText()
 
 */
 void
@@ -791,7 +797,8 @@ vpDisplay::displayCharString ( const vpImage<vpRGBa> &I,
 /*! 
 
   Display a string at the image point (i,j) location.
-    
+  Use rather displayText() that does the same.
+
   To select the font used to display the string, use setFont().
     
   \param I : Image associated to the display.
@@ -799,7 +806,7 @@ vpDisplay::displayCharString ( const vpImage<vpRGBa> &I,
   \param string : String to display in overlay.
   \param color : String color.
   
-  \sa setFont()
+  \sa setFont(), displayText()
 
 */
 void
@@ -828,7 +835,8 @@ vpDisplay::displayCharString ( const vpImage<unsigned char> &I,
 /*!
 
   Display a string at the image point (i,j) location.
-    
+  Use rather displayText() that does the same.
+
   To select the font used to display the string, use setFont().
     
   \param I : Image associated to the display.
@@ -836,13 +844,13 @@ vpDisplay::displayCharString ( const vpImage<unsigned char> &I,
   \param string : String to display in overlay.
   \param color : String color.
   
-  \sa setFont()
+  \sa setFont(), displayText()
 
 */
 void
 vpDisplay::displayCharString ( const vpImage<vpRGBa> &I,
                                int i, int j, const char *string,
-			       const vpColor &color)
+                               const vpColor &color)
 {
   try
   {
@@ -852,6 +860,145 @@ vpDisplay::displayCharString ( const vpImage<vpRGBa> &I,
       ip.set_i( i );
       ip.set_j( j );
       ( I.display )->displayCharString ( ip, string, color ) ;
+    }
+  }
+  catch ( ... )
+  {
+    vpERROR_TRACE ( "Error caught" ) ;
+    throw ;
+  }
+}
+
+/*!
+
+  Display a string at the image point \e ip location.
+
+  To select the font used to display the string, use setFont().
+
+  \param I : Image associated to the display.
+  \param ip : Upper left image point location of the string in the display.
+  \param s : String to display in overlay.
+  \param color : String color.
+
+  \sa setFont()
+
+*/
+void
+vpDisplay::displayText ( const vpImage<unsigned char> &I,
+                         const vpImagePoint &ip, const std::string &s,
+                         const vpColor &color )
+{
+  try
+  {
+    if ( I.display != NULL )
+    {
+      ( I.display )->displayCharString ( ip, s.c_str(), color ) ;
+    }
+  }
+  catch ( ... )
+  {
+    vpERROR_TRACE ( "Error caught" ) ;
+    throw ;
+  }
+}
+
+/*!
+
+  Display a string at the image point \e ip location.
+
+  To select the font used to display the string, use setFont().
+
+  \param I : Image associated to the display.
+  \param ip : Upper left image point location of the string in the display.
+  \param s : String to display in overlay.
+  \param color : String color.
+
+  \sa setFont()
+
+*/
+void
+vpDisplay::displayText ( const vpImage<vpRGBa> &I,
+                         const vpImagePoint &ip, const std::string &s,
+                         const vpColor &color )
+{
+  try
+  {
+    if ( I.display != NULL )
+    {
+      ( I.display )->displayCharString ( ip, s.c_str(), color ) ;
+    }
+  }
+  catch ( ... )
+  {
+    vpERROR_TRACE ( "Error caught" ) ;
+    throw ;
+  }
+}
+
+/*!
+
+  Display a string at the image point (i,j) location.
+
+  To select the font used to display the string, use setFont().
+
+  \param I : Image associated to the display.
+  \param i,j : Upper left image point location of the string in the display.
+  \param s : String to display in overlay.
+  \param color : String color.
+
+  \sa setFont()
+
+*/
+void
+vpDisplay::displayText ( const vpImage<unsigned char> &I,
+                         int i, int j, const std::string &s,
+                         const vpColor &color)
+{
+  try
+  {
+    if ( I.display != NULL )
+    {
+      vpImagePoint ip;
+      ip.set_i( i );
+      ip.set_j( j );
+
+      ( I.display )->displayCharString ( ip, s.c_str(), color ) ;
+    }
+  }
+  catch ( ... )
+  {
+    vpERROR_TRACE ( "Error caught" ) ;
+    throw ;
+  }
+}
+
+/*!
+
+  Display a string at the image point (i,j) location.
+
+  To select the font used to display the string, use setFont().
+
+  \param I : Image associated to the display.
+  \param i,j : Upper left image point location of the string in the display.
+  \param s : String to display in overlay.
+  \param color : String color.
+
+  \sa setFont()
+
+*/
+void
+vpDisplay::displayText ( const vpImage<vpRGBa> &I,
+                         int i, int j, const std::string &s,
+                         const vpColor &color)
+{
+  try
+  {
+    if ( I.display != NULL )
+    {
+      vpImagePoint ip;
+      ip.set_i( i );
+      ip.set_j( j );
+      ( I.display )->displayCharString ( ip, s.c_str(), color ) ;
     }
   }
   catch ( ... )
@@ -1359,16 +1506,24 @@ void vpDisplay::displayLine ( const vpImage<vpRGBa> &I,
   \param I : The image associated to the display.
   \param ip : Point location.
   \param color : Point color.
+  \param thickness : Thickness of the point
 */
 void vpDisplay::displayPoint ( const vpImage<unsigned char> &I,
                                const vpImagePoint &ip,
-			       const vpColor &color )
+                               const vpColor &color,
+                               unsigned int thickness )
 {
   try
   {
     if ( I.display != NULL )
     {
-      ( I.display )->displayPoint ( ip, color ) ;
+      if (thickness == 1)
+        ( I.display )->displayPoint ( ip, color ) ;
+      else {
+        vpRect rect(0, 0, thickness, thickness);
+        rect.moveCenter(ip);
+        ( I.display )->displayRectangle ( rect, color, true ) ;
+      }
     }
   }
   catch ( ... )
@@ -1382,16 +1537,24 @@ void vpDisplay::displayPoint ( const vpImage<unsigned char> &I,
   \param I : The image associated to the display.
   \param ip : Point location.
   \param color : Point color.
+  \param thickness : Thickness of the point
 */
 void vpDisplay::displayPoint ( const vpImage<vpRGBa> &I,
                                const vpImagePoint &ip,
-			       const vpColor &color )
+                               const vpColor &color,
+                               unsigned int thickness )
 {
   try
   {
     if ( I.display != NULL )
     {
-      ( I.display )->displayPoint ( ip, color ) ;
+      if (thickness == 1)
+        ( I.display )->displayPoint ( ip, color ) ;
+      else {
+        vpRect rect(0, 0, thickness, thickness);
+        rect.moveCenter(ip);
+        ( I.display )->displayRectangle ( rect, color, true ) ;
+      }
     }
   }
   catch ( ... )
@@ -1406,10 +1569,12 @@ void vpDisplay::displayPoint ( const vpImage<vpRGBa> &I,
   \param I : The image associated to the display.
   \param i,j : Point location.
   \param color : Point color.
+  \param thickness : Thickness of the point
 */
 void vpDisplay::displayPoint ( const vpImage<unsigned char> &I,
                                int i, int j,
-                               const vpColor &color )
+                               const vpColor &color,
+                               unsigned int thickness )
 {
   try
   {
@@ -1418,7 +1583,13 @@ void vpDisplay::displayPoint ( const vpImage<unsigned char> &I,
       vpImagePoint ip;
       ip.set_i( i );
       ip.set_j( j );
-      ( I.display )->displayPoint ( ip, color ) ;
+      if (thickness == 1)
+        ( I.display )->displayPoint ( ip, color ) ;
+      else {
+        vpRect rect(0, 0, thickness, thickness);
+        rect.moveCenter(ip);
+        ( I.display )->displayRectangle ( rect, color, true ) ;
+      }
     }
   }
   catch ( ... )
@@ -1434,10 +1605,13 @@ void vpDisplay::displayPoint ( const vpImage<unsigned char> &I,
   \param I : The image associated to the display.
   \param i,j : Point location.
   \param color : Point color.
+  \param thickness : Thickness of the point
+
 */
 void vpDisplay::displayPoint ( const vpImage<vpRGBa> &I,
                                int i, int j,
-                               const vpColor &color )
+                               const vpColor &color,
+                               unsigned int thickness )
 {
   try
   {
@@ -1446,7 +1620,71 @@ void vpDisplay::displayPoint ( const vpImage<vpRGBa> &I,
       vpImagePoint ip;
       ip.set_i( i );
       ip.set_j( j );
-      ( I.display )->displayPoint ( ip, color ) ;
+      if (thickness == 1)
+        ( I.display )->displayPoint ( ip, color ) ;
+      else {
+        vpRect rect(0, 0, thickness, thickness);
+        rect.moveCenter(ip);
+        ( I.display )->displayRectangle ( rect, color, true ) ;
+      }
+    }
+  }
+  catch ( ... )
+  {
+    vpERROR_TRACE ( "Error caught" ) ;
+    throw ;
+  }
+}
+
+/*!
+  Display a polygon defined by a vector of image points.
+  \param I : The image associated to the display.
+  \param vip : Vector of image point that define the vertexes of the polygon.
+  \param color : Line color.
+  \param thickness : Line thickness.
+
+*/
+void
+vpDisplay::displayPolygon(const vpImage<unsigned char> &I,
+                          const std::vector<vpImagePoint> &vip,
+                          const vpColor &color,
+                          unsigned int thickness)
+{
+  try
+  {
+    if ( I.display != NULL )
+    {
+      for (unsigned int i=0; i< vip.size(); i++)
+        ( I.display )->displayLine ( vip[i], vip[(i+1)%vip.size()], color, thickness );
+    }
+  }
+  catch ( ... )
+  {
+    vpERROR_TRACE ( "Error caught" ) ;
+    throw ;
+  }
+}
+
+/*!
+  Display a polygon defined by a vector of image points.
+  \param I : The image associated to the display.
+  \param vip : Vector of image point that define the vertexes of the polygon.
+  \param color : Line color.
+  \param thickness : Line thickness.
+
+*/
+void
+vpDisplay::displayPolygon(const vpImage<vpRGBa> &I,
+                          const std::vector<vpImagePoint> &vip,
+                          const vpColor &color,
+                          unsigned int thickness)
+{
+  try
+  {
+    if ( I.display != NULL )
+    {
+      for (unsigned int i=0; i< vip.size(); i++)
+        ( I.display )->displayLine ( vip[i], vip[(i+1)%vip.size()], color, thickness );
     }
   }
   catch ( ... )
@@ -2049,6 +2287,8 @@ void vpDisplay::close ( vpImage<unsigned char> &I )
 
 /*!
   Set the windows title.
+  \note This functionality is not implemented when vpDisplayOpenCV is used.
+
   \param I : Image associated to the display window.
   \param windowtitle : Window title.
 */
@@ -2483,7 +2723,7 @@ bool vpDisplay::getClick ( const vpImage<unsigned char> &I,
 bool  vpDisplay::getClick ( const vpImage<unsigned char> &I,
                             vpImagePoint &ip, 
                             vpMouseButton::vpMouseButtonType& button,
-			    bool blocking)
+                            bool blocking)
 {
   try
   {
@@ -2498,6 +2738,56 @@ bool  vpDisplay::getClick ( const vpImage<unsigned char> &I,
     throw ;
   }
   return false ;
+}
+
+/*!
+  Wait for a mouse button click and get the position of the clicked
+  image point. The button used to click is also set.
+
+  \param I [in] : The displayed image.
+
+  \param button [out] : The button used to click.
+
+  \param blocking [in] :
+  - When set to true, this method waits until a mouse button is
+    pressed and then returns always true.
+  - When set to false, returns true only if a mouse button is
+    pressed, otherwise returns false.
+
+  \return true if a mouse button is pressed, false otherwise.
+
+*/
+bool  vpDisplay::getClick ( const vpImage<unsigned char> &I,
+                            vpMouseButton::vpMouseButtonType& button,
+                            bool blocking)
+{
+  vpImagePoint ip;
+  return vpDisplay::getClick(I, ip, button, blocking);
+}
+
+/*!
+  Wait for a mouse button click and get the position of the clicked
+  image point. The button used to click is also set.
+
+  \param I [in] : The displayed image.
+
+  \param button [out] : The button used to click.
+
+  \param blocking [in] :
+  - When set to true, this method waits until a mouse button is
+    pressed and then returns always true.
+  - When set to false, returns true only if a mouse button is
+    pressed, otherwise returns false.
+
+  \return true if a mouse button is pressed, false otherwise.
+
+*/
+bool  vpDisplay::getClick ( const vpImage<vpRGBa> &I,
+                            vpMouseButton::vpMouseButtonType& button,
+                            bool blocking)
+{
+  vpImagePoint ip;
+  return vpDisplay::getClick(I, ip, button, blocking);
 }
 
 /*!
@@ -2541,6 +2831,57 @@ vpDisplay::getClickUp ( const vpImage<unsigned char> &I,
   }
   return false ;
 }
+
+/*!
+  Wait for a mouse button click release and get the position of the clicked
+  image point. The button used to click is also set.
+
+  \param I [in] : The displayed image.
+
+  \param button [out] : The clicked button.
+
+  \param blocking [in] :
+  - When set to true, this method waits until a mouse button is
+    released and then returns always true.
+  - When set to false, returns true only if a mouse button is
+    released, otherwise returns false.
+
+  \return true if a mouse button is released, false otherwise.
+
+*/
+bool  vpDisplay::getClickUp ( const vpImage<unsigned char> &I,
+                            vpMouseButton::vpMouseButtonType& button,
+                            bool blocking)
+{
+  vpImagePoint ip;
+  return vpDisplay::getClickUp(I, ip, button, blocking);
+}
+
+/*!
+  Wait for a mouse button click release and get the position of the clicked
+  image point. The button used to click is also set.
+
+  \param I [in] : The displayed image.
+
+  \param button [out] : The clicked button.
+
+  \param blocking [in] :
+  - When set to true, this method waits until a mouse button is
+    released and then returns always true.
+  - When set to false, returns true only if a mouse button is
+    released, otherwise returns false.
+
+  \return true if a mouse button is released, false otherwise.
+
+*/
+bool  vpDisplay::getClickUp ( const vpImage<vpRGBa> &I,
+                            vpMouseButton::vpMouseButtonType& button,
+                            bool blocking)
+{
+  vpImagePoint ip;
+  return vpDisplay::getClickUp(I, ip, button, blocking);
+}
+
 /*!
   Get a keyboard event.
 
@@ -3218,3 +3559,402 @@ vpDisplay::getPointerPosition (const vpImage<vpRGBa> &I, vpImagePoint &ip)
   }
   return false;
 }
+
+/*!
+  Display an ellipse from its parameters expressed in pixels.
+  \param I : Image to consider.
+  \param center : Center \f$(u_c, v_c)\f$ of the ellipse.
+  \param coef1, coef2, coef3 : Depending on the parameter \e use_centered_moments these parameters
+  are:
+  - the centered moments expressed in pixels: \f$\mu_{20}, \mu_{11}, \mu_{02}\f$;
+  - the major and minor axis lenght in pixels and the excentricity of the ellipse in radians: \f$a, b, e\f$.
+  \param use_centered_moments : When false, the parameters coef1, coef2, coef3
+  are the parameters \f$a, b, e\f$. When true, the parameters coef1, coef2, coef3 are rather the centered moments
+  \f$\mu_{20}, \mu_{11}, \mu_{02}\f$ expressed in pixels. In that case, we compute the parameters \e a, \e b and \e e
+  from the centered moments.
+  \param color : Drawings color.
+  \param thickness : Drawings thickness.
+
+  All the points \f$(u_\theta,v_\theta)\f$ on the ellipse are drawn thanks to its parametric representation:
+
+  \f[ \left(\begin{array}{c}
+  u_\theta \\
+  v_\theta
+  \end{array} \right) = \left(\begin{array}{c}
+  u_c \\
+  v_c
+  \end{array} \right) + \left(\begin{array}{cc}
+  \cos(e) & -\sin(e) \\
+  \sin(e) & \cos(e)
+  \end{array} \right) \left(\begin{array}{c}
+  a \cos(\theta) \\
+  b \sin(\theta)
+  \end{array} \right) \f]
+
+  with \f$0 \leq \theta \leq 2\pi\f$.
+
+  The following example shows how to use for example this function to display the result of a tracking.
+  \code
+    vpMeEllipse ellipse;
+    ...
+    vpDisplay::display(I);
+    ellipse.track(I) ;
+
+    vpDisplay::displayEllipse(I, ellipse.getCenter(), ellipse.get_mu20(), ellipse.get_mu11(), ellipse.get_mu02(),
+                              true, vpColor::orange, 1);
+    vpDisplay::flush(I);
+  \endcode
+*/
+void vpDisplay::displayEllipse(const vpImage<unsigned char> &I,
+                               const vpImagePoint &center,
+                               const double &coef1, const double &coef2, const double &coef3,
+                               bool use_centered_moments,
+                               const vpColor &color,
+                               unsigned int thickness)
+{
+  vpDisplay::displayEllipse(I, center, coef1, coef2, coef3, 0., vpMath::rad(360), use_centered_moments, color, thickness);
+}
+
+/*!
+  Display an ellipse from its parameters expressed in pixels.
+  \param I : Image to consider.
+  \param center : Center \f$(u_c, v_c)\f$ of the ellipse.
+  \param coef1, coef2, coef3 : Depending on the parameter \e use_centered_moments these parameters
+  are:
+  - the centered moments expressed in pixels: \f$\mu_{20}, \mu_{11}, \mu_{02}\f$;
+  - the major and minor axis lenght in pixels and the excentricity of the ellipse in radians: \f$a, b, e\f$.
+  \param theta1, theta2 : Angles \f$(\theta_1, \theta_2)\f$ in radians used to select a portion of the ellipse.
+  If theta1=0 and theta2=vpMath::rad(360) all the ellipse is displayed.
+  \param use_centered_moments : When false, the parameters coef1, coef2, coef3
+  are the parameters \f$a, b, e\f$. When true, the parameters coef1, coef2, coef3 are rather the centered moments
+  \f$\mu_{20}, \mu_{11}, \mu_{02}\f$ expressed in pixels. In that case, we compute the parameters \e a, \e b and \e e
+  from the centered moments.
+  \param color : Drawings color.
+  \param thickness : Drawings thickness.
+
+  All the points \f$(u_\theta,v_\theta)\f$ on the ellipse are drawn thanks to its parametric representation:
+
+  \f[ \left(\begin{array}{c}
+  u_\theta \\
+  v_\theta
+  \end{array} \right) = \left(\begin{array}{c}
+  u_c \\
+  v_c
+  \end{array} \right) + \left(\begin{array}{cc}
+  \cos(e) & -\sin(e) \\
+  \sin(e) & \cos(e)
+  \end{array} \right) \left(\begin{array}{c}
+  a \cos(\theta) \\
+  b \sin(\theta)
+  \end{array} \right) \f]
+
+  with \f$\theta_1 \leq \theta \leq \theta_2\f$.
+
+  The following example shows how to use for example this function to display the result of a tracking.
+  \code
+    vpMeEllipse ellipse;
+    ...
+    vpDisplay::display(I);
+    ellipse.track(I) ;
+
+    vpDisplay::displayEllipse(I, ellipse.getCenter(), ellipse.get_mu20(),
+                              ellipse.get_mu11(), ellipse.get_mu02(),
+                              ellipse.getSmallestAngle(), ellipse.getHighestAngle(),
+                              true, vpColor::orange, 1);
+    vpDisplay::flush(I);
+  \endcode
+*/
+void vpDisplay::displayEllipse(const vpImage<vpRGBa> &I,
+                               const vpImagePoint &center,
+                               const double &coef1, const double &coef2, const double &coef3,
+                               const double &theta1, const double &theta2, bool use_centered_moments,
+                               const vpColor &color,
+                               unsigned int thickness)
+{
+  try
+  {
+    if ( I.display != NULL )
+    {
+      double j1, i1;
+      vpImagePoint iP11;
+      double j2, i2;
+      vpImagePoint iP22;
+      j1 = j2 = i1 = i2 = 0 ;
+      double a=0., b=0., e=0.;
+
+      double mu20_p = coef1;
+      double mu11_p = coef2;
+      double mu02_p = coef3;
+
+      if (use_centered_moments) {
+        if (std::fabs(mu11_p) > std::numeric_limits<double>::epsilon()) {
+
+          double val_p = sqrt(vpMath::sqr(mu20_p-mu02_p) + 4*vpMath::sqr(mu11_p));
+          a = sqrt((mu20_p + mu02_p + val_p)/2);
+          b = sqrt((mu20_p + mu02_p - val_p)/2);
+
+          e = (mu02_p - mu20_p + val_p)/(2*mu11_p);
+          e = atan(e);
+        }
+        else {
+          a = sqrt(mu20_p);
+          b = sqrt(mu02_p);
+          e = 0.;
+        }
+      }
+      else {
+        a = coef1;
+        b = coef2;
+        e = coef3;
+      }
+
+      // Approximation of the circumference of an ellipse:
+      // [Ramanujan, S., "Modular Equations and Approximations to ,"
+      // Quart. J. Pure. Appl. Math., vol. 45 (1913-1914), pp. 350-372]
+      double t = (a-b)/(a+b);
+      double circumference = M_PI*(a+b)*(1 + 3*vpMath::sqr(t)/(10 + sqrt(4 - 3*vpMath::sqr(t))));
+
+      int nbpoints = (int)(floor(circumference/5));
+      if (nbpoints < 10)
+        nbpoints = 10;
+      double incr = 2*M_PI / nbpoints ; // angle increment
+
+      double smallalpha = theta1;
+      double highalpha  = theta2;
+      double ce = cos(e);
+      double se = sin(e);
+
+      double k = smallalpha ;
+      j1 = a *cos(k) ; // equation of an ellipse
+      i1 = b *sin(k) ; // equation of an ellipse
+
+      // (i1,j1) are the coordinates on the origin centered ellipse ;
+      // a rotation by "e" and a translation by (xci,jc) are done
+      // to get the coordinates of the point on the shifted ellipse
+      iP11.set_j ( center.get_j() + ce *j1 - se *i1 );
+      iP11.set_i ( center.get_i() + se *j1 + ce *i1 );
+
+      while (k+incr<highalpha+incr)
+      {
+        j2 = a *cos(k+incr) ; // equation of an ellipse
+        i2 = b *sin(k+incr) ; // equation of an ellipse
+
+        // to get the coordinates of the point on the shifted ellipse
+        iP22.set_j ( center.get_j() + ce *j2 - se *i2 );
+        iP22.set_i ( center.get_i() + se *j2 + ce *i2 );
+
+        ( I.display )->displayLine(iP11, iP22, color, thickness) ;
+
+        i1 = i2;
+        j1 = j2;
+        iP11 = iP22;
+
+        k += incr ;
+      }
+    }
+  }
+  catch ( vpException &e )
+  {
+    throw(e) ;
+  }
+}
+
+/*!
+  Display an ellipse from its parameters expressed in pixels.
+  \param I : Image to consider.
+  \param center : Center \f$(u_c, v_c)\f$ of the ellipse.
+  \param coef1, coef2, coef3 : Depending on the parameter \e use_centered_moments these parameters
+  are:
+  - the centered moments expressed in pixels: \f$\mu_{20}, \mu_{11}, \mu_{02}\f$;
+  - the major and minor axis lenght in pixels and the excentricity of the ellipse in radians: \f$a, b, e\f$.
+  \param use_centered_moments : When false, the parameters coef1, coef2, coef3
+  are the parameters \f$a, b, e\f$. When true, the parameters coef1, coef2, coef3 are rather the centered moments
+  \f$\mu_{20}, \mu_{11}, \mu_{02}\f$ expressed in pixels. In that case, we compute the parameters \e a, \e b and \e e
+  from the centered moments.
+  \param color : Drawings color.
+  \param thickness : Drawings thickness.
+
+  All the points \f$(u_\theta,v_\theta)\f$ on the ellipse are drawn thanks to its parametric representation:
+
+  \f[ \left(\begin{array}{c}
+  u_\theta \\
+  v_\theta
+  \end{array} \right) = \left(\begin{array}{c}
+  u_c \\
+  v_c
+  \end{array} \right) + \left(\begin{array}{cc}
+  \cos(e) & -\sin(e) \\
+  \sin(e) & \cos(e)
+  \end{array} \right) \left(\begin{array}{c}
+  a \cos(\theta) \\
+  b \sin(\theta)
+  \end{array} \right) \f]
+
+  with \f$0 \leq \theta \leq 2\pi\f$.
+
+  The following example shows how to use for example this function to display the result of a tracking.
+  \code
+    vpMeEllipse ellipse;
+    ...
+    vpDisplay::display(I);
+    ellipse.track(I) ;
+
+    vpDisplay::displayEllipse(I, ellipse.getCenter(), ellipse.get_mu20(), ellipse.get_mu11(), ellipse.get_mu02(),
+                              true, vpColor::orange, 1);
+    vpDisplay::flush(I);
+  \endcode
+*/
+void vpDisplay::displayEllipse(const vpImage<vpRGBa> &I,
+                               const vpImagePoint &center,
+                               const double &coef1, const double &coef2, const double &coef3,
+                               bool use_centered_moments,
+                               const vpColor &color,
+                               unsigned int thickness)
+{
+  vpDisplay::displayEllipse(I, center, coef1, coef2, coef3, 0., vpMath::rad(360), use_centered_moments, color, thickness);
+}
+
+/*!
+  Display an ellipse from its parameters expressed in pixels.
+  \param I : Image to consider.
+  \param center : Center \f$(u_c, v_c)\f$ of the ellipse.
+  \param coef1, coef2, coef3 : Depending on the parameter \e use_centered_moments these parameters
+  are:
+  - the centered moments expressed in pixels: \f$\mu_{20}, \mu_{11}, \mu_{02}\f$;
+  - the major and minor axis lenght in pixels and the excentricity of the ellipse in radians: \f$a, b, e\f$.
+  \param theta1, theta2 : Angles \f$(\theta_1, \theta_2)\f$ in radians used to select a portion of the ellipse.
+  If theta1=0 and theta2=vpMath::rad(360) all the ellipse is displayed.
+  \param use_centered_moments : When false, the parameters coef1, coef2, coef3
+  are the parameters \f$a, b, e\f$. When true, the parameters coef1, coef2, coef3 are rather the centered moments
+  \f$\mu_{20}, \mu_{11}, \mu_{02}\f$ expressed in pixels. In that case, we compute the parameters \e a, \e b and \e e
+  from the centered moments.
+  \param color : Drawings color.
+  \param thickness : Drawings thickness.
+
+  All the points \f$(u_\theta,v_\theta)\f$ on the ellipse are drawn thanks to its parametric representation:
+
+  \f[ \left(\begin{array}{c}
+  u_\theta \\
+  v_\theta
+  \end{array} \right) = \left(\begin{array}{c}
+  u_c \\
+  v_c
+  \end{array} \right) + \left(\begin{array}{cc}
+  \cos(e) & -\sin(e) \\
+  \sin(e) & \cos(e)
+  \end{array} \right) \left(\begin{array}{c}
+  a \cos(\theta) \\
+  b \sin(\theta)
+  \end{array} \right) \f]
+
+  with \f$\theta_1 \leq \theta \leq \theta_2\f$.
+
+  The following example shows how to use for example this function to display the result of a tracking.
+  \code
+    vpMeEllipse ellipse;
+    ...
+    vpDisplay::display(I);
+    ellipse.track(I) ;
+
+    vpDisplay::displayEllipse(I, ellipse.getCenter(), ellipse.get_mu20(),
+                              ellipse.get_mu11(), ellipse.get_mu02(),
+                              ellipse.getSmallestAngle(), ellipse.getHighestAngle(),
+                              true, vpColor::orange, 1);
+    vpDisplay::flush(I);
+  \endcode
+*/
+void vpDisplay::displayEllipse(const vpImage<unsigned char> &I,
+                               const vpImagePoint &center,
+                               const double &coef1, const double &coef2, const double &coef3,
+                               const double &theta1, const double &theta2, bool use_centered_moments,
+                               const vpColor &color,
+                               unsigned int thickness)
+{
+  try
+  {
+    if ( I.display != NULL )
+    {
+      double j1, i1;
+      vpImagePoint iP11;
+      double j2, i2;
+      vpImagePoint iP22;
+      j1 = j2 = i1 = i2 = 0 ;
+      double a=0., b=0., e=0.;
+
+      double mu20_p = coef1;
+      double mu11_p = coef2;
+      double mu02_p = coef3;
+
+      if (use_centered_moments) { 
+        if (std::fabs(mu11_p) > std::numeric_limits<double>::epsilon()) {
+
+          double val_p = sqrt(vpMath::sqr(mu20_p-mu02_p) + 4*vpMath::sqr(mu11_p));
+          a = sqrt((mu20_p + mu02_p + val_p)/2);
+          b = sqrt((mu20_p + mu02_p - val_p)/2);
+
+          e = (mu02_p - mu20_p + val_p)/(2*mu11_p);
+          e = atan(e);
+        }
+        else {
+          a = sqrt(mu20_p);
+          b = sqrt(mu02_p);
+          e = 0.;
+        }
+      }
+      else {
+        a = coef1;
+        b = coef2;
+        e = coef3;
+      }
+
+      // Approximation of the circumference of an ellipse:
+      // [Ramanujan, S., "Modular Equations and Approximations to ,"
+      // Quart. J. Pure. Appl. Math., vol. 45 (1913-1914), pp. 350-372]
+      double t = (a-b)/(a+b);
+      double circumference = M_PI*(a+b)*(1 + 3*vpMath::sqr(t)/(10 + sqrt(4 - 3*vpMath::sqr(t))));
+
+      int nbpoints = (int)(floor(circumference/5));
+      if (nbpoints < 10)
+        nbpoints = 10;
+      double incr = 2*M_PI / nbpoints ; // angle increment
+
+      double smallalpha = theta1;
+      double highalpha  = theta2;
+      double ce = cos(e);
+      double se = sin(e);
+
+      double k = smallalpha ;
+      j1 = a *cos(k) ; // equation of an ellipse
+      i1 = b *sin(k) ; // equation of an ellipse
+
+      // (i1,j1) are the coordinates on the origin centered ellipse ;
+      // a rotation by "e" and a translation by (xci,jc) are done
+      // to get the coordinates of the point on the shifted ellipse
+      iP11.set_j ( center.get_j() + ce *j1 - se *i1 );
+      iP11.set_i ( center.get_i() + se *j1 + ce *i1 );
+
+      while (k+incr<highalpha+incr)
+      {
+        j2 = a *cos(k+incr) ; // equation of an ellipse
+        i2 = b *sin(k+incr) ; // equation of an ellipse
+
+        // to get the coordinates of the point on the shifted ellipse
+        iP22.set_j ( center.get_j() + ce *j2 - se *i2 );
+        iP22.set_i ( center.get_i() + se *j2 + ce *i2 );
+
+        ( I.display )->displayLine(iP11, iP22, color, thickness) ;
+
+        i1 = i2;
+        j1 = j2;
+        iP11 = iP22;
+
+        k += incr ;
+      }
+    }
+  }
+  catch ( vpException &e )
+  {
+    throw(e) ;
+  }
+}
+

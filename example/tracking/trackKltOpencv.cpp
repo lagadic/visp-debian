@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: trackKltOpencv.cpp 4658 2014-02-09 09:50:14Z fspindle $
+ * $Id: trackKltOpencv.cpp 5108 2015-01-05 07:48:58Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -53,9 +53,9 @@
 #include <iomanip>
 #include <vector>
 
-#if (defined (VISP_HAVE_X11) || defined(VISP_HAVE_GTK) || defined(VISP_HAVE_GDI))
+#if (defined (VISP_HAVE_X11) || defined(VISP_HAVE_GTK) || defined(VISP_HAVE_GDI) || defined (VISP_HAVE_OPENCV))
 
-#if (defined (VISP_HAVE_OPENCV))
+#if defined (VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION >= 0x020100)
 
 #include <visp/vpKltOpencv.h>
 #include <visp/vpImage.h>
@@ -63,6 +63,7 @@
 #include <visp/vpDisplayX.h>
 #include <visp/vpDisplayGTK.h>
 #include <visp/vpDisplayGDI.h>
+#include <visp/vpDisplayOpenCV.h>
 #include <visp/vpParseArgv.h>
 #include <visp/vpIoTools.h>
 
@@ -218,15 +219,12 @@ main(int argc, const char ** argv)
     bool opt_click_allowed = true;
     bool opt_display = true;
 
-    // Get the VISP_IMAGE_PATH environment variable value
-    char *ptenv = getenv("VISP_INPUT_IMAGE_PATH");
-    if (ptenv != NULL)
-      env_ipath = ptenv;
+    // Get the visp-images-data package path or VISP_INPUT_IMAGE_PATH environment variable value
+    env_ipath = vpIoTools::getViSPImagesDataPath();
 
     // Set the default input path
     if (! env_ipath.empty())
       ipath = env_ipath;
-
 
     // Read the command line options
     if (getOptions(argc, argv, opt_ipath, opt_ppath,opt_first, opt_nimages,
@@ -270,7 +268,11 @@ main(int argc, const char ** argv)
     // it size is not defined yet, it will be defined when the image will
     // read on the disk
     vpImage<unsigned char> vpI ; // This is a ViSP image used for display only
-    IplImage * cvI; // This is an OpenCV IPL image used by the tracker
+#if (VISP_HAVE_OPENCV_VERSION < 0x020408)
+    IplImage * cvI = NULL; // This is an OpenCV IPL image used by the tracker
+#else
+    cv::Mat cvI;
+#endif
 
     unsigned iter = opt_first;
     std::ostringstream s;
@@ -292,17 +294,16 @@ main(int argc, const char ** argv)
       //  in the download section. It is named "ViSP-images.tar.gz"
 
       // Set the path location of the image sequence
-      dirname = ipath + vpIoTools::path("/ViSP-images/mire-2/");
+      dirname = vpIoTools::createFilePath(ipath, "ViSP-images/mire-2");
 
       // Build the name of the image file
 
       s.setf(std::ios::right, std::ios::adjustfield);
       s << "image." << std::setw(4) << std::setfill('0') << iter << ".pgm";
-      filename = dirname + s.str();
+      filename = vpIoTools::createFilePath(dirname, s.str());
     }
     else {
-
-      sprintf(cfilename,opt_ppath.c_str(), iter) ;
+      sprintf(cfilename, opt_ppath.c_str(), iter) ;
       filename = cfilename;
     }
 
@@ -313,15 +314,11 @@ main(int argc, const char ** argv)
     // exception readPGM may throw various exception if, for example,
     // the file does not exist, or if the memory cannot be allocated
     try{
-      vpCTRACE << "Load: " << filename << std::endl;
+      std::cout << "Load: " << filename << std::endl;
 
       // Load a ViSP image used for the display
       vpImageIo::read(vpI, filename) ;
-      // Load an OpenCV IPL image used by the tracker
-      if((cvI = cvLoadImage(filename.c_str(), CV_LOAD_IMAGE_GRAYSCALE))== NULL) {
-        printf("Cannot read image: %s\n", filename.c_str());
-        return (0);
-      }
+      vpImageConvert::convert(vpI, cvI);
     }
     catch(...)
     {
@@ -345,6 +342,8 @@ main(int argc, const char ** argv)
     vpDisplayGTK display;
 #elif defined VISP_HAVE_GDI
     vpDisplayGDI display;
+#elif defined VISP_HAVE_OPENCV
+    vpDisplayOpenCV display;
 #endif
 
     if (opt_display) {
@@ -393,22 +392,15 @@ main(int argc, const char ** argv)
       if (opt_ppath.empty()){
         s.str("");
         s << "image." << std::setw(4) << std::setfill('0') << iter << ".pgm";
-        filename = dirname + s.str();
+        filename = vpIoTools::createFilePath(dirname, s.str());
       }
       else {
         sprintf(cfilename, opt_ppath.c_str(), iter) ;
         filename = cfilename;
       }
       // read the image
-      std::cout << "read : " << filename << std::endl;
-      // Load a ViSP image used for the display
       vpImageIo::read(vpI, filename) ;
-      // Load an OpenCV IPL image used by the tracker
-      if((cvI = cvLoadImage(filename.c_str(), CV_LOAD_IMAGE_GRAYSCALE))
-         == NULL) {
-        printf("Cannot read image: %s\n", filename.c_str());
-        return (0);
-      }
+      vpImageConvert::convert(vpI, cvI);
 
       // track the dot and returns its coordinates in the image
       // results are given in float since many many are usually considered
@@ -426,7 +418,7 @@ main(int argc, const char ** argv)
       // Tracking of the detected points
       tracker.track(cvI);
       std::cout << "Tracking performed in " <<
-                   vpTime::measureTimeMs() - time << " ms): " << std::endl;
+                   vpTime::measureTimeMs() - time << " ms" << std::endl;
 
       if (opt_display) {
         // Display the tracked points
@@ -459,7 +451,7 @@ main()
 int
 main()
 {
-  vpERROR_TRACE("You do not have X11, GTK or GDI display functionalities...");
+  vpERROR_TRACE("You do not have X11, GTK, GDI or OpenCV display functionalities...");
 }
 
 #endif

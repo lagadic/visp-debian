@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpBasicFeature.cpp 4632 2014-02-03 17:06:40Z fspindle $
+ * $Id: vpBasicFeature.cpp 5237 2015-01-30 13:52:04Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -68,12 +68,24 @@ const unsigned int vpBasicFeature::FEATURE_ALL = 0xffff;
 /*!
   \file vpBasicFeature.cpp
   \brief Class that defines what is a visual feature.
-
+*/
+/*!
   Default constructor.
 */
 vpBasicFeature::vpBasicFeature()
   : s(), dim_s(0), flags(NULL), nbParameters(0), deallocate(vpBasicFeature::user)
 {
+}
+
+/*!
+  Destructor that free allocated memory.
+*/
+vpBasicFeature::~vpBasicFeature()
+{
+  if (flags != NULL) {
+    delete [] flags;
+    flags = NULL;
+  }
 }
 
 /*!

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpMomentCInvariant.h 4574 2014-01-09 08:48:51Z fspindle $
+ * $Id: vpMomentCInvariant.h 5303 2015-02-10 17:01:28Z mbakthav $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -193,6 +193,11 @@ class VISP_EXPORT vpMomentCInvariant : public vpMoment {
           Access to partial invariants. The index convention is the same as in [1].
           */
         double getI(unsigned int index) const {return I[index];}
+
+        /*!
+          Print the moment invariants used to obtain the actual visual features
+         */
+        void printInvariants(std::ostream& os) const;
 
         /*!
           Access to partial invariant I (see [2]).

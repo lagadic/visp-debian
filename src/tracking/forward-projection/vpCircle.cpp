@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpCircle.cpp 4649 2014-02-07 14:57:11Z fspindle $
+ * $Id: vpCircle.cpp 4772 2014-07-10 17:05:53Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -73,19 +73,17 @@ vpCircle::setWorldCoordinates(const vpColVector& oP_)
   We mean here the coordinates of the circle in the object frame
  
   \param A : A from the plane equation Ax + By + Cz = 0.
-  \param B : A from the plane equation Ax + By + Cz = 0.
-  \param C : A from the plane equation Ax + By + Cz = 0.
+  \param B : B from the plane equation Ax + By + Cz = 0.
+  \param C : C from the plane equation Ax + By + Cz = 0.
   \param X0 : X Coordinate of the center of the sphere.
   \param Y0 : Y Coordinate of the center of the sphere.
   \param Z0 : Z Coordinate of the center of the sphere.
   \param R : Radius of the sphere.
 */
 void
-vpCircle::setWorldCoordinates(const double A, const double B,
-			       const double C,
-			       const double X0, const double Y0,
-			       const double Z0,
-			       const double R)
+vpCircle::setWorldCoordinates(const double A, const double B, const double C,
+                              const double X0, const double Y0, const double Z0,
+                              const double R)
 {
   oP[0] = A ;
   oP[1] = B ;
@@ -122,8 +120,8 @@ vpCircle::vpCircle(const vpColVector& oP_)
   Construct the circle from the intersection of a plane and a sphere. 
  
   \param A : A from the plane equation Ax + By + Cz = 0.
-  \param B : A from the plane equation Ax + By + Cz = 0.
-  \param C : A from the plane equation Ax + By + Cz = 0.
+  \param B : B from the plane equation Ax + By + Cz = 0.
+  \param C : C from the plane equation Ax + By + Cz = 0.
   \param X0 : X Coordinate of the center of the sphere.
   \param Y0 : Y Coordinate of the center of the sphere.
   \param Z0 : Z Coordinate of the center of the sphere.
@@ -150,14 +148,31 @@ vpCircle::~vpCircle()
 
 
 
-//! perspective projection of the circle
+/*!
+  Perspective projection of the circle.
+
+  From the 3D parameters of the circle in the camera frame available in cP, computes the 2D parameters of the ellipse resulting from the perspective projection in the image plane. Those 2D parameters are available in p vector.
+
+  See vpCircle::projection(const vpColVector &, vpColVector &) for a more detailed description of the parameters.
+  */
 void
 vpCircle::projection()
 {
   projection(cP,p) ;
 }
 
-//! Perspective projection of the circle.
+/*!
+  Perspective projection of the circle.
+  \param cP_: 3D cercle input parameters. This vector is of dimension 7. It contains the following parameters: A, B, C, X0, Y0, Z0, r where
+  - A,B,C are the parameters of the plane with equation Ax+By+Cz+D=0 containing the circle
+  - X0,Y0,Z0 are the 3D coordinates of the cercle in the camera frame
+  - r is the circle radius.
+
+  \param p_: 2D circle output parameters. This is a 5 dimension vector. It contains the following parameters: xc, yc, m20, m11, m02 where:
+  - xc,yc are the normalized coordinates of the center of the ellipse (ie the perspective projection of a 3D
+    circle becomes a 2D ellipse in the image) in the image plane.
+  - mu20,mu11,mu02 are the second order centered moments of the ellipse.
+  */
 void
 vpCircle::projection(const vpColVector &cP_, vpColVector &p_)
 {
@@ -188,6 +203,12 @@ vpCircle::projection(const vpColVector &cP_, vpColVector &p_)
     K[5] = 1 - 2*C*Z0 + C*C*s;
 
   }
+
+//  {
+//    std::cout << "K dans vpCircle::projection(): " << std::endl;
+//    for (unsigned int i=1; i<6; i++)
+//      std::cout << K[i]/K[0] << std::endl;
+//  }
   double det  = K[2]*K[2] -K[0]*K[1];
   if (fabs(det) < 1e-8)
   {
@@ -204,7 +225,8 @@ vpCircle::projection(const vpColVector &cP_, vpColVector &p_)
 
   double A,B,E ;
 
-  if (fabs(K[2])<1e-6)
+  //if (fabs(K[2])<1e-6)
+  if (fabs(K[2])<std::numeric_limits<double>::epsilon())
   {
     E = 0.0;
     if (K[0] > K[1])
@@ -235,15 +257,15 @@ vpCircle::projection(const vpColVector &cP_, vpColVector &p_)
   }
 
   det =  (1.0 + vpMath::sqr(E));
-  double m20 = (vpMath::sqr(A) +  vpMath::sqr(B*E))  /det ;
-  double m11 = (vpMath::sqr(A)  - vpMath::sqr(B)) *E / det ;
-  double m02 = (vpMath::sqr(B) + vpMath::sqr(A*E))   / det ;
+  double mu20 = (vpMath::sqr(A) +  vpMath::sqr(B*E))  /det ;
+  double mu11 = (vpMath::sqr(A) - vpMath::sqr(B)) *E / det ;
+  double mu02 = (vpMath::sqr(B) + vpMath::sqr(A*E))   / det ;
 
   p_[0] = xc ;
   p_[1] = yc ;
-  p_[2] = m20 ;
-  p_[3] = m11 ;
-  p_[4] = m02 ;
+  p_[2] = mu20 ;
+  p_[3] = mu11 ;
+  p_[4] = mu02 ;
 }
 
 //! perspective projection of the circle

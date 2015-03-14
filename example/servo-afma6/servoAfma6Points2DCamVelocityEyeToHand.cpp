@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: servoAfma6Points2DCamVelocityEyeToHand.cpp 4574 2014-01-09 08:48:51Z fspindle $
+ * $Id: servoAfma6Points2DCamVelocityEyeToHand.cpp 5004 2014-11-24 08:24:18Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -284,14 +284,10 @@ int main()
       vpDisplay::display(I) ;
       ip.set_i( 265 );
       ip.set_j( 150 );
-      vpDisplay::displayCharString(I, ip,
-                                   "Eye-To-Hand Visual Servoing",
-                                   vpColor::green) ;
+      vpDisplay::displayText(I, ip, "Eye-To-Hand Visual Servoing", vpColor::green) ;
       ip.set_i( 280 );
       ip.set_j( 150 );
-      vpDisplay::displayCharString(I, ip,
-                                   "IRISA-INRIA Rennes, Lagadic project",
-                                   vpColor::green) ;
+      vpDisplay::displayText(I, ip, "IRISA-INRIA Rennes, Lagadic project", vpColor::green) ;
       try
 	    {
 	      for (i=0 ; i < nbPoint ; i++)

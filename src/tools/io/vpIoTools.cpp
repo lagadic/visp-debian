@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpIoTools.cpp 4604 2014-01-21 14:15:23Z fspindle $
+ * $Id: vpIoTools.cpp 5214 2015-01-27 18:33:01Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -55,6 +55,7 @@
 #include <fcntl.h>
 #include <limits>
 #include <cmath>
+#include <algorithm>
 #if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
 #  include <unistd.h>
 #elif defined(_WIN32)
@@ -171,16 +172,11 @@ vpIoTools::getUserName()
 /*!
   Get the content of an environment variable.
 
-  \warning Under windows, this function is not implemented yet.
-
   \param env : Environment variable name (HOME, LOGNAME...).
-  \return Value of the environment variable
-
-  \exception vpException::notImplementedError : If this method is
-  called under Windows.
+  \return Value of the environment variable.
 
   \exception vpIoException::cantGetenv : If an error occur while
-  getting the environement variable value.
+  getting the environment variable value.
 
   \code
 #include <iostream>
@@ -194,8 +190,8 @@ int main()
     envvalue = vpIoTools::getenv("HOME");
     std::cout << "$HOME = \"" << envvalue << "\"" << std::endl;
   }
-  catch (...) {
-    std::cout << "Cannot get the environment variable value" << std::endl;
+  catch (vpException &e) {
+    std::cout << e.getMessage() << std::endl;
     return -1;
   }
   return 0;
@@ -205,14 +201,9 @@ int main()
   \sa getenv(std::string &)
 */
 std::string
-vpIoTools::getenv(const char *
-#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
-                  env
-#endif
-                  )
+vpIoTools::getenv(const char *env)
 {
   std::string value;
-#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
   // Get the environment variable value.
   char *_value = NULL;
   _value = ::getenv(env);
@@ -224,27 +215,16 @@ vpIoTools::getenv(const char *
   value = _value;
 
   return value;
-#elif defined(_WIN32)
-
-  vpERROR_TRACE( "Not implemented!" );
-  throw(vpIoException(vpException::notImplementedError,
-		      "Not implemented!")) ;
-#endif
 }
 
 /*!
   Get the content of an environment variable.
 
-  \warning Under windows, this function is not implemented yet.
-
   \param env : Environment variable name (HOME, LOGNAME...).
   \return Value of the environment variable
 
-  \exception vpException::notImplementedError : If this method is
-  called under Windows.
-
   \exception vpIoException::cantGetenv : If an error occur while
-  getting the environement variable value.
+  getting the environment variable value.
 
   \code
 #include <iostream>
@@ -259,8 +239,8 @@ int main()
     envvalue = vpIoTools::getenv(env);
     std::cout << "$HOME = \"" << envvalue << "\"" << std::endl;
   }
-  catch (...) {
-    std::cout << "Cannot get the environment variable value" << std::endl;
+  catch (vpException &e) {
+    std::cout << e.getMessage() << std::endl;
     return -1;
   }
   return 0;
@@ -270,7 +250,7 @@ int main()
   \sa getenv(const char *)
 */
 std::string
-vpIoTools::getenv(std::string &env)
+vpIoTools::getenv(const std::string &env)
 {
   return (vpIoTools::getenv(env.c_str()));
 }
@@ -1075,4 +1055,353 @@ void vpIoTools::saveConfigFile(const bool &actuallySave)
     // file copy
     vpIoTools::copy(configFile, dest);
   }
+}
+
+/*!
+ Get ViSP images data path. ViSP images data can be installed from Debian or Ubuntu \e visp-images-data package.
+ It can be also installed from ViSP-images.zip that can be found on http://team.inria.fr/lagadic/visp/download.html page.
+
+ This function returns the path to the folder that contains the data.
+ - It checks first if \e visp-images-data package is installed. In that case returns then \e /usr/share/visp-images-data".
+ - Then it checks if VISP_INPUT_IMAGE_PATH environment variable that gives the location of the data is set. In that
+   case returns the content of this environment var.
+
+ If the path is not found, returns an empty string.
+ */
+std::string vpIoTools::getViSPImagesDataPath()
+{
+  std::string data_path;
+  std::string file_to_test("ViSP-images/mbt/cube.cao");
+  std::string filename;
+#ifdef UNIX
+  // Test if visp-images-data package is u-installed (Ubuntu and Debian)
+  data_path = "/usr/share/visp-images-data";
+  filename = data_path + "/" + file_to_test;
+  if (vpIoTools::checkFilename(filename))
+    return data_path;
+#endif
+  // Test if VISP_INPUT_IMAGE_PATH env var is set
+  try {
+    data_path = vpIoTools::getenv("VISP_INPUT_IMAGE_PATH");
+    filename = data_path + "/" + file_to_test;
+    if (vpIoTools::checkFilename(filename))
+      return data_path;
+  }
+  catch(...) {
+  }
+  data_path = "";
+  return data_path;
+}
+
+/*!
+   Returns the extension of the file or an empty string if the file has no extension. If checkFile flag is set,
+   it will check first if the pathname denotes a directory and so return an empty string and second it will check
+   if the file denoted by the pathanme exists. If so, it will return the extension if present.
+   \param pathname : The pathname of the file we want to get the extension.
+   \param checkFile : If true, the file must exist otherwise an empty string will be returned.
+   \return The extension of the file or an empty string if the file has no extension.
+   or if the pathname is empty.
+ */
+std::string vpIoTools::getFileExtension(const std::string& pathname, const bool checkFile)
+{
+  if(checkFile && (vpIoTools::checkDirectory(pathname) || !vpIoTools::checkFilename(pathname))) {
+    return "";
+  }
+
+  //On Unix, or on the Mac
+  std::string sep = "/";
+  std::string altsep = "";
+  std::string extsep = ".";
+
+#if defined(_WIN32)
+  sep = "\\";
+  altsep = "/";
+  extsep = ".";
+#endif
+
+  //Python 2.7.8 module.
+//# Split a path in root and extension.
+//# The extension is everything starting at the last dot in the last
+//# pathname component; the root is everything before that.
+//# It is always true that root + ext == p.
+//
+//# Generic implementation of splitext, to be parametrized with
+//# the separators
+//def _splitext(p, sep, altsep, extsep):
+//    """Split the extension from a pathname.
+//
+//    Extension is everything from the last dot to the end, ignoring
+//    leading dots.  Returns "(root, ext)"; ext may be empty."""
+//
+//    sepIndex = p.rfind(sep)
+//    if altsep:
+//        altsepIndex = p.rfind(altsep)
+//        sepIndex = max(sepIndex, altsepIndex)
+//
+//    dotIndex = p.rfind(extsep)
+//    if dotIndex > sepIndex:
+//        # skip all leading dots
+//        filenameIndex = sepIndex + 1
+//        while filenameIndex < dotIndex:
+//            if p[filenameIndex] != extsep:
+//                return p[:dotIndex], p[dotIndex:]
+//            filenameIndex += 1
+//
+//    return p, ''
+
+  int sepIndex = (int)pathname.rfind(sep);
+  if(!altsep.empty()) {
+    int altsepIndex = (int)pathname.rfind(altsep);
+    sepIndex = (std::max)(sepIndex, altsepIndex);
+  }
+
+  size_t dotIndex = pathname.rfind(extsep);
+  if(dotIndex != std::string::npos) {
+    //The extsep character exists
+    if((sepIndex != (int)std::string::npos && (int)dotIndex > sepIndex) || sepIndex == (int)std::string::npos) {
+      if(sepIndex == (int)std::string::npos) {
+        sepIndex = -1;
+      }
+      size_t filenameIndex = (size_t)(sepIndex + 1);
+
+      while(filenameIndex < dotIndex) {
+        if(pathname.compare(filenameIndex, 1, extsep) != 0) {
+          return pathname.substr(dotIndex);
+        }
+        filenameIndex++;
+      }
+    }
+  }
+
+
+  return "";
+}
+
+/*!
+   Returns the name of the file or directory denoted by this pathname.
+   \return The name of the file or directory denoted by this pathname, or an
+   empty string if this pathname's name sequence is empty.
+ */
+std::string vpIoTools::getName(const std::string& pathname)
+{
+  if(pathname.size() > 0)
+  {
+    std::string convertedPathname = vpIoTools::path(pathname);
+
+    size_t index = convertedPathname.find_last_of(vpIoTools::separator);
+    if(index != std::string::npos) {
+      return convertedPathname.substr(index + 1);
+    }
+
+    return convertedPathname;
+  }
+
+  return "";
+}
+
+/*!
+   Returns the name of the file without extension or directory denoted by this pathname.
+   \return The name of the file without extension or directory denoted by this pathname, or an
+   empty string if this pathname's name sequence is empty.
+ */
+std::string vpIoTools::getNameWE(const std::string& pathname)
+{
+  std::string name = vpIoTools::getName(pathname);
+  size_t found = name.find_last_of(".");
+  std::string name_we = name.substr(0, found);
+  return name_we;
+}
+
+/*!
+ 	 Returns the pathname string of this pathname's parent.
+   \return The pathname string of this pathname's parent, or
+   an empty string if this pathname does not name a parent directory.
+ */
+std::string vpIoTools::getParent(const std::string& pathname)
+{
+	if(pathname.size() > 0)
+	{
+		std::string convertedPathname = vpIoTools::path(pathname);
+
+		size_t index = convertedPathname.find_last_of(vpIoTools::separator);
+		if(index != std::string::npos) {
+			return convertedPathname.substr(0, index);
+		}
+	}
+
+	return "";
+}
+
+/*!
+  Return the file path that corresponds to the concatenated
+  \e parent and \e child string files
+  by adding the corresponding separator for unix or windows.
+
+  The corresponding path is also converted. Under
+  windows, all the "/" characters are converted
+  into "\\" characters. Under Unix systems all the "\\"
+  characters are converted into "/" characters.
+ */
+std::string vpIoTools::createFilePath(const std::string& parent, const std::string child)
+{
+	if(child.size() == 0 && parent.size() == 0)
+	{
+		return "";
+	}
+
+	if(child.size() == 0)
+	{
+		return vpIoTools::path(parent);
+	}
+
+	if(parent.size() == 0)
+	{
+		return vpIoTools::path(child);
+	}
+
+	std::string convertedParent = vpIoTools::path(parent);
+	std::string convertedChild = vpIoTools::path(child);
+
+	std::stringstream ss;
+	ss << vpIoTools::separator;
+	std::string stringSeparator;
+	ss >> stringSeparator;
+
+	std::string lastConvertedParentChar = convertedParent.substr(convertedParent.size() - 1);
+	std::string firstConvertedChildChar = convertedChild.substr(0, 1);
+
+	if(lastConvertedParentChar == stringSeparator)
+	{
+		convertedParent = convertedParent.substr(0, convertedParent.size() - 1);
+	}
+
+	if(firstConvertedChildChar == stringSeparator)
+	{
+		convertedChild = convertedChild.substr(1);
+	}
+
+	return std::string(convertedParent + vpIoTools::separator + convertedChild);
+}
+
+/*!
+   Return whether a path is absolute.
+
+   \return true if the pathname is absolute, false otherwise.
+ */
+bool vpIoTools::isAbsolutePathname(const std::string& pathname)
+{
+  //# Inspired by the Python 2.7.8 module.
+	//# Return whether a path is absolute.
+	//# Trivial in Posix, harder on the Mac or MS-DOS.
+	//# For DOS it is absolute if it starts with a slash or backslash (current
+	//# volume), or if a pathname after the volume letter and colon / UNC resource
+	//# starts with a slash or backslash.
+	//
+	//def isabs(s):
+	//    """Test whether a path is absolute"""
+	//    s = splitdrive(s)[1]
+	//    return s != '' and s[:1] in '/\\'
+	std::string path = splitDrive(pathname).second;
+	return path.size() > 0 && (path.substr(0, 1) == "/" || path.substr(0, 1) == "\\");
+}
+
+/*!
+   Split a path in a drive specification (a drive letter followed by a colon) and the path specification.
+   It is always true that drivespec + pathspec == p
+ 	 Inspired by the Python 2.7.8 module.
+ 	 \return a pair whose the first element is the drive specification and the second element
+ 	 the path specification
+ */
+std::pair<std::string, std::string> vpIoTools::splitDrive(const std::string& pathname)
+{
+//# Split a path in a drive specification (a drive letter followed by a
+//# colon) and the path specification.
+//# It is always true that drivespec + pathspec == p
+//def splitdrive(p):
+//    """Split a pathname into drive/UNC sharepoint and relative path specifiers.
+//    Returns a 2-tuple (drive_or_unc, path); either part may be empty.
+//
+//    If you assign
+//        result = splitdrive(p)
+//    It is always true that:
+//        result[0] + result[1] == p
+//
+//    If the path contained a drive letter, drive_or_unc will contain everything
+//    up to and including the colon.  e.g. splitdrive("c:/dir") returns ("c:", "/dir")
+//
+//    If the path contained a UNC path, the drive_or_unc will contain the host name
+//    and share up to but not including the fourth directory separator character.
+//    e.g. splitdrive("//host/computer/dir") returns ("//host/computer", "/dir")
+//
+//    Paths cannot contain both a drive letter and a UNC path.
+//
+//    """
+//    if len(p) > 1:
+//        normp = p.replace(altsep, sep)
+//        if (normp[0:2] == sep*2) and (normp[2] != sep):
+//            # is a UNC path:
+//            # vvvvvvvvvvvvvvvvvvvv drive letter or UNC path
+//            # \\machine\mountpoint\directory\etc\...
+//            #           directory ^^^^^^^^^^^^^^^
+//            index = normp.find(sep, 2)
+//            if index == -1:
+//                return '', p
+//            index2 = normp.find(sep, index + 1)
+//            # a UNC path can't have two slashes in a row
+//            # (after the initial two)
+//            if index2 == index + 1:
+//                return '', p
+//            if index2 == -1:
+//                index2 = len(p)
+//            return p[:index2], p[index2:]
+//        if normp[1] == ':':
+//            return p[:2], p[2:]
+//    return '', p
+
+
+  //On Unix, the drive is always empty.
+  //On the Mac, the drive is always empty (don't use the volume name -- it doesn't have the same
+  //syntactic and semantic oddities as DOS drive letters, such as there being a separate current directory per drive).
+#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__)))
+  return std::pair<std::string, std::string>("", pathname);
+#else
+	const std::string sep = "\\";
+	const std::string sepsep = "\\\\";
+	const std::string altsep = "/";
+
+	if(pathname.size() > 1) {
+		std::string normPathname = pathname;
+		std::replace(normPathname.begin(), normPathname.end(), *altsep.c_str(), *sep.c_str());
+
+		if(normPathname.substr(0, 2) == sepsep && normPathname.substr(2, 1) != sep) {
+			// is a UNC path:
+			// vvvvvvvvvvvvvvvvvvvv drive letter or UNC path
+			// \\machine\mountpoint\directory\etc\...
+			//           directory ^^^^^^^^^^^^^^^
+			size_t index = normPathname.find(sep, 2);
+			if(index == std::string::npos) {
+				return std::pair<std::string, std::string>("", pathname);
+			}
+
+			size_t index2 = normPathname.find(sep, index + 1);
+			//# a UNC path can't have two slashes in a row
+			//# (after the initial two)
+			if(index2 == index + 1) {
+				return std::pair<std::string, std::string>("", pathname);
+			}
+
+			if(index2 == std::string::npos) {
+				index2 = pathname.size();
+			}
+
+			return std::pair<std::string, std::string>(pathname.substr(0, index2), pathname.substr(index2));
+		}
+
+		if(normPathname[1] == ':') {
+			return std::pair<std::string, std::string>(pathname.substr(0, 2), pathname.substr(2));
+		}
+	}
+
+	return std::pair<std::string, std::string>("", pathname);
+#endif
 }

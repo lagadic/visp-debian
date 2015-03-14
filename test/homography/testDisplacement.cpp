@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: testDisplacement.cpp 4658 2014-02-09 09:50:14Z fspindle $
+ * $Id: testDisplacement.cpp 4833 2014-08-28 14:21:46Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -205,9 +205,9 @@ main(int argc, const char ** argv)
       vpHomogeneousMatrix M ;
       M.insert(R) ;
 
-      M[0][3] = 0.21 ;
-      M[1][3] =- 0.31 ;
-      M[2][3] = 0.5 ;
+      M[0][3] =  0.21 ;
+      M[1][3] = -0.31 ;
+      M[2][3] =  0.5 ;
 
       std::cout << "M" << std::endl << M << std::endl ;
       vpPlane p(0.4,-0.5,0.5,1) ;

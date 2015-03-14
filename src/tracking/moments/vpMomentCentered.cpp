@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpMomentCentered.cpp 4620 2014-01-27 21:28:32Z fspindle $
+ * $Id: vpMomentCentered.cpp 4712 2014-03-28 17:55:43Z mbakthav $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -123,8 +123,9 @@ u02 u12  x  x
 u30 x    x  x
   \endcode
 
+ This output will be followed by an output with indexes as produced by printWithIndices() function
 */
-VISP_EXPORT std::ostream & operator<<(std::ostream & os, vpMomentCentered& m){
+VISP_EXPORT std::ostream & operator<<(std::ostream & os, const vpMomentCentered& m){
     for(unsigned int i = 0;i<m.values.size();i++){
         if(i%(m.getObject().getOrder()+1)==0)
           os << std::endl;
@@ -136,6 +137,48 @@ VISP_EXPORT std::ostream & operator<<(std::ostream & os, vpMomentCentered& m){
 
         os << "\t";
     }
-    
+    os << std::endl;
+    m.printWithIndices(os);
     return os;
+}
+
+/*!
+Print in a readable form which looks better than output from << operator
+*/
+void
+vpMomentCentered::printWithIndices(std::ostream& os) const {
+    unsigned int orderp1 = getObject().getOrder()+1;
+    for(unsigned int k=0; k<orderp1; k++) {
+        for(unsigned int l=0; l<orderp1-k; l++)
+        {
+            os << "mu[" << k << "," << l << "] = " << this->get(k,l) << "\t";
+        }
+        os << std::endl;
+    }
+    os << std::endl;
+}
+
+/*!
+Prints moments required for calculation of vpMomentCentered,
+which are
+1. Raw geometric moments (vpMomentObject) and
+2. Centre of gravity (vpMomentGravityCentered)
+*/
+void
+vpMomentCentered::printDependencies(std::ostream& os) const {
+    os << (__FILE__) << std::endl;
+    /*
+    Retreive the raw moments
+    */
+    const vpMomentObject objt = getObject();
+    vpMomentObject::printWithIndices(objt, os);
+
+    /*
+    Get xg,yg
+    */
+    bool found_moment_gravity;
+    const vpMomentGravityCenter& momentGravity = static_cast<const vpMomentGravityCenter&>(getMoments().get("vpMomentGravityCenter",found_moment_gravity));
+    if(!found_moment_gravity)
+        throw vpException(vpException::notInitialized,"vpMomentGravityCenter not found");
+    os << "Xg = " << momentGravity.getXg() << "\t" << "Yg = " << momentGravity.getYg() << std::endl;
 }

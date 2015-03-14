@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpRobot.h 4632 2014-02-03 17:06:40Z fspindle $
+ * $Id: vpRobot.h 5238 2015-01-30 13:52:25Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -117,7 +117,7 @@ protected:
 public:
   vpRobot (void);
   vpRobot (const vpRobot &robot);
-  virtual ~vpRobot() { ; }
+  virtual ~vpRobot();
 
   //---------- Jacobian -----------------------------
   //! Get the robot Jacobian expressed in the end-effector frame

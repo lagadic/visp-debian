@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: testXmlParser.cpp 4658 2014-02-09 09:50:14Z fspindle $
+ * $Id: testXmlParser.cpp 5126 2015-01-05 22:07:11Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -127,17 +127,13 @@ protected:
   
 */
 vpExampleDataParser::vpExampleDataParser()
+ : m_range(0.), m_step(0), m_size_filter(0), m_name("")
 {
   nodeMap["config"] = config;
   nodeMap["range"] = range;
   nodeMap["step"] = step;
   nodeMap["size_filter"] = size_filter;
   nodeMap["name"] = name;
-  
-  m_range = 0.0;
-  m_step = 0;
-  m_size_filter = 0;
-  m_name = "";
 }
 
 /*!
@@ -325,7 +321,7 @@ int main(int argc, const char** argv)
       opath = opt_opath;
 
     // Append to the output path string, the login name of the user
-    std::string dirname = opath + vpIoTools::path("/") + username;
+    std::string dirname = vpIoTools::createFilePath(opath, username);
 
     // Test if the output path exist. If no try to create it
     if (vpIoTools::checkDirectory(dirname) == false) {

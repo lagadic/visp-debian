@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpTemplateTrackerZNCC.h 4666 2014-02-16 16:21:33Z fspindle $
+ * $Id: vpTemplateTrackerZNCC.h 4956 2014-11-12 15:50:23Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -57,7 +57,6 @@
 #include <visp/vpImageTools.h>
 #include <visp/vpImageFilter.h>
 #include <visp/vpMath.h>
-#include <visp/vpList.h>
 #include <visp/vpHomography.h>
 
 #define APPROX_NCC

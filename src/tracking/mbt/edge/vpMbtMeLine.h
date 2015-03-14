@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpMbtMeLine.h 4574 2014-01-09 08:48:51Z fspindle $
+ * $Id: vpMbtMeLine.h 4740 2014-05-26 07:15:44Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -52,6 +52,8 @@
 #include <visp/vpPoint.h>
 #include <visp/vpMe.h>
 #include <visp/vpMeTracker.h>
+
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 
 /*!
   \class vpMbtMeLine
@@ -120,6 +122,8 @@ class VISP_EXPORT vpMbtMeLine : public vpMeTracker
     void reSample(const vpImage<unsigned char>&image, vpImagePoint ip1, vpImagePoint ip2);
     void updateDelta();
 } ;
+
+#endif // #ifndef DOXYGEN_SHOULD_SKIP_THIS
 
 #endif
 

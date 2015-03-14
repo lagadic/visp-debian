@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpBasicFeature.h 4632 2014-02-03 17:06:40Z fspindle $
+ * $Id: vpBasicFeature.h 5237 2015-01-30 13:52:04Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -108,7 +108,7 @@ public:
   vpBasicFeature() ;
   vpBasicFeature(const vpBasicFeature &f) ;
   vpBasicFeature &operator=(const vpBasicFeature &f) ;
-  virtual ~vpBasicFeature() { /*vpTRACE("0x%x", this)*/; }
+  virtual ~vpBasicFeature();
   //! Return element \e i in the state vector  (usage : x = s[i] )
   virtual inline double operator[](const unsigned int i) const {  return s[i]; }
 

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: trackDot2.cpp 4658 2014-02-09 09:50:14Z fspindle $
+ * $Id: trackDot2.cpp 5108 2015-01-05 07:48:58Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -53,7 +53,7 @@
 #include <sstream>
 #include <iomanip>
 
-#if (defined (VISP_HAVE_X11) || defined(VISP_HAVE_GTK) || defined(VISP_HAVE_GDI))
+#if (defined (VISP_HAVE_X11) || defined(VISP_HAVE_GTK) || defined(VISP_HAVE_GDI) || defined(VISP_HAVE_OPENCV))
 
 #include <visp/vpImage.h>
 #include <visp/vpImageIo.h>
@@ -61,6 +61,7 @@
 #include <visp/vpDisplayX.h>
 #include <visp/vpDisplayGTK.h>
 #include <visp/vpDisplayGDI.h>
+#include <visp/vpDisplayOpenCV.h>
 #include <visp/vpDot2.h>
 #include <visp/vpParseArgv.h>
 #include <visp/vpIoTools.h>
@@ -217,15 +218,12 @@ main(int argc, const char ** argv)
     bool opt_click_allowed = true;
     bool opt_display = true;
 
-    // Get the VISP_IMAGE_PATH environment variable value
-    char *ptenv = getenv("VISP_INPUT_IMAGE_PATH");
-    if (ptenv != NULL)
-      env_ipath = ptenv;
+    // Get the visp-images-data package path or VISP_INPUT_IMAGE_PATH environment variable value
+    env_ipath = vpIoTools::getViSPImagesDataPath();
 
     // Set the default input path
     if (! env_ipath.empty())
       ipath = env_ipath;
-
 
     // Read the command line options
     if (getOptions(argc, argv, opt_ipath, opt_ppath,opt_first, opt_nimages,
@@ -290,13 +288,13 @@ main(int argc, const char ** argv)
       //  in the download section. It is named "ViSP-images.tar.gz"
 
       // Set the path location of the image sequence
-      dirname = ipath + vpIoTools::path("/ViSP-images/mire-2/");
+      dirname = vpIoTools::createFilePath(ipath, "ViSP-images/mire-2");
 
       // Build the name of the image file
 
       s.setf(std::ios::right, std::ios::adjustfield);
       s << "image." << std::setw(4) << std::setfill('0') << iter << ".pgm";
-      filename = dirname + s.str();
+      filename = vpIoTools::createFilePath(dirname, s.str());
     }
     else {
 
@@ -337,6 +335,8 @@ main(int argc, const char ** argv)
     vpDisplayGTK display;
 #elif defined VISP_HAVE_GDI
     vpDisplayGDI display;
+#elif defined VISP_HAVE_OPENCV
+    vpDisplayOpenCV display;
 #endif
 
     if (opt_display) {
@@ -426,7 +426,7 @@ main(int argc, const char ** argv)
       if (opt_ppath.empty()){
         s.str("");
         s << "image." << std::setw(4) << std::setfill('0') << iter << ".pgm";
-        filename = dirname + s.str();
+        filename = vpIoTools::createFilePath(dirname, s.str());
       }
       else {
         sprintf(cfilename, opt_ppath.c_str(), iter) ;
@@ -514,7 +514,7 @@ main(int argc, const char ** argv)
 int
 main()
 {
-  vpERROR_TRACE("You do not have X11, GTK or GDI display functionalities...");
+  vpERROR_TRACE("You do not have X11, GTK, GDI or OpenCV display functionalities...");
 }
 
 #endif

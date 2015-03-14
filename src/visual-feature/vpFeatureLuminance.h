@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpFeatureLuminance.h 4664 2014-02-16 16:17:54Z fspindle $
+ * $Id: vpFeatureLuminance.h 5098 2014-12-20 16:32:06Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -51,7 +51,7 @@
   \file vpFeatureLuminance.h
   \brief Class that defines the image luminance visual feature
 
-  For more details see \cite collewet:inria-00261398.
+  For more details see \cite Collewet08c.
 */
 
 
@@ -78,7 +78,7 @@ class VISP_EXPORT vpLuminance
   \class vpFeatureLuminance
   \brief Class that defines the image luminance visual feature
 
-  For more details see \cite collewet:inria-00261398.
+  For more details see \cite Collewet08c.
 */
 
 class VISP_EXPORT vpFeatureLuminance : public vpBasicFeature

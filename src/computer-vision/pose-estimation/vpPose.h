@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpPose.h 4632 2014-02-03 17:06:40Z fspindle $
+ * $Id: vpPose.h 5211 2015-01-26 17:44:35Z strinh $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -130,7 +130,7 @@ public:
   void clearPoint() ;
 
   //! compute the pose for a given method
-  void computePose(vpPoseMethodType methode, vpHomogeneousMatrix &cMo) ;
+  bool computePose(vpPoseMethodType methode, vpHomogeneousMatrix &cMo, bool (*func)(vpHomogeneousMatrix *)=NULL) ;
   //! compute the residual (i.e., the quality of the result)
   //! compute the residual (in meter for pose M)
   double computeResidual(const vpHomogeneousMatrix &cMo) const ;
@@ -156,7 +156,7 @@ public:
   //! Levenberg Marquartd non linear minimization approach)
   void poseLowe(vpHomogeneousMatrix & cMo) ;
   //! compute the pose using the Ransac approach 
-  void poseRansac(vpHomogeneousMatrix & cMo) ;  
+  bool poseRansac(vpHomogeneousMatrix & cMo, bool (*func)(vpHomogeneousMatrix *)=NULL) ;
   //! compute the pose using a robust virtual visual servoing approach
   void poseVirtualVSrobust(vpHomogeneousMatrix & cMo) ;
   //! compute the pose using virtual visual servoing approach
@@ -167,7 +167,14 @@ public:
   void setVvsIterMax(int nb) { vvsIterMax = nb ; }
   
   void setRansacNbInliersToReachConsensus(const unsigned int &nbC){ ransacNbInlierConsensus = nbC; }
-  void setRansacThreshold(const double &t){ ransacThreshold = t; }
+  void setRansacThreshold(const double &t) {
+    //Test whether or not t is > 0
+    if(t > 0) {
+      ransacThreshold = t;
+    } else {
+      throw vpException(vpException::badValue, "The Ransac threshold must be positive as we deal with distance.");
+    }
+  }
   void setRansacMaxTrials(const int &rM){ ransacMaxTrials = rM; }
   unsigned int getRansacNbInliers() const { return (unsigned int) ransacInliers.size(); }
   std::vector<vpPoint> getRansacInliers() const{ return ransacInliers; }

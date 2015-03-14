@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpAROgre.cpp 4604 2014-01-21 14:15:23Z fspindle $
+ * $Id: vpAROgre.cpp 5234 2015-01-30 13:51:02Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -75,33 +75,17 @@
 vpAROgre::vpAROgre(const vpCameraParameters &cam,
 		   unsigned int width, unsigned int height,
 		   const char *resourcePath, const char *pluginsPath)
-  : mRoot(0), mCamera(0), mSceneMgr(0), mWindow(0)
+    : name("ViSP - Augmented Reality"),mRoot(0), mCamera(0), mSceneMgr(0), mWindow(0),
+      mResourcePath(resourcePath), mPluginsPath(pluginsPath),
 #ifdef VISP_HAVE_OIS
-  , mInputManager(0), mKeyboard(0)
+      mInputManager(0), mKeyboard(0),
 #endif
+      keepOn(true), // When created no reason to stop displaying
+      mImageRGBA(), mImage(), mPixelBuffer(NULL), mBackground(NULL), mBackgroundHeight(0),
+      mBackgroundWidth(0), mWindowHeight(height), mWindowWidth(width), windowHidden(false),
+      mNearClipping(0.001), mFarClipping(200), mcam(cam), mshowConfigDialog(true),
+      mOptionnalResourceLocation()
 {
-  // Get resources.cfg path
-  mResourcePath = resourcePath;
-  //std::cout << "mResourcePath: " << mResourcePath<< std::endl;
-  // Get plugins.cfg path
-  mPluginsPath = pluginsPath;
-  //std::cout << "mPluginsPath: " << mPluginsPath<< std::endl;
-  // Set intrinsic camera parameters
-  mcam = cam;
-  // When created no reason to stop displaying
-  keepOn = true;
-  // Set Dimensions
-  mWindowWidth = width;
-  mWindowHeight = height;
-  windowHidden = false;
-  mshowConfigDialog = true;
-  mOptionnalResourceLocation.clear();
-
-  name = "ViSP - Augmented Reality";
-
-  mBackground = NULL;
-  mBackgroundHeight = 0;
-  mBackgroundWidth = 0;
 }
 
 /*!
@@ -338,8 +322,11 @@ void vpAROgre::init(bool
     Ogre::String rightconf = (*it).second.currentValue;
 
     if(leftconf == "Video Mode"){
-      if(canInit)
-        sscanf(rightconf.c_str(), "%d %*s %d", &mWindowWidth, &mWindowHeight);
+      if(canInit) {
+        int ret = sscanf(rightconf.c_str(), "%d %*s %d", &mWindowWidth, &mWindowHeight);
+        if (ret == 0)
+          std::cout << "Cannot read Ogre video mode" << std::endl;
+      }
       else{
         if(mWindowWidth == 0 && mWindowHeight == 0){
           mWindowWidth = mBackgroundWidth;
@@ -942,23 +929,27 @@ void vpAROgre::closeOIS(void)
 /*!
   Update the projection parameters of the camera.
 */
+// Note: equation taken from:
+// http://strawlab.org/2011/11/05/augmented-reality-with-OpenGL/
 void vpAROgre::updateCameraProjection(void)
 {
-  Ogre::Real f,n,f_m_n,f_p_n,px,py,u0,v0;
-  f = (Ogre::Real)200.0; // Far clip distance
-  n = (Ogre::Real)0.001; // Near clip distance
-  f_m_n = (Ogre::Real)(f-n);
-  f_p_n = (Ogre::Real)(f+n);
-  px = (Ogre::Real)mcam.get_px();
-  py = (Ogre::Real)mcam.get_py();
-  u0 = (Ogre::Real)mcam.get_u0();
-  v0 = (Ogre::Real)mcam.get_v0();
-  Ogre::Matrix4 Projection
-    = Ogre::Matrix4( (Ogre::Real)(2.0*px/mBackgroundWidth), 0,  (Ogre::Real)(2.0*(u0/mBackgroundWidth)-1.0), 0,
-		     0, (Ogre::Real)(2.0*py/mBackgroundHeight), (Ogre::Real)(2.0*(v0/mBackgroundHeight)-1.0),0,
-		     0, 0, (Ogre::Real)(-1.0*f_p_n/f_m_n), (Ogre::Real)(-2.0*f*n/f_m_n),
-		     0, 0, -1.0, 0);
-  mCamera->setCustomProjectionMatrix(true, Projection);
+  if(mCamera != 0){
+      Ogre::Real f,n,f_m_n,f_p_n,px,py,u0,v0;
+      f = (Ogre::Real)(mFarClipping); // Far clip distance
+      n = (Ogre::Real)(mNearClipping); // Near clip distance
+      f_m_n = (Ogre::Real)(f-n);
+      f_p_n = (Ogre::Real)(f+n);
+      px = (Ogre::Real)mcam.get_px();
+      py = (Ogre::Real)mcam.get_py();
+      u0 = (Ogre::Real)mcam.get_u0();
+      v0 = (Ogre::Real)mcam.get_v0();
+      Ogre::Matrix4 Projection
+        = Ogre::Matrix4( (Ogre::Real)(2.0*px/mBackgroundWidth), 0,  (Ogre::Real)(1.0 - 2.0*(u0/mBackgroundWidth)), 0,
+                 0, (Ogre::Real)(2.0*py/mBackgroundHeight), (Ogre::Real)(-1.0 + 2.0*(v0/mBackgroundHeight)),0,
+                 0, 0, (Ogre::Real)(-1.0*f_p_n/f_m_n), (Ogre::Real)(-2.0*f*n/f_m_n),
+                 0, 0, -1.0, 0);
+      mCamera->setCustomProjectionMatrix(true, Projection);
+  }
 }
 
 /*!

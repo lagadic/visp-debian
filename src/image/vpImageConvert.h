@@ -1,6 +1,6 @@
 /****************************************************************************
 *
-* $Id: vpImageConvert.h 4604 2014-01-21 14:15:23Z fspindle $
+* $Id: vpImageConvert.h 5204 2015-01-24 13:18:18Z fspindle $
 *
 * This file is part of the ViSP software.
 * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -57,7 +57,14 @@
 #include <visp/vpRGBa.h>
 
 #ifdef VISP_HAVE_OPENCV
-#  if (VISP_HAVE_OPENCV_VERSION >= 0x020101) // Require opencv >= 2.1.1
+#  if (VISP_HAVE_OPENCV_VERSION >= 0x030000) // Require opencv >= 3.0.0
+#    include <opencv2/core/core.hpp>
+#    include <opencv2/highgui/highgui.hpp>
+#    include <opencv2/imgproc/imgproc_c.h>
+#  elif (VISP_HAVE_OPENCV_VERSION >= 0x020408) // Require opencv >= 2.4.8
+#    include <opencv2/core/core.hpp>
+#    include <opencv2/highgui/highgui.hpp>
+#  elif (VISP_HAVE_OPENCV_VERSION >= 0x020101) // Require opencv >= 2.1.1
 #    include <opencv2/core/core.hpp>
 #    include <opencv2/legacy/legacy.hpp>
 #    include <opencv2/highgui/highgui.hpp>
@@ -117,6 +124,7 @@ public:
           vpImage<double> &dest);
           
 #ifdef VISP_HAVE_OPENCV
+  // Deprecated: will be removed with OpenCV transcient from C to C++ api
   static void convert(const IplImage* src,
           vpImage<vpRGBa> & dest, bool flip = false) ;
   static void convert(const IplImage* src,
@@ -125,7 +133,7 @@ public:
           IplImage *&dest) ;
   static void convert(const vpImage<unsigned char> & src,
           IplImage* &dest) ;
-#if VISP_HAVE_OPENCV_VERSION >= 0x020100
+#  if VISP_HAVE_OPENCV_VERSION >= 0x020100
   static void convert(const cv::Mat& src,
           vpImage<vpRGBa>& dest, const bool flip = false);
   static void convert(const cv::Mat& src,
@@ -134,7 +142,7 @@ public:
           cv::Mat& dest) ;
   static void convert(const vpImage<unsigned char> & src,
           cv::Mat& dest, const bool copyData = true) ;
-#endif
+#  endif
 #endif
     
 #ifdef VISP_HAVE_YARP
@@ -272,10 +280,10 @@ public:
       unsigned char* rgb, unsigned int size);
 
   static void BGRToRGBa(unsigned char * bgr, unsigned char * rgba,
-      unsigned int width, unsigned int height, bool flip);
+      unsigned int width, unsigned int height, bool flip=false);
 
   static void BGRToGrey(unsigned char * bgr, unsigned char * grey,
-      unsigned int width, unsigned int height, bool flip);
+      unsigned int width, unsigned int height, bool flip=false);
 
   static void YCbCrToRGB(unsigned char *ycbcr, unsigned char *rgb,
       unsigned int size);

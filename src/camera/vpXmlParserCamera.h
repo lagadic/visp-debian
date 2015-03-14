@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpXmlParserCamera.h 4649 2014-02-07 14:57:11Z fspindle $
+ * $Id: vpXmlParserCamera.h 5006 2014-11-24 15:57:45Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -241,11 +241,11 @@ public:
   vpXmlParserCamera& operator =(const vpXmlParserCamera& twinparser);
   ~vpXmlParserCamera(){}
 
-  int parse(vpCameraParameters &cam, const char * filename,
+  int parse(vpCameraParameters &cam, const std::string &filename,
 	    const std::string &camera_name,
       const vpCameraParameters::vpCameraParametersProjType &projModel,  
 	    const unsigned int image_width = 0, const unsigned int image_height = 0);
-  int save(const vpCameraParameters &cam, const char * filename,
+  int save(const vpCameraParameters &cam, const std::string &filename,
 	   const std::string &camera_name,
 	   const unsigned int image_width = 0, const unsigned int image_height = 0);
 

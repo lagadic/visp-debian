@@ -15,7 +15,7 @@
   \file vpFeatureLuminance.cpp
   \brief Class that defines the image luminance visual feature
 
-  For more details see \cite collewet:inria-00261398..
+  For more details see \cite Collewet08c.
 */
 
 
@@ -106,15 +106,12 @@ vpFeatureLuminance &vpFeatureLuminance::operator=(const vpFeatureLuminance& f)
 }
 
 /*! 
-  Default destructor.
+  Destructor that free allocated memory.
 */
 vpFeatureLuminance::~vpFeatureLuminance() 
 {
   if (pixInfo != NULL) delete [] pixInfo ;
-  if (flags != NULL) delete [] flags;
 }
-
-
 
 /*!
   Set the value of \f$ Z \f$ which represents the depth in the 3D camera frame.

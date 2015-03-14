@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpKeyPointSurf.cpp 4649 2014-02-07 14:57:11Z fspindle $
+ * $Id: vpKeyPointSurf.cpp 5202 2015-01-24 09:29:06Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -43,7 +43,7 @@
 #include <visp/vpKeyPointSurf.h>
 
 #if defined (VISP_HAVE_OPENCV_NONFREE)
-#if VISP_HAVE_OPENCV_VERSION >= 0x010100 // Require opencv >= 1.1.0
+#if (VISP_HAVE_OPENCV_VERSION >= 0x010100) && VISP_HAVE_OPENCV_VERSION < 0x030000// Require opencv >= 1.1.0 < 3.0.0
 
 #include <visp/vpImageConvert.h>
 #include <visp/vpImageTools.h>

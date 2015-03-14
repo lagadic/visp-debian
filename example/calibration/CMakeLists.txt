@@ -1,6 +1,6 @@
 #############################################################################
 #
-# $Id: CMakeLists.txt 4598 2014-01-20 17:07:30Z fspindle $
+# $Id: CMakeLists.txt 4961 2014-11-14 13:06:26Z fspindle $
 #
 # This file is part of the ViSP software.
 # Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -43,31 +43,32 @@
 # the source name.
 #
 # If you want to add/remove a source, modify here
-SET (SOURCE
+set (SOURCE
   camera_calibration.cpp
   calibrateTsai.cpp
 )
 
 # rule for binary build
-FOREACH(source ${SOURCE})
+foreach(source ${SOURCE})
   # Compute the name of the binary to create
-  GET_FILENAME_COMPONENT(binary ${source} NAME_WE)
+  get_filename_component(binary ${source} NAME_WE)
 
   # From source compile the binary and add link rules
-  ADD_EXECUTABLE(${binary} ${source})
-  TARGET_LINK_LIBRARIES(${binary} ${VISP_INTERN_LIBRARY} ${VISP_EXTERN_LIBRARIES})
-
-ENDFOREACH(source)
+  add_executable(${binary} ${source})
+  target_link_libraries(${binary} ${VISP_INTERN_LIBRARY} ${VISP_EXTERN_LIBRARIES})
+  add_dependencies(visp_examples ${binary})
+  if(ENABLE_SOLUTION_FOLDERS)
+    set_target_properties(${binary} PROPERTIES FOLDER "examples")
+  endif()
+endforeach()
 
 # Add test
 # To run these tests automaticaly using the crontab under Unix or the task
 # manager under windows, we have to add the -d option to turn off the display
 # of acquired images
-ADD_TEST(calibrateTsai calibrateTsai)
+add_test(calibrateTsai calibrateTsai)
 
 # copy the data
-get_target_property(target_location camera_calibration LOCATION)
-get_filename_component(target_location "${target_location}" PATH)
 list(APPEND data2copy "${CMAKE_CURRENT_SOURCE_DIR}/default-chessboard.cfg" )
 list(APPEND data2copy "${CMAKE_CURRENT_SOURCE_DIR}/default-circles.cfg" )
 list(APPEND data2copy "${CMAKE_CURRENT_SOURCE_DIR}/chessboard-01.png" )
@@ -80,10 +81,25 @@ list(APPEND data2copy "${CMAKE_CURRENT_SOURCE_DIR}/circles-02.png" )
 list(APPEND data2copy "${CMAKE_CURRENT_SOURCE_DIR}/circles-03.png" )
 list(APPEND data2copy "${CMAKE_CURRENT_SOURCE_DIR}/circles-04.png" )
 list(APPEND data2copy "${CMAKE_CURRENT_SOURCE_DIR}/circles-05.png" )
-foreach(data ${data2copy})
-  add_custom_command(
-    TARGET camera_calibration
-    POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy "${data}" "${target_location}"
-  )
-endforeach()
+
+# Since CMake 3.0.0 policy CMP0026 was introduced to disallow location property on target.
+# If CMake 3.0.0 is used, we use $<TARGET_FILE_DIR:tgt> to get the target location
+if (CMAKE_VERSION VERSION_GREATER 2.8.12)
+  foreach(data ${data2copy})
+    add_custom_command(
+      TARGET camera_calibration
+      POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy "${data}" "$<TARGET_FILE_DIR:camera_calibration"
+    )
+  endforeach()
+else()
+  get_target_property(target_location camera_calibration LOCATION)
+  get_filename_component(target_location "${target_location}" PATH)
+  foreach(data ${data2copy})
+    add_custom_command(
+      TARGET camera_calibration
+      POST_BUILD
+      COMMAND ${CMAKE_COMMAND} -E copy "${data}" "${target_location}"
+    )
+  endforeach()
+endif()

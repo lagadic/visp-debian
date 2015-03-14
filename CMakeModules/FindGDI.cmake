@@ -1,6 +1,6 @@
 #############################################################################
 #
-# $Id: FindGDI.cmake 4574 2014-01-09 08:48:51Z fspindle $
+# $Id: FindGDI.cmake 5286 2015-02-09 14:36:35Z fspindle $
 #
 # This file is part of the ViSP software.
 # Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -49,6 +49,9 @@ IF(WIN32)
   IF(MINGW)
     FIND_LIBRARY(GDI_LIBRARY gdi32
                  "C:/MinGW/lib"
+                 "C:/mingw/mingw/lib"
+                 "$ENV{MINGW_DIR}/lib"
+                 "$ENV{MINGW_DIR}/mingw/lib"
                  DOC "Where can the GDI (Graphics Device Interface) library be found"
                  NO_DEFAULT_PATH
                 )
@@ -59,15 +62,17 @@ IF(WIN32)
                    "$ENV{WINSDK_DIR}/Lib/x64"
                    "$ENV{WINSDK_HOME}/Lib/x64"
                    "$ENV{DXSDK_DIR}/Lib/x64"
-                   "C:/Program Files/Microsoft SDKs/Windows/v6.1/Lib/x64"
                    "C:/Program Files/Microsoft SDKs/Windows/v6.0/Lib/x64"
+                   "C:/Program Files/Microsoft SDKs/Windows/v6.0a/Lib/x64"
+                   "C:/Program Files/Microsoft SDKs/Windows/v6.1/Lib/x64"
                    "C:/Program Files/Microsoft SDKs/Windows/v7.0A/Lib/x64"
                    "C:/Program Files/Microsoft SDKs/Windows/v7.1/Lib/x64"
+                   "C:/Program Files/Microsoft SDKs/Windows/v7.1A/Lib/x64"
                    "C:/Program Files (x86)/Microsoft SDKs/Windows/v7.0A/Lib/x64"
+                   "C:/Program Files (x86)/Microsoft SDKs/Windows/v7.1A/Lib/x64"
+                   "C:/Program Files (x86)/Windows Kits/8.0/Lib/win8/um/x64"
                    "C:/Program Files/Microsoft Platform SDK/Lib/x64"
                    "C:/DXSDK/Include/Lib/x64"
-                   "C:/Program Files/Microsoft SDKs/Windows/v6.0a/Lib/x64"
-                   "C:/Program Files (x86)/Windows Kits/8.0/Lib/win8/um/x64"
                    DOC "Where can the GDI (Graphics Device Interface) library be found"
                   )
 
@@ -102,16 +107,16 @@ IF(WIN32)
                    "$ENV{WINSDK_DIR}/Lib"
                    "$ENV{WINSDK_HOME}/Lib"
                    "$ENV{DXSDK_DIR}/Lib"
-                   "C:/Program Files/Microsoft SDKs/Windows/v6.1/Lib"
+                   "C:/Program Files/Microsoft SDKs/Windows/v6.0a/Lib"
                    "C:/Program Files/Microsoft SDKs/Windows/v6.0/Lib"
+                   "C:/Program Files/Microsoft SDKs/Windows/v6.1/Lib"
                    "C:/Program Files/Microsoft SDKs/Windows/v7.0A/Lib"
                    "C:/Program Files (x86)/Microsoft SDKs/Windows/v7.0A/Lib"
                    "C:/Program Files (x86)/Microsoft SDKs/Windows/v7.1/Lib"
                    "C:/Program Files (x86)/Microsoft SDKs/Windows/v7.1A/Lib"
+                   "C:/Program Files (x86)/Windows Kits/8.0/Lib/win8/um/x86"
                    "C:/Program Files/Microsoft Platform SDK/Lib"
                    "C:/DXSDK/Include/Lib"
-                   "C:/Program Files/Microsoft SDKs/Windows/v6.0a/Lib"
-                   "C:/Program Files (x86)/Windows Kits/8.0/Lib/win8/um/x86"
                    DOC "Where can the GDI (Graphics Device Interface) library be found"
                   )
 

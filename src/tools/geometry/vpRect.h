@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpRect.h 4649 2014-02-07 14:57:11Z fspindle $
+ * $Id: vpRect.h 5009 2014-11-25 18:00:13Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -167,6 +167,12 @@ public:
   inline double getRight() const { return (this->left + this->width - 1.0); };
 
   /*!
+    Returns the size of the rectangle.
+    \sa getWidth(), getHeight()
+  */
+  inline double getSize() const { return (this->width * this->height); };
+
+  /*!
     Returns the top coordinate of the rectangle. 
 
     \sa getTopLeft(), getBottom()
@@ -194,6 +200,10 @@ public:
 
   friend VISP_EXPORT bool inRectangle( const vpImagePoint &ip, const vpRect &rect );
   friend VISP_EXPORT std::ostream& operator<< (std::ostream &os, const vpRect& r);
+  void set(double left, double top, double width, double height);
+  void set(const vpImagePoint &topLeft, double width, double height);
+  void set(const vpImagePoint &topLeft, const vpImagePoint &bottomRight);
+  void set(const vpRect& r);
   void set(const std::vector<vpImagePoint> &ip);
 
   /*!
@@ -302,6 +312,19 @@ public:
     this->top  = y - this->height/2 + 0.5;
   };
   
+  /*!
+
+    Center the rectangle to the image point given as parameter, leaving
+    the size unchanged.
+
+    \sa getCenter()
+
+  */
+  inline void moveCenter(const vpImagePoint &center) {
+    this->left = center.get_u() - this->width/2  + 0.5;
+    this->top  = center.get_v() - this->height/2 + 0.5;
+  };
+
 private:
   double left;   // Upper left corner position along the columns axis
   double top;    // Upper left corner position along the rows axis

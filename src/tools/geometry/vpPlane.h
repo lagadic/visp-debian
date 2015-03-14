@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpPlane.h 4649 2014-02-07 14:57:11Z fspindle $
+ * $Id: vpPlane.h 4702 2014-03-27 15:33:52Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -76,12 +76,16 @@ class VISP_EXPORT vpPlane
   double A,B,C,D ;
 
 public:
+  typedef enum {
+    object_frame,
+    camera_frame
+  } vpPlaneFrame;
   vpPlane() ;
   vpPlane(const vpPlane& P) ;
   vpPlane(const double A, const double B,const  double C,const  double D) ;
-  vpPlane(const vpPoint& P, const vpColVector &n) ;
-  vpPlane(const vpPoint &P, const vpPoint &Q, const vpPoint &R) ;
-  void init(const vpPoint& P, const vpPoint& Q, const vpPoint& R) ;
+  vpPlane(const vpPoint& P, const vpColVector &n, vpPlaneFrame frame=camera_frame) ;
+  vpPlane(const vpPoint &P, const vpPoint &Q, const vpPoint &R, vpPlaneFrame frame=camera_frame) ;
+  void init(const vpPoint& P, const vpPoint& Q, const vpPoint& R, vpPlaneFrame frame=camera_frame) ;
   void init(const vpColVector& P, const vpColVector &n) ;
   void init(const vpPlane& P) ;
 

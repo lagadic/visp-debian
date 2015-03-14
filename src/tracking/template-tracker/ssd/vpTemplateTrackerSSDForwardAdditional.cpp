@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpTemplateTrackerSSDForwardAdditional.cpp 4661 2014-02-10 19:34:58Z fspindle $
+ * $Id: vpTemplateTrackerSSDForwardAdditional.cpp 5264 2015-02-04 13:49:55Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -54,7 +54,7 @@ vpTemplateTrackerSSDForwardAdditional::vpTemplateTrackerSSDForwardAdditional(vpT
 void vpTemplateTrackerSSDForwardAdditional::trackNoPyr(const vpImage<unsigned char> &I)
 {
   double erreur=0;
-  int Nbpoint=0;
+  unsigned int Nbpoint=0;
 
   if(blur)
     vpImageFilter::filter(I, BI,fgG,taillef);
@@ -119,17 +119,19 @@ void vpTemplateTrackerSSDForwardAdditional::trackNoPyr(const vpImage<unsigned ch
 
 
     }
-    if(Nbpoint==0)std::cout<<"plus de point dans template suivi"<<std::endl;
+    if(Nbpoint==0) {
+      //std::cout<<"plus de point dans template suivi"<<std::endl;
+      throw(vpTrackingException(vpTrackingException::notEnoughPointError, "No points in the template"));
+    }
 
     vpMatrix::computeHLM(H,lambda,HLM);
     try
     {
       dp=1.*HLM.inverseByLU()*G;
     }
-    catch(...)
+    catch(vpException &e)
     {
-      std::cout<<"probleme inversion"<<std::endl;
-      break;
+      throw(e);
     }
 
     switch(minimizationMethod)

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: trackMeCircle.cpp 4658 2014-02-09 09:50:14Z fspindle $
+ * $Id: trackMeCircle.cpp 5108 2015-01-05 07:48:58Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -59,13 +59,14 @@
 #include <sstream>
 #include <iomanip>
 
-#if (defined (VISP_HAVE_X11) || defined(VISP_HAVE_GTK) || defined(VISP_HAVE_GDI))
+#if (defined (VISP_HAVE_X11) || defined(VISP_HAVE_GTK) || defined(VISP_HAVE_GDI) || defined(VISP_HAVE_OPENCV))
 
 #include <visp/vpImage.h>
 #include <visp/vpImageIo.h>
 #include <visp/vpDisplayX.h>
 #include <visp/vpDisplayGTK.h>
 #include <visp/vpDisplayGDI.h>
+#include <visp/vpDisplayOpenCV.h>
 #include <visp/vpColor.h>
 
 #include <visp/vpMeEllipse.h>
@@ -174,15 +175,12 @@ main(int argc, const char ** argv)
     bool opt_click_allowed = true;
     bool opt_display = true;
 
-    // Get the VISP_IMAGE_PATH environment variable value
-    char *ptenv = getenv("VISP_INPUT_IMAGE_PATH");
-    if (ptenv != NULL)
-      env_ipath = ptenv;
+    // Get the visp-images-data package path or VISP_INPUT_IMAGE_PATH environment variable value
+    env_ipath = vpIoTools::getViSPImagesDataPath();
 
     // Set the default input path
     if (! env_ipath.empty())
       ipath = env_ipath;
-
 
     // Read the command line options
     if (getOptions(argc, argv, opt_ipath, opt_click_allowed,
@@ -225,10 +223,10 @@ main(int argc, const char ** argv)
     vpImage<unsigned char> I ;
 
     // Set the path location of the image sequence
-    dirname = ipath +  vpIoTools::path("/ViSP-images/circle/");
+    dirname = vpIoTools::createFilePath(ipath, "ViSP-images/circle");
 
     // Build the name of the image file
-    filename = dirname + "circle.pgm";
+    filename = vpIoTools::createFilePath(dirname, "circle.pgm");
 
     // Read the PGM image named "filename" on the disk, and put the
     // bitmap into the image structure I.  I is initialized to the
@@ -264,6 +262,8 @@ main(int argc, const char ** argv)
     vpDisplayGTK display;
 #elif defined VISP_HAVE_GDI
     vpDisplayGDI display;
+#elif defined VISP_HAVE_OPENCV
+    vpDisplayOpenCV display;
 #endif
 
     if (opt_display) {
@@ -285,7 +285,6 @@ main(int argc, const char ** argv)
     me.setSampleStep(2) ;
     me.setPointsToTrack(60) ;
     me.setThreshold(15000) ;
-
 
     E1.setCircle(true) ;
     E1.setMe(&me) ;
@@ -336,7 +335,7 @@ main(int argc, const char ** argv)
 int
 main()
 {
-  vpERROR_TRACE("You do not have X11, GTK or GDI display functionalities...");
+  vpERROR_TRACE("You do not have X11, GTK, GDI or OpenCV display functionalities...");
 }
 
 #endif

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpMbtKltXmlParser.cpp 4582 2014-01-14 14:02:46Z ayol $
+ * $Id: vpMbtKltXmlParser.cpp 5126 2015-01-05 22:07:11Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -55,9 +55,9 @@
   
 */
 vpMbtKltXmlParser::vpMbtKltXmlParser()
+  : maskBorder(0), maxFeatures(0), winSize(0), qualityValue(0.), minDist(0.),
+    harrisParam(0.), blockSize(0), pyramidLevels(0)
 {
-  maskBorder = maxFeatures = winSize = blockSize = pyramidLevels = 0;
-  qualityValue = minDist = harrisParam = 0.;
   init();
 }
 

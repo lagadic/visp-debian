@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpSkipio.h 4574 2014-01-09 08:48:51Z fspindle $
+ * $Id: vpSkipio.h 5284 2015-02-09 14:24:10Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -49,7 +49,7 @@
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 
 void skip_cmd (void);
-void skip_keyword (int token, char *err);
+void skip_keyword (int token, const char *err);
 
 #endif
 #endif

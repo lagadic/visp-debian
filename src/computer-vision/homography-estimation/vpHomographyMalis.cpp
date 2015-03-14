@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpHomographyMalis.cpp 4649 2014-02-07 14:57:11Z fspindle $
+ * $Id: vpHomographyMalis.cpp 5264 2015-02-04 13:49:55Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -343,7 +343,7 @@ HLM3D(unsigned int nb_pts,
   unsigned int  pts_ref[4];		/*** definit lesquels des points de
 				     l'image sont les points de reference***/
   /***  ***/
-  int perm;			/***  Compte le nombre de permutations, quand le nombre
+  unsigned int perm;			/***  Compte le nombre de permutations, quand le nombre
 				      de permutations =0 arret de l'ordonnancement **/
   int  cont_zeros;		/*** pour compter les valeurs quasi= a zero	***/
   unsigned int  cont;
@@ -532,10 +532,10 @@ HLM3D(unsigned int nb_pts,
     perm = 0;
     for (i=1; i < nc ;i++) {
       if (svSorted[i-1] > svSorted[i]) {
-	v_temp = svSorted[i-1] ;
-	svSorted[i-1] = svSorted[i] ;
-	svSorted[i] = v_temp ;
-	perm = perm + 1;
+        v_temp = svSorted[i-1] ;
+        svSorted[i-1] = svSorted[i] ;
+        svSorted[i] = v_temp ;
+        perm = perm + 1;
       }
     }
   }

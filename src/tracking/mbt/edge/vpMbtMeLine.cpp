@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpMbtMeLine.cpp 4649 2014-02-07 14:57:11Z fspindle $
+ * $Id: vpMbtMeLine.cpp 5216 2015-01-28 08:03:09Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -85,7 +85,7 @@ vpMbtMeLine::~vpMbtMeLine()
   Initialization of the tracking. The line is defined thanks to the
   coordinates of two points corresponding to the extremities and its (\f$\rho \: \theta\f$) parameters.
   
-  Remeber the equation of a line : \f$ i \; cos(\theta) + j \; sin(\theta) - \rho = 0 \f$
+  Remember the equation of a line : \f$ i \; cos(\theta) + j \; sin(\theta) - \rho = 0 \f$
 
   \param I : Image in which the line appears.
   \param ip1 : Coordinates of the first point.
@@ -110,27 +110,24 @@ vpMbtMeLine::initTracking(const vpImage<unsigned char> &I, const vpImagePoint &i
      
     this->rho = rho_;
     this->theta = theta_;
+    theta_1 = theta_;
       
     a = cos(theta);
     b = sin(theta);
     c = -rho;
-    
-    double d = sqrt(vpMath::sqr(ip1.get_i()-ip2.get_i())+vpMath::sqr(ip1.get_j()-ip2.get_j())) ;
-
-    expecteddensity = d / (double)me->getSampleStep();
-      
+          
     delta = - theta + M_PI/2.0;
     normalizeAngle(delta);
     delta_1 = delta;
 
     sample(I) ;
+    expecteddensity = (double)list.size();
 
     vpMeTracker::track(I);
   }
-  catch(...)
+  catch(vpException &e)
   {
-//    vpERROR_TRACE("Error caught") ;
-    throw ;
+    throw e;
   }
   vpCDEBUG(1) <<" end vpMeLine::initTracking()"<<std::endl ;
 }
@@ -152,9 +149,8 @@ vpMbtMeLine::sample(const vpImage<unsigned char>& I)
   //if (me->getSampleStep==0)
   if (std::fabs(me->getSampleStep()) <= std::numeric_limits<double>::epsilon())
   {
-    vpERROR_TRACE("function called with sample step = 0") ;
     throw(vpTrackingException(vpTrackingException::fatalError,
-			      "sample step = 0")) ;
+                              "Function vpMbtMeLine::sample() called with moving-edges sample step = 0")) ;
   }
 
   // i, j portions of the line_p
@@ -183,12 +179,12 @@ vpMbtMeLine::sample(const vpImage<unsigned char>& I)
   for(int i=0; i<=vpMath::round(n_sample); i++)
   {
     // If point is in the image, add to the sample list
-    if(!outOfImage(vpMath::round(is), vpMath::round(js), 0, rows, cols))
+    if(!outOfImage(vpMath::round(is), vpMath::round(js), (int)(me->getRange()+me->getMaskSize()+1), (int)rows, (int)cols))
     {
       vpMeSite pix ; //= list.value();
       pix.init((int)is, (int)js, delta, 0, sign) ;
   
-      pix.track(I,me,0);
+      pix.track(I, me, false);
       
       pix.setDisplay(selectDisplay) ;
 
@@ -207,7 +203,7 @@ vpMbtMeLine::sample(const vpImage<unsigned char>& I)
   }
 
   vpCDEBUG(1) << "end vpMeLine::sample() : ";
-  vpCDEBUG(1) << n_sample << " point inserted in the list " << std::endl  ;
+  vpCDEBUG(1) << list.size() << " point inserted in the list " << std::endl  ;
 }
 
 
@@ -217,39 +213,45 @@ vpMbtMeLine::sample(const vpImage<unsigned char>& I)
   \param I : The image.
 */
 void
-vpMbtMeLine::suppressPoints(const vpImage<unsigned char> & /*I*/)
+vpMbtMeLine::suppressPoints(const vpImage<unsigned char> & I)
 {
   for(std::list<vpMeSite>::iterator it=list.begin(); it!=list.end(); ){
     vpMeSite s = *it;//current reference pixel
 
-  if (fabs(sin(theta)) > 0.9) // Vertical line management
-  {
-    if ((s.i < imin) ||(s.i > imax)) 
+    if (fabs(sin(theta)) > 0.9) // Vertical line management
     {
-      s.setState(vpMeSite::CONSTRAST);
+      if ((s.i < imin) ||(s.i > imax))
+      {
+        s.setState(vpMeSite::CONSTRAST);
+      }
     }
-  }
 
-  else if (fabs(cos(theta)) > 0.9) // Horizontal line management
-  {
-    if ((s.j < jmin) || (s.j > jmax))
+    else if (fabs(cos(theta)) > 0.9) // Horizontal line management
     {
-      s.setState(vpMeSite::CONSTRAST);
+      if ((s.j < jmin) || (s.j > jmax))
+      {
+        s.setState(vpMeSite::CONSTRAST);
+      }
     }
-  }
 
-  else
-  {
-    if ((s.i < imin) ||(s.i > imax) || (s.j < jmin) || (s.j > jmax) ) 
+    else
     {
-      s.setState(vpMeSite::CONSTRAST);
-    }
-  }
+      if ((s.i < imin) ||(s.i > imax) || (s.j < jmin) || (s.j > jmax) )
+      {
+        s.setState(vpMeSite::CONSTRAST);
+      }
 
-  if (s.getState() != vpMeSite::NO_SUPPRESSION)
-    it = list.erase(it);
-  else
-    ++it;
+    }
+
+    if (outOfImage(s.i, s.j, (int)(me->getRange()+me->getMaskSize()+1), (int)I.getHeight(), (int)I.getWidth()))
+    {
+      s.setState(vpMeSite::TOO_NEAR);
+    }
+
+    if (s.getState() != vpMeSite::NO_SUPPRESSION)
+      it = list.erase(it);
+    else
+      ++it;
   }
 }
 
@@ -271,9 +273,8 @@ vpMbtMeLine::seekExtremities(const vpImage<unsigned char> &I)
   //if (me->getSampleStep()==0)
   if (std::fabs(me->getSampleStep()) <= std::numeric_limits<double>::epsilon())
   {
-
-    vpERROR_TRACE("function called with sample step = 0") ;
-    throw(vpTrackingException(vpTrackingException::fatalError,"sample step = 0")) ;
+    throw(vpTrackingException(vpTrackingException::fatalError,
+                              "Function called with sample step = 0")) ;
   }
 
   // i, j portions of the line_p
@@ -303,13 +304,12 @@ vpMbtMeLine::seekExtremities(const vpImage<unsigned char> &I)
     P.ifloat = P.ifloat + di*sample_step ; P.i = (int)P.ifloat ;
     P.jfloat = P.jfloat + dj*sample_step ; P.j = (int)P.jfloat ;
 
-
-    if ((P.i < imin) ||(P.i > imax) || (P.j < jmin) || (P.j > jmax) ) 
+    if ((P.i < imin) ||(P.i > imax) || (P.j < jmin) || (P.j > jmax) )
     {
       if (vpDEBUG_ENABLE(3)) vpDisplay::displayCross(I,P.i,P.j,5,vpColor::cyan) ;
     }
     else
-    if(!outOfImage(P.i, P.j, 5, rows, cols))
+    if(!outOfImage(P.i, P.j, (int)(me->getRange()+me->getMaskSize()+1), (int)rows, (int)cols))
     {
       P.track(I,me,false) ;
 
@@ -330,24 +330,23 @@ vpMbtMeLine::seekExtremities(const vpImage<unsigned char> &I)
     P.ifloat = P.ifloat - di*sample_step ; P.i = (int)P.ifloat ;
     P.jfloat = P.jfloat - dj*sample_step ; P.j = (int)P.jfloat ;
 
-
-    if ((P.i < imin) ||(P.i > imax) || (P.j < jmin) || (P.j > jmax) ) 
+    if ((P.i < imin) ||(P.i > imax) || (P.j < jmin) || (P.j > jmax) )
     {
       if (vpDEBUG_ENABLE(3)) vpDisplay::displayCross(I,P.i,P.j,5,vpColor::cyan) ;
     }
 
-  else
-  if(!outOfImage(P.i, P.j, 5, rows, cols))
+    else
+    if(!outOfImage(P.i, P.j, (int)(me->getRange()+me->getMaskSize()+1), (int)rows, (int)cols))
     {
       P.track(I,me,false) ;
-			
+
       if (P.getState() == vpMeSite::NO_SUPPRESSION)
       {
         list.push_back(P);
-				if (vpDEBUG_ENABLE(3)) vpDisplay::displayCross(I,P.i,P.j, 5, vpColor::green) ;
+        if (vpDEBUG_ENABLE(3)) vpDisplay::displayCross(I,P.i,P.j, 5, vpColor::green) ;
       }
       else
-				if (vpDEBUG_ENABLE(3)) vpDisplay::displayCross(I,P.i,P.j, 10, vpColor::blue) ;
+        if (vpDEBUG_ENABLE(3)) vpDisplay::displayCross(I,P.i,P.j, 10, vpColor::blue) ;
     }
   }
 	
@@ -370,16 +369,14 @@ vpMbtMeLine::seekExtremities(const vpImage<unsigned char> &I)
 void
 vpMbtMeLine::reSample(const vpImage<unsigned char> &I)
 {
-  double d = sqrt(vpMath::sqr(PExt[0].ifloat-PExt[1].ifloat)+vpMath::sqr(PExt[0].jfloat-PExt[1].jfloat)) ;
-
   unsigned int n = numberOfSignal() ;
-  double expected_density = d / (double)me->getSampleStep();
 
-  if ((double)n<0.5*expected_density && n > 0)
+  if ((double)n<0.5*expecteddensity && n > 0)
   {
     double delta_new = delta;
     delta = delta_1;
     sample(I) ;
+    expecteddensity = (double)list.size();
     delta = delta_new;
     //  2. On appelle ce qui n'est pas specifique
     {
@@ -404,12 +401,9 @@ vpMbtMeLine::reSample(const vpImage<unsigned char> &I)
 void
 vpMbtMeLine::reSample(const vpImage<unsigned char> &I, vpImagePoint ip1, vpImagePoint ip2)
 {
-  double d = sqrt(vpMath::sqr(ip1.get_i()-ip2.get_i())+vpMath::sqr(ip1.get_j()-ip2.get_j())) ;
-
   size_t n = list.size();
-  expecteddensity = d / (double)me->getSampleStep();
 
-  if ((double)n<0.5*expecteddensity && n > 0)
+  if ((double)n<0.5*expecteddensity /*&& n > 0*/) // n is always > 0
   {
     double delta_new = delta;
     delta = delta_1;
@@ -418,6 +412,7 @@ vpMbtMeLine::reSample(const vpImage<unsigned char> &I, vpImagePoint ip1, vpImage
     PExt[1].ifloat = (float)ip2.get_i() ;
     PExt[1].jfloat = (float)ip2.get_j() ;
     sample(I) ;
+    expecteddensity = (double)list.size();
     delta = delta_new;
     vpMeTracker::track(I) ;
   }
@@ -470,9 +465,9 @@ vpMbtMeLine::track(const vpImage<unsigned char> &I)
   {
     vpMeTracker::track(I);
   }
-  catch(...)
+  catch(vpException &e)
   {
-    throw ;
+    throw e;
   }
 
   // supression des points rejetes par les ME

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: sonarPioneerReader.cpp 4604 2014-01-21 14:15:23Z fspindle $
+ * $Id: sonarPioneerReader.cpp 4814 2014-07-31 11:38:39Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -287,7 +287,7 @@ int main(int argc, char **argv)
             std::string username = vpIoTools::getUserName();
 
             // Append to the output path string, the login name of the user
-            opath +=  vpIoTools::path("/") + username;
+            opath = vpIoTools::createFilePath(opath, username);
 
             // Test if the output path exist. If no try to create it
             if (vpIoTools::checkDirectory(opath) == false) {

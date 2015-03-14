@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpTemplateTrackerSSDInverseCompositional.cpp 4672 2014-02-17 09:01:17Z fspindle $
+ * $Id: vpTemplateTrackerSSDInverseCompositional.cpp 5264 2015-02-04 13:49:55Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -112,7 +112,7 @@ void vpTemplateTrackerSSDInverseCompositional::initHessienDesired(const vpImage<
 void vpTemplateTrackerSSDInverseCompositional::trackNoPyr(const vpImage<unsigned char> &I)
 {
   double erreur=0;
-  int Nbpoint=0;
+  unsigned int Nbpoint=0;
   if(blur)
     vpImageFilter::filter(I, BI,fgG,taillef);
 
@@ -162,7 +162,12 @@ void vpTemplateTrackerSSDInverseCompositional::trackNoPyr(const vpImage<unsigned
         }
       }
     }
-    if(Nbpoint==0)std::cout<<"plus de point dans template suivi"<<std::endl;
+    //std::cout << "npoint: " << Nbpoint << std::endl;
+    if(Nbpoint==0) {
+      //std::cout<<"plus de point dans template suivi"<<std::endl;
+      deletePosEvalRMS();
+      throw(vpTrackingException(vpTrackingException::notEnoughPointError, "No points in the template"));
+    }
     dp=gain*dp;
     //std::cout<<erreur/Nbpoint<<","<<GetCost(I,p)<<std::endl;
     if(useBrent)
@@ -176,6 +181,8 @@ void vpTemplateTrackerSSDInverseCompositional::trackNoPyr(const vpImage<unsigned
     iteration++;
 
     computeEvalRMS(p);
+    //std::cout << "iteration: " << iteration << " max: " << iterationMax << std::endl;
+    //std::cout << "evolRMS: " <<  evolRMS << " threshold: " << threshold_RMS << std::endl;
   }
   while(/*( erreur_prec-erreur<50) &&*/ (iteration < iterationMax)&&(evolRMS>threshold_RMS));
 

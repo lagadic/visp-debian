@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpColor.h 4649 2014-02-07 14:57:11Z fspindle $
+ * $Id: vpColor.h 5126 2015-01-05 22:07:11Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -205,6 +205,8 @@ class VISP_EXPORT vpColor : public vpRGBa
      vpColor::vpColorIdentifier cid=vpColor::id_unknown)
     : vpRGBa(r, g, b), id(cid)
   {};
+  /*! Default destructor. */
+  inline virtual ~vpColor() {};
 
   friend VISP_EXPORT bool operator==( const vpColor &c1, const vpColor &c2 );
   friend VISP_EXPORT bool operator!=( const vpColor &c1, const vpColor &c2 );

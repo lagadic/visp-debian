@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpCalibration.h 4663 2014-02-14 10:32:11Z fspindle $
+ * $Id: vpCalibration.h 4921 2014-10-09 08:19:29Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -144,9 +144,9 @@ public:
   double computeStdDeviation_dist(const vpHomogeneousMatrix &cMo,
                                   const vpCameraParameters &cam);
   int displayData(vpImage<unsigned char> &I, vpColor color=vpColor::red,
-                  unsigned int thickness=1) ;
+                  unsigned int thickness=1, int subsampling_factor=1) ;
   int displayGrid(vpImage<unsigned char> &I, vpColor color=vpColor::yellow,
-                  unsigned int thickness=1) ;
+                  unsigned int thickness=1, int subsampling_factor=1) ;
 
   //! Set the gain for the virtual visual servoing algorithm.
   static double getLambda(){return gain;}

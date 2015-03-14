@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpKeyPointSurf.h 4649 2014-02-07 14:57:11Z fspindle $
+ * $Id: vpKeyPointSurf.h 5205 2015-01-26 08:56:41Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -58,10 +58,9 @@
 #include <list>
 #include <vector>
 
-#if defined (VISP_HAVE_OPENCV_NONFREE)
+#if defined (VISP_HAVE_OPENCV_NONFREE) && (VISP_HAVE_OPENCV_VERSION < 0x030000)
 
-
-#if (VISP_HAVE_OPENCV_VERSION >= 0x020400) // Require opencv >= 2.4.0
+#if (VISP_HAVE_OPENCV_VERSION >= 0x020400)  // Require opencv >= 1.1.0 < 3.0.0
 #  include <opencv2/features2d/features2d.hpp>
 #  include <opencv2/legacy/compat.hpp>
 #  include <opencv2/nonfree/nonfree.hpp>
@@ -76,7 +75,10 @@
   \class vpKeyPointSurf
 
   \brief Class that implements the SURF key points and technics thanks
-  to the OpenCV library.
+  to OpenCV library.
+
+  \deprecated This class is deprecated with OpenCV 3.0.0 or more recent.
+  You should rather use vpKeyPoint class that is more generic.
 
   The goal of this class is to provide a tool to match points from a
   model and points belonging to an image in which the model appears.
@@ -105,31 +107,29 @@
 #include <visp/vpImage.h>
 #include <visp/vpKeyPointSurf.h>
 
-#if VISP_HAVE_OPENCV_VERSION >= 0x010100 // Surf key-points only available since OpenCV-1.1.0
 int main()
 {
+#if defined (VISP_HAVE_OPENCV_NONFREE) && (VISP_HAVE_OPENCV_VERSION < 0x030000)
   vpImage<unsigned char> Ireference;
   vpImage<unsigned char> Icurrent;
   vpKeyPointSurf surf;
 
-  //First grab the reference image Ireference
+  // First grab the reference image Ireference
 
-  //Build the reference SURF points.
+  // Build the reference SURF points.
   surf.buildReference(Ireference);
 
-  //Then grab another image which represents the current image Icurrent
+  // Then grab another image which represents the current image Icurrent
 
-  //Match points between the reference points and the SURF points computed in the current image.
+  // Match points between the reference points and the SURF points computed in the current image.
   surf.matchPoint(Icurrent);
 
-  //Display the matched points
+  // Display the matched points
   surf.display(Ireference, Icurrent);
 
   return (0);
-}
-#else
-int main() {}
 #endif
+}
   \endcode
 
   It is also possible to create the reference thanks to only a part of the
@@ -142,9 +142,9 @@ int main() {}
 #include <visp/vpDisplay.h>
 #include <visp/vpKeyPointSurf.h>
 
-#if VISP_HAVE_OPENCV_VERSION >= 0x010100 // Surf key-points only available since OpenCV-1.1.0
 int main()
 {
+#if defined (VISP_HAVE_OPENCV_NONFREE) && (VISP_HAVE_OPENCV_VERSION < 0x030000)
   vpImage<unsigned char> Ireference;
   vpImage<unsigned char> Icurrent;
   vpKeyPointSurf surf;
@@ -183,10 +183,8 @@ int main()
   surf.display(Ireference, Icurrent);
 
   return(0);
-}
-#else
-int main() {}
 #endif
+}
   \endcode
 
   This class is also described in \ref tutorial-matching.

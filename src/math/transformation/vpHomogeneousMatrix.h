@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpHomogeneousMatrix.h 4574 2014-01-09 08:48:51Z fspindle $
+ * $Id: vpHomogeneousMatrix.h 5130 2015-01-06 18:50:43Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -56,8 +56,9 @@ class vpRotationMatrix;
 class vpPoseVector;
 class vpThetaUVector;
 
-#include <visp/vpMatrix.h>
+#include <vector>
 
+#include <visp/vpMatrix.h>
 #include <visp/vpRotationMatrix.h>
 #include <visp/vpThetaUVector.h>
 #include <visp/vpTranslationVector.h>
@@ -121,13 +122,17 @@ class VISP_EXPORT vpHomogeneousMatrix : public vpMatrix
   //! Construction from translation and rotation defined as a theta u vector.
   vpHomogeneousMatrix(const double tx, const double ty, const double tz,
 		      const double tux, const double tuy, const double tuz) ;
+  vpHomogeneousMatrix(const std::vector<float> &v);
+  vpHomogeneousMatrix(const std::vector<double> &v);
 
   //! Construction from translation vector and rotation matrix.
   void buildFrom(const vpTranslationVector &t, const vpRotationMatrix &R) ;
   //! Construction from translation vector and theta u rotation vector.
   void buildFrom(const vpTranslationVector &t, const vpThetaUVector &tu) ;
   //! Construction from translation vector and quaternion rotation vector.
-  void buildFrom(const vpTranslationVector &t, const vpQuaternionVector& q  ) ;
+  void buildFrom(const vpTranslationVector &t, const vpQuaternionVector& q) ;
+  void buildFrom(const std::vector<float> &v) ;
+  void buildFrom(const std::vector<double> &v) ;
 
   /*!
     Construction from translation vector and theta u rotation vector 
@@ -139,6 +144,29 @@ class VISP_EXPORT vpHomogeneousMatrix : public vpMatrix
   void buildFrom(const double tx,const  double ty, const double tz,
 		 const double tux,const  double tuy, const double tuz  ) ;
     
+  void convert(std::vector<float> &M);
+  void convert(std::vector<double> &M);
+
+  /*!
+    Return the translation vector from the homogeneous transformation matrix.
+   */
+  vpTranslationVector getTranslationVector()
+  {
+    vpTranslationVector tr;
+    this->extract(tr);
+    return tr;
+  }
+//  /*!
+//    Return the rotation matrix from the homogeneous transformation matrix.
+//   */
+//  vpThetaUVector getThetaUVector()
+//  vpRotationMatrix getRotationMatrix()
+//  {
+//    vpRotationMatrix R;
+//    this->extract(R);
+//    return R;
+//  }
+
   //! Copy operator from vpHomogeneousMatrix.
   vpHomogeneousMatrix &operator=(const vpHomogeneousMatrix &M);
 
@@ -146,7 +174,7 @@ class VISP_EXPORT vpHomogeneousMatrix : public vpMatrix
   vpHomogeneousMatrix operator*(const vpHomogeneousMatrix &M) const;
 
   //! Multiply by a vector ! size 4 !!!
-  vpColVector operator*(vpColVector &v) const;
+  vpColVector operator*(const vpColVector &v) const;
 
   // Invert the homogeneous matrix.
   vpHomogeneousMatrix inverse() const ;

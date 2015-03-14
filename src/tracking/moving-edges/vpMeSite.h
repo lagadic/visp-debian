@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpMeSite.h 4574 2014-01-09 08:48:51Z fspindle $
+ * $Id: vpMeSite.h 5060 2014-12-12 18:31:03Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -215,7 +215,7 @@ public:
   */
   inline double getWeight() const { return weight; }
   
-//Opérators
+//Operators
   vpMeSite &operator=(const vpMeSite &m) ;
   int       operator!=(const vpMeSite  &m) ;
   

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpOpenCVGrabber.h 4574 2014-01-09 08:48:51Z fspindle $
+ * $Id: vpOpenCVGrabber.h 5023 2014-12-03 16:07:48Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -49,7 +49,7 @@
 
 #include <visp/vpConfig.h>
 
-#if defined(VISP_HAVE_OPENCV)
+#if ( defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION < 0x020408))
 
 #if VISP_HAVE_OPENCV_VERSION >= 0x020101
 #  include <opencv2/highgui/highgui.hpp>

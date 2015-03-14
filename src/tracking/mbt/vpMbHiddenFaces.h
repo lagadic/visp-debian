@@ -36,7 +36,7 @@
  *
  * Authors:
  * Romain Tallonneau
- * Aurélien Yol
+ * Aurelien Yol
  *
  *****************************************************************************/
 #pragma once
@@ -84,16 +84,21 @@ class vpMbHiddenFaces
                            bool &changed, 
                            bool useOgre = false, bool testRoi = false,
                            const vpImage<unsigned char> &I = vpImage<unsigned char>(),
-                           const vpCameraParameters &cam = vpCameraParameters()
-                          ) ;
+                           const vpCameraParameters &cam = vpCameraParameters()) ;
 
-  
   public :
                     vpMbHiddenFaces() ;
                   ~vpMbHiddenFaces() ;
                 
     void          addPolygon(PolygonType *p)  ;
 
+    bool computeVisibility(const vpHomogeneousMatrix &cMo,
+                           const double &angleAppears, const double &angleDisappears,
+                           bool &changed, bool useOgre, bool testRoi,
+                           const vpImage<unsigned char> &I,
+                           const vpCameraParameters &cam,
+                           const vpTranslationVector &cameraPos,
+                           unsigned int index);
 #ifdef VISP_HAVE_OGRE
     void          displayOgre(const vpHomogeneousMatrix &cMo);
 #endif   
@@ -155,7 +160,7 @@ class vpMbHiddenFaces
     //! operator[] as reader.
     inline const PolygonType*  operator[](const unsigned int i) const { return Lpol[i];}
 
-    void          reset();  
+    void          reset();
     
 #ifdef VISP_HAVE_OGRE
     /*!
@@ -167,7 +172,7 @@ class vpMbHiddenFaces
       \param h : Height of the background
       \param w : Width of the background
     */
-    void          setBackgroundSizeOgre(const unsigned int &h, const unsigned int &w) { ogreBackground.resize(h,w); }
+    void          setBackgroundSizeOgre(const unsigned int &h, const unsigned int &w) { ogreBackground = vpImage<unsigned char>(h, w, 0); }
 #endif
     
     unsigned int  setVisible(const vpImage<unsigned char>& I, const vpCameraParameters &cam, const vpHomogeneousMatrix &cMo, const double &angle, bool &changed) ;
@@ -227,10 +232,9 @@ vpMbHiddenFaces<PolygonType>::vpMbHiddenFaces()
   ogreInitialised = false;
   ogre = new vpAROgre();
   ogre->setShowConfigDialog(false);
-  ogreBackground = vpImage<unsigned char>(480, 640);
+  ogreBackground = vpImage<unsigned char>(480, 640, 0);
 #endif
 }
-
 
 /*!
   Basic destructor.
@@ -245,9 +249,22 @@ vpMbHiddenFaces<PolygonType>::~vpMbHiddenFaces()
     Lpol[i] = NULL ;
   }
   Lpol.resize(0);
-  
+
 #ifdef VISP_HAVE_OGRE
-  delete ogre;
+  if(ogre != NULL){
+    delete ogre;
+    ogre = NULL;
+  }
+
+  // This is already done by calling "delete ogre"
+//  for(unsigned int i = 0 ; i < lOgrePolygons.size() ; i++){
+//    if (lOgrePolygons[i]!=NULL){
+//      delete lOgrePolygons[i] ;
+//    }
+//    lOgrePolygons[i] = NULL ;
+//  }
+
+  lOgrePolygons.resize(0);
 #endif
 }
 
@@ -264,6 +281,11 @@ vpMbHiddenFaces<PolygonType>::addPolygon(PolygonType *p)
   p_new->index = p->index;
   p_new->setNbPoint(p->nbpt);
   p_new->isvisible = p->isvisible;
+  p_new->useLod = p->useLod;
+  p_new->minLineLengthThresh = p->minLineLengthThresh;
+  p_new->minPolygonAreaThresh = p->minPolygonAreaThresh;
+  p_new->setName(p->name);
+
   for(unsigned int i = 0; i < p->nbpt; i++)
     p_new->p[i]= p->p[i];
   Lpol.push_back(p_new);
@@ -284,6 +306,28 @@ vpMbHiddenFaces<PolygonType>::reset()
     Lpol[i] = NULL ;
   }
   Lpol.resize(0);
+
+#ifdef VISP_HAVE_OGRE
+  if(ogre != NULL){
+    delete ogre;
+    ogre = NULL;
+  }
+
+  // This is already done by calling "delete ogre"
+//  for(unsigned int i = 0 ; i < lOgrePolygons.size() ; i++){
+//    if (lOgrePolygons[i]!=NULL){
+//      delete lOgrePolygons[i] ;
+//    }
+//    lOgrePolygons[i] = NULL ;
+//  }
+
+  lOgrePolygons.resize(0);
+
+  ogreInitialised = false;
+  ogre = new vpAROgre();
+  ogre->setShowConfigDialog(false);
+  ogreBackground = vpImage<unsigned char>(480, 640);
+#endif
 }
 
 /*!
@@ -302,11 +346,11 @@ vpMbHiddenFaces<PolygonType>::reset()
 */
 template<class PolygonType>
 unsigned int
-vpMbHiddenFaces<PolygonType>::setVisiblePrivate(const vpHomogeneousMatrix &cMo, const double &angleAppears, const double &angleDisappears,
-                                               bool &changed, bool useOgre, bool testRoi, 
-                                               const vpImage<unsigned char> &I,
-                                               const vpCameraParameters &cam
-                                              )
+vpMbHiddenFaces<PolygonType>::setVisiblePrivate(const vpHomogeneousMatrix &cMo,
+                                                const double &angleAppears, const double &angleDisappears,
+                                                bool &changed, bool useOgre, bool testRoi,
+                                                const vpImage<unsigned char> &I,
+                                                const vpCameraParameters &cam)
 {  
   nbVisiblePolygon = 0;
   changed = false;
@@ -322,77 +366,122 @@ vpMbHiddenFaces<PolygonType>::setVisiblePrivate(const vpHomogeneousMatrix &cMo, 
 #endif
   }
   
-  for (unsigned int i = 0; i < Lpol.size(); i += 1){ 
-    Lpol[i]->changeFrame(cMo);
-    Lpol[i]->isappearing = false;
-    
-    if(Lpol[i]->isVisible())
-    {
-      bool testDisappear = false;
-      unsigned int nbCornerInsidePrev = 0;
-      
-      if(testRoi){
-       nbCornerInsidePrev = Lpol[i]->getNbCornerInsidePrevImage();
-       if(Lpol[i]->getNbCornerInsideImage(I, cam) == 0)
-          testDisappear = true;
-      }
-      
-      if(!testDisappear){
-        if(useOgre)
+  for (unsigned int i = 0; i < Lpol.size(); i++){
+    if (computeVisibility(cMo, angleAppears, angleDisappears, changed, useOgre, testRoi, I, cam, cameraPos, i))
+      nbVisiblePolygon ++;
+  }
+  return nbVisiblePolygon;
+}
+
+/*!
+  Compute the visibility of a given face index.
+
+  \param cMo : The pose of the camera
+  \param angleAppears : Angle used to test the appearance of a face
+  \param angleDisappears : Angle used to test the disappearance of a face
+  \param changed : True if a face appeared, disappeared or too many points have been lost. False otherwise
+  \param useOgre : True if a Ogre is used to test the visibility, False otherwise
+  \param testRoi : True if a face have to be entirely in the image False otherwise
+  \param I : Image used to test if a face is entirely projected in the image.
+  \param cam : Camera parameters.
+  \param cameraPos : Position of the camera. Used only when Ogre is used as 3rd party.
+  \param index : Index of the face to consider.
+
+  \return Return true if the face is visible.
+*/
+template<class PolygonType>
+bool
+vpMbHiddenFaces<PolygonType>::computeVisibility(const vpHomogeneousMatrix &cMo,
+                                                const double &angleAppears, const double &angleDisappears,
+                                                bool &changed, bool useOgre, bool /* testRoi */,
+                                                const vpImage<unsigned char> & I,
+                                                const vpCameraParameters & cam,
+                                                const vpTranslationVector &
+                                                #ifdef VISP_HAVE_OGRE
+                                                cameraPos
+                                                #endif
+                                                ,
+                                                unsigned int index)
+{
+  unsigned int i = index;
+  Lpol[i]->changeFrame(cMo);
+  Lpol[i]->isappearing = false;
+
+  //Commented because we need to compute visibility
+  // even when dealing with line in level of detail case
+  /*if(Lpol[i]->getNbPoint() <= 2)
+  {
+      Lpol[i]->isvisible = true;
+  }
+  else*/{
+  if(Lpol[i]->isVisible())
+  {
+    bool testDisappear = false;
+    unsigned int nbCornerInsidePrev = 0;
+
+//    if(testRoi){
+//      nbCornerInsidePrev = Lpol[i]->getNbCornerInsidePrevImage();
+//      if(Lpol[i]->getNbCornerInsideImage(I, cam) == 0)
+//        testDisappear = true;
+//    }
+
+    if(!testDisappear){
+      if(useOgre)
 #ifdef VISP_HAVE_OGRE
-          testDisappear = ((!Lpol[i]->isVisible(cMo, angleDisappears, true)) || !isVisibleOgre(cameraPos,i));
+        testDisappear = ((!Lpol[i]->isVisible(cMo, angleDisappears, true, cam, I)) || !isVisibleOgre(cameraPos,i));
 #else
-          testDisappear = (!Lpol[i]->isVisible(cMo, angleDisappears));
+        testDisappear = (!Lpol[i]->isVisible(cMo, angleDisappears, false, cam, I));
 #endif
-        else
-          testDisappear = (!Lpol[i]->isVisible(cMo, angleDisappears));
-      }
-  
-      // test if the face is still visible
-      if(testDisappear){
-//         std::cout << "Face " << i << " disappears" << std::endl;
-        changed = true;
-        Lpol[i]->isvisible = false;
-      }
-      else {
-        nbVisiblePolygon++;
-        Lpol[i]->isvisible = true;
-        
-        if(nbCornerInsidePrev > Lpol[i]->getNbCornerInsidePrevImage())
-          changed = true;
-      }
-    }
-    else
-    {
-      bool testAppear = true;
-      
-      if(testRoi && Lpol[i]->getNbCornerInsideImage(I, cam) == 0)
-       testAppear = false;
-      
-      if(testAppear){
-        if(useOgre)
-#ifdef VISP_HAVE_OGRE
-          testAppear = ((Lpol[i]->isVisible(cMo, angleAppears, true)) && isVisibleOgre(cameraPos,i));
-#else
-          testAppear = (Lpol[i]->isVisible(cMo, angleAppears));
-#endif
-        else
-          testAppear = (Lpol[i]->isVisible(cMo, angleAppears));
-      } 
-      
-      if(testAppear){   
-//         std::cout << "Face " << i << " appears" << std::endl;
-        Lpol[i]->isvisible = true;
-        changed = true;
-        nbVisiblePolygon++;
-      }
       else
-        Lpol[i]->isvisible = false;
+        testDisappear = (!Lpol[i]->isVisible(cMo, angleDisappears, false, cam, I));
+    }
+
+    // test if the face is still visible
+    if(testDisappear){
+//               std::cout << "Face " << i << " disappears" << std::endl;
+      changed = true;
+      Lpol[i]->isvisible = false;
+    }
+    else {
+      //nbVisiblePolygon++;
+      Lpol[i]->isvisible = true;
+
+      if(nbCornerInsidePrev > Lpol[i]->getNbCornerInsidePrevImage())
+        changed = true;
     }
   }
-  
-//   std::cout << "Nombre de polygones visibles: " << nbVisiblePolygon << std::endl;
-  return nbVisiblePolygon;
+  else
+  {
+    bool testAppear = true;
+
+//    if(testRoi && Lpol[i]->getNbCornerInsideImage(I, cam) == 0)
+//      testAppear = false;
+
+    if(testAppear){
+      if(useOgre)
+#ifdef VISP_HAVE_OGRE
+        testAppear = ((Lpol[i]->isVisible(cMo, angleAppears, true, cam, I)) && isVisibleOgre(cameraPos,i));
+#else
+        testAppear = (Lpol[i]->isVisible(cMo, angleAppears, false, cam, I));
+#endif
+      else
+        testAppear = (Lpol[i]->isVisible(cMo, angleAppears, false, cam, I));
+    }
+
+    if(testAppear){
+//      std::cout << "Face " << i << " appears" << std::endl;
+      Lpol[i]->isvisible = true;
+      changed = true;
+      //nbVisiblePolygon++;
+    }
+    else{
+//      std::cout << "Problem" << std::endl;
+      Lpol[i]->isvisible = false;
+    }
+  }
+  }
+  //   std::cout << "Nombre de polygones visibles: " << nbVisiblePolygon << std::endl;
+  return Lpol[i]->isvisible;
 }
 
 /*!

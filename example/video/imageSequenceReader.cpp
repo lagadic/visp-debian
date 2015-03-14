@@ -191,10 +191,8 @@ main(int argc, const char ** argv)
     std::cout <<  "-------------------------------------------------------" << std::endl ;
     std::cout << std::endl ;
 
-    // Get the VISP_IMAGE_PATH environment variable value
-    char *ptenv = getenv("VISP_INPUT_IMAGE_PATH");
-    if (ptenv != NULL)
-      env_ipath = ptenv;
+    // Get the visp-images-data package path or VISP_INPUT_IMAGE_PATH environment variable value
+    env_ipath = vpIoTools::getViSPImagesDataPath();
 
     // Set the default input path
     if (! env_ipath.empty())
@@ -246,7 +244,7 @@ main(int argc, const char ** argv)
 
     if (opt_ppath.empty())
     {
-      filename = ipath +  vpIoTools::path("/ViSP-images/mire-2/image.%04d.pgm");
+      filename = vpIoTools::createFilePath(ipath, "ViSP-images/mire-2/image.%04d.pgm");
     }
     else
     {
@@ -254,7 +252,7 @@ main(int argc, const char ** argv)
     }
 
     //Initialize the reader and get the first frame.
-    reader.setFileName(filename.c_str());
+    reader.setFileName(filename);
     reader.setFirstFrameIndex(opt_first);
     reader.open(I);
 
@@ -274,7 +272,6 @@ main(int argc, const char ** argv)
       display.init(I, 100, 100,"Display video frame") ;
       vpDisplay::display(I) ;
       vpDisplay::flush(I) ;
-
     }
 
     if (opt_display && opt_click_allowed)

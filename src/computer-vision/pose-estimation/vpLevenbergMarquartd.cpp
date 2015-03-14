@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpLevenbergMarquartd.cpp 4574 2014-01-09 08:48:51Z fspindle $
+ * $Id: vpLevenbergMarquartd.cpp 5107 2015-01-05 07:47:13Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -40,13 +40,13 @@
  *
  *****************************************************************************/
 
-#include <visp/vpLevenbergMarquartd.h>
-#include <visp/vpMath.h>
-
 #include <cmath>    // std::fabs
 #include <limits>   // numeric_limits
 #include <iostream>
 #include <algorithm>    // std::min
+
+#include <visp/vpLevenbergMarquartd.h>
+#include <visp/vpMath.h>
 
 #define	SIGN(x)		((x) < 0 ? -1 : 1)
 #define	SWAP(a,b,c)	{(c) = (a); (a) = (b); (b) = (c);}
@@ -575,7 +575,7 @@ int	qrfac(int m, int n, double *a, int lda, int *pivot, int *ipvt,
   /*
    *	epsmch est la precision machine.
    */
-  epsmch = DBL_EPSILON;
+  epsmch = std::numeric_limits<double>::epsilon();
 
   /*
    *	calcul des normes initiales des lignes et initialisation
@@ -857,7 +857,7 @@ int	qrsolv (int n, double *r, int ldr, int *ipvt, double *diag, double *qtb,
 
   /*
    *	resolution du systeme triangulaire pour z. Si le systeme est
-   *	singulier, on obtient une solution au moindres carrés.
+   *	singulier, on obtient une solution au moindres carres.
    */
   nsing =  n;
 
@@ -917,7 +917,7 @@ int	qrsolv (int n, double *r, int ldr, int *ipvt, double *diag, double *qtb,
  * xtol		Erreur relative desiree dans la solution approximee. La
  *		terminaison survient quand l'erreur relative entre deux
  *		iterations consecutives est au moins egal a xtol.
- * gtol		Mesure de l'orthogonalité entre le vecteur des fonctions et les
+ * gtol		Mesure de l'orthogonalite entre le vecteur des fonctions et les
  *		colonnes du jacobien. La terminaison survient quand le cosinus
  *		de l'angle entre fvec et n'importe quelle colonne du jacobien
  *		est au moins egal a gtol, en valeur absolue.
@@ -1025,12 +1025,12 @@ int	lmder (void (*ptr_fcn)(int m, int n, double *xc, double *fvecc,
   int count = 0;
   int		i, j, l;
   double		actred, delta, dirder, epsmch, fnorm, fnorm1, gnorm;
-  double		ratio = DBL_EPSILON;
+  double		ratio = std::numeric_limits<double>::epsilon();
   double		par, pnorm, prered;
   double		sum, temp, temp1, temp2, xnorm = 0.0;
 
   /* epsmch est la precision machine.	*/
-  epsmch = DBL_EPSILON;
+  epsmch = std::numeric_limits<double>::epsilon();
 
   *info = 0;
   iflag = 0;

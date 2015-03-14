@@ -1,6 +1,6 @@
 /****************************************************************************
 *
-* $Id: vpMeTracker.cpp 4649 2014-02-07 14:57:11Z fspindle $
+* $Id: vpMeTracker.cpp 4797 2014-07-23 15:52:28Z fspindle $
 *
 * This file is part of the ViSP software.
 * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -95,9 +95,18 @@ vpMeTracker::vpMeTracker(const vpMeTracker& meTracker)
   #endif
 }
 
+/*!
+ Reset the tracker by removing all the moving edges.
+ */
+void vpMeTracker::reset()
+{
+  nGoodElement = 0;
+  list.clear();
+}
+
 vpMeTracker::~vpMeTracker()
 {
-  list.clear();
+  reset();
 }
 
 vpMeTracker&

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: camera_calibration.cpp 4663 2014-02-14 10:32:11Z fspindle $
+ * $Id: camera_calibration.cpp 5126 2015-01-05 22:07:11Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -66,7 +66,9 @@
 class Settings
 {
 public:
-  Settings() {
+  Settings()
+    : boardSize(), calibrationPattern(UNDEFINED), squareSize(0.), input(), tempo(0.), goodInput(false), patternToUse()
+  {
     boardSize = cv::Size(0, 0);
     calibrationPattern = UNDEFINED;
     squareSize = 0.025f;
@@ -132,8 +134,8 @@ public:
 private:
   std::string patternToUse;
 };
-
 #endif
+
 int main(int argc, const char ** argv)
 {
   try {
@@ -196,8 +198,12 @@ int main(int argc, const char ** argv)
       case Settings::CHESSBOARD:
         //std::cout << "Use chessboard " << std::endl;
         found = findChessboardCorners( cvI, s.boardSize, pointBuf,
+#if (VISP_HAVE_OPENCV_VERSION >= 0x030000)
+                                       cv::CALIB_CB_ADAPTIVE_THRESH | cv::CALIB_CB_FAST_CHECK | cv::CALIB_CB_NORMALIZE_IMAGE);
+#else
                                        CV_CALIB_CB_ADAPTIVE_THRESH | CV_CALIB_CB_FAST_CHECK | CV_CALIB_CB_NORMALIZE_IMAGE);
-        break;
+#endif
+          break;
       case Settings::CIRCLES_GRID:
         //std::cout << "Use circle grid " << std::endl;
         found = findCirclesGrid( cvI, s.boardSize, pointBuf, cv::CALIB_CB_SYMMETRIC_GRID  );
@@ -221,7 +227,12 @@ int main(int argc, const char ** argv)
         if (s.calibrationPattern == Settings::CHESSBOARD) {
           // improve the found corners' coordinate accuracy for chessboard
           cornerSubPix( cvI, pointBuf, cv::Size(11,11),
-                        cv::Size(-1,-1), cv::TermCriteria( CV_TERMCRIT_EPS+CV_TERMCRIT_ITER, 30, 0.1 ));
+                        cv::Size(-1,-1),
+#if (VISP_HAVE_OPENCV_VERSION >= 0x030000)
+                        cv::TermCriteria( cv::TermCriteria::EPS+cv::TermCriteria::COUNT, 30, 0.1 ));
+#else
+                        cv::TermCriteria( CV_TERMCRIT_EPS+CV_TERMCRIT_ITER, 30, 0.1 ));
+#endif
         }
         char title[20]; sprintf(title, "image %ld", frame_index);
         vpDisplay::setTitle(I, title);
@@ -255,12 +266,12 @@ int main(int argc, const char ** argv)
       }
 
       if (found)
-        vpDisplay::displayCharString(I, 15, 15, "Image processing succeed", vpColor::green);
+        vpDisplay::displayText(I, 15, 15, "Image processing succeed", vpColor::green);
       else
-        vpDisplay::displayCharString(I, 15, 15, "Image processing fails", vpColor::green);
+        vpDisplay::displayText(I, 15, 15, "Image processing fails", vpColor::green);
 
       if (s.tempo > 10.f) {
-        vpDisplay::displayCharString(I, 35, 15, "A click to process the next image", vpColor::green);
+        vpDisplay::displayText(I, 35, 15, "A click to process the next image", vpColor::green);
         vpDisplay::flush(I);
         vpDisplay::getClick(I);
       }

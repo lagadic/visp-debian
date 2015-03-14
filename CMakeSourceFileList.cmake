@@ -73,6 +73,14 @@ SET (SRC_COMPUTER_VISION
   computer-vision/pose-estimation/vpPoseVirtualVisualServoing.cpp
   )
 
+if(VISP_HAVE_ZBAR)
+  list(APPEND SRC_DETECTION detection/barcode/vpDetectorQRCode.cpp)
+endif()
+
+if(VISP_HAVE_DMTX)
+  list(APPEND SRC_DETECTION detection/barcode/vpDetectorDataMatrixCode.cpp)
+endif()
+
 SET (SRC_EXCEPTION
   exceptions/vpException.cpp
   )
@@ -114,12 +122,17 @@ SET (SRC_KEY_POINT
   key-point/vpBasicKeyPoint.cpp
   )
 
-IF(VISP_HAVE_OPENCV_NONFREE)
-  LIST(APPEND SRC_KEY_POINT key-point/vpKeyPointSurf.cpp)
-ENDIF()
-IF(VISP_HAVE_OPENCV)
-  LIST(APPEND SRC_KEY_POINT key-point/vpPlanarObjectDetector.cpp)
-  LIST(APPEND SRC_KEY_POINT key-point/vpFernClassifier.cpp)
+if(VISP_HAVE_OPENCV_NONFREE AND OpenCV_VERSION VERSION_LESS 3.0.0)
+  list(APPEND SRC_KEY_POINT key-point/vpKeyPointSurf.cpp)
+endif()
+if(VISP_HAVE_OPENCV)
+  list(APPEND SRC_KEY_POINT key-point/vpPlanarObjectDetector.cpp)
+  list(APPEND SRC_KEY_POINT key-point/vpFernClassifier.cpp)
+  list (APPEND SRC_KEY_POINT key-point/vpKeyPoint.cpp)
+endif()
+
+IF(VISP_HAVE_XML2)
+  LIST(APPEND SRC_KEY_POINT key-point/vpXmlConfigParserKeyPoint.cpp)
 ENDIF()
 
 IF(VISP_HAVE_LIBFREENECT_AND_DEPENDENCIES)
@@ -175,6 +188,10 @@ SET (SRC_MATH
 
 IF(VISP_HAVE_LAPACK)
   LIST(APPEND SRC_MATH math/matrix/vpMatrix_cholesky.cpp)
+ENDIF()
+
+IF(VISP_HAVE_XML2)
+  LIST(APPEND SRC_MATH math/transformation/vpXmlParserHomogeneousMatrix.cpp)
 ENDIF()
 
 SET (SRC_ROBOT
@@ -236,23 +253,23 @@ SET (SRC_SERVO
 SET (SRC_SIMULATOR
   simulator/image-simulator/vpImageSimulator.cpp
   simulator/wireframe-simulator/vpWireFrameSimulator.cpp
-  simulator/wireframe-simulator/core/vpArit.c
-  simulator/wireframe-simulator/core/vpAritio.c
-  simulator/wireframe-simulator/core/vpBound.c
-  simulator/wireframe-simulator/core/vpBoundio.c
-  simulator/wireframe-simulator/core/vpClipping.c
-  simulator/wireframe-simulator/core/vpDisplay.c
-  simulator/wireframe-simulator/core/vpKeyword.c
-  simulator/wireframe-simulator/core/vpLex.c
-  simulator/wireframe-simulator/core/vpMyio.c
-  simulator/wireframe-simulator/core/vpParser.c
-  simulator/wireframe-simulator/core/vpProjection.c
-  simulator/wireframe-simulator/core/vpRfstack.c
-  simulator/wireframe-simulator/core/vpSkipio.c
-  simulator/wireframe-simulator/core/vpTmstack.c
-  simulator/wireframe-simulator/core/vpToken.c
-  simulator/wireframe-simulator/core/vpViewio.c
-  simulator/wireframe-simulator/core/vpVwstack.c
+  simulator/wireframe-simulator/core/vpArit.cpp
+  simulator/wireframe-simulator/core/vpAritio.cpp
+  simulator/wireframe-simulator/core/vpBound.cpp
+  simulator/wireframe-simulator/core/vpBoundio.cpp
+  simulator/wireframe-simulator/core/vpClipping.cpp
+  simulator/wireframe-simulator/core/vpCoreDisplay.cpp
+  simulator/wireframe-simulator/core/vpKeyword.cpp
+  simulator/wireframe-simulator/core/vpLex.cpp
+  simulator/wireframe-simulator/core/vpMyio.cpp
+  simulator/wireframe-simulator/core/vpParser.cpp
+  simulator/wireframe-simulator/core/vpProjection.cpp
+  simulator/wireframe-simulator/core/vpRfstack.cpp
+  simulator/wireframe-simulator/core/vpSkipio.cpp
+  simulator/wireframe-simulator/core/vpTmstack.cpp
+  simulator/wireframe-simulator/core/vpToken.cpp
+  simulator/wireframe-simulator/core/vpViewio.cpp
+  simulator/wireframe-simulator/core/vpVwstack.cpp
   )
 IF(VISP_HAVE_X11 OR VISP_HAVE_GDI OR VISP_HAVE_OPENCV OR VISP_HAVE_D3D9 OR VISP_HAVE_GTK)
   list(APPEND SRC_SIMULATOR simulator/coin-simulator/vpProjectionDisplay.cpp)
@@ -267,6 +284,7 @@ IF(VISP_HAVE_OGRE)
 ENDIF()
 
 SET (SRC_TOOLS
+  tools/convert/vpConvert.cpp
   tools/geometry/vpPlane.cpp
   tools/geometry/vpRect.cpp
   tools/geometry/vpTriangle.cpp
@@ -318,10 +336,12 @@ SET (SRC_TRACKING
   tracking/moving-edges/vpMeNurbs.cpp
 
   tracking/mbt/vpMbTracker.cpp
+  tracking/mbt/vpMbtPolygon.cpp
   tracking/mbt/edge/vpMbEdgeTracker.cpp
+  tracking/mbt/edge/vpMbtDistanceCircle.cpp
   tracking/mbt/edge/vpMbtDistanceCylinder.cpp
   tracking/mbt/edge/vpMbtDistanceLine.cpp
-  tracking/mbt/edge/vpMbtPolygon.cpp
+  tracking/mbt/edge/vpMbtMeEllipse.cpp
   tracking/mbt/edge/vpMbtMeLine.cpp
 
   tracking/moments/vpMoment.cpp
@@ -364,12 +384,13 @@ if(VISP_HAVE_XML2)
   list(APPEND SRC_TRACKING tracking/mbt/hybrid/vpMbtEdgeKltXmlParser.cpp)
 endif()
 
-IF(VISP_HAVE_OPENCV)
-  LIST(APPEND SRC_TRACKING tracking/klt/vpKltOpencv.cpp)
-  LIST(APPEND SRC_TRACKING tracking/mbt/hybrid/vpMbEdgeKltTracker.cpp)
-  LIST(APPEND SRC_TRACKING tracking/mbt/klt/vpMbtKltPolygon.cpp)
-  LIST(APPEND SRC_TRACKING tracking/mbt/klt/vpMbKltTracker.cpp)
-ENDIF()
+if(VISP_HAVE_OPENCV)
+  list(APPEND SRC_TRACKING detection/face/vpDetectorFace.cpp)
+  list(APPEND SRC_TRACKING tracking/klt/vpKltOpencv.cpp)
+  list(APPEND SRC_TRACKING tracking/mbt/hybrid/vpMbEdgeKltTracker.cpp)
+  list(APPEND SRC_TRACKING tracking/mbt/klt/vpMbtDistanceKltPoints.cpp)
+  list(APPEND SRC_TRACKING tracking/mbt/klt/vpMbKltTracker.cpp)
+endif()
 
 SET (SRC_VIDEO
   video/vpVideoReader.cpp
@@ -447,6 +468,7 @@ SET (SRC_ALL
   ${SRC_CAMERA}
   ${SRC_COMPUTER_VISION}
   ${SRC_EXCEPTION}
+  ${SRC_DETECTION}
   ${SRC_DEVICE_DISPLAY}
   ${SRC_DEVICE_FRAMEGRABBER}
   ${SRC_DEVICE_KINECT}

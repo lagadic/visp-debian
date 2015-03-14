@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpTemplateTrackerSSDForwardCompositional.cpp 4632 2014-02-03 17:06:40Z fspindle $
+ * $Id: vpTemplateTrackerSSDForwardCompositional.cpp 5264 2015-02-04 13:49:55Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -74,7 +74,7 @@ void vpTemplateTrackerSSDForwardCompositional::trackNoPyr(const vpImage<unsigned
   if(!compoInitialised)
     std::cout<<"Compositionnal tracking no initialised\nUse InitCompo(vpImage<unsigned char> &I) function"<<std::endl;
   double erreur=0;
-  int Nbpoint=0;
+  unsigned int Nbpoint=0;
 
   if(blur)
     vpImageFilter::filter(I, BI,fgG,taillef);
@@ -143,7 +143,10 @@ void vpTemplateTrackerSSDForwardCompositional::trackNoPyr(const vpImage<unsigned
 
 
     }
-    if(Nbpoint==0)std::cout<<"plus de point dans template suivi"<<std::endl;
+    if(Nbpoint==0) {
+      //std::cout<<"plus de point dans template suivi"<<std::endl;
+      throw(vpTrackingException(vpTrackingException::notEnoughPointError, "No points in the template"));
+    }
 
     vpMatrix::computeHLM(H,lambda,HLM);
 
@@ -151,10 +154,10 @@ void vpTemplateTrackerSSDForwardCompositional::trackNoPyr(const vpImage<unsigned
     {
       dp=1.*HLM.inverseByLU()*G;
     }
-    catch(...)
+    catch(vpException &e)
     {
-      std::cout<<"probleme inversion"<<std::endl;
-      break;
+      //std::cout<<"probleme inversion"<<std::endl;
+      throw(e);
     }
 
     dp=gain*dp;

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpScale.h 4574 2014-01-09 08:48:51Z fspindle $
+ * $Id: vpScale.h 5126 2015-01-05 22:07:11Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -88,7 +88,7 @@ public:
 
   //! Constructor
   vpScale();
-  vpScale(double, int, int);
+  vpScale(double kernel_bandwidth, unsigned int dim=1, int type=EPANECHNIKOV);
   //! Destructor
   virtual ~vpScale(void);
 

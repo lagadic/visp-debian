@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpNurbs.cpp 4649 2014-02-07 14:57:11Z fspindle $
+ * $Id: vpNurbs.cpp 5235 2015-01-30 13:51:21Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -550,7 +550,7 @@ vpNurbs::removeCurveKnot(double l_u, unsigned int l_r, unsigned int l_num, doubl
   }
 
   unsigned int ord = l_p + 1;
-  double fout = (2*l_r-l_s-l_p)/2;
+  double fout = (2*l_r-l_s-l_p)/2.;
   unsigned int last = l_r - l_s;
   unsigned int first = l_r - l_p;
   unsigned int tblSize = 2*l_p+1;

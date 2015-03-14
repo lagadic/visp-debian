@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: templateTracker.cpp 4658 2014-02-09 09:50:14Z fspindle $
+ * $Id: templateTracker.cpp 5002 2014-11-24 08:18:58Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -232,10 +232,8 @@ main(int argc, const char ** argv)
     WarpType opt_warp_type = WARP_AFFINE;
     long opt_last_frame = 30;
 
-    // Get the VISP_IMAGE_PATH environment variable value
-    char *ptenv = getenv("VISP_INPUT_IMAGE_PATH");
-    if (ptenv != NULL)
-      env_ipath = ptenv;
+    // Get the visp-images-data package path or VISP_INPUT_IMAGE_PATH environment variable value
+    env_ipath = vpIoTools::getViSPImagesDataPath();
 
     // Set the default input path
     if (! env_ipath.empty())
@@ -263,9 +261,9 @@ main(int argc, const char ** argv)
 
     // Get the option values
     if (!opt_ipath.empty())
-      ipath = opt_ipath + vpIoTools::path("/ViSP-images/mire-2/image.%04d.pgm");
+      ipath = vpIoTools::createFilePath(opt_ipath, "ViSP-images/mire-2/image.%04d.pgm");
     else
-      ipath = env_ipath + vpIoTools::path("/ViSP-images/mire-2/image.%04d.pgm");
+      ipath = vpIoTools::createFilePath(env_ipath, "ViSP-images/mire-2/image.%04d.pgm");
 
     vpImage<unsigned char> I;
     vpVideoReader reader;
@@ -366,7 +364,7 @@ main(int argc, const char ** argv)
         tracker->resetTracker();
 
         if (opt_display && opt_click_allowed) {
-          vpDisplay::displayCharString(I, 10, 10, "Re-init simulation", vpColor::red);
+          vpDisplay::displayText(I, 10, 10, "Re-init simulation", vpColor::red);
           vpDisplay::flush(I);
           tracker->initClick(I, delaunay);
         }
@@ -399,7 +397,7 @@ main(int argc, const char ** argv)
       vpDisplay::flush(I) ;
     }
     if (opt_click_allowed) {
-      vpDisplay::displayCharString(I, 10,10, "A click to exit...", vpColor::red);
+      vpDisplay::displayText(I, 10,10, "A click to exit...", vpColor::red);
       vpDisplay::flush(I) ;
       vpDisplay::getClick(I) ;
     }

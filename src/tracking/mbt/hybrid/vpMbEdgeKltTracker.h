@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpMbEdgeKltTracker.h 4649 2014-02-07 14:57:11Z fspindle $
+ * $Id: vpMbEdgeKltTracker.h 5126 2015-01-05 22:07:11Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -49,7 +49,7 @@
 
 #include <visp/vpConfig.h>
 
-#ifdef VISP_HAVE_OPENCV
+#if (defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION >= 0x020100))
 
 #include <visp/vpRobust.h>
 #include <visp/vpSubMatrix.h>
@@ -246,31 +246,6 @@ public:
                           const vpColor& col , const unsigned int thickness=1, const bool displayFullModel = false);
   virtual void    display(const vpImage<vpRGBa>& I, const vpHomogeneousMatrix &cMo, const vpCameraParameters &cam,
                           const vpColor& col , const unsigned int thickness=1, const bool displayFullModel = false);
-  
-  /*! Return the angle used to test polygons appearance. */
-  virtual inline  double  getAngleAppear() const { return vpMbKltTracker::getAngleAppear(); }   
-  
-          /*! Return the angle used to test polygons disappearance. */
-  virtual inline  double  getAngleDisappear() const { return vpMbKltTracker::getAngleDisappear(); } 
-  
-          /*!
-            Get the clipping used.
-            
-            \sa vpMbtPolygonClipping
-            
-            \return Clipping flags.
-          */          
-  virtual inline  unsigned int getClipping() const { return vpMbKltTracker::clippingFlag; } 
-  
-          /*! Return a reference to the faces structure. */
-  inline  vpMbHiddenFaces<vpMbtKltPolygon>& getFaces() { return vpMbKltTracker::faces;}
-
-          /*!
-            Get the far distance for clipping.
-
-            \return Far clipping value.
-          */
-  virtual inline  double  getFarClippingDistance() const { return vpMbKltTracker::getFarClippingDistance(); }
 
           /*!
             Get the value of the gain used to compute the control law.
@@ -295,31 +270,12 @@ public:
 
           void    loadConfigFile(const char* configFile);
   virtual void    loadConfigFile(const std::string& configFile);
-  virtual void    loadModel(const std::string& modelFile);
   
+          void    reInitModel(const vpImage<unsigned char>& I, const std::string &cad_name, const vpHomogeneousMatrix& cMo_,
+        		  const bool verbose=false);
+          void    reInitModel(const vpImage<unsigned char>& I, const char* cad_name, const vpHomogeneousMatrix& cMo,
+        		  const bool verbose=false);
           void    resetTracker();
-          
-          /*!
-            Set the angle used to test polygons appearance.
-            If the angle between the normal of the polygon and the line going
-            from the camera to the polygon center has a value lower than
-            this parameter, the polygon is considered as appearing.
-            The polygon will then be tracked.
-
-            \param a : new angle in radian.
-          */
-  virtual inline  void setAngleAppear(const double &a) { vpMbKltTracker::setAngleAppear(a); vpMbEdgeTracker::setAngleAppear(a);}
-  
-          /*!
-            Set the angle used to test polygons disappearance.
-            If the angle between the normal of the polygon and the line going
-            from the camera to the polygon center has a value greater than
-            this parameter, the polygon is considered as disappearing.
-            The tracking of the polygon will then be stopped.
-
-            \param a : new angle in radian.
-          */
-  virtual inline  void setAngleDisappear(const double &a) { vpMbKltTracker::setAngleDisappear(a); vpMbEdgeTracker::setAngleDisappear(a);}
 
   virtual void    setCameraParameters(const vpCameraParameters& cam);
   
@@ -330,14 +286,14 @@ public:
             
             \param flags : New clipping flags.
           */
-  virtual void    setClipping(const unsigned int &flags) {vpMbEdgeTracker::setClipping(flags); vpMbKltTracker::setClipping(flags);}
+  virtual void    setClipping(const unsigned int &flags) {vpMbEdgeTracker::setClipping(flags); }
 
           /*!
             Set the far distance for clipping.
 
             \param dist : Far clipping value.
           */
-  virtual void   setFarClippingDistance(const double &dist) { vpMbEdgeTracker::setFarClippingDistance(dist); vpMbKltTracker::setFarClippingDistance(dist); }
+  virtual void   setFarClippingDistance(const double &dist) { vpMbEdgeTracker::setFarClippingDistance(dist); }
 
           /*!
             Set the value of the gain used to compute the control law.
@@ -358,17 +314,22 @@ public:
             
             \param dist : Near clipping value.
           */
-  virtual void   setNearClippingDistance(const double &dist) { vpMbEdgeTracker::setNearClippingDistance(dist); vpMbKltTracker::setNearClippingDistance(dist); }
-          
+  virtual void   setNearClippingDistance(const double &dist) { vpMbEdgeTracker::setNearClippingDistance(dist); }
+
           /*!
             Use Ogre3D for visibility tests
-            
+
             \warning This function has to be called before the initialization of the tracker.
-            
+
             \param v : True to use it, False otherwise
           */
-  virtual inline  void    setOgreVisibilityTest(const bool &v) { vpMbKltTracker::setOgreVisibilityTest(v); }
-  
+  virtual void   setOgreVisibilityTest(const bool &v){
+       vpMbTracker::setOgreVisibilityTest(v);
+#ifdef VISP_HAVE_OGRE
+       faces.getOgreContext()->setWindowName("MBT Hybrid");
+#endif
+      }
+
   virtual void    setPose(const vpImage<unsigned char> &I, const vpHomogeneousMatrix& cdMo);
 
   virtual void    testTracking(){};
@@ -379,8 +340,12 @@ protected:
                              vpColVector &w_klt, const unsigned int lvl=0);
 
   virtual void    init(const vpImage<unsigned char>& I);
-  virtual void    initCylinder(const vpPoint& , const vpPoint &, const double , const unsigned int );
-  virtual void    initFaceFromCorners(const std::vector<vpPoint>& corners, const unsigned int indexFace = -1);
+  virtual void    initCircle(const vpPoint&, const vpPoint &, const vpPoint &, const double r, const int idFace=0,
+      const std::string &name="");
+  virtual void    initCylinder(const vpPoint&, const vpPoint &, const double r, const int idFace,
+      const std::string &name="");
+          virtual void    initFaceFromCorners(vpMbtPolygon &polygon);
+          virtual void    initFaceFromLines(vpMbtPolygon &polygon);
   unsigned int    initMbtTracking(const unsigned int level=0);
 
           bool    postTracking(const vpImage<unsigned char>& I, vpColVector &w_mbt, vpColVector &w_klt,

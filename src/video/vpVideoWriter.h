@@ -52,6 +52,13 @@
 #include <visp/vpImageIo.h>
 #include <visp/vpFFMPEG.h>
 
+#if VISP_HAVE_OPENCV_VERSION >= 0x020200
+#  include <opencv2/highgui/highgui.hpp>
+#elif VISP_HAVE_OPENCV_VERSION >= 0x020000
+#  include <opencv/highgui.h>
+#endif
+
+
 /*!
   \class vpVideoWriter
 
@@ -59,7 +66,12 @@
 
   \brief Class that enables to write easily a video file or a sequence of images.
  
-  The following example shows how this class is really easy to use. It enable to write an image sequence. The images are stored in the folder "./image" and are named "image0000.jpeg", "image0001.jpeg", "image0002.jpeg", ...
+  The following example available in tutorial-video-recorder.cpp shows how this
+  class can be used to record a video from a camera by default in an mpeg file.
+  \include tutorial-video-recorder.cpp
+
+  The following example shows also how this class can be used to write an image sequence.
+  The images are stored in the folder "./image" and are named "image0000.jpeg", "image0001.jpeg", "image0002.jpeg", ...
   
   \code
   #include <visp/vpConfig.h>
@@ -97,13 +109,14 @@
 
 int main()
 {
-#ifdef VISP_HAVE_FFMPEG
   vpImage<vpRGBa> I;
 
   vpVideoWriter writer;
 
   // Set up the framerate to 30Hz. Default is 25Hz.
   writer.setFramerate(30);
+
+#ifdef VISP_HAVE_FFMPEG
   // Set up the bit rate
   writer.setBitRate(1000000);
   // Set up the codec to use
@@ -111,6 +124,9 @@ int main()
   writer.setCodec(CODEC_ID_MPEG2VIDEO);
 #else
   writer.setCodec(AV_CODEC_ID_MPEG2VIDEO);
+#endif
+#elif defined VISP_HAVE_OPENCV
+  writer.setCodec( CV_FOURCC('P','I','M','1') );
 #endif
   writer.setFileName("./test.mpeg");
 
@@ -127,7 +143,6 @@ int main()
   writer.close();
 
   return 0;
-#endif
 }
   \endcode
 */
@@ -147,6 +162,10 @@ class VISP_EXPORT vpVideoWriter
     //!The bite rate
     unsigned int bit_rate;
     int framerate;
+#elif VISP_HAVE_OPENCV_VERSION >= 0x020100
+	  cv::VideoWriter writer;
+	  int fourcc;
+	  double framerate;
 #endif
     //!Types of available formats
     typedef enum
@@ -157,6 +176,7 @@ class VISP_EXPORT vpVideoWriter
       FORMAT_PNG,
       FORMAT_AVI,
       FORMAT_MPEG,
+      FORMAT_MPEG4,
       FORMAT_MOV,
       FORMAT_UNKNOWN
     } vpVideoFormatType;
@@ -234,6 +254,8 @@ class VISP_EXPORT vpVideoWriter
 #else
     inline void setCodec(const AVCodecID codec_id) {this->codec = codec_id;}
 #endif
+#elif VISP_HAVE_OPENCV_VERSION >= 0x020100
+    inline void setCodec(const int fourcc_codec) {this->fourcc = fourcc_codec;}
 #endif
 
     void setFileName(const char *filename);
@@ -253,6 +275,17 @@ class VISP_EXPORT vpVideoWriter
       By default the framerate is set to 25Hz.
     */
     inline void setFramerate(const int frame_rate) {
+      this->framerate = frame_rate;
+    }
+#elif VISP_HAVE_OPENCV_VERSION >= 0x020100
+	/*!
+      Sets the framerate in Hz of the video when encoding.
+
+      \param frame_rate : the expected framerate.
+
+      By default the framerate is set to 25Hz.
+    */
+    inline void setFramerate(const double frame_rate) {
       this->framerate = frame_rate;
     }
 #endif

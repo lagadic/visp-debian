@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpXmlParserCamera.cpp 4649 2014-02-07 14:57:11Z fspindle $
+ * $Id: vpXmlParserCamera.cpp 5264 2015-02-04 13:49:55Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -139,7 +139,7 @@ vpXmlParserCamera::operator =(const vpXmlParserCamera& twinParser) {
   \return error code.
 */
 int
-vpXmlParserCamera::parse(vpCameraParameters &cam, const char * filename,
+vpXmlParserCamera::parse(vpCameraParameters &cam, const std::string &filename,
                          const std::string& cam_name,
                          const vpCameraParameters::vpCameraParametersProjType &projModel,
                          const unsigned int im_width,
@@ -148,7 +148,7 @@ vpXmlParserCamera::parse(vpCameraParameters &cam, const char * filename,
   xmlDocPtr doc;
   xmlNodePtr node;
 
-  doc = xmlParseFile(filename);
+  doc = xmlParseFile(filename.c_str());
   if (doc == NULL)
   {
     return SEQUENCE_ERROR;
@@ -184,7 +184,7 @@ vpXmlParserCamera::parse(vpCameraParameters &cam, const char * filename,
   \return error code.
 */
 int
-vpXmlParserCamera::save(const vpCameraParameters &cam, const char * filename,
+vpXmlParserCamera::save(const vpCameraParameters &cam, const std::string &filename,
                         const std::string& cam_name,
                         const unsigned int im_width,
                         const unsigned int im_height)
@@ -193,7 +193,7 @@ vpXmlParserCamera::save(const vpCameraParameters &cam, const char * filename,
   xmlNodePtr node;
   xmlNodePtr nodeCamera = NULL;
 
-  doc = xmlReadFile(filename,NULL,XML_PARSE_NOWARNING + XML_PARSE_NOERROR
+  doc = xmlReadFile(filename.c_str(), NULL, XML_PARSE_NOWARNING + XML_PARSE_NOERROR
                     + XML_PARSE_NOBLANKS);
   if (doc == NULL){
     doc = xmlNewDoc ((xmlChar*)"1.0");
@@ -229,15 +229,15 @@ vpXmlParserCamera::save(const vpCameraParameters &cam, const char * filename,
     return SEQUENCE_ERROR;
   }
 
-  nodeCamera = find_camera(doc, node, camera_name, image_width, image_height);
+  nodeCamera = find_camera(doc, node, cam_name, im_width, im_height);
   if(nodeCamera == NULL){
-    write(node, camera_name, image_width, image_height);
+    write(node, cam_name, im_width, im_height);
   }
   else{
     write_camera(nodeCamera);
   }
 
-  xmlSaveFormatFile(filename,doc,1);
+  xmlSaveFormatFile(filename.c_str(), doc, 1);
   xmlFreeDoc(doc);
 
   return SEQUENCE_OK;
@@ -276,7 +276,7 @@ vpXmlParserCamera::read (xmlDocPtr doc, xmlNodePtr node,
   vpXmlCodeType prop;
 
   vpXmlCodeSequenceType back = SEQUENCE_OK;
-  int nbCamera = 0;
+  unsigned int nbCamera = 0;
 
   for (node = node->xmlChildrenNode; node != NULL;  node = node->next)
   {
@@ -501,12 +501,13 @@ vpXmlParserCamera::read_camera (xmlDocPtr doc, xmlNodePtr node,
 
     switch (prop)
     {
-    case CODE_XML_CAMERA_NAME:{
+    case CODE_XML_CAMERA_NAME: {
       char * val_char = xmlReadCharChild(doc, node);
       camera_name_tmp = val_char;
+      std::cout << "Found camera with name: \"" << camera_name_tmp << "\"" << std::endl;
       xmlFree(val_char);
-    }break;
-
+      break;
+    }
     case CODE_XML_WIDTH:
       image_width_tmp = xmlReadUnsignedIntChild(doc, node);
       break;

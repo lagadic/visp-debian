@@ -1,5 +1,6 @@
 /*! \example tutorial-ibvs-4pts-image-tracking.cpp */
 #include <visp/vpDisplayX.h>
+#include <visp/vpDisplayOpenCV.h>
 #include <visp/vpDisplayGDI.h>
 #include <visp/vpFeatureBuilder.h>
 #include <visp/vpImageIo.h>
@@ -24,6 +25,7 @@ public:
     \param cam : Intrinsic camera parameters.
     */
   vpVirtualGrabber(const std::string &filename, const vpCameraParameters &cam)
+    : sim_(), target_(), cam_()
   {
     // The target is a square 20cm by 2cm square
     // Initialise the 3D coordinates of the target corners
@@ -80,7 +82,7 @@ void display_trajectory(const vpImage<unsigned char> &I, const std::vector<vpDot
 
 int main()
 {
-#if defined(VISP_HAVE_X11) || defined(VISP_HAVE_GDI)
+#if defined(VISP_HAVE_X11) || defined(VISP_HAVE_GDI) || defined(VISP_HAVE_OPENCV)
   try {
     vpHomogeneousMatrix cdMo(0, 0, 0.75, 0, 0, 0);
     vpHomogeneousMatrix cMo(0.15, -0.1, 1., vpMath::rad(10), vpMath::rad(-10), vpMath::rad(50));
@@ -106,14 +108,16 @@ int main()
     vpDisplayX d(I, 0, 0, "Current camera view");
 #elif defined(VISP_HAVE_GDI)
     vpDisplayGDI d(I, 0, 0, "Current camera view");
+#elif defined(VISP_HAVE_OPENCV)
+    vpDisplayOpenCV d(I, 0, 0, "Current camera view");
 #else
     std::cout << "No image viewer is available..." << std::endl;
 #endif
 
     vpDisplay::display(I);
-    vpDisplay::displayCharString(I, 10, 10,
-                                 "Click in the 4 dots to initialise the tracking and start the servo",
-                                 vpColor::red);
+    vpDisplay::displayText(I, 10, 10,
+                           "Click in the 4 dots to initialise the tracking and start the servo",
+                           vpColor::red);
     vpDisplay::flush(I);
 
     vpFeaturePoint p[4], pd[4];

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpWin32API.cpp 4574 2014-01-09 08:48:51Z fspindle $
+ * $Id: vpWin32API.cpp 5285 2015-02-09 14:32:54Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -108,11 +108,12 @@ void vpSelectObject(HWND hWnd, HDC hDC, HDC hDCMem, HGDIOBJ h){
 
 BOOL vpReleaseSemaphore(HANDLE hSemaphore,LONG IReleaseCount,LPLONG lpPreviousCount){
   BOOL ret = ReleaseSemaphore(hSemaphore,IReleaseCount,lpPreviousCount);
+#ifndef __MINGW32__
   if(ret==0){
     vpProcessErrors("ReleaseSemaphore");
   }
+#endif
   return ret;
-  
 }
 
 void vpEnterCriticalSection(LPCRITICAL_SECTION lpCriticalSection){

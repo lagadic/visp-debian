@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpServo.cpp 4674 2014-02-17 15:34:41Z fspindle $
+ * $Id: vpServo.cpp 5219 2015-01-28 10:29:21Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -829,7 +829,7 @@ bool vpServo::testInitialization()
     break ;
   case  EYETOHAND_L_cVf_fVe_eJe:
     if (!init_cVf) vpERROR_TRACE("cVf not initialized") ;
-    if (!init_fJe) vpERROR_TRACE("fVe not initialized") ;
+    if (!init_fVe) vpERROR_TRACE("fVe not initialized") ;
     if (!init_eJe) vpERROR_TRACE("eJe not initialized") ;
     return (init_cVf && init_fVe && init_eJe) ;
     break ;
@@ -978,7 +978,7 @@ vpColVector vpServo::computeControlLaw()
     else
       J1p = J1.t() ;
 
-    if (rankJ1 == L.getCols())
+    if (rankJ1 == J1.getCols())
     {
       /* if no degrees of freedom remains (rank J1 = ndof)
        WpW = I, multiply by WpW is useless
@@ -1068,7 +1068,7 @@ vpColVector vpServo::computeControlLaw()
 vpColVector vpServo::computeControlLaw(double t)
 {
   static int iteration =0;
-  static vpColVector e1_initial;
+  //static vpColVector e1_initial;
 
   try
   {
@@ -1145,7 +1145,7 @@ vpColVector vpServo::computeControlLaw(double t)
     else
       J1p = J1.t() ;
 
-    if (rankJ1 == L.getCols())
+    if (rankJ1 == J1.getCols())
     {
       /* if no degrees of freedom remains (rank J1 = ndof)
        WpW = I, multiply by WpW is useless
@@ -1183,6 +1183,9 @@ vpColVector vpServo::computeControlLaw(double t)
     if (iteration==0 || std::fabs(t) < std::numeric_limits<double>::epsilon()) {
       e1_initial = e1;
     }
+    // Security check. If size of e1_initial and e1 differ, that means that e1_initial was not set
+    if (e1_initial.getRows() != e1.getRows())
+      e1_initial = e1;
 
     e = - lambda(e1) * e1 + lambda(e1) * e1_initial*exp(-mu*t);
 
@@ -1241,7 +1244,6 @@ vpColVector vpServo::computeControlLaw(double t)
 vpColVector vpServo::computeControlLaw(double t, const vpColVector &e_dot_init)
 {
   static int iteration =0;
-  static vpColVector e1_initial;
 
   try
   {
@@ -1318,7 +1320,7 @@ vpColVector vpServo::computeControlLaw(double t, const vpColVector &e_dot_init)
     else
       J1p = J1.t() ;
 
-    if (rankJ1 == L.getCols())
+    if (rankJ1 == J1.getCols())
     {
       /* if no degrees of freedom remains (rank J1 = ndof)
        WpW = I, multiply by WpW is useless
@@ -1356,6 +1358,9 @@ vpColVector vpServo::computeControlLaw(double t, const vpColVector &e_dot_init)
     if (iteration==0 || std::fabs(t) < std::numeric_limits<double>::epsilon()) {
       e1_initial = e1;
     }
+    // Security check. If size of e1_initial and e1 differ, that means that e1_initial was not set
+    if (e1_initial.getRows() != e1.getRows())
+      e1_initial = e1;
 
     e = - lambda(e1) * e1 + (e_dot_init + lambda(e1) * e1_initial)*exp(-mu*t);
 
@@ -1415,7 +1420,7 @@ vpColVector vpServo::computeControlLaw(double t, const vpColVector &e_dot_init)
 */
 vpColVector vpServo::secondaryTask(const vpColVector &de2dt)
 {
-  if (rankJ1 == L.getCols())
+  if (rankJ1 == J1.getCols())
   {
     vpERROR_TRACE("no degree of freedom is free, cannot use secondary task") ;
     throw(vpServoException(vpServoException::noDofFree,
@@ -1473,7 +1478,7 @@ vpColVector vpServo::secondaryTask(const vpColVector &de2dt)
 */
 vpColVector vpServo::secondaryTask(const vpColVector &e2, const vpColVector &de2dt)
 {
-  if (rankJ1 == L.getCols())
+  if (rankJ1 == J1.getCols())
   {
     vpERROR_TRACE("no degree of freedom is free, cannot use secondary task") ;
     throw(vpServoException(vpServoException::noDofFree,

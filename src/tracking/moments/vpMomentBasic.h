@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpMomentBasic.h 4574 2014-01-09 08:48:51Z fspindle $
+ * $Id: vpMomentBasic.h 4710 2014-03-28 17:39:33Z mbakthav $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -82,7 +82,7 @@ class VISP_EXPORT vpMomentBasic : public vpMoment {
           Moment name.
           */
         const char* name() const { return "vpMomentBasic";}
-
+        friend VISP_EXPORT std::ostream & operator<<(std::ostream & os, const vpMomentBasic& v);
+        void printDependencies(std::ostream& os) const;
 };
-std::ostream & operator<<(std::ostream & os, vpMomentBasic& v);
 #endif

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpMeNurbs.cpp 4649 2014-02-07 14:57:11Z fspindle $
+ * $Id: vpMeNurbs.cpp 5060 2014-12-12 18:31:03Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -56,6 +56,7 @@
 #include <visp/vpRect.h>
 #include <visp/vpImageTools.h>
 #include <visp/vpImageConvert.h>
+#include <visp/vpImageFilter.h>
 #include <stdlib.h>
 #include <cmath>    // std::fabs
 #include <limits>   // numeric_limits
@@ -575,7 +576,7 @@ vpMeNurbs::seekExtremities(const vpImage<unsigned char> &I)
 
   \param I : Image in which the edge appears.
 */
-#ifdef VISP_HAVE_OPENCV
+#if (defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION < 0x030000))
 void
 vpMeNurbs::seekExtremitiesCanny(const vpImage<unsigned char> &I)
 #else
@@ -583,7 +584,7 @@ void
 vpMeNurbs::seekExtremitiesCanny(const vpImage<unsigned char> & /* I */)
 #endif
 {
-#ifdef VISP_HAVE_OPENCV
+#if (defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION < 0x030000))
   vpMeSite pt = list.front();
   vpImagePoint firstPoint(pt.ifloat,pt.jfloat);
   pt = list.back();
@@ -614,14 +615,17 @@ vpMeNurbs::seekExtremitiesCanny(const vpImage<unsigned char> & /* I */)
     if( u > 0)
       lastPtInSubIm = nurbs.computeCurvePoint(u);
     
+#if (VISP_HAVE_OPENCV_VERSION >= 0x020408)
+    vpImageFilter::canny(Isub, Isub, 3, cannyTh1, 3);
+#else
     IplImage* Ip = NULL;
     vpImageConvert::convert(Isub, Ip);
     
-
     IplImage* dst = cvCreateImage( cvSize((int)Isub.getWidth(), (int)Isub.getHeight()), 8, 1 );
     cvCanny( Ip, dst, cannyTh1, cannyTh2, 3 );
     
     vpImageConvert::convert(dst, Isub);
+#endif
     
     vpImagePoint firstBorder(-1,-1);
     
@@ -748,14 +752,17 @@ vpMeNurbs::seekExtremitiesCanny(const vpImage<unsigned char> & /* I */)
     if( u < 1.0)
       lastPtInSubIm = nurbs.computeCurvePoint(u);
     
+#if (VISP_HAVE_OPENCV_VERSION >= 0x020408)
+    vpImageFilter::canny(Isub, Isub, 3, cannyTh1, 3);
+#else
     IplImage* Ip = NULL;
     vpImageConvert::convert(Isub, Ip);
-    
 
     IplImage* dst = cvCreateImage( cvSize((int)Isub.getWidth(), (int)Isub.getHeight()), 8, 1 );
     cvCanny( Ip, dst, cannyTh1, cannyTh2, 3 );
-    
+
     vpImageConvert::convert(dst, Isub);
+#endif
     
     vpImagePoint firstBorder(-1,-1);
     
@@ -1064,7 +1071,7 @@ vpMeNurbs::track(const vpImage<unsigned char> &I)
   //Suppressions des points ejectes par le tracking
   suppressPoints();
 
-  //Recalcule les param�tres
+  //Recalcule les parametres
 //  nurbs.globalCurveInterp(list);
   nurbs.globalCurveApprox(list,nbControlPoints);
   

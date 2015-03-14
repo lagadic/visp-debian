@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpDot.cpp 4649 2014-02-07 14:57:11Z fspindle $
+ * $Id: vpDot.cpp 4943 2014-11-03 13:51:09Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -47,17 +47,11 @@
 */
 
 #include <visp/vpDot.h>
-
 #include <visp/vpDisplay.h>
 #include <visp/vpColor.h>
-
-// exception handling
 #include <visp/vpTrackingException.h>
-#include <vector>
 
-#ifdef VISP_USE_MSVC
-#  pragma comment(linker, "/STACK:256000000") // Increase max recursion depth
-#endif
+#include <vector>
 
 /*
   \class vpDot
@@ -216,7 +210,7 @@ vpDot::setGrayLevelOut()
   if (gray_level_min == 0) {
     if (gray_level_max == 255) {
       // gray_level_min = 0 and gray_level_max = 255: this should not occur
-      vpERROR_TRACE("Unable to choose a good \"out\" level") ;
+      //vpERROR_TRACE("Unable to choose a good \"out\" level") ;
       throw(vpTrackingException(vpTrackingException::initializationError,
 				"Unable to choose a good \"out\" level")) ;
     }
@@ -296,14 +290,18 @@ bool vpDot::connexe(const vpImage<unsigned char>& I,unsigned int u,unsigned int 
     n+=1 ;
 
     if (n > nbMaxPoint) {
-      vpERROR_TRACE("Too many point %lf (%lf%% of image size). "
-		    "This threshold can be modified using the setMaxDotSize() "
-		    "method.",
-		    n, n / (I.getWidth() * I.getHeight()),
-		    nbMaxPoint, maxDotSizePercentage) ;
+//      vpERROR_TRACE("Too many point %lf (%lf%% of image size). "
+//		    "This threshold can be modified using the setMaxDotSize() "
+//		    "method.",
+//		    n, n / (I.getWidth() * I.getHeight()),
+//		    nbMaxPoint, maxDotSizePercentage) ;
 
       throw(vpTrackingException(vpTrackingException::featureLostError,
-				"Dot to big")) ;
+                                "Too many point %lf (%lf%% of image size). "
+                                "This threshold can be modified using the setMaxDotSize() "
+                                "method.",
+                                n, n / (I.getWidth() * I.getHeight()),
+                                nbMaxPoint, maxDotSizePercentage)) ;
     }
 
     // Bounding box update
@@ -464,7 +462,7 @@ vpDot::COG(const vpImage<unsigned char> &I, double& u, double& v)
     }
     if (sol == false)
     {
-      vpERROR_TRACE("Dot has been lost") ;
+      //vpERROR_TRACE("Dot has been lost") ;
       throw(vpTrackingException(vpTrackingException::featureLostError,
 				"Dot has been lost")) ;
     }
@@ -545,7 +543,7 @@ vpDot::COG(const vpImage<unsigned char> &I, double& u, double& v)
     }
 
     if (sol == false) {
-      vpERROR_TRACE("Dot has been lost") ;
+      //vpERROR_TRACE("Dot has been lost") ;
       throw(vpTrackingException(vpTrackingException::featureLostError,
 				"Dot has been lost")) ;
     }
@@ -589,19 +587,21 @@ vpDot::COG(const vpImage<unsigned char> &I, double& u, double& v)
 
   if (npoint < 5)
   {
-    vpERROR_TRACE("Dot to small") ;
+    //vpERROR_TRACE("Dot to small") ;
     throw(vpTrackingException(vpTrackingException::featureLostError,
 			      "Dot to small")) ;
   }
 
   if (npoint > nbMaxPoint)
   {
-    vpERROR_TRACE("Too many point %lf (%lf%%). Max allowed is %lf (%lf%%). This threshold can be modified using the setMaxDotSize() method.",
-		  npoint, npoint / (I.getWidth() * I.getHeight()),
-		  nbMaxPoint, maxDotSizePercentage) ;
+//    vpERROR_TRACE("Too many point %lf (%lf%%). Max allowed is %lf (%lf%%). This threshold can be modified using the setMaxDotSize() method.",
+//		  npoint, npoint / (I.getWidth() * I.getHeight()),
+//		  nbMaxPoint, maxDotSizePercentage) ;
 
-   throw(vpTrackingException(vpTrackingException::featureLostError,
-			      "Dot to big")) ;
+    throw(vpTrackingException(vpTrackingException::featureLostError,
+                              "Too many point %lf (%lf%%). Max allowed is %lf (%lf%%). This threshold can be modified using the setMaxDotSize() method.",
+                              npoint, npoint / (I.getWidth() * I.getHeight()),
+                              nbMaxPoint, maxDotSizePercentage)) ;
   }  
 }
 
@@ -679,10 +679,9 @@ vpDot::initTracking(const vpImage<unsigned char>& I)
   try {
     track( I );
   }
-  catch(...)
+  catch(vpException &e)
   {
-    vpERROR_TRACE("Error caught") ;
-    throw ;
+    throw(e) ;
   }
 }
 
@@ -734,10 +733,9 @@ vpDot::initTracking(const vpImage<unsigned char>& I, const vpImagePoint &ip)
   try {
     track( I );
   }
-  catch(...)
+  catch(vpException &e)
   {
-    vpERROR_TRACE("Error caught") ;
-    throw ;
+    throw(e) ;
   }
 }
 
@@ -781,10 +779,9 @@ vpDot::initTracking(const vpImage<unsigned char>& I, const vpImagePoint &ip,
   try {
     track( I );
   }
-  catch(...)
+  catch(vpException &e)
   {
-    vpERROR_TRACE("Error caught") ;
-    throw ;
+    throw(e) ;
   }
 }
 
@@ -829,10 +826,9 @@ vpDot::track(const vpImage<unsigned char> &I)
     }
 
   }
-  catch(...)
+  catch(vpException &e)
   {
-    vpERROR_TRACE("Error caught") ;
-    throw ;
+    throw(e) ;
   }
 }
 

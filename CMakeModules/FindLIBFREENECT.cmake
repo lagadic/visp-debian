@@ -1,6 +1,6 @@
 #############################################################################
 #
-# $Id: FindLIBFREENECT.cmake 4574 2014-01-09 08:48:51Z fspindle $
+# $Id: FindLIBFREENECT.cmake 4695 2014-03-15 11:28:48Z fspindle $
 #
 # This file is part of the ViSP software.
 # Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -62,6 +62,8 @@ ELSE()
     $ENV{LIBFREENECT_HOME}/include
     /usr/include
     /usr/local/include
+    /usr/include/libfreenect
+    /usr/local/include/libfreenect
     )
   FIND_PATH(LIBFREENECT_H_INCLUDE_DIR libfreenect.h
     $ENV{LIBFREENECT_HOME}/include

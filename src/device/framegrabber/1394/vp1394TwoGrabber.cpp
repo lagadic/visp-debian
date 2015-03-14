@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vp1394TwoGrabber.cpp 4649 2014-02-07 14:57:11Z fspindle $
+ * $Id: vp1394TwoGrabber.cpp 4728 2014-04-23 12:26:44Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -337,23 +337,25 @@ vp1394TwoGrabber::setCamera(uint64_t cam_id)
     bool is_guid = false;
     // check if the camera_id is a guid
     for (unsigned int i=0; i< num_cameras; i++) {
-      if (cameras[i]->guid == camera_id) {
+      if (cameras[i]->guid == cam_id) {
         this->camera_id = i;
         is_guid = true;
         break;
       }
     }
     if (is_guid == false) {
+      std::cout << "Error: The camera with guid 0x" << std::hex << cam_id << " is not present" << std::endl;
+      std::cout << num_cameras << " camera(s) connected" << std::endl;
+      for (unsigned int i=0; i< num_cameras; i++) {
+        std::cout << " - camera " << i << " with guid 0x" << std::hex << cameras[i]->guid << std::endl;
+      }
       close();
-      vpERROR_TRACE("The camera with GUID 0x%x or id %u is not present", 
-		    camera_id, camera_id);
-      vpERROR_TRACE("Only %u camera on the bus.", num_cameras);
       throw (vpFrameGrabberException(vpFrameGrabberException::settingError,
 				     "The required camera is not present") );
     }
   }
   else {
-    this->camera_id =  cam_id;
+    this->camera_id = (unsigned int) cam_id; // The input cam_id is not a uint64_t guid, but the index of the camera
   }
 
   // create a pointer to the working camera

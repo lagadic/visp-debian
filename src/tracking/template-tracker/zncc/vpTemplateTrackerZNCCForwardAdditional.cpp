@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpTemplateTrackerZNCCForwardAdditional.cpp 4574 2014-01-09 08:48:51Z fspindle $
+ * $Id: vpTemplateTrackerZNCCForwardAdditional.cpp 4783 2014-07-15 13:07:52Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -291,7 +291,7 @@ void vpTemplateTrackerZNCCForwardAdditional::trackNoPyr(const vpImage<unsigned c
     //std::cout<<G<<std::endl;
     H=H/sqrt(denom);
 
-    if(Nbpoint==0)std::cout<<"plus de point dans template suivi"<<std::endl;
+    //if(Nbpoint==0)std::cout<<"plus de point dans template suivi"<<std::endl; // cannot occur
 
     try
     {
@@ -299,10 +299,10 @@ void vpTemplateTrackerZNCCForwardAdditional::trackNoPyr(const vpImage<unsigned c
       //dp=1.*HLM.inverseByLU()*G;
       dp=1.*HLMdesireInverse*G;
     }
-    catch(...)
+    catch(vpException &e)
     {
-      std::cout<<"probleme inversion"<<std::endl;
-      break;
+      //std::cout<<"probleme inversion"<<std::endl;
+      throw(e);
     }
 
     dp=gain*dp;

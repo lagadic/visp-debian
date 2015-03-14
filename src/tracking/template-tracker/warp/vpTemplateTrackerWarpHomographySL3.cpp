@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpTemplateTrackerWarpHomographySL3.cpp 4669 2014-02-16 16:25:57Z fspindle $
+ * $Id: vpTemplateTrackerWarpHomographySL3.cpp 4783 2014-07-15 13:07:52Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -107,9 +107,9 @@ void vpTemplateTrackerWarpHomographySL3::findWarp(const double *ut0,const double
     try{
       dp=HLM.inverseByLU()*G_;
     }
-    catch(...){
-      std::cout<<"Cannot inverse the matrix by LU "<<std::endl;
-      break;
+    catch(vpException &e){
+      //std::cout<<"Cannot inverse the matrix by LU "<<std::endl;
+      throw(e);
     }
     pRondp(p,dp,p);
 

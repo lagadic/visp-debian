@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpMbtDistanceLine.h 4649 2014-02-07 14:57:11Z fspindle $
+ * $Id: vpMbtDistanceLine.h 4802 2014-07-24 09:24:43Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -154,7 +154,7 @@ class VISP_EXPORT vpMbtDistanceLine
     
     void initInteractionMatrixError();
     
-    void initMovingEdge(const vpImage<unsigned char> &I, const vpHomogeneousMatrix &cMo);
+    bool initMovingEdge(const vpImage<unsigned char> &I, const vpHomogeneousMatrix &cMo);
     
     /*!
       Check if the line is visible in the image or not.
@@ -213,11 +213,7 @@ class VISP_EXPORT vpMbtDistanceLine
     void updateMovingEdge(const vpImage<unsigned char> &I, const vpHomogeneousMatrix &cMo);
 
   private:
-    void belongToPolygon(int index_) { Lindex_polygon.push_back(index_); }
     void project(const vpHomogeneousMatrix &cMo);
-    void setFace( vpMbHiddenFaces<vpMbtPolygon> *_hiddenface) { hiddenface = _hiddenface ; }
-    
-
 } ;
 
 #endif

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpMbtDistanceLine.cpp 4649 2014-02-07 14:57:11Z fspindle $
+ * $Id: vpMbtDistanceLine.cpp 5136 2015-01-08 10:09:04Z ayol $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -228,6 +228,7 @@ vpMbtDistanceLine::setMovingEdge(vpMe *_me)
   me = _me ;
   if (meline != NULL)
   {
+    meline->reset();
     meline->setMe(me) ;
   }
 }
@@ -239,8 +240,9 @@ vpMbtDistanceLine::setMovingEdge(vpMe *_me)
   
   \param I : The image.
   \param cMo : The pose of the camera used to initialize the moving edges.
+  \return false if an error occur, true otherwise.
 */
-void
+bool
 vpMbtDistanceLine::initMovingEdge(const vpImage<unsigned char> &I, const vpHomogeneousMatrix &cMo)
 {
   if(isvisible){
@@ -287,6 +289,7 @@ vpMbtDistanceLine::initMovingEdge(const vpImage<unsigned char> &I, const vpHomog
       catch(...)
       {
         //vpTRACE("the line can't be initialized");
+        return false;
       }
     }
     else{
@@ -296,6 +299,7 @@ vpMbtDistanceLine::initMovingEdge(const vpImage<unsigned char> &I, const vpHomog
     }
   }   
 //	trackMovingEdge(I,cMo)  ;
+  return true;
 }
 
 
@@ -335,6 +339,7 @@ vpMbtDistanceLine::trackMovingEdge(const vpImage<unsigned char> &I, const vpHomo
     }
     catch(...)
     {
+      meline->reset();
       Reinit = true;
     }
     nbFeature =(unsigned int) meline->getMeList().size();
@@ -416,7 +421,8 @@ vpMbtDistanceLine::reinitMovingEdge(const vpImage<unsigned char> &I, const vpHom
   if(meline!= NULL)
     delete meline;
   
-  initMovingEdge(I,cMo);
+  if (initMovingEdge(I,cMo) == false)
+    Reinit = true;
 
   Reinit = false;
 }
@@ -436,10 +442,10 @@ void
 vpMbtDistanceLine::display(const vpImage<unsigned char> &I, const vpHomogeneousMatrix &cMo,
                            const vpCameraParameters &camera, const vpColor col, const unsigned int thickness, const bool displayFullModel)
 {
-  p1->changeFrame(cMo);
-  p2->changeFrame(cMo);
-
   if(isvisible || displayFullModel){
+    p1->changeFrame(cMo);
+    p2->changeFrame(cMo);
+
     vpImagePoint ip1, ip2;
     vpCameraParameters c = camera;
     if(poly.getClipping() > 3) // Contains at least one FOV constraint
@@ -456,7 +462,7 @@ vpMbtDistanceLine::display(const vpImage<unsigned char> &I, const vpHomogeneousM
        ((poly.roiPointsClip[1].second & poly.roiPointsClip[0].second & vpMbtPolygon::RIGHT_CLIPPING) == 0)){ 
       vpMeterPixelConversion::convertPoint(cam,poly.roiPointsClip[0].first.get_x(),poly.roiPointsClip[0].first.get_y(),ip1);
       vpMeterPixelConversion::convertPoint(cam,poly.roiPointsClip[1].first.get_x(),poly.roiPointsClip[1].first.get_y(),ip2);
-    
+
       vpDisplay::displayLine(I,ip1,ip2,col, thickness);
     }
   }
@@ -478,10 +484,10 @@ vpMbtDistanceLine::display(const vpImage<vpRGBa> &I, const vpHomogeneousMatrix &
                            const vpCameraParameters &camera, const vpColor col,
                            const unsigned int thickness, const bool displayFullModel)
 {
-  p1->changeFrame(cMo);
-  p2->changeFrame(cMo);
-
   if(isvisible || displayFullModel){
+    p1->changeFrame(cMo);
+    p2->changeFrame(cMo);
+
     vpImagePoint ip1, ip2;
     vpCameraParameters c = camera;
     if(poly.getClipping() > 3) // Contains at least one FOV constraint

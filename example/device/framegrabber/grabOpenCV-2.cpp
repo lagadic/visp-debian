@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: grabOpenCV-2.cpp 4574 2014-01-09 08:48:51Z fspindle $
+ * $Id: grabOpenCV-2.cpp 5005 2014-11-24 08:25:51Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -52,7 +52,7 @@
 
 #include <visp/vpConfig.h>
 
-#if defined(VISP_HAVE_OPENCV)
+#if defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION >= 0x020100)
 
 #include <visp/vpDisplayOpenCV.h>
 #include <visp/vpImage.h>
@@ -72,28 +72,38 @@ int main(int argc, char** argv)
 
     std::cout << "Use device: " << device << std::endl;
     cv::VideoCapture cap(device); // open the default camera
+#if (VISP_HAVE_OPENCV_VERSION >= 0x030000)
+    cap.set(cv::CAP_PROP_FRAME_WIDTH, 640);
+    cap.set(cv::CAP_PROP_FRAME_HEIGHT, 480);
+#else
     cap.set(CV_CAP_PROP_FRAME_WIDTH, 640);
     cap.set(CV_CAP_PROP_FRAME_HEIGHT, 480);
+#endif
     if(!cap.isOpened())  // check if we succeeded
       return -1;
     cv::Mat frame;
     cap >> frame; // get a new frame from camera
 
-    IplImage iplimage = frame;
-    std::cout << "Image size: " << iplimage.width << " "
-              << iplimage.height << std::endl;
+    std::cout << "Image size: "
+#if (VISP_HAVE_OPENCV_VERSION >= 0x030000)
+              << (int)cap.get(cv::CAP_PROP_FRAME_WIDTH) << " "
+              << (int)cap.get(cv::CAP_PROP_FRAME_HEIGHT) << std::endl;
+#else
+              << (int)cap.get(CV_CAP_PROP_FRAME_WIDTH) << " "
+              << (int)cap.get(CV_CAP_PROP_FRAME_HEIGHT) << std::endl;
+#endif
 
     //vpImage<vpRGBa> I; // for color images
     vpImage<unsigned char> I; // for gray images
-    vpImageConvert::convert(&iplimage, I);
+    vpImageConvert::convert(frame, I);
+
     vpDisplayOpenCV d(I);
 
     for(;;) {
       cap >> frame; // get a new frame from camera
-      iplimage = frame;
 
       // Convert the image in ViSP format and display it
-      vpImageConvert::convert(&iplimage, I);
+      vpImageConvert::convert(frame, I);
       vpDisplay::display(I);
       vpDisplay::flush(I);
       if (vpDisplay::getClick(I, false)) // a click to exit

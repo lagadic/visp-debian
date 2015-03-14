@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpImageFilter.h 4574 2014-01-09 08:48:51Z fspindle $
+ * $Id: vpImageFilter.h 4991 2014-11-21 16:03:09Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.

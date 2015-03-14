@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: testPolygon.cpp 4658 2014-02-09 09:50:14Z fspindle $
+ * $Id: testPolygon.cpp 5004 2014-11-24 08:24:18Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -170,9 +170,6 @@ main(int argc, const char** argv)
 
 
     std::vector <vpImagePoint> vec3;
-    vec2.push_back(vpImagePoint(250, 250));
-    vec2.push_back(vpImagePoint(150, 250));
-    vec2.push_back(vpImagePoint(250, 250));
     vpPolygon p3(vec3);
 
 #if defined VISP_HAVE_X11
@@ -209,7 +206,7 @@ main(int argc, const char** argv)
       vpDisplay::displayCross(I, p2.getCenter(), 5, vpColor::red);
       p3.display(I, vpColor::blue, 1);
       vpDisplay::displayCross(I, p3.getCenter(), 5, vpColor::lightBlue);
-      vpDisplay::displayCharString(I, vpImagePoint(10, 10), "Click to finish", vpColor::red);
+      vpDisplay::displayText(I, vpImagePoint(10, 10), "Click to finish", vpColor::red);
       vpDisplay::flush(I);
 
       if (opt_click)
@@ -217,8 +214,8 @@ main(int argc, const char** argv)
 
 
       vpDisplay::display(I);
-      vpDisplay::displayCharString(I, vpImagePoint(10, 10), "Left click to add a point", vpColor::red);
-      vpDisplay::displayCharString(I, vpImagePoint(20, 10), "Right click to build the polygon", vpColor::red);
+      vpDisplay::displayText(I, vpImagePoint(10, 10), "Left click to add a point", vpColor::red);
+      vpDisplay::displayText(I, vpImagePoint(20, 10), "Right click to build the polygon", vpColor::red);
       vpDisplay::flush(I);
       if (opt_click) {
         vpPolygon p4;

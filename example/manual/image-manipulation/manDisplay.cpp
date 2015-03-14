@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: manDisplay.cpp 4574 2014-01-09 08:48:51Z fspindle $
+ * $Id: manDisplay.cpp 5004 2014-11-24 08:24:18Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -123,9 +123,9 @@ int main()
     // Display in overlay a yellow string
     ip.set_i( 300 );
     ip.set_j( 160 );
-    vpDisplay::displayCharString(I, ip,
-                                 "ViSP is a marvelous software",
-                                 vpColor::black) ;
+    vpDisplay::displayText(I, ip,
+                           "ViSP is a marvelous software",
+                           vpColor::black) ;
     //Flush the display : without this line nothing will appear on the screen
     vpDisplay::flush(I);
 

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpParallelPortException.h 4574 2014-01-09 08:48:51Z fspindle $
+ * $Id: vpParallelPortException.h 5126 2015-01-05 22:07:11Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -90,18 +90,18 @@ class VISP_EXPORT vpParallelPortException : public vpException
     } ;
 
   public:
-    vpParallelPortException (const int code,  const char* format, ...)
+    vpParallelPortException (const int id,  const char* format, ...)
     {
-      this->code = code;
+      this->code = id;
       va_list args;
       va_start(args, format);
       setMessage(format, args);
       va_end (args);
     }
-    vpParallelPortException (const int code, const std::string & msg)
-      : vpException(code, msg){ ; }
-    vpParallelPortException (const int code)
-      : vpException(code){ ; }
+    vpParallelPortException (const int id, const std::string & msg)
+      : vpException(id, msg){ ; }
+    vpParallelPortException (const int id)
+      : vpException(id){ ; }
 
 };
 

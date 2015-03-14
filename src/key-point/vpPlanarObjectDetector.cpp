@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpPlanarObjectDetector.cpp 4632 2014-02-03 17:06:40Z fspindle $
+ * $Id: vpPlanarObjectDetector.cpp 4976 2014-11-18 10:17:38Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -41,7 +41,7 @@
 
 #include <visp/vpPlanarObjectDetector.h>
 
-#if (VISP_HAVE_OPENCV_VERSION >= 0x020000) // Require opencv >= 2.0.0
+#if (VISP_HAVE_OPENCV_VERSION >= 0x020000) && (VISP_HAVE_OPENCV_VERSION < 0x030000) // Require opencv >= 2.0.0 and < 3.0.0
 
 #include <visp/vpImageConvert.h>
 #include <visp/vpException.h>

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpTemplateTrackerZNCCInverseCompositional.cpp 4671 2014-02-17 08:59:28Z fspindle $
+ * $Id: vpTemplateTrackerZNCCInverseCompositional.cpp 5264 2015-02-04 13:49:55Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -252,7 +252,7 @@ void vpTemplateTrackerZNCCInverseCompositional::trackNoPyr(const vpImage<unsigne
     vpImageFilter::filter(I, BI,fgG,taillef);
 
   double erreur=0;
-  int Nbpoint=0;
+  unsigned int Nbpoint=0;
   vpColVector dpinv(nbParam);
   double Ic;
   double Iref;
@@ -295,7 +295,7 @@ void vpTemplateTrackerZNCCInverseCompositional::trackNoPyr(const vpImage<unsigne
 
 
     }
-    if(Nbpoint!=0)
+    if(Nbpoint > 0)
     {
       moyIref=moyIref/Nbpoint;
       moyIc=moyIc/Nbpoint;

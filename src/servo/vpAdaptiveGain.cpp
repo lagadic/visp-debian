@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpAdaptiveGain.cpp 4641 2014-02-05 12:42:03Z fspindle $
+ * $Id: vpAdaptiveGain.cpp 5126 2015-01-05 22:07:11Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -86,6 +86,11 @@ vpAdaptiveGain::vpAdaptiveGain ()
   \param c : Value of the constant gain.
 */
 vpAdaptiveGain::vpAdaptiveGain (double c)
+  :
+  coeff_a (),
+  coeff_b (),
+  coeff_c (),
+  lambda(1.)
 {
   initFromConstant(c);
 }
@@ -99,6 +104,11 @@ vpAdaptiveGain::vpAdaptiveGain (double c)
 
 */
 vpAdaptiveGain::vpAdaptiveGain (double gain_at_zero, double gain_at_infinity, double slope_at_zero)
+  :
+  coeff_a (),
+  coeff_b (),
+  coeff_c (),
+  lambda(1.)
 {
   initStandard(gain_at_zero, gain_at_infinity, slope_at_zero);
 }

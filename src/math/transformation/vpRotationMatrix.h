@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpRotationMatrix.h 4574 2014-01-09 08:48:51Z fspindle $
+ * $Id: vpRotationMatrix.h 5037 2014-12-05 19:06:41Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -48,6 +48,7 @@
   \brief Class that consider the particular case of rotation matrix
 */
 
+#include <visp/vpHomogeneousMatrix.h>
 #include <visp/vpMatrix.h>
 #include <visp/vpRxyzVector.h>
 #include <visp/vpRzyxVector.h>
@@ -55,6 +56,7 @@
 #include <visp/vpThetaUVector.h>
 #include <visp/vpTranslationVector.h>
 #include <visp/vpQuaternionVector.h>
+#include <visp/vpPoseVector.h>
 
 /*!
   \class vpRotationMatrix
@@ -71,12 +73,14 @@
 */
 class VISP_EXPORT vpRotationMatrix : public vpMatrix
 {
-  friend class vpMatrix;  
+  friend class vpMatrix;
+  friend class vpHomogeneousMatrix;
   friend class vpRxyzVector;
   friend class vpRzyzVector;
   friend class vpRzyxVector;
   friend class vpThetaUVector;
   friend class vpTranslationVector;
+  friend class vpPoseVector;
 public:
   //! Basic initialisation (identity)
   void init() ;
@@ -84,23 +88,36 @@ public:
   //! Basic initialisation (identity)
   void setIdentity() ;
   void eye();
-  //! basic constructor
+  //! Default constructor.
   vpRotationMatrix()   ;
-  //! copy constructor
+  //! Copy constructor.
   vpRotationMatrix(const vpRotationMatrix &R) ;
-  //! Construction from  rotation (theta U parameterization)
+  //! Copy constructor.
+  vpRotationMatrix(const vpHomogeneousMatrix &M) ;
+  //! Construction from rotation (theta U parameterization)
   vpRotationMatrix(const vpThetaUVector &r) ;
-  //! Construction from  rotation (Euler parameterization)
+  //! Construction from a pose vector.
+  vpRotationMatrix(const vpPoseVector &p) ;
+  //! Construction from rotation (Euler parameterization)
   vpRotationMatrix(const vpRzyzVector &r) ;
-  //! Construction from  rotation Rxyz
+  //! Construction from rotation Rxyz
   vpRotationMatrix(const vpRxyzVector &r) ;
-  //! Construction from  rotation Rzyx
+  //! Construction from rotation Rzyx
   vpRotationMatrix(const vpRzyxVector &r) ;
-  //! Construction from  rotation (theta U parameterization)
+  //! Construction from rotation (theta U parameterization)
   vpRotationMatrix(const double tux, const  double tuy, const double tuz) ;
 
   vpRotationMatrix(const vpQuaternionVector& q);
 
+//  /*!
+//    Return the \f$\theta u\f$ vector that corresponds to tha rotation matrix.
+//   */
+//  vpThetaUVector getThetaUVector()
+//  {
+//    vpThetaUVector tu;
+//    tu.buildFrom(*this);
+//    return tu;
+//  }
 
   //! copy operator from vpRotationMatrix
   vpRotationMatrix &operator=(const vpRotationMatrix &R);
@@ -134,8 +151,12 @@ public:
   void printVector() ;
   friend VISP_EXPORT std::ostream &operator << (std::ostream &s, const vpRotationMatrix &m);
 
-  //! Transform a vector vpThetaUVector into an rotation matrix
+  //! Build a rotation matrix from an homogeneous matrix.
+  vpRotationMatrix buildFrom(const vpHomogeneousMatrix &M) ;
+  //! Transform a vector vpThetaUVector into a rotation matrix
   vpRotationMatrix buildFrom(const vpThetaUVector &v) ;
+  //! Transform a pose vector into a rotation matrix
+  vpRotationMatrix buildFrom(const vpPoseVector &p) ;
   //! Transform a vector reprensenting the euler (Rzyz) angle
   //! into a rotation matrix
   vpRotationMatrix buildFrom(const vpRzyzVector &v) ;

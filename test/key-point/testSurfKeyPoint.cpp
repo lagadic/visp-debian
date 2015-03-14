@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: testSurfKeyPoint.cpp 4658 2014-02-09 09:50:14Z fspindle $
+ * $Id: testSurfKeyPoint.cpp 5202 2015-01-24 09:29:06Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -47,7 +47,7 @@
 #include <stdio.h>
 #include <sstream>
 #include <iomanip>
-#if ((defined (VISP_HAVE_X11) || defined(VISP_HAVE_GTK) || defined(VISP_HAVE_GDI)) && defined(VISP_HAVE_OPENCV_NONFREE) && (VISP_HAVE_OPENCV_VERSION >= 0x010100))  // Require opencv >= 1.1.0
+#if ((defined (VISP_HAVE_X11) || defined(VISP_HAVE_GTK) || defined(VISP_HAVE_GDI)) && defined(VISP_HAVE_OPENCV_NONFREE) && (VISP_HAVE_OPENCV_VERSION < 0x030000))  // Require opencv >= 1.1.0 < 3.0.0
 
 #include <visp/vpKeyPointSurf.h>
 #include <visp/vpImage.h>
@@ -173,10 +173,8 @@ main(int argc, const char ** argv)
     bool opt_click_allowed = true;
     bool opt_display = true;
 
-    // Get the VISP_IMAGE_PATH environment variable value
-    char *ptenv = getenv("VISP_INPUT_IMAGE_PATH");
-    if (ptenv != NULL)
-      env_ipath = ptenv;
+    // Get the visp-images-data package path or VISP_INPUT_IMAGE_PATH environment variable value
+    env_ipath = vpIoTools::getViSPImagesDataPath();
 
     // Set the default input path
     if (! env_ipath.empty())
@@ -225,11 +223,11 @@ main(int argc, const char ** argv)
     vpImage<unsigned char> Icur ;
 
     // Set the path location of the image sequence
-    dirname = ipath +  vpIoTools::path("/ViSP-images/cube/");
+    dirname = vpIoTools::createFilePath(ipath, "ViSP-images/cube");
 
     // Build the name of the image file
-    filenameRef = dirname + "image.0000.pgm";
-    filenameCur = dirname + "image.0079.pgm";
+    filenameRef = vpIoTools::createFilePath(dirname, "image.0000.pgm");
+    filenameCur = vpIoTools::createFilePath(dirname, "image.0079.pgm");
 
     // Read the PGM image named "filename" on the disk, and put the
     // bitmap into the image structure I.  I is initialized to the
@@ -381,7 +379,7 @@ main()
 #if ( ! (defined (VISP_HAVE_X11) || defined(VISP_HAVE_GTK) || defined(VISP_HAVE_GDI)) )
   vpERROR_TRACE("You do not have X11, GTK or GDI display functionalities...");
 #else
-  vpERROR_TRACE("You do not have OpenCV-1.1.0 or a more recent release that contains opencv_nonfree component...");
+  vpERROR_TRACE("You do not have 1.1.0 <= OpenCV < 2.4.8 that contains opencv_nonfree component...");
 #endif
 }
 

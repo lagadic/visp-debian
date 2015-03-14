@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpRobot.cpp 4632 2014-02-03 17:06:40Z fspindle $
+ * $Id: vpRobot.cpp 5238 2015-01-30 13:52:25Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -72,6 +72,21 @@ vpRobot::vpRobot (const vpRobot &robot)
   qmin(NULL), qmax(NULL), verbose_(true)
 {
   *this = robot;
+}
+
+/*!
+   Destructor that free allocated memory.
+ */
+vpRobot::~vpRobot()
+{
+  if (qmin != NULL) {
+    delete [] qmin;
+    qmin = NULL;
+  }
+  if (qmax != NULL) {
+    delete [] qmax;
+    qmax = NULL;
+  }
 }
 
 /*! Copy operator. */

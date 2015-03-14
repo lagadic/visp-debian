@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: trackMeNurbs.cpp 4658 2014-02-09 09:50:14Z fspindle $
+ * $Id: trackMeNurbs.cpp 5108 2015-01-05 07:48:58Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -60,7 +60,7 @@
 #include <sstream>
 #include <iomanip>
 
-#if (defined (VISP_HAVE_X11) || defined(VISP_HAVE_GTK) || defined(VISP_HAVE_GDI))
+#if (defined (VISP_HAVE_X11) || defined(VISP_HAVE_GTK) || defined(VISP_HAVE_GDI) || defined(VISP_HAVE_OPENCV))
 
 #include <visp/vpImage.h>
 #include <visp/vpImageIo.h>
@@ -68,6 +68,7 @@
 #include <visp/vpDisplayX.h>
 #include <visp/vpDisplayGTK.h>
 #include <visp/vpDisplayGDI.h>
+#include <visp/vpDisplayOpenCV.h>
 #include <visp/vpColor.h>
 
 #include <visp/vpMeNurbs.h>
@@ -176,10 +177,8 @@ main(int argc, const char ** argv)
     bool opt_click_allowed = true;
     bool opt_display = true;
 
-    // Get the VISP_IMAGE_PATH environment variable value
-    char *ptenv = getenv("VISP_INPUT_IMAGE_PATH");
-    if (ptenv != NULL)
-      env_ipath = ptenv;
+    // Get the visp-images-data package path or VISP_INPUT_IMAGE_PATH environment variable value
+    env_ipath = vpIoTools::getViSPImagesDataPath();
 
     // Set the default input path
     if (! env_ipath.empty())
@@ -226,7 +225,7 @@ main(int argc, const char ** argv)
     vpImage<unsigned char> I ;
 
     // Set the path location of the image sequence
-    filename = ipath +  vpIoTools::path("/ViSP-images/ellipse-1/image.%04d.pgm");
+    filename = vpIoTools::createFilePath(ipath, "ViSP-images/ellipse-1/image.%04d.pgm");
 
     // Build the name of the image file
     vpVideoReader reader;
@@ -242,6 +241,8 @@ main(int argc, const char ** argv)
     vpDisplayGTK display;
 #elif defined VISP_HAVE_GDI
     vpDisplayGDI display;
+#elif defined VISP_HAVE_OPENCV
+    vpDisplayOpenCV display;
 #endif
 
     if (opt_display) {
@@ -263,7 +264,6 @@ main(int argc, const char ** argv)
     me.setSampleStep(5) ;
     me.setPointsToTrack(60) ;
     me.setThreshold(15000) ;
-
 
     nurbs.setMe(&me);
     nurbs.setDisplay(vpMeSite::RANGE_RESULT) ;
@@ -291,14 +291,12 @@ main(int argc, const char ** argv)
       nurbs.display(I, vpColor::green) ;
     }
 
-
     nurbs.track(I) ;
     if (opt_display && opt_click_allowed) {
       std::cout << "A click to continue..." << std::endl;
       vpDisplay::getClick(I) ;
     }
     std::cout <<"------------------------------------------------------------"<<std::endl;
-
 
     for (int iter = 1 ; iter < 40 ; iter++)
     {
@@ -334,7 +332,7 @@ main(int argc, const char ** argv)
 int
 main()
 {
-  vpERROR_TRACE("You do not have X11, GTK or GDI display functionalities...");
+  vpERROR_TRACE("You do not have X11, GTK, GDI or OpenCV display functionalities...");
 }
 
 #endif

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpTemplateTrackerSSD.cpp 4666 2014-02-16 16:21:33Z fspindle $
+ * $Id: vpTemplateTrackerSSD.cpp 5264 2015-02-04 13:49:55Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -100,7 +100,7 @@ double vpTemplateTrackerSSD::getSSD(vpImage<unsigned char> &I,vpColVector &tp)
   double IW,Tij;
   int i,j;
   double i2,j2;
-  int Nbpoint=0;
+  unsigned int Nbpoint=0;
 
   if(pyrInitialised)
   {

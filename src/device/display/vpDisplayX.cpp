@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpDisplayX.cpp 4649 2014-02-07 14:57:11Z fspindle $
+ * $Id: vpDisplayX.cpp 5214 2015-01-27 18:33:01Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -80,9 +80,11 @@ vpDisplayX::vpDisplayX ( vpImage<unsigned char> &I,
                          int x,
                          int y,
                          const char *title )
+  : display(NULL), window(), Ximage(NULL), lut(), context(),
+    screen(0), planes(0), event(), pixmap(), x_color(NULL),
+    screen_depth(8), xcolor(), values(), size(0), ximage_data_init(false),
+    RMask(0), GMask(0), BMask(0), RShift(0), GShift(0), BShift(0)
 {
-  size = 0;
-  x_color = NULL;
   init ( I, x, y, title ) ;
 }
 
@@ -100,9 +102,11 @@ vpDisplayX::vpDisplayX ( vpImage<vpRGBa> &I,
                          int x,
                          int y,
                          const char *title )
+  : display(NULL), window(), Ximage(NULL), lut(), context(),
+    screen(0), planes(0), event(), pixmap(), x_color(NULL),
+    screen_depth(8), xcolor(), values(), size(0), ximage_data_init(false),
+    RMask(0), GMask(0), BMask(0), RShift(0), GShift(0), BShift(0)
 {
-  size = 0;
-  x_color = NULL;
   init ( I, x, y, title ) ;
 }
 
@@ -129,20 +133,18 @@ int main()
   \endcode
 */
 vpDisplayX::vpDisplayX ( int x, int y, const char *title )
+  : display(NULL), window(), Ximage(NULL), lut(), context(),
+    screen(0), planes(0), event(), pixmap(), x_color(NULL),
+    screen_depth(8), xcolor(), values(), size(0), ximage_data_init(false),
+    RMask(0), GMask(0), BMask(0), RShift(0), GShift(0), BShift(0)
 {
   windowXPosition = x ;
   windowYPosition = y ;
-
-  this->x_color = NULL;
 
   if (title != NULL)
     title_ = std::string(title);
   else
     title_ = std::string(" ");
-
-  ximage_data_init = false;
-
-  size = 0;
 }
 
 /*!
@@ -165,10 +167,11 @@ int main()
   \endcode
 */
 vpDisplayX::vpDisplayX()
+  : display(NULL), window(), Ximage(NULL), lut(), context(),
+    screen(0), planes(0), event(), pixmap(), x_color(NULL),
+    screen_depth(8), xcolor(), values(), size(0), ximage_data_init(false),
+    RMask(0), GMask(0), BMask(0), RShift(0), GShift(0), BShift(0)
 {
-  x_color = NULL;
-  ximage_data_init = false;
-  size = 0;
 }
 
 /*!
@@ -207,7 +210,7 @@ vpDisplayX::init ( vpImage<unsigned char> &I, int x, int y, const char *title )
   else
     title_ = std::string(" ");
 
-  // Positionnement de la fenetre dans l'�cran.
+  // Positionnement de la fenetre dans l'ecran.
   if ( ( windowXPosition < 0 ) || ( windowYPosition < 0 ) )
   {
     hints.flags = 0;
@@ -234,11 +237,10 @@ vpDisplayX::init ( vpImage<unsigned char> &I, int x, int y, const char *title )
   lut          = DefaultColormap ( display, screen );
   screen_depth = (unsigned int)DefaultDepth ( display, screen );
 
-  if ( ( window =
-              XCreateSimpleWindow ( display, RootWindow ( display, screen ),
-                                    windowXPosition, windowYPosition, width, height, 1,
-                                    BlackPixel ( display, screen ),
-                                    WhitePixel ( display, screen ) ) ) == 0 )
+  if ( ( window = XCreateSimpleWindow ( display, RootWindow ( display, screen ),
+                                        windowXPosition, windowYPosition, width, height, 1,
+                                        BlackPixel ( display, screen ),
+                                        WhitePixel ( display, screen ) ) ) == 0 )
   {
     vpERROR_TRACE ( "Can't create window." );
     throw ( vpDisplayException ( vpDisplayException::cannotOpenWindowError,
@@ -285,6 +287,14 @@ vpDisplayX::init ( vpImage<unsigned char> &I, int x, int y, const char *title )
     XSetWindowColormap ( display, window, lut ) ;
     XInstallColormap ( display, lut ) ;
 
+    Visual *visual = DefaultVisual (display, screen);
+    RMask = visual->red_mask;
+    GMask = visual->green_mask;
+    BMask = visual->blue_mask;
+
+    RShift = 15 - getMsb(RMask);    /* these are right-shifts */
+    GShift = 15 - getMsb(GMask);
+    BShift = 15 - getMsb(BMask);
   }
 
   //
@@ -607,16 +617,17 @@ vpDisplayX::init ( vpImage<unsigned char> &I, int x, int y, const char *title )
   // Pixmap creation.
   pixmap = XCreatePixmap ( display, window, width, height, screen_depth );
 
-  do
-    XNextEvent ( display, &event );
-  while ( event.xany.type != Expose );
+  // Hangs when forward X11 is used to send the display to an other computer
+//  do
+//    XNextEvent ( display, &event );
+//  while ( event.xany.type != Expose );
 
   {
     Ximage = XCreateImage ( display, DefaultVisual ( display, screen ),
                             screen_depth, ZPixmap, 0, NULL,
                             I.getWidth() , I.getHeight(), XBitmapPad ( display ), 0 );
 
-    Ximage->data = ( char * ) malloc ( I.getWidth() * I.getHeight() * (unsigned int)Ximage->bits_per_pixel / 8 );
+    Ximage->data = ( char * ) malloc ( I.getHeight() * (unsigned int)Ximage->bytes_per_line );
     ximage_data_init = true;
 
   }
@@ -735,9 +746,17 @@ vpDisplayX::init ( vpImage<vpRGBa> &I, int x, int y, const char *title )
       colortable[i] = xcolor.pixel;
     }
 
+    Visual *visual = DefaultVisual (display, screen);
+    RMask = visual->red_mask;
+    GMask = visual->green_mask;
+    BMask = visual->blue_mask;
+
+    RShift = 15 - getMsb(RMask);    /* these are right-shifts */
+    GShift = 15 - getMsb(GMask);
+    BShift = 15 - getMsb(BMask);
+
     XSetWindowColormap ( display, window, lut ) ;
     XInstallColormap ( display, lut ) ;
-
   }
 
 
@@ -1061,10 +1080,10 @@ vpDisplayX::init ( vpImage<vpRGBa> &I, int x, int y, const char *title )
   // Pixmap creation.
   pixmap = XCreatePixmap ( display, window, width, height, screen_depth );
 
-  do
-    XNextEvent ( display, &event );
-  while ( event.xany.type != Expose );
-
+  // Hangs when forward X11 is used to send the display to an other computer
+//  do
+//    XNextEvent ( display, &event );
+//  while ( event.xany.type != Expose );
 
   {
     Ximage = XCreateImage ( display, DefaultVisual ( display, screen ),
@@ -1072,8 +1091,7 @@ vpDisplayX::init ( vpImage<vpRGBa> &I, int x, int y, const char *title )
                             I.getWidth() , I.getHeight(), XBitmapPad ( display ), 0 );
 
 
-    Ximage->data = ( char * ) malloc ( I.getWidth() * I.getHeight()
-                                       * (unsigned int)Ximage->bits_per_pixel / 8 );
+    Ximage->data = ( char * ) malloc ( I.getHeight() * (unsigned int)Ximage->bytes_per_line );
     ximage_data_init = true;
 
   }
@@ -1106,7 +1124,7 @@ void vpDisplayX::init ( unsigned int w, unsigned int h, int x, int y, const char
     windowXPosition = x ;
   if (y != -1)
     windowYPosition = y ;
-  // Positionnement de la fenetre dans l'�cran.
+  // Positionnement de la fenetre dans l'ecran.
   if ( ( windowXPosition < 0 ) || ( windowYPosition < 0 ) )
   {
     hints.flags = 0;
@@ -1188,6 +1206,14 @@ void vpDisplayX::init ( unsigned int w, unsigned int h, int x, int y, const char
     XSetWindowColormap ( display, window, lut ) ;
     XInstallColormap ( display, lut ) ;
 
+    Visual *visual = DefaultVisual (display, screen);
+    RMask = visual->red_mask;
+    GMask = visual->green_mask;
+    BMask = visual->blue_mask;
+
+    RShift = 15 - getMsb(RMask);    /* these are right-shifts */
+    GShift = 15 - getMsb(GMask);
+    BShift = 15 - getMsb(BMask);
   }
 
   vpColor pcolor; // predefined colors
@@ -1532,17 +1558,17 @@ void vpDisplayX::init ( unsigned int w, unsigned int h, int x, int y, const char
   // Pixmap creation.
   pixmap = XCreatePixmap ( display, window, width, height, screen_depth );
 
-  do
-    XNextEvent ( display, &event );
-  while ( event.xany.type != Expose );
+  // Hangs when forward X11 is used to send the display to an other computer
+//  do
+//    XNextEvent ( display, &event );
+//  while ( event.xany.type != Expose );
 
   {
     Ximage = XCreateImage ( display, DefaultVisual ( display, screen ),
                             screen_depth, ZPixmap, 0, NULL,
                             width, height, XBitmapPad ( display ), 0 );
 
-    Ximage->data = ( char * ) malloc ( width * height
-                                       * (unsigned int)Ximage->bits_per_pixel / 8 );
+    Ximage->data = ( char * ) malloc ( height * (unsigned int)Ximage->bytes_per_line );
     ximage_data_init = true;
   }
   displayHasBeenInitialized = true ;
@@ -1689,14 +1715,15 @@ void vpDisplayX::displayImage ( const vpImage<unsigned char> &I )
       }
       case 16:
       {
-        unsigned short      *dst_16 = NULL;
-        dst_16 = ( unsigned short* ) Ximage->data;
-
-        for ( unsigned int i = 0; i < height ; i++ )
-        {
+        unsigned short *dst_16 = ( unsigned short* ) Ximage->data;
+        unsigned char  *dst_8  = NULL;
+        unsigned int bytes_per_line = (unsigned int)Ximage->bytes_per_line;
+        for ( unsigned int i = 0; i < height ; i++ ) {
+          dst_8 =  (unsigned char*) Ximage->data + i * bytes_per_line;
+          dst_16 = (unsigned short *) dst_8;
           for ( unsigned int j=0 ; j < width; j++ )
           {
-            * ( dst_16+ ( i*width+j ) ) = ( unsigned short ) colortable[I[i][j]] ;
+            * ( dst_16 + j ) = ( unsigned short ) colortable[I[i][j]] ;
           }
         }
 
@@ -1755,56 +1782,80 @@ void vpDisplayX::displayImage ( const vpImage<unsigned char> &I )
 */
 void vpDisplayX::displayImage ( const vpImage<vpRGBa> &I )
 {
-
   if ( displayHasBeenInitialized )
   {
-
     switch ( screen_depth )
     {
-      case 24:
-      case 32:
-      {
-        /*
+    case 16: {
+      unsigned short *dst_16 = NULL;
+      unsigned char  *dst_8  = NULL;
+      vpRGBa* bitmap = I.bitmap;
+      unsigned int r, g, b;
+      unsigned int bytes_per_line = (unsigned int)Ximage->bytes_per_line;
+
+      for ( unsigned int i = 0; i < height ; i++ ) {
+        dst_8 =  (unsigned char*) Ximage->data + i * bytes_per_line;
+        dst_16 = (unsigned short *) dst_8;
+        for ( unsigned int j=0 ; j < width; j++ )
+        {
+          r = bitmap->R;
+          g = bitmap->G;
+          b = bitmap->B;
+          * ( dst_16 + j ) = (((r << 8) >> RShift) & RMask) |
+              (((g << 8) >> GShift) & GMask) |
+              (((b << 8) >> BShift) & BMask);
+          bitmap++;
+        }
+      }
+
+      XPutImage ( display, pixmap, context, Ximage, 0, 0, 0, 0, width, height );
+      XSetWindowBackgroundPixmap ( display, window, pixmap );
+
+      break;
+    }
+    case 24:
+    case 32:
+    {
+      /*
          * 32-bit source, 24/32-bit destination
          */
-
-        unsigned char       *dst_32 = NULL;
-        dst_32 = ( unsigned char* ) Ximage->data;
-	vpRGBa* bitmap = I.bitmap;
-	unsigned int sizeI = I.getWidth() * I.getHeight();
-#ifdef BIGENDIAN
-        // little indian/big indian
-        for ( unsigned int i = 0; i < sizeI ; i++ )
-        {
+      unsigned char       *dst_32 = NULL;
+      dst_32 = ( unsigned char* ) Ximage->data;
+      vpRGBa* bitmap = I.bitmap;
+      unsigned int sizeI = I.getWidth() * I.getHeight();
+      if (XImageByteOrder(display) == 1) {
+        // big endian
+        for ( unsigned int i = 0; i < sizeI ; i++ ) {
           *(dst_32++) = bitmap->A;
           *(dst_32++) = bitmap->R;
           *(dst_32++) = bitmap->G;
           *(dst_32++) = bitmap->B;
-	  bitmap++;
+          bitmap++;
         }
-#else
-        for ( unsigned int i = 0; i < sizeI; i++ )
-        {
-          *(dst_32++) = bitmap->B;
-          *(dst_32++) = bitmap->G;
-          *(dst_32++) = bitmap->R;
-          *(dst_32++) = bitmap->A;
-	  bitmap++;
-        }
-#endif
-        // Affichage de l'image dans la Pixmap.
-        XPutImage ( display, pixmap, context, Ximage, 0, 0, 0, 0, width, height );
-        XSetWindowBackgroundPixmap ( display, window, pixmap );
-//        XClearWindow ( display, window );
-//        XSync ( display,1 );
-        break;
-
       }
-      default:
-        vpERROR_TRACE ( "Unsupported depth (%d bpp) for color display",
-                        screen_depth ) ;
-        throw ( vpDisplayException ( vpDisplayException::depthNotSupportedError,
-                                     "Unsupported depth for color display" ) ) ;
+      else {
+        // little endian
+        for ( unsigned int i = 0; i < sizeI; i++ ) {
+          *(dst_32++) = bitmap->B;
+          *(dst_32++) = bitmap->G;
+          *(dst_32++) = bitmap->R;
+          *(dst_32++) = bitmap->A;
+          bitmap++;
+        }
+      }
+      // Affichage de l'image dans la Pixmap.
+      XPutImage ( display, pixmap, context, Ximage, 0, 0, 0, 0, width, height );
+      XSetWindowBackgroundPixmap ( display, window, pixmap );
+      //        XClearWindow ( display, window );
+      //        XSync ( display,1 );
+      break;
+
+    }
+    default:
+      vpERROR_TRACE ( "Unsupported depth (%d bpp) for color display",
+                      screen_depth ) ;
+      throw ( vpDisplayException ( vpDisplayException::depthNotSupportedError,
+                                   "Unsupported depth for color display" ) ) ;
     }
   }
   else
@@ -1898,7 +1949,7 @@ void vpDisplayX::displayImageROI ( const vpImage<unsigned char> &I,const vpImage
         unsigned int iwidth = I.getWidth();
 
         src_8 = src_8 + (int)(iP.get_i()*iwidth+ iP.get_j());
-        dst_8 = dst_8 + (int)(iP.get_i()*this->height+ iP.get_j());
+        dst_8 = dst_8 + (int)(iP.get_i()*this->width+ iP.get_j());
 
         unsigned int i = 0;
         while (i < h)
@@ -1914,13 +1965,13 @@ void vpDisplayX::displayImageROI ( const vpImage<unsigned char> &I,const vpImage
             j++;
           }
           src_8 = src_8 + iwidth;
-          dst_8 = dst_8 + this->height;
+          dst_8 = dst_8 + this->width;
           i++;
         }
       }
 
       // Affichage de l'image dans la Pixmap.
-      XPutImage ( display, pixmap, context, Ximage, iP.get_u(), iP.get_v(), iP.get_u(), iP.get_v(), w, h );
+      XPutImage ( display, pixmap, context, Ximage, (int)iP.get_u(), (int)iP.get_v(), (int)iP.get_u(), (int)iP.get_v(), w, h );
       XSetWindowBackgroundPixmap ( display, window, pixmap );
       //        XClearWindow ( display, window );
       //        XSync ( display,1 );
@@ -1928,32 +1979,43 @@ void vpDisplayX::displayImageROI ( const vpImage<unsigned char> &I,const vpImage
     }
     case 16:
     {
-      unsigned short      *dst_16 = NULL;
-      dst_16 = ( unsigned short* ) Ximage->data;
-      unsigned char       *src_8  = NULL;
-      src_8 = ( unsigned char * ) I.bitmap;
-
-      unsigned int iwidth = I.getWidth();
-
-      src_8 = src_8 + (int)(iP.get_i()*iwidth+ iP.get_j());
-      dst_16 = dst_16 + (int)(iP.get_i()*this->height+ iP.get_j());
-
-      unsigned int i = 0;
-      while (i < h)
-      {
-        unsigned int j = 0;
-        while (j < w)
+      unsigned short *dst_16 = NULL;
+      unsigned char  *dst_8  = NULL;
+      unsigned int bytes_per_line = (unsigned int)Ximage->bytes_per_line;
+      for ( unsigned int i = (unsigned int)iP.get_i(); i < (unsigned int)(iP.get_i()+h) ; i++ ) {
+        dst_8 =  (unsigned char  *) Ximage->data + i * bytes_per_line;
+        dst_16 = (unsigned short *) dst_8;
+        for ( unsigned int j=(unsigned int)iP.get_j() ; j < (unsigned int)(iP.get_j()+w); j++ )
         {
-          *(dst_16+j) = ( unsigned short ) colortable[*(src_8+j)];
-          j++;
+          * ( dst_16 + j ) = ( unsigned short ) colortable[I[i][j]] ;
         }
-        src_8 = src_8 + iwidth;
-        dst_16 = dst_16 + this->height;
-        i++;
       }
 
+//      unsigned char *src_8 = (unsigned char *) I.bitmap;
+//      unsigned char *dst_8 = (unsigned char *) Ximage->data;
+//      unsigned short *dst_16  = NULL;
+
+//      unsigned int iwidth = I.getWidth();
+
+//      src_8 += (int)(iP.get_i()*iwidth + iP.get_j());
+//      dst_8 += (int)(iP.get_i()*Ximage->bytes_per_line + iP.get_j()*Ximage->bits_per_pixel/8);
+//      dst_16 = (unsigned short *) dst_8;
+
+//      unsigned int i = 0;
+//      while (i < h) {
+//        unsigned int j = 0;
+
+//        while (j < w) {
+//          *(dst_16 + j) = ( unsigned short ) colortable[*(src_8+j)];
+//          j++;
+//        }
+//        src_8  = src_8  + iwidth;
+//        dst_16 = dst_16 + Ximage->bytes_per_line;
+//        i++;
+//      }
+
       // Affichage de l'image dans la Pixmap.
-      XPutImage ( display, pixmap, context, Ximage, iP.get_u(), iP.get_v(), iP.get_u(), iP.get_v(), w, h );
+      XPutImage ( display, pixmap, context, Ximage, (int)iP.get_u(), (int)iP.get_v(), (int)iP.get_u(), (int)iP.get_v(), w, h );
       XSetWindowBackgroundPixmap ( display, window, pixmap );
       //        XClearWindow ( display, window );
       //        XSync ( display,1 );
@@ -1993,7 +2055,7 @@ void vpDisplayX::displayImageROI ( const vpImage<unsigned char> &I,const vpImage
       }
 
       // Affichage de l'image dans la Pixmap.
-      XPutImage ( display, pixmap, context, Ximage, iP.get_u(), iP.get_v(), iP.get_u(), iP.get_v(), w, h );
+      XPutImage ( display, pixmap, context, Ximage, (int)iP.get_u(), (int)iP.get_v(), (int)iP.get_u(), (int)iP.get_v(), w, h );
       XSetWindowBackgroundPixmap ( display, window, pixmap );
       //        XClearWindow ( display, window );
       //        XSync ( display,1 );
@@ -2030,9 +2092,32 @@ void vpDisplayX::displayImageROI ( const vpImage<vpRGBa> &I,const vpImagePoint &
 {
   if ( displayHasBeenInitialized )
   {
-
     switch ( screen_depth )
     {
+    case 16: {
+      unsigned short *dst_16 = NULL;
+      unsigned char  *dst_8  = NULL;
+      unsigned int r, g, b;
+      unsigned int bytes_per_line = (unsigned int)Ximage->bytes_per_line;
+      for ( unsigned int i = (unsigned int)iP.get_i(); i < (unsigned int)(iP.get_i()+h) ; i++ ) {
+        dst_8 =  (unsigned char  *) Ximage->data + i * bytes_per_line;
+        dst_16 = (unsigned short *) dst_8;
+        for ( unsigned int j=(unsigned int)iP.get_j() ; j < (unsigned int)(iP.get_j()+w); j++ )
+        {
+          r = I[i][j].R;
+          g = I[i][j].G;
+          b = I[i][j].B;
+          * ( dst_16 + j ) = (((r << 8) >> RShift) & RMask) |
+              (((g << 8) >> GShift) & GMask) |
+              (((b << 8) >> BShift) & BMask);
+        }
+      }
+
+      XPutImage ( display, pixmap, context, Ximage, 0, 0, 0, 0, width, height );
+      XSetWindowBackgroundPixmap ( display, window, pixmap );
+
+      break;
+    }
     case 24:
     case 32:
     {
@@ -2051,31 +2136,45 @@ void vpDisplayX::displayImageROI ( const vpImage<vpRGBa> &I,const vpImagePoint &
       dst_32 = dst_32 + (int)(iP.get_i()*4*this->width+ iP.get_j()*4);
 
       unsigned int i = 0;
-      while (i < h)
-      {
-        unsigned int j = 0;
-        while (j < w)
-        {
-#ifdef BIGENDIAN
-          *(dst_32+4*j) = (src_32+j)->A;
-          *(dst_32+4*j+1) = (src_32+j)->R;
-          *(dst_32+4*j+2) = (src_32+j)->G;
-          *(dst_32+4*j+3) = (src_32+j)->B;
-#else
-          *(dst_32+4*j) = (src_32+j)->B;
-          *(dst_32+4*j+1) = (src_32+j)->G;
-          *(dst_32+4*j+2) = (src_32+j)->R;
-          *(dst_32+4*j+3) = (src_32+j)->A;
-#endif
-          j++;
+
+      if (XImageByteOrder(display) == 1) {
+        // big endian
+        while (i < h) {
+          unsigned int j = 0;
+          while (j < w) {
+            *(dst_32+4*j) = (src_32+j)->A;
+            *(dst_32+4*j+1) = (src_32+j)->R;
+            *(dst_32+4*j+2) = (src_32+j)->G;
+            *(dst_32+4*j+3) = (src_32+j)->B;
+
+            j++;
+          }
+          src_32 = src_32 + iwidth;
+          dst_32 = dst_32 + 4*this->width;
+          i++;
         }
-        src_32 = src_32 + iwidth;
-        dst_32 = dst_32 + 4*this->width;
-        i++;
+
+      }
+      else {
+        // little endian
+        while (i < h) {
+          unsigned int j = 0;
+          while (j < w) {
+            *(dst_32+4*j) = (src_32+j)->B;
+            *(dst_32+4*j+1) = (src_32+j)->G;
+            *(dst_32+4*j+2) = (src_32+j)->R;
+            *(dst_32+4*j+3) = (src_32+j)->A;
+
+            j++;
+          }
+          src_32 = src_32 + iwidth;
+          dst_32 = dst_32 + 4*this->width;
+          i++;
+        }
       }
 
       // Affichage de l'image dans la Pixmap.
-      XPutImage ( display, pixmap, context, Ximage, iP.get_u(), iP.get_v(), iP.get_u(), iP.get_v(), w, h );
+      XPutImage ( display, pixmap, context, Ximage, (int)iP.get_u(), (int)iP.get_v(), (int)iP.get_u(), (int)iP.get_v(), w, h );
       XSetWindowBackgroundPixmap ( display, window, pixmap );
       //        XClearWindow ( display, window );
       //        XSync ( display,1 );
@@ -2163,7 +2262,7 @@ void vpDisplayX::flushDisplayROI(const vpImagePoint &iP, const unsigned int w, c
   if ( displayHasBeenInitialized )
   {
     //XClearWindow ( display, window );
-    XClearArea ( display, window,iP.get_u(),iP.get_v(),w,h,0 );
+    XClearArea ( display, window,(int)iP.get_u(),(int)iP.get_v(),w,h,0 );
     XFlush ( display );
   }
   else
@@ -2217,10 +2316,10 @@ void vpDisplayX::clearDisplay ( const vpColor &color )
   \param thickness : Thickness of the lines used to display the arrow.
 */
 void vpDisplayX::displayArrow ( const vpImagePoint &ip1, 
-				const vpImagePoint &ip2,
+                                const vpImagePoint &ip2,
                                 const vpColor &color,
                                 unsigned int w, unsigned int h,
-				unsigned int thickness)
+                                unsigned int thickness)
 {
   if ( displayHasBeenInitialized )
   {
@@ -2240,21 +2339,24 @@ void vpDisplayX::displayArrow ( const vpImagePoint &ip1,
         a /= lg ;
         b /= lg ;
 
-	vpImagePoint ip3;
+        vpImagePoint ip3;
         ip3.set_i(ip2.get_i() - w*a);
         ip3.set_j(ip2.get_j() - w*b);
 
-	vpImagePoint ip4;
-	ip4.set_i( ip3.get_i() - b*h );
-	ip4.set_j( ip3.get_j() + a*h );
+        vpImagePoint ip4;
+        ip4.set_i( ip3.get_i() - b*h );
+        ip4.set_j( ip3.get_j() + a*h );
 
-	displayLine ( ip2, ip4, color, thickness ) ;
+        if (lg > 2*vpImagePoint::distance(ip2, ip4) )
+          displayLine ( ip2, ip4, color, thickness ) ;
         
-	ip4.set_i( ip3.get_i() + b*h );
-	ip4.set_j( ip3.get_j() - a*h );
+        ip4.set_i( ip3.get_i() + b*h );
+        ip4.set_j( ip3.get_j() - a*h );
 
-	displayLine ( ip2, ip4, color, thickness ) ;
-	displayLine ( ip1, ip2, color, thickness ) ;
+        if (lg > 2*vpImagePoint::distance(ip2, ip4) )
+          displayLine ( ip2, ip4, color, thickness ) ;
+
+        displayLine ( ip1, ip2, color, thickness ) ;
       }
     }
     catch ( ... )
@@ -2750,7 +2852,7 @@ vpDisplayX::getClick(bool blocking)
     }
        
     if(ret){
-      /* Recuperation de la coordonnee du pixel cliqu�. */
+      /* Recuperation de la coordonnee du pixel clique. */
       if ( XQueryPointer ( display,
                            window,
                            &rootwin, &childwin,
@@ -2941,7 +3043,7 @@ vpDisplayX::getClickUp ( vpImagePoint &ip,
     }
        
     if(ret){
-      /* Recuperation de la coordonnee du pixel cliqu�. */
+      /* Recuperation de la coordonnee du pixel clique. */
       if ( XQueryPointer ( display,
                            window,
                            &rootwin, &childwin,
@@ -2974,14 +3076,9 @@ vpDisplayX::getClickUp ( vpImagePoint &ip,
 */
 void vpDisplayX::getImage ( vpImage<vpRGBa> &I )
 {
-
   if ( displayHasBeenInitialized )
   {
-
-
     XImage *xi ;
-    //xi= XGetImage ( display,window, 0,0, getWidth(), getHeight(),
-    //                AllPlanes, ZPixmap ) ;
 
     XCopyArea (display,window, pixmap, context,
                0,0, getWidth(), getHeight(), 0, 0);
@@ -3002,28 +3099,41 @@ void vpDisplayX::getImage ( vpImage<vpRGBa> &I )
     unsigned char       *src_32 = NULL;
     src_32 = ( unsigned char* ) xi->data;
 
-#ifdef BIGENDIAN
-    // little indian/big indian
-    for ( unsigned int i = 0; i < I.getWidth() * I.getHeight() ; i++ )
-    {
-      I.bitmap[i].A = src_32[i*4] ;
-      I.bitmap[i].R = src_32[i*4 + 1] ;
-      I.bitmap[i].G = src_32[i*4 + 2] ;
-      I.bitmap[i].B = src_32[i*4 + 3] ;
-    }
-#else
-    for ( unsigned int i = 0; i < I.getWidth() * I.getHeight() ; i++ )
-    {
-      I.bitmap[i].B = src_32[i*4] ;
-      I.bitmap[i].G = src_32[i*4 + 1] ;
-      I.bitmap[i].R = src_32[i*4 + 2] ;
-      I.bitmap[i].A = src_32[i*4 + 3] ;
-    }
-#endif
+    if (screen_depth == 16) {
+      for ( unsigned int i = 0; i < I.getHeight() ; i++ ) {
+        size_t i_ = i*I.getWidth();
+        for ( unsigned int j = 0; j < I.getWidth() ; j++ ) {
+          size_t ij_ = i_+j;
+          unsigned long pixel = XGetPixel(xi, (int)j, (int)i);
+          I.bitmap[ij_].R = (((pixel & RMask) << RShift) >> 8);
+          I.bitmap[ij_].G = (((pixel & GMask) << GShift) >> 8);
+          I.bitmap[ij_].B = (((pixel & BMask) << BShift) >> 8);
+          I.bitmap[ij_].A = 0;
+        }
+      }
 
-
+    }
+    else {
+      if (XImageByteOrder(display) == 1) {
+        // big endian
+        for ( unsigned int i = 0; i < I.getWidth() * I.getHeight() ; i++ ) {
+          I.bitmap[i].A = src_32[i*4] ;
+          I.bitmap[i].R = src_32[i*4 + 1] ;
+          I.bitmap[i].G = src_32[i*4 + 2] ;
+          I.bitmap[i].B = src_32[i*4 + 3] ;
+        }
+      }
+      else {
+        // little endian
+        for ( unsigned int i = 0; i < I.getWidth() * I.getHeight() ; i++ ) {
+          I.bitmap[i].B = src_32[i*4] ;
+          I.bitmap[i].G = src_32[i*4 + 1] ;
+          I.bitmap[i].R = src_32[i*4 + 2] ;
+          I.bitmap[i].A = src_32[i*4 + 3] ;
+        }
+      }
+    }
     XDestroyImage ( xi ) ;
-
   }
   else
   {
@@ -3271,10 +3381,20 @@ vpDisplayX::getPointerPosition ( vpImagePoint &ip)
   return ret ;
 }
 
+/*!
+  Get the position of the most significant bit.
+*/
+int vpDisplayX::getMsb(unsigned int u32val)
+{
+    int i;
+
+    for (i = 31;  i >= 0;  --i) {
+        if (u32val & 0x80000000L)
+            break;
+        u32val <<= 1;
+    }
+    return i;
+}
+
 #endif
 
-/*
- * Local variables:
- * c-basic-offset: 2
- * End:
- */

@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpMbEdgeTracker.h 4649 2014-02-07 14:57:11Z fspindle $
+ * $Id: vpMbEdgeTracker.h 5217 2015-01-28 09:40:02Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -54,6 +54,7 @@
 #include <visp/vpMe.h>
 #include <visp/vpMbtMeLine.h>
 #include <visp/vpMbtDistanceLine.h>
+#include <visp/vpMbtDistanceCircle.h>
 #include <visp/vpMbtDistanceCylinder.h>
 #include <visp/vpXmlParser.h>
 
@@ -86,10 +87,6 @@
 #  else
 #    include <cv.h>
 #  endif
-#endif
-
-#ifdef VISP_BUILD_DEPRECATED_FUNCTIONS
-#  include <visp/vpList.h>
 #endif
 
 /*!
@@ -277,23 +274,24 @@ class VISP_EXPORT vpMbEdgeTracker: virtual public vpMbTracker
     double lambda;
     
     //! The moving edges parameters. 
-    vpMe  me;
+    vpMe me;
     //! Vector of list of all the lines tracked (each line is linked to a list of moving edges). Each element of the vector is for a scale (element 0 = level 0 = no subsampling).
     std::vector< std::list< vpMbtDistanceLine*> > lines;
+
+    //! Vector of the tracked circles.
+    std::vector< std::list< vpMbtDistanceCircle*> > circles;
+
     //! Vector of the tracked cylinders.
     std::vector< std::list< vpMbtDistanceCylinder*> > cylinders;
 
     //! Index of the polygon to add, and total number of polygon extracted so far. 
     unsigned int nline;
 
-    //! Index of the cylinder to add, and total number of polygon extracted so far.
+    //! Index of the circle to add, and total number of circles extracted so far.
+    unsigned int ncircle;
+
+    //! Index of the cylinder to add, and total number of cylinders extracted so far.
     unsigned int ncylinder;
-    
-    //! Index of the polygon to add, and total number of polygon extracted so far. Cannot be unsigned because the default index of a polygon is -1.
-    int index_polygon;
-    
-    //! Set of faces describing the object. 
-    vpMbHiddenFaces<vpMbtPolygon> faces;
     
     //! Number of polygon (face) currently visible. 
     unsigned int nbvisiblepolygone;
@@ -309,25 +307,7 @@ class VISP_EXPORT vpMbEdgeTracker: virtual public vpMbTracker
     
     //! Current scale level used. This attribute must not be modified outside of the downScale() and upScale() methods, as it used to specify to some methods which set of distanceLine use. 
     unsigned int scaleLevel;
-    
-    //! Use Ogre3d for visibility tests
-    bool useOgre;
-  
-    //! Angle used to detect a face appearance
-    double angleAppears;
-  
-    //! Angle used to detect a face disappearance
-    double angleDisappears;
-    
-    //! Distance for near clipping
-    double distNearClip;
-    
-    //! Distance for near clipping
-    double distFarClip;
-    
-    //! Flags specifying which clipping to used
-    unsigned int clippingFlag;
-  
+
 public:
   
   vpMbEdgeTracker(); 
@@ -337,34 +317,7 @@ public:
                const vpColor& col , const unsigned int thickness=1, const bool displayFullModel = false);
   void display(const vpImage<vpRGBa>& I, const vpHomogeneousMatrix &cMo, const vpCameraParameters &cam,
                const vpColor& col , const unsigned int thickness=1, const bool displayFullModel = false);
-  
-  /*! Return the angle used to test polygons appearance. */
-  virtual inline double getAngleAppear() const { return angleAppears; }   
-  
-  /*! Return the angle used to test polygons disappearance. */
-  virtual inline double getAngleDisappear() const { return angleDisappears; } 
-  
-  /*!
-    Get the clipping used.
-    
-    \sa vpMbtPolygonClipping
-    
-    \return Clipping flags.
-  */          
-  virtual inline  unsigned int getClipping() const { return clippingFlag; } 
-  
-  /*! Return a reference to the faces structure. */
-  inline vpMbHiddenFaces<vpMbtPolygon>& getFaces() { return faces; }
-  
-  /*!
-    Get the far distance for clipping.
-    
-    \return Far clipping value.
-  */
-  virtual inline double getFarClippingDistance() const { return distFarClip; }
-  
-  inline double getFirstThreshold() const { return percentageGdPt;}
-  
+
   /*!
     Get the value of the gain used to compute the control law.
     
@@ -373,25 +326,23 @@ public:
   virtual inline double getLambda() const {return lambda;}
   
   void getLline(std::list<vpMbtDistanceLine *>& linesList, const unsigned int level = 0);
+  void getLcircle(std::list<vpMbtDistanceCircle *>& circlesList, const unsigned int level = 0);
   void getLcylinder(std::list<vpMbtDistanceCylinder *>& cylindersList, const unsigned int level = 0);
-  
+
   /*!
     Get the moving edge parameters.
-    
+
     \return an instance of the moving edge parameters used by the tracker.
   */
   inline void getMovingEdge(vpMe &p_me ) const { p_me = this->me;}
-  
   /*!
-    Get the near distance for clipping.
-    
-    \return Near clipping value.
+    Get the moving edge parameters.
+
+    \return an instance of the moving edge parameters used by the tracker.
   */
-  virtual inline double getNearClippingDistance() const { return distNearClip; }
-  
+  inline vpMe getMovingEdge() const { return this->me;}
+
   unsigned int getNbPoints(const unsigned int level=0) const;
-  unsigned int getNbPolygon() const ;
-  vpMbtPolygon* getPolygon(const unsigned int index);
   
   /*!
     Return the scales levels used for the tracking. 
@@ -399,42 +350,23 @@ public:
     \return The scales levels used for the tracking. 
   */
   std::vector<bool> getScales() const {return scales;}
-  
+  /*!
+     \return The threshold value between 0 and 1 over good moving edges ratio. It allows to
+     decide if the tracker has enough valid moving edges to compute a pose. 1 means that all
+     moving edges should be considered as good to have a valid pose, while 0.1 means that
+     10% of the moving edge are enough to declare a pose valid.
+
+     \sa setGoodMovingEdgesRatioThreshold()
+   */
+  inline double getGoodMovingEdgesRatioThreshold() const { return percentageGdPt;}
+
   void loadConfigFile(const std::string &configFile);
   void loadConfigFile(const char* configFile);
-  void loadModel(const std::string &cad_name);
-  void loadModel(const char* cad_name);  
-  
-  void reInitModel(const vpImage<unsigned char>& I, const char* cad_name, const vpHomogeneousMatrix& cMo);
+  void reInitModel(const vpImage<unsigned char>& I, const std::string &cad_name, const vpHomogeneousMatrix& cMo_,
+		  const bool verbose=false);
+  void reInitModel(const vpImage<unsigned char>& I, const char* cad_name, const vpHomogeneousMatrix& cMo,
+		  const bool verbose=false);
   void resetTracker();
-  
-  /*!
-    Set the angle used to test polygons appearance.
-    If the angle between the normal of the polygon and the line going
-    from the camera to the polygon center has a value lower than
-    this parameter, the polygon is considered as appearing.
-    The polygon will then be tracked.
-
-    \warning This angle will only be used when setOgreVisibilityTest(true)
-    is called.
-
-    \param a : new angle in radian.
-  */
-  virtual inline  void setAngleAppear(const double &a) { angleAppears = a; }   
-  
-  /*!
-    Set the angle used to test polygons disappearance.
-    If the angle between the normal of the polygon and the line going
-    from the camera to the polygon center has a value greater than
-    this parameter, the polygon is considered as disappearing.
-    The tracking of the polygon will then be stopped.
-
-    \warning This angle will only be used when setOgreVisibilityTest(true)
-    is called.
-
-    \param a : new angle in radian.
-  */
-  virtual inline void setAngleDisappear(const double &a) { angleDisappears = a; }
   
   /*!
     Set the camera parameters.
@@ -453,37 +385,48 @@ public:
         for(std::list<vpMbtDistanceCylinder*>::const_iterator it=cylinders[i].begin(); it!=cylinders[i].end(); ++it){
           (*it)->setCameraParameters(cam);
         }
+
+        for(std::list<vpMbtDistanceCircle*>::const_iterator it=circles[i].begin(); it!=circles[i].end(); ++it){
+          (*it)->setCameraParameters(cam);
+        }
       }
     }
   }
-  
-  virtual void  setClipping(const unsigned int &flags);
-  
-  /*!
-    Enable to display the points along the line with a color corresponding to their state.
-    
-    - If green : The vpMeSite is a good point.
-    - If blue : The point is removed because of the vpMeSite tracking phase (contrast problem).
-    - If purple : The point is removed because of the vpMeSite tracking phase (threshold problem).
-    - If red : The point is removed because of the robust method in the virtual visual servoing.
-    
-    \param displayMe : set it to true to display the points.
-  */
-  void setDisplayMovingEdges(const bool displayMe) {displayFeatures = displayMe;}
-  
+
+  virtual void setClipping(const unsigned int &flags);
+
   virtual void setFarClippingDistance(const double &dist);
-  
+
+  virtual void setNearClippingDistance(const double &dist);
+
   /*!
-    Set the first threshold used to check if the tracking failed. It corresponds to the percentage of good point which is necessary.
-    
-    The condition which has to be be satisfied is the following : \f$ nbGoodPoint > threshold1 \times (nbGoodPoint + nbBadPoint)\f$.
-    
-    The threshold is ideally between 0 and 1.
-    
-    \param threshold1 : The new value of the threshold. 
+    Use Ogre3D for visibility tests
+
+    \warning This function has to be called before the initialization of the tracker.
+
+    \param v : True to use it, False otherwise
   */
-  void setFirstThreshold(const double  threshold1) {percentageGdPt = threshold1;}
-  
+  virtual void setOgreVisibilityTest(const bool &v){
+      vpMbTracker::setOgreVisibilityTest(v);
+#ifdef VISP_HAVE_OGRE
+      faces.getOgreContext()->setWindowName("MBT Edge");
+#endif
+  }
+
+  /*!
+     Set the threshold value between 0 and 1 over good moving edges ratio. It allows to
+     decide if the tracker has enough valid moving edges to compute a pose. 1 means that all
+     moving edges should be considered as good to have a valid pose, while 0.1 means that
+     10% of the moving edge are enough to declare a pose valid.
+
+     \param threshold : Value between 0 and 1 that corresponds to the ratio of good
+     moving edges that is necessary to consider that the estimated pose is valid.
+     Default value is 0.4.
+
+     \sa getGoodMovingEdgesRatioThreshold()
+   */
+  void setGoodMovingEdgesRatioThreshold(const double  threshold) {percentageGdPt = threshold;}
+
   /*!
     Set the value of the gain used to compute the control law.
     
@@ -492,11 +435,7 @@ public:
   virtual inline void setLambda(const double gain) {this->lambda = gain;}
   
   void setMovingEdge(const vpMe &me);
-  
-  virtual void setNearClippingDistance(const double &dist);
-  
-  virtual void setOgreVisibilityTest(const bool &v);
-  
+
   virtual void setPose(const vpImage<unsigned char> &I, const vpHomogeneousMatrix& cdMo);
   
   void setScales(const std::vector<bool>& _scales);
@@ -504,19 +443,26 @@ public:
   void track(const vpImage<unsigned char> &I);
 
 protected:
-  void addCylinder(const vpPoint &P1, const vpPoint &P2, const double r, const std::string& name = "");
-  void addLine(vpPoint &p1, vpPoint &p2, int polygone = -1, std::string name = "");
+  bool samePoint(const vpPoint &P1, const vpPoint &P2);
+  void addCircle(const vpPoint &P1, const vpPoint &P2, const vpPoint &P3, const double r, int idFace = -1, const std::string& name = "");
+  void addCylinder(const vpPoint &P1, const vpPoint &P2, const double r, int idFace = -1, const std::string& name = "");
+  void addLine(vpPoint &p1, vpPoint &p2, int polygon = -1, std::string name = "");
   void addPolygon(vpMbtPolygon &p) ;
   void cleanPyramid(std::vector<const vpImage<unsigned char>* >& _pyramid);
   void computeVVS(const vpImage<unsigned char>& _I);
   void downScale(const unsigned int _scale);
   void init(const vpImage<unsigned char>& I);
-  virtual void initCylinder(const vpPoint& p1, const vpPoint &p2, const double radius, const unsigned int indexCylinder=0);
-  virtual void initFaceFromCorners(const std::vector<vpPoint>& _corners, const unsigned int _indexFace = -1);
+  virtual void initCircle(const vpPoint& p1, const vpPoint &p2, const vpPoint &p3, const double radius,
+                          const int idFace=0, const std::string &name="");
+  virtual void initCylinder(const vpPoint& p1, const vpPoint &p2, const double radius, const int idFace=0,
+                            const std::string &name="");
+  virtual void initFaceFromCorners(vpMbtPolygon &polygon);
+  virtual void initFaceFromLines(vpMbtPolygon &polygon);
   void initMovingEdge(const vpImage<unsigned char> &I, const vpHomogeneousMatrix &_cMo) ;
   void initPyramid(const vpImage<unsigned char>& _I, std::vector<const vpImage<unsigned char>* >& _pyramid);
   void reInitLevel(const unsigned int _lvl);
   void reinitMovingEdge(const vpImage<unsigned char> &I, const vpHomogeneousMatrix &_cMo);
+  void removeCircle(const std::string& name);
   void removeCylinder(const std::string& name);
   void removeLine(const std::string& name);
   void testTracking();
@@ -530,7 +476,42 @@ protected:
     @name Deprecated functions
   */
   vp_deprecated void visibleFace(const vpHomogeneousMatrix &_cMo, bool &newvisibleline);
-#endif
+
+public:
+  /*!
+    \deprecated Since this function name is not explicit, use rather getGoodMovingEdgesRatioThreshold()
+    that does the same.
+
+    \return The threshold value between 0 and 1 that allows to decide if the tracker
+    has enough valid moving edges to compute a pose.
+   */
+  vp_deprecated inline double getFirstThreshold() const { return percentageGdPt;}
+  /*!
+    \deprecated Use vpMbTracker::setDisplayFeatures() instead.
+    Enable to display the points along the line with a color corresponding to their state.
+
+    - If green : The vpMeSite is a good point.
+    - If blue : The point is removed because of the vpMeSite tracking phase (contrast problem).
+    - If purple : The point is removed because of the vpMeSite tracking phase (threshold problem).
+    - If red : The point is removed because of the robust method in the virtual visual servoing.
+
+    \param displayMe : set it to true to display the points.
+  */
+  vp_deprecated void setDisplayMovingEdges(const bool displayMe) {displayFeatures = displayMe;}
+  /*!
+    \deprecated Since this function name is not explicit, use rather setGoodMovingEdgesRatioThreshold()
+    that does the same.
+    Set the first threshold used to check if the tracking failed. It corresponds to the percentage
+    of good point which is necessary.
+
+    The condition which has to be be satisfied is the following : \f$ nbGoodPoint > threshold1 \times (nbGoodPoint + nbBadPoint)\f$.
+
+    The threshold is ideally between 0 and 1.
+
+    \param threshold1 : The new value of the threshold.
+  */
+  vp_deprecated void setFirstThreshold(const double  threshold1) {percentageGdPt = threshold1;}
+  #endif
 };
 
 #endif

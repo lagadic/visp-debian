@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpServo.h 4674 2014-02-17 15:34:41Z fspindle $
+ * $Id: vpServo.h 5219 2015-01-28 10:29:21Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -560,6 +560,9 @@ public:
   vpColVector sv ;
 
   double mu;
+
+  vpColVector e1_initial;
+
 } ;
 
 #endif

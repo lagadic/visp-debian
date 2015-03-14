@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpD3DRenderer.cpp 4604 2014-01-21 14:15:23Z fspindle $
+ * $Id: vpD3DRenderer.cpp 4733 2014-05-19 20:44:05Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -1111,17 +1111,21 @@ void vpD3DRenderer::drawArrow(const vpImagePoint &ip1,
 
       vpImagePoint ip4 ;
 
-	  ip4.set_i( ip3.get_i() + b*_h );
-	  ip4.set_j( ip3.get_j() - a*_h );
+      ip4.set_i( ip3.get_i() + b*_h );
+      ip4.set_j( ip3.get_j() - a*_h );
 
-	  MoveToEx(hDCMem, vpMath::round(ip2.get_j()), vpMath::round(ip2.get_i()), NULL);
-	  LineTo(hDCMem, vpMath::round(ip4.get_j()), vpMath::round(ip4.get_i()));
+      if (lg > 2*vpImagePoint::distance(ip2, ip4) ) {
+        MoveToEx(hDCMem, vpMath::round(ip2.get_j()), vpMath::round(ip2.get_i()), NULL);
+        LineTo(hDCMem, vpMath::round(ip4.get_j()), vpMath::round(ip4.get_i()));
+      }
 
-	  ip4.set_i( ip3.get_i() - b*h );
-	  ip4.set_j( ip3.get_j() + a*h );
+      ip4.set_i( ip3.get_i() - b*h );
+      ip4.set_j( ip3.get_j() + a*h );
 
-	  MoveToEx(hDCMem, vpMath::round(ip2.get_j()), vpMath::round(ip2.get_i()), NULL);
-	  LineTo(hDCMem, vpMath::round(ip4.get_j()), vpMath::round(ip4.get_i()));
+      if (lg > 2*vpImagePoint::distance(ip2, ip4) ) {
+        MoveToEx(hDCMem, vpMath::round(ip2.get_j()), vpMath::round(ip2.get_i()), NULL);
+        LineTo(hDCMem, vpMath::round(ip4.get_j()), vpMath::round(ip4.get_i()));
+      }
 
       MoveToEx(hDCMem, vpMath::round(ip1.get_j()), vpMath::round(ip1.get_i()), NULL);
       LineTo(hDCMem, vpMath::round(ip2.get_j()), vpMath::round(ip2.get_i()));

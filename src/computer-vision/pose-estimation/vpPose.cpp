@@ -1,6 +1,6 @@
 /****************************************************************************
 *
-* $Id: vpPose.cpp 4649 2014-02-07 14:57:11Z fspindle $
+* $Id: vpPose.cpp 5212 2015-01-26 17:45:45Z strinh $
 *
 * This file is part of the ViSP software.
 * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -382,8 +382,8 @@ LAGRANGE_VIRTUAL_VS  Virtual visual servoing initialized using
 Lagrange approach
 
 */
-void
-vpPose::computePose(vpPoseMethodType methode, vpHomogeneousMatrix& cMo)
+bool
+vpPose::computePose(vpPoseMethodType methode, vpHomogeneousMatrix& cMo, bool (*func)(vpHomogeneousMatrix *))
 {
 #if (DEBUG_LEVEL1)
   std::cout << "begin vpPose::ComputePose()" << std::endl ;
@@ -509,7 +509,7 @@ vpPose::computePose(vpPoseMethodType methode, vpHomogeneousMatrix& cMo)
         "Not enough points ")) ;
     }
     try {
-      poseRansac(cMo);
+      return poseRansac(cMo, func);
     }
     catch(...)
     {
@@ -563,6 +563,9 @@ vpPose::computePose(vpPoseMethodType methode, vpHomogeneousMatrix& cMo)
 #if (DEBUG_LEVEL1)
   std::cout << "end vpPose::ComputePose()" << std::endl ;
 #endif
+
+  //If here, there was no exception thrown so return true
+  return true;
 }
 
 
@@ -715,8 +718,8 @@ vpPose::poseFromRectangle(vpPoint &p1,vpPoint &p2,
   vpMatrix Kinv =K.pseudoInverse();
 
   vpMatrix KinvH =Kinv*H;
-  kh1=KinvH.column(1);
-  kh2=KinvH.column(2);
+  kh1=KinvH.getCol(0);
+  kh2=KinvH.getCol(1);
 
 
   double s= sqrt(kh1.sumSquare())/sqrt(kh2.sumSquare());

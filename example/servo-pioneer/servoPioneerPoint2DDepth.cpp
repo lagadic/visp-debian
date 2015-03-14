@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: servoPioneerPoint2DDepth.cpp 4574 2014-01-09 08:48:51Z fspindle $
+ * $Id: servoPioneerPoint2DDepth.cpp 5128 2015-01-06 11:46:58Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -60,7 +60,7 @@
 #include <visp/vpServo.h>
 #include <visp/vpVelocityTwistMatrix.h>
 
-#if defined(VISP_HAVE_DC1394_2) || defined(VISP_HAVE_V4L2) || defined(VISP_HAVE_CMU1394) || defined(VISP_HAVE_OPENCV)
+#if defined(VISP_HAVE_DC1394_2) || defined(VISP_HAVE_V4L2) || defined(VISP_HAVE_CMU1394) || (VISP_HAVE_OPENCV_VERSION >= 0x020100)
 #if defined(VISP_HAVE_X11) || defined(VISP_HAVE_GDI)
 #if defined(VISP_HAVE_PIONEER)
 #  define TEST_COULD_BE_ACHIEVED

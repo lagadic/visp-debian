@@ -1,6 +1,6 @@
 #############################################################################
 #
-# $Id: OgreTools.cmake 4588 2014-01-15 17:29:53Z fspindle $
+# $Id: OgreTools.cmake 4769 2014-07-08 20:25:50Z fspindle $
 #
 # This file is part of the ViSP software.
 # Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -42,7 +42,7 @@
 # Find Ogre plugins
 #
 # This is a modified version of the macro provided with Ogre
-# except that should be used only in a desparate way when the one original
+# except that it should be used only in a desperate way when the original
 # one doesn't detect anything
 #########################################################
 

@@ -1,6 +1,6 @@
 #############################################################################
 #
-# $Id: FindIRISA.cmake 4574 2014-01-09 08:48:51Z fspindle $
+# $Id: FindIRISA.cmake 5309 2015-02-11 11:08:15Z fspindle $
 #
 # This file is part of the ViSP software.
 # Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -50,6 +50,7 @@ ELSE(NOT UNIX)
   FIND_PATH(IRISA_INCLUDE_DIR irisa_Afma6.h
     $ENV{IRISA_HOME}/include
     /local/soft/Cerebellum/Irisa/current/src
+    /home/soft/Cerebellum/Irisa/current/src
     )
   #MESSAGE("DBG IRISA_INCLUDE_DIR=${IRISA_INCLUDE_DIR}")  
   
@@ -58,6 +59,7 @@ ELSE(NOT UNIX)
     PATHS 
     $ENV{IRISA_HOME}/lib
     /local/soft/Cerebellum/Irisa/current/src
+    /home/soft/Cerebellum/Irisa/current/src
     )
 
   #MESSAGE("DBG IRISA_LIBRARY=${IRISA_LIBRARY}")

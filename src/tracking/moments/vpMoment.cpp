@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpMoment.cpp 4649 2014-02-07 14:57:11Z fspindle $
+ * $Id: vpMoment.cpp 4709 2014-03-28 17:37:12Z mbakthav $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -133,3 +133,11 @@ VISP_EXPORT std::ostream & operator<<(std::ostream & os, const vpMoment& m){
   return os;
 }
 
+/*!
+Prints values of all dependent moments required to calculate a specific vpMoment.
+Not made pure to maintain compatibility
+Recommended : Types inheriting from vpMoment should implement this function
+*/
+void vpMoment::printDependencies(std::ostream& os) const{
+    os << " WARNING : Falling back to base class version of printDependencies(). To prevent that, this has to be implemented in the derived classes!" << std::endl;
+}

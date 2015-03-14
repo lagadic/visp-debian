@@ -1,6 +1,6 @@
 /****************************************************************************
 *
-* $Id: vpPoseDementhon.cpp 4649 2014-02-07 14:57:11Z fspindle $
+* $Id: vpPoseDementhon.cpp 5198 2015-01-23 17:32:04Z fspindle $
 *
 * This file is part of the ViSP software.
 * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -83,15 +83,7 @@ vpPose::poseDementhonNonPlan(vpHomogeneousMatrix &cMo)
     c3d.push_back(P) ;
   }
 
-  vpMatrix a ;
-  try{
-    a.resize(npt,3) ;
-  }
-  catch(...)
-  {
-    vpERROR_TRACE(" ") ;
-    throw ;
-  }
+  vpMatrix a(npt,3) ;
 
   for (unsigned int i=0 ; i < npt ; i++)
   {
@@ -130,31 +122,9 @@ vpPose::poseDementhonNonPlan(vpHomogeneousMatrix &cMo)
 
   int cpt = 0 ;
   vpColVector I, J, k ;
-  try{
-    I.resize(3) ;
-  }
-  catch(...)
-  {
-    vpERROR_TRACE(" ") ;
-    throw ;
-  }
-  try{
-    J.resize(3) ;
-  }
-  catch(...)
-  {
-    vpERROR_TRACE(" ") ;
-    throw ;
-  }
-
-  try {
-    k.resize(3) ;
-  }
-  catch(...)
-  {
-    vpERROR_TRACE(" ") ;
-    throw ;
-  }
+  I.resize(3) ;
+  J.resize(3) ;
+  k.resize(3) ;
 
   while(cpt < 20)
   {
@@ -177,9 +147,9 @@ vpPose::poseDementhonNonPlan(vpHomogeneousMatrix &cMo)
 
     if (normI+normJ < 1e-10)
     {
-      vpERROR_TRACE(" normI+normJ = 0, division par zero " ) ;
+      //vpERROR_TRACE(" normI+normJ = 0, division par zero " ) ;
       throw(vpException(vpException::divideByZeroError,
-        "division by zero  ")) ;
+                        "Division by zero in Dementhon pose computation: normI+normJ = 0")) ;
     }
 
     k = vpColVector::cross(I,J) ;
@@ -193,9 +163,9 @@ vpPose::poseDementhonNonPlan(vpHomogeneousMatrix &cMo)
     }
     if (npt==0)
     {
-      vpERROR_TRACE( " npt = 0, division par zero ");
+      //vpERROR_TRACE( " npt = 0, division par zero ");
       throw(vpException(vpException::divideByZeroError,
-        "division by zero  ")) ;
+                        "Division by zero in Dementhon pose computation: no points")) ;
     }
     seuil/=npt;
   }
@@ -613,7 +583,7 @@ vpPose::poseDementhonPlan(vpHomogeneousMatrix &cMo)
 
       //calcul de U
       vpColVector U(3) ;
-      U = ata.column(imin+1) ;
+      U = ata.getCol(imin) ;
 
 #if (DEBUG_LEVEL2)
       {
@@ -744,9 +714,3 @@ double vpPose::computeResidualDementhon(const vpHomogeneousMatrix &cMo)
 #undef DEBUG_LEVEL2
 #undef DEBUG_LEVEL3
 
-
-/*
-* Local variables:
-* c-basic-offset: 2
-* End:
-*/

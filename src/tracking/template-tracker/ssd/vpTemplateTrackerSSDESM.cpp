@@ -1,6 +1,6 @@
 /****************************************************************************
  *
- * $Id: vpTemplateTrackerSSDESM.cpp 4632 2014-02-03 17:06:40Z fspindle $
+ * $Id: vpTemplateTrackerSSDESM.cpp 5264 2015-02-04 13:49:55Z fspindle $
  *
  * This file is part of the ViSP software.
  * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
@@ -106,7 +106,7 @@ compoInitialised=true;
 void vpTemplateTrackerSSDESM::trackNoPyr(const vpImage<unsigned char> &I)
 {
   double erreur=0;
-  int Nbpoint=0;
+  unsigned int Nbpoint=0;
 
   if(blur)
     vpImageFilter::filter(I, BI,fgG,taillef);
@@ -179,8 +179,13 @@ void vpTemplateTrackerSSDESM::trackNoPyr(const vpImage<unsigned char> &I)
 
 
     }
+    if(Nbpoint==0) {
+      //std::cout<<"plus de point dans template suivi"<<std::endl;
+      throw(vpTrackingException(vpTrackingException::notEnoughPointError, "No points in the template"));
+    }
+
     vpMatrix::computeHLM(HDir,lambdaDep,HLMDir);
-    //if(Nbpoint==0)std::cout<<"plus de point dans template suivi"<<std::endl;
+
     try
     {
       //dp=(HLMInv+HLMDir).inverseByLU()*(GInv+GDir);
@@ -188,20 +193,15 @@ void vpTemplateTrackerSSDESM::trackNoPyr(const vpImage<unsigned char> &I)
       //dp=HLMInv.inverseByLU()*GInv;
       dp=(HLMDir).inverseByLU()*(GDir);
     }
-    catch(...)
+    catch(vpException &e)
     {
-      std::cout<<"probleme inversion"<<std::endl;
-      break;
+      //std::cout<<"probleme inversion"<<std::endl;
+      throw(e);
     }
 
     dp=gain*dp;
     if(useBrent)
     {
-      if(! Nbpoint) {
-        throw(vpException(vpException::divideByZeroError,
-              "Cannot compute optimal Brent gain: size = 0")) ;
-      }
-
       alpha=2.;
       computeOptimalBrentGain(I,p,erreur/Nbpoint,dp,alpha);
       dp=alpha*dp;
