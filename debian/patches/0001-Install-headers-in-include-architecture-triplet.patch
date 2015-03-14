@@ -1,0 +1,25 @@
+From 71b4fa650e393bc196220ec8cf59bb2fef68c7b5 Mon Sep 17 00:00:00 2001
+From: Fabien Spindler <Fabien.Spindler@inria.fr>
+Date: Sat, 14 Mar 2015 18:25:07 +0100
+Subject: [PATCH] Install headers in include architecture triplet
+
+---
+ src/CMakeLists.txt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
+index b1cd872..0736508 100644
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -124,7 +124,7 @@ install(
+   TARGETS ${VISP_INTERN_LIBRARY}
+   EXPORT VISPTargets
+   # install rule for all the headers
+-  PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/visp
++  PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/${CMAKE_LIBRARY_ARCHITECTURE}/visp
+   # Destination is either lib or lib64 on Unix 64 bits architectures
+   RUNTIME DESTINATION ${VISP_BIN_INSTALL_PATH} COMPONENT libraries
+   LIBRARY DESTINATION ${VISP_LIB_INSTALL_PATH} COMPONENT libraries
+-- 
+2.1.4
+
