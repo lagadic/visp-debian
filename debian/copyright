@@ -4,7 +4,7 @@ Upstream-Contact: visp@inria.fr
 Source: http://www.irisa.fr/lagadic/visp/download.html
 
 Files: *
-Copyright: 2005-2014, INRIA
+Copyright: 2005-2015, Inria
 License: GPL-2
  See `/usr/share/common-licenses/GPL-2'.
 

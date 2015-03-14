@@ -18,18 +18,15 @@ Build-Depends: debhelper (>= 9),
                libjpeg-dev,
                libpng-dev,
                graphviz,
-               libswscale-dev,
-               libavutil-dev,
-               libavformat-dev,
-               libavcodec-dev,
-               libbz2-dev,
                libx11-dev,
                libv4l-dev [!hurd-any],
                libusb-dev,
                libfreenect-dev [!hurd-any],
                libois-dev [linux-any],
+               libzbar-dev,
+               libdmtx-dev,
 	       visp-images-data
-Standards-Version: 3.9.5
+Standards-Version: 3.9.6
 Vcs-Browser: http://anonscm.debian.org/gitweb/?p=debian-science/packages/visp.git
 Vcs-Git: git://anonscm.debian.org/debian-science/packages/visp.git
 Homepage: http://www.irisa.fr/lagadic/visp/visp.html
@@ -48,17 +45,14 @@ Depends: libopencv-dev [!any-sparc64 !x32],
          libxml2-dev,
          libjpeg-dev,
          libpng-dev,
-         libswscale-dev,
-         libavutil-dev,
-         libavformat-dev,
-         libavcodec-dev,
-         libbz2-dev,
          libx11-dev,
          libv4l-dev [!hurd-any],
          libusb-dev,
          libfreenect-dev [!hurd-any],
          libois-dev [linux-any],
-         libvisp2.9 (= ${binary:Version}),
+         libzbar-dev,
+         libdmtx-dev,
+         libvisp2.10 (= ${binary:Version}),
          ${misc:Depends}
 Suggests: libvisp-doc
 Multi-Arch: same
@@ -73,7 +67,7 @@ Description: visual servoing library - development files
  This package contains development files (headers and shared library
  symbolic link).
 
-Package: libvisp2.9
+Package: libvisp2.10
 Architecture: any
 Multi-Arch: same
 Depends: ${shlibs:Depends},
@@ -89,10 +83,10 @@ Description: visual servoing library
  ViSP can be useful in robotics, computer vision, augmented reality and
  computer animation.
 
-Package: libvisp2.9-dbg
+Package: libvisp2.10-dbg
 Architecture: any
 Section: debug
-Depends: libvisp2.9 (= ${binary:Version}),
+Depends: libvisp2.10 (= ${binary:Version}),
          ${misc:Depends}
 Multi-Arch: same
 Description: visual servoing library - debugging symbols

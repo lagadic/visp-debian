@@ -1,6 +1,0 @@
-0001-Install-vpConfig.h-in-include-architecture-triplet.patch
-0002-Fix-compat-with-ffmpeg-libraries.patch
-0003-Install-OGRE-config-files-in-arch-specific-directory.patch
-0004-Remove-commented-lines-in-visp-config.install.in.patch
-0005-Avoid-linking-against-useless-dependency-in-FindGSL..patch
-0006-CMakeLists.txt-install-share-data-in-visp-VERSION-if.patch
