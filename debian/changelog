@@ -1,3 +1,20 @@
+visp (2.10.0-1) unstable; urgency=medium
+
+  * Imported Upstream version 2.10.0
+  * Remove obsolete patches, bump ABI to 2.10
+  * Fix lintian dep5-copyright-license-name-not-unique and 
+    space-in-std-short-name-in-dep5-copyright warnings
+  * Override lintian embedded-javascript-library warning
+  * Add patch to install headers in architecture triplet
+  * Add patch to be able to use the library either from build dir of from 
+    install dir. Now VISP_SCENES_DIR, VISP_ROBOT_ARMS_DIR, 
+    VISP_HAVE_OGRE_PLUGINS_PATH, VISP_HAVE_OGRE_RESOURCES_PATH defined in 
+    vpConfig.h may contain multiple path locations separated with ; character.
+    These locations are the one to found the resources in the build tree, and
+    the one to found the resources in the install tree.
+
+ -- Fabien Spindler <Fabien.Spindler@inria.fr>  Sun, 15 Mar 2015 10:38:16 +0100
+
 visp (2.9.0-3) unstable; urgency=medium
 
   * Add patch to solve update failure detected by piuparts (Closes: #754657)
