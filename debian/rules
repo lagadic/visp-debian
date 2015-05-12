@@ -60,10 +60,11 @@ else
 endif
 
 
-.PHONY: override_dh_auto_configure	\
-	override_dh_auto_build-indep	\
-	override_dh_strip		\
-	override_dh_auto_test
+.PHONY: override_dh_auto_configure \
+	override_dh_auto_build-indep \
+	override_dh_strip \
+	override_dh_auto_test \
+	override_dh_install
 
 %:
 	dh  $@ --parallel
@@ -101,3 +102,11 @@ endif
 override_dh_auto_test:
 	export VISP_INPUT_IMAGE_PATH=/usr/share/visp-images-data/ \
 	 && dh_auto_test --max-parallel=1 || ${DH_AUTOTEST_CAN_FAIL}
+
+override_dh_install:
+ifneq ($(DEB_HOST_ARCH_OS),hurd)
+	# On hurd usr/lib/*/visp/* is empty and produces an error
+	dh_install "usr/lib/*/visp/*" -p libvisp-dev
+	# Continue zith regular dh_install
+	dh_install
+endif

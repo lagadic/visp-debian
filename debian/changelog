@@ -1,3 +1,11 @@
+visp (2.10.0-2) unstable; urgency=medium
+
+  * Add patch to fix segfault on sparc, powerpc...
+  * Override dh_install to avoid an error on hurd where usr/lib/*/visp/*
+    doesn't exist
+
+ -- Fabien Spindler <Fabien.Spindler@inria.fr>  Tue, 12 May 2015 14:38:23 +0200
+
 visp (2.10.0-1) unstable; urgency=medium
 
   * Imported Upstream version 2.10.0

@@ -3,4 +3,4 @@ usr/include/*/visp/*
 usr/lib/*/libvisp.so
 usr/lib/*/cmake/*
 usr/lib/*/pkgconfig/*
-usr/lib/*/visp/*
+#usr/lib/*/visp/*
