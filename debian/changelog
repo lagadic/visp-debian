@@ -1,3 +1,10 @@
+visp (2.10.0-3) unstable; urgency=medium
+
+  * Override dh_install to avoid an error on kfreebsd where usr/lib/*/visp/*
+    doesn't exist
+
+ -- Fabien Spindler <Fabien.Spindler@inria.fr>  Mon, 18 May 2015 08:49:35 +0200
+
 visp (2.10.0-2) unstable; urgency=medium
 
   * Add patch to fix segfault on sparc, powerpc...
