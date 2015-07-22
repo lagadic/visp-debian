@@ -1,7 +1,7 @@
 From 71b4fa650e393bc196220ec8cf59bb2fef68c7b5 Mon Sep 17 00:00:00 2001
 From: Fabien Spindler <Fabien.Spindler@inria.fr>
 Date: Sat, 14 Mar 2015 18:25:07 +0100
-Subject: [PATCH] Install headers in include architecture triplet
+Subject: [PATCH 1/4] Install headers in include architecture triplet
 
 ---
  src/CMakeLists.txt | 2 +-
