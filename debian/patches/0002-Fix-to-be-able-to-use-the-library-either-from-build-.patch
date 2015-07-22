@@ -1,7 +1,7 @@
 From a3de4582022b3e71a5ccfda7bca517af104624c7 Mon Sep 17 00:00:00 2001
 From: Fabien Spindler <Fabien.Spindler@inria.fr>
 Date: Sun, 15 Mar 2015 10:22:11 +0100
-Subject: [PATCH 2/2] Fix to be able to use the library either from build dir
+Subject: [PATCH 2/4] Fix to be able to use the library either from build dir
  of from install dir. Now VISP_SCENES_DIR, VISP_ROBOT_ARMS_DIR,
  VISP_HAVE_OGRE_PLUGINS_PATH, VISP_HAVE_OGRE_RESOURCES_PATH defined in
  vpConfig.h may contain multiple path locations separated with ; character.
