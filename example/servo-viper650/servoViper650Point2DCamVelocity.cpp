@@ -3,7 +3,7 @@
  * $Id: servoViper650Point2DCamVelocity.cpp 3616 2012-03-09 14:31:52Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -62,7 +62,7 @@
 #include <fstream>
 #include <sstream>
 
-#if (defined (VISP_HAVE_VIPER650) && defined (VISP_HAVE_DC1394_2))
+#if (defined (VISP_HAVE_VIPER650) && defined (VISP_HAVE_DC1394_2) && defined (VISP_HAVE_X11))
 
 #include <visp/vp1394TwoGrabber.h>
 #include <visp/vpImage.h>

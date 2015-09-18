@@ -3,7 +3,7 @@
  * $Id: vpFeatureThetaU.h 3530 2012-01-03 10:52:12Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -80,7 +80,7 @@ public:
   vpFeatureSegment(bool normalized=false);
 
   //! Destructor. Does nothing.
-  ~vpFeatureSegment() { if (flags != NULL) delete [] flags; }
+  ~vpFeatureSegment() {}
   // change values of the segment
   void buildFrom(const double x1, const double y1, const double Z1, const double x2, const double y2, const double Z2);
 

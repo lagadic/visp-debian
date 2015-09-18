@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vp1394TwoGrabber.cpp 4323 2013-07-18 09:24:01Z fspindle $
+ * $Id: vp1394TwoGrabber.cpp 4728 2014-04-23 12:26:44Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -168,28 +168,20 @@ int main()
 
 */
 vp1394TwoGrabber::vp1394TwoGrabber(bool reset)
+  : camera(NULL), cameras(NULL), num_cameras(0), camera_id(0), verbose(false), camIsOpen(NULL),
+    num_buffers(4), // ring buffer size
+    isDataModified(NULL), initialShutterMode(NULL), dataCam(NULL)
+  #ifdef VISP_HAVE_DC1394_2_CAMERA_ENUMERATE // new API > libdc1394-2.0.0-rc7
+  , d(NULL),
+    list(NULL)
+  #endif
 {
   // protected members
   width = height = 0;
 
   // private members
-  num_cameras = 0;
-  cameras = NULL;
-  camera_id = 0;
-  verbose = false;//true;
-  camIsOpen = NULL;
   init = false;
-  cameras = NULL;
-#ifdef VISP_HAVE_DC1394_2_CAMERA_ENUMERATE // new API > libdc1394-2.0.0-rc7
-  d = NULL;
-  list = NULL;
-#endif
-  num_buffers = 4; // ring buffer size
 
-  isDataModified = NULL; 
-  initialShutterMode = NULL;
-  dataCam = NULL; 
-  
   reset = false;
   initialize(reset);
   
@@ -220,7 +212,7 @@ vp1394TwoGrabber::~vp1394TwoGrabber()
   If multiples cameras are connected on the bus, select the camero to dial
   with.
 
-  \param camera_id : A camera identifier or GUID. By identifier, we
+  \param cam_id : A camera identifier or GUID. By identifier, we
   mean a value comprised between 0 (the first camera found on the bus)
   and the number of cameras found on the bus and returned by
   getNumCameras() minus 1. If two cameras are connected on the bus,
@@ -332,37 +324,38 @@ int main()
 }
   \endcode
 
-
   \sa setFormat(), setVideoMode(), setFramerate(), getNumCameras()
 
 */
 void
-vp1394TwoGrabber::setCamera(uint64_t camera_id)
+vp1394TwoGrabber::setCamera(uint64_t cam_id)
 {
   // Suppose that if camera_id is a camera GUID, this value is greater
   // than the number of cameras connected to the bus
-  if (camera_id >= num_cameras) {
+  if (cam_id >= num_cameras) {
     // Check if camera_id is a camera guid
     bool is_guid = false;
     // check if the camera_id is a guid
     for (unsigned int i=0; i< num_cameras; i++) {
-      if (cameras[i]->guid == camera_id) {
-	this->camera_id = i; 
-	is_guid = true;
-	break;
+      if (cameras[i]->guid == cam_id) {
+        this->camera_id = i;
+        is_guid = true;
+        break;
       }
     }
     if (is_guid == false) {
+      std::cout << "Error: The camera with guid 0x" << std::hex << cam_id << " is not present" << std::endl;
+      std::cout << num_cameras << " camera(s) connected" << std::endl;
+      for (unsigned int i=0; i< num_cameras; i++) {
+        std::cout << " - camera " << i << " with guid 0x" << std::hex << cameras[i]->guid << std::endl;
+      }
       close();
-      vpERROR_TRACE("The camera with GUID 0x%x or id %u is not present", 
-		    camera_id, camera_id);
-      vpERROR_TRACE("Only %u camera on the bus.", num_cameras);
       throw (vpFrameGrabberException(vpFrameGrabberException::settingError,
 				     "The required camera is not present") );
     }
   }
   else {
-    this->camera_id =  camera_id;
+    this->camera_id = (unsigned int) cam_id; // The input cam_id is not a uint64_t guid, but the index of the camera
   }
 
   // create a pointer to the working camera
@@ -374,7 +367,7 @@ vp1394TwoGrabber::setCamera(uint64_t camera_id)
 
   Get the active camera identifier on the bus.
 
-  \param camera_id : The active camera identifier. The value is
+  \param cam_id : The active camera identifier. The value is
   comprised between 0 (the first camera) and the number of cameras
   found on the bus returned by getNumCameras() minus 1.
 
@@ -385,10 +378,10 @@ vp1394TwoGrabber::setCamera(uint64_t camera_id)
 
 */
 void
-vp1394TwoGrabber::getCamera(uint64_t &camera_id)
+vp1394TwoGrabber::getCamera(uint64_t &cam_id)
 {
   if (num_cameras) {
-    camera_id = this->camera_id;
+    cam_id = this->camera_id;
   }
   else {
     close();
@@ -434,7 +427,7 @@ vp1394TwoGrabber::getCamera()
 
 */
 void
-vp1394TwoGrabber::getNumCameras(unsigned int &ncameras)
+vp1394TwoGrabber::getNumCameras(unsigned int &ncameras) const
 {
   if (! num_cameras) {
     vpCTRACE << "No camera found..."<< std::endl;
@@ -452,7 +445,7 @@ vp1394TwoGrabber::getNumCameras(unsigned int &ncameras)
 
 */
 unsigned int
-vp1394TwoGrabber::getNumCameras()
+vp1394TwoGrabber::getNumCameras() const
 {
   unsigned int ncameras = 0;
   if (! num_cameras) {
@@ -1345,10 +1338,10 @@ vp1394TwoGrabber::isColorCodingSupported(vp1394TwoVideoModeType mode,
 
   \param top : Position of the upper left roi corner.
 
-  \param width : Roi width. If width is set to 0, uses the maximum
+  \param w : Roi width. If width is set to 0, uses the maximum
   allowed image width.
 
-  \param height : Roi height. If width is set to 0, uses the maximum
+  \param h : Roi height. If width is set to 0, uses the maximum
   allowed image height.
 
 
@@ -1362,7 +1355,7 @@ vp1394TwoGrabber::isColorCodingSupported(vp1394TwoVideoModeType mode,
 */
 void
 vp1394TwoGrabber::setFormat7ROI(unsigned int left, unsigned int top,
-                                unsigned int width, unsigned int height)
+                                unsigned int w, unsigned int h)
 {
   open();
   if (! num_cameras) {
@@ -1397,8 +1390,8 @@ vp1394TwoGrabber::setFormat7ROI(unsigned int left, unsigned int top,
     }
 #if 0
     vpTRACE("left: %d top: %d width: %d height: %d", left, top,
-            width == 0 ? DC1394_USE_MAX_AVAIL: width,
-            height == 0 ? DC1394_USE_MAX_AVAIL : height);
+            width == 0 ? DC1394_USE_MAX_AVAIL: w,
+            height == 0 ? DC1394_USE_MAX_AVAIL : h);
     vpTRACE("max_width: %d max_height: %d", max_width, max_height);
 #endif
 
@@ -1416,26 +1409,25 @@ vp1394TwoGrabber::setFormat7ROI(unsigned int left, unsigned int top,
     int32_t roi_width;
     int32_t roi_height;
 
-    if (width != 0) {
+    if (w != 0) {
       // Check if roi width is acceptable (ie roi is contained in the image)
-      if (width > (max_width - left))
-        width = (max_width - left);
-      roi_width = (int32_t)width;
+      if (w > (max_width - left))
+        w = (max_width - left);
+      roi_width = (int32_t)w;
     }
     else {
       roi_width = DC1394_USE_MAX_AVAIL;
     }
 
-    if (height != 0) {
+    if (h != 0) {
       // Check if roi height is acceptable (ie roi is contained in the image)
-      if (height > (max_height - top))
-        height = (max_height - top);
-      roi_height = (int32_t)height;
+      if (h > (max_height - top))
+        h = (max_height - top);
+      roi_height = (int32_t)h;
     }
     else {
       roi_height = DC1394_USE_MAX_AVAIL;
     }
-
 
     if (dc1394_format7_set_roi(camera, _videomode,
                                (dc1394color_coding_t) DC1394_QUERY_FROM_CAMERA, // color_coding
@@ -1530,7 +1522,7 @@ vp1394TwoGrabber::initialize(bool reset)
       dc1394_reset_bus(cameras[0]);
     }
 
-    if (list != NULL)
+    // if (list != NULL)
       dc1394_camera_free_list (list);
     list = NULL;
 
@@ -1771,7 +1763,7 @@ vp1394TwoGrabber::setRingBufferSize(unsigned int size)
   \sa setRingBufferSize()
 */
 unsigned int
-vp1394TwoGrabber::getRingBufferSize()
+vp1394TwoGrabber::getRingBufferSize() const
 {
   return num_buffers;
 }
@@ -1780,6 +1772,9 @@ vp1394TwoGrabber::getRingBufferSize()
   Enable auto shutter. It is also possible to set auto shutter min
   and max exposure time, but only for AVT cameras. In that case
   use setAutoShutter(unsigned int, unsigned int).
+
+  \param enable : Flag to enable or disable the auto shutter. If false, set the
+  shutter as manual.
 
   \exception vpFrameGrabberException::initializationError : If no
   camera found on the bus.
@@ -1813,13 +1808,21 @@ int main()
   \sa setAutoShutter(unsigned int, unsigned int), getAutoShutter()
 */
 void
-vp1394TwoGrabber::setAutoShutter()
+vp1394TwoGrabber::setAutoShutter(bool enable)
 {
   if (! num_cameras) {
     close();
     vpERROR_TRACE("No camera found");
     throw (vpFrameGrabberException(vpFrameGrabberException::initializationError,
                                    "No camera found") );
+  }
+
+  dc1394feature_mode_t mode;
+  if (enable) {
+    mode = DC1394_FEATURE_MODE_AUTO;
+  }
+  else {
+    mode = DC1394_FEATURE_MODE_MANUAL;
   }
 
   if (dc1394_feature_set_power(camera, DC1394_FEATURE_SHUTTER, DC1394_ON)
@@ -1832,7 +1835,7 @@ vp1394TwoGrabber::setAutoShutter()
 
   if (dc1394_feature_set_mode(camera,
             DC1394_FEATURE_SHUTTER,
-            DC1394_FEATURE_MODE_AUTO)
+            mode)
       != DC1394_SUCCESS) {
     //       vpERROR_TRACE("Cannot set auto shutter. \n");
     close();
@@ -1930,6 +1933,9 @@ vp1394TwoGrabber::getAutoShutter(unsigned int &minvalue, unsigned int &maxvalue)
   and max gain, but only for AVT cameras. In that case
   use setAutoGain(unsigned int, unsigned int).
 
+  \param enable : Flag to enable or disable the auto gain. If false, set the
+  gain as manual.
+
   \exception vpFrameGrabberException::initializationError : If no
   camera found on the bus.
 
@@ -1948,7 +1954,7 @@ int main()
   vp1394TwoGrabber g(false); // Don't reset the bus
   g.setVideoMode(vp1394TwoGrabber::vpVIDEO_MODE_FORMAT7_0 );
   g.setColorCoding(vp1394TwoGrabber::vpCOLOR_CODING_MONO8);
-  g.setAutoGain(); // Enable auto gain
+  g.setAutoGain(true); // Enable auto gain
   g.setIsoTransmissionSpeed(vp1394TwoGrabber::vpISO_SPEED_800); // 1394b
   while(1)
     g.acquire(I);
@@ -1962,7 +1968,7 @@ int main()
   \sa setAutoGain(unsigned int, unsigned int), getAutoGain()
 */
 void
-vp1394TwoGrabber::setAutoGain()
+vp1394TwoGrabber::setAutoGain(bool enable)
 {
   if (! num_cameras) {
     close();
@@ -1971,7 +1977,15 @@ vp1394TwoGrabber::setAutoGain()
                                    "No camera found") );
   }
 
-  if (dc1394_feature_set_power(camera, DC1394_FEATURE_SHUTTER, DC1394_ON)
+  dc1394feature_mode_t mode;
+  if (enable) {
+    mode = DC1394_FEATURE_MODE_AUTO;
+  }
+  else {
+    mode = DC1394_FEATURE_MODE_MANUAL;
+  }
+
+  if (dc1394_feature_set_power(camera, DC1394_FEATURE_GAIN, DC1394_ON)
       != DC1394_SUCCESS) {
     //       vpERROR_TRACE("Cannot set shutter on. \n");
     close();
@@ -1981,7 +1995,7 @@ vp1394TwoGrabber::setAutoGain()
 
   if (dc1394_feature_set_mode(camera,
             DC1394_FEATURE_GAIN,
-            DC1394_FEATURE_MODE_AUTO)
+            mode)
       != DC1394_SUCCESS) {
     //       vpERROR_TRACE("Cannot set auto gain. \n");
     close();
@@ -2924,7 +2938,7 @@ vp1394TwoGrabber::acquire(vpImage<vpRGBa> &I,
   Get the image width. It depends on the camera video mode setVideoMode(). The
   image size is only available after a call to open() or acquire().
 
-  \param width : The image width, zero if the required camera is not available.
+  \param w : The image width, zero if the required camera is not available.
 
   \exception vpFrameGrabberException::initializationError : If no
   camera found on the bus.
@@ -2935,7 +2949,7 @@ vp1394TwoGrabber::acquire(vpImage<vpRGBa> &I,
   \sa getHeight(), open(), acquire()
 
 */
-void vp1394TwoGrabber::getWidth(unsigned int &width)
+void vp1394TwoGrabber::getWidth(unsigned int &w)
 {
   if (! num_cameras) {
     close();
@@ -2944,7 +2958,7 @@ void vp1394TwoGrabber::getWidth(unsigned int &width)
                                    "No camera found") );
   }
 
-  width = this->width;
+  w = this->width;
 }
 
 /*!
@@ -2981,7 +2995,7 @@ unsigned int vp1394TwoGrabber::getWidth()
   setVideoMode(). The image size is only available after a call to
   open() or acquire().
 
-  \param height : The image height.
+  \param h : The image height.
 
   \exception vpFrameGrabberException::initializationError : If no
   camera found on the bus.
@@ -2992,7 +3006,7 @@ unsigned int vp1394TwoGrabber::getWidth()
   \sa getWidth()
 
 */
-void vp1394TwoGrabber::getHeight(unsigned int &height)
+void vp1394TwoGrabber::getHeight(unsigned int &h)
 {
   if (! num_cameras) {
     close();
@@ -3001,7 +3015,7 @@ void vp1394TwoGrabber::getHeight(unsigned int &height)
                                    "No camera found") );
   }
 
-  height = this->height;
+  h = this->height;
 }
 /*!
 
@@ -3096,8 +3110,8 @@ std::string vp1394TwoGrabber::videoMode2string(vp1394TwoVideoModeType videomode)
     _str = strVideoMode[_videomode - DC1394_VIDEO_MODE_MIN];
   }
   else {
-    vpCERROR << "The video mode " << videomode
-    << " is not supported by the camera" << std::endl;
+    vpCERROR << "The video mode " << (int)videomode
+             << " is not supported by the camera" << std::endl;
   }
 
   return _str;
@@ -3125,8 +3139,8 @@ std::string vp1394TwoGrabber::framerate2string(vp1394TwoFramerateType fps)
     _str = strFramerate[_fps - DC1394_FRAMERATE_MIN];
   }
   else {
-    vpCERROR << "The framerate " << fps
-    << " is not supported by the camera" << std::endl;
+    vpCERROR << "The framerate " << (int)fps
+             << " is not supported by the camera" << std::endl;
   }
 
   return _str;
@@ -3155,8 +3169,8 @@ std::string vp1394TwoGrabber::colorCoding2string(vp1394TwoColorCodingType colorc
 
   }
   else {
-    vpCERROR << "The color coding " << colorcoding
-    << " is not supported by the camera" << std::endl;
+    vpCERROR << "The color coding " << (int)colorcoding
+             << " is not supported by the camera" << std::endl;
   }
 
   return _str;
@@ -3319,7 +3333,7 @@ void vp1394TwoGrabber::resetBus()
   dc1394_camera_free (camera);
   dc1394_free (d);
   d = NULL;
-  if (cameras != NULL)
+  //if (cameras != NULL)
     delete [] cameras;
   cameras = NULL ;
 #elif defined VISP_HAVE_DC1394_2_FIND_CAMERAS // old API <= libdc1394-2.0.0-rc7
@@ -3764,7 +3778,7 @@ vp1394TwoGrabber::getFramerateSupported(vp1394TwoVideoModeType mode,
 */
 uint32_t
 vp1394TwoGrabber::getColorCodingSupported(vp1394TwoVideoModeType mode,
-    vpList<vp1394TwoColorCodingType> & codings)
+                                          vpList<vp1394TwoColorCodingType> & codings)
 {
   if (! num_cameras) {
     close();

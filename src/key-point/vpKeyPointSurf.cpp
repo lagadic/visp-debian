@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpKeyPointSurf.cpp 4182 2013-03-27 13:20:58Z fspindle $
+ * $Id: vpKeyPointSurf.cpp 5202 2015-01-24 09:29:06Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -43,7 +43,7 @@
 #include <visp/vpKeyPointSurf.h>
 
 #if defined (VISP_HAVE_OPENCV_NONFREE)
-#if VISP_HAVE_OPENCV_VERSION >= 0x010100 // Require opencv >= 1.1.0
+#if (VISP_HAVE_OPENCV_VERSION >= 0x010100) && VISP_HAVE_OPENCV_VERSION < 0x030000// Require opencv >= 1.1.0 < 3.0.0
 
 #include <visp/vpImageConvert.h>
 #include <visp/vpImageTools.h>
@@ -56,9 +56,21 @@
 #include <vector>
 #include <list>
 
+double compareSURFDescriptors( const float* d1, const float* d2, double best, int length );
+int naiveNearestNeighbor( const float *vec, int laplacian,
+                          const CvSeq *model_keypoints,
+                          const CvSeq *model_descriptors );
+int naiveNearestNeighbor( const float *vec,
+                          const CvSeq *ref_keypoints,
+                          const CvSeq *ref_descriptors );
+void findPairs( const CvSeq* objectKeypoints,
+                const CvSeq* objectDescriptors,
+                const CvSeq* imageKeypoints,
+                const CvSeq* imageDescriptors,
+                std::vector<int>& ptpairs );
+
 // Compare two surf descriptors.
-double compareSURFDescriptors( const float* d1, const float* d2,
-			       double best, int length )
+double compareSURFDescriptors( const float* d1, const float* d2, double best, int length )
 {
   double total_cost = 0;
   int i;
@@ -79,8 +91,8 @@ double compareSURFDescriptors( const float* d1, const float* d2,
 
 //Find for a point candidate the most similar point in the reference point list.
 int naiveNearestNeighbor( const float *vec, int laplacian,
-			  const CvSeq *model_keypoints,
-			  const CvSeq *model_descriptors )
+                          const CvSeq *model_keypoints,
+                          const CvSeq *model_descriptors )
 {
   int length = (int)(model_descriptors->elem_size/(int)sizeof(float));
   int i, neighbor = -1;
@@ -115,8 +127,8 @@ int naiveNearestNeighbor( const float *vec, int laplacian,
 
 //Find for a point candidate the most similar point in the reference point list.
 int naiveNearestNeighbor( const float *vec,
-			  const CvSeq *ref_keypoints,
-			  const CvSeq *ref_descriptors )
+                          const CvSeq *ref_keypoints,
+                          const CvSeq *ref_descriptors )
 {
   int length = (int)(ref_descriptors->elem_size/(int)sizeof(float));
   int i, neighbor = -1;
@@ -149,10 +161,10 @@ int naiveNearestNeighbor( const float *vec,
 
 //Find all the matched points
 void findPairs( const CvSeq* objectKeypoints,
-		const CvSeq* objectDescriptors,
-		const CvSeq* imageKeypoints,
-		const CvSeq* imageDescriptors,
-		std::vector<int>& ptpairs )
+                const CvSeq* objectDescriptors,
+                const CvSeq* imageKeypoints,
+                const CvSeq* imageDescriptors,
+                std::vector<int>& ptpairs )
 {
   int i;
   CvSeqReader reader, kreader;
@@ -187,18 +199,12 @@ void findPairs( const CvSeq* objectKeypoints,
   type to extended.
 
 */
-vpKeyPointSurf::vpKeyPointSurf():vpBasicKeyPoint()
+vpKeyPointSurf::vpKeyPointSurf()
+  : vpBasicKeyPoint(),
+    storage(NULL), params(), storage_cur(NULL), image_keypoints(NULL), image_descriptors(NULL),
+    ref_keypoints(NULL), ref_descriptors(NULL), hessianThreshold(500), descriptorType(extendedDescriptor)
 {
-  descriptorType = extendedDescriptor;
-  hessianThreshold = 500;
   init();
-
-  image_keypoints = NULL;
-  image_descriptors = NULL;
-  ref_keypoints = NULL;
-  ref_descriptors = NULL;
-
-  storage_cur = NULL;
 }
 
 /*!

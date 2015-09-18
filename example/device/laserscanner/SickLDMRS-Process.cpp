@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: SickLDMRS-Process.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: SickLDMRS-Process.cpp 4658 2014-02-09 09:50:14Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -74,7 +74,7 @@
 #include <visp/vp1394TwoGrabber.h>
 #include <visp/vpIoTools.h>
  
-#if ( defined(UNIX) && ( ! defined(WIN32) ) ) && (defined(VISP_HAVE_X11) || defined(VISP_HAVE_GDI) || defined(VISP_HAVE_GTK)) 
+#if ( !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) ) && (defined(VISP_HAVE_X11) || defined(VISP_HAVE_GDI) || defined(VISP_HAVE_GTK))
 
 static int save = 0;
 static int layerToDisplay = 0xF; // 0xF = 1111 => all the layers are selected
@@ -85,6 +85,9 @@ pthread_mutex_t shm_mutex;
 #endif
 std::string output_path;
 
+void *laser_display_and_save_loop(void *);
+void *laser_acq_loop(void *);
+void *camera_acq_and_display_loop(void *);
 
 void *laser_display_and_save_loop(void *)
 {
@@ -307,60 +310,66 @@ void *camera_acq_and_display_loop(void *)
 
 int main(int argc, const char ** argv)
 {
-  output_path = "data";
-  // Test if the output path directory exist. If no try to create it
-  if (vpIoTools::checkDirectory(output_path) == false) {
-    try {
-      // Create a directory with name "username"
-      vpIoTools::makeDirectory(output_path);
+  try {
+    output_path = "data";
+    // Test if the output path directory exist. If no try to create it
+    if (vpIoTools::checkDirectory(output_path) == false) {
+      try {
+        // Create a directory with name "username"
+        vpIoTools::makeDirectory(output_path);
+      }
+      catch (...) {
+        std::cout << "Cannot create " << output_path << " directory" << std::endl;
+        return false;
+      }
     }
-    catch (...) {
-      std::cout << "Cannot create " << output_path << " directory" << std::endl;
-      return false;
+
+    // Parse the command line to set the variables
+    vpParseArgv::vpArgvInfo argTable[] =
+    {
+      {"-layer", vpParseArgv::ARGV_INT, (char*) NULL, (char *) &layerToDisplay,
+       "The layer to display:\n"
+       "\t\t. 0x1 for layer 1.\n"
+       "\t\t. 0x2 for layer 2.\n"
+       "\t\t. 0x4 for layer 3.\n"
+       "\t\t. 0x8 for layer 4.\n"
+       "\t\tTo display all the layers you should set 0xF value."
+      },
+      {"-save", vpParseArgv::ARGV_INT, (char*) NULL, (char *) &save,
+       "Turn to 1 in order to save data."
+      },
+      {"-h", vpParseArgv::ARGV_HELP, (char*) NULL, (char *) NULL,
+       "Display one or more measured layers form a Sick LD-MRS laser scanner."},
+      {(char*) NULL, vpParseArgv::ARGV_END, (char*) NULL, (char*) NULL, (char*) NULL}
+    } ;
+
+    // Read the command line options
+    if(vpParseArgv::parse(&argc, argv, argTable,
+                          vpParseArgv::ARGV_NO_LEFTOVERS |
+                          vpParseArgv::ARGV_NO_ABBREV |
+                          vpParseArgv::ARGV_NO_DEFAULTS)) {
+      return (false);
     }
-  }
 
-  // Parse the command line to set the variables
-  vpParseArgv::vpArgvInfo argTable[] =
-  {
-    {"-layer", vpParseArgv::ARGV_INT, (char*) NULL, (char *) &layerToDisplay,
-     "The layer to display:\n"
-     "\t\t. 0x1 for layer 1.\n"
-     "\t\t. 0x2 for layer 2.\n"
-     "\t\t. 0x4 for layer 3.\n"
-     "\t\t. 0x8 for layer 4.\n"
-     "\t\tTo display all the layers you should set 0xF value."
-    },
-    {"-save", vpParseArgv::ARGV_INT, (char*) NULL, (char *) &save,
-     "Turn to 1 in order to save data."
-    },
-    {"-h", vpParseArgv::ARGV_HELP, (char*) NULL, (char *) NULL,
-     "Display one or more measured layers form a Sick LD-MRS laser scanner."},
-    {(char*) NULL, vpParseArgv::ARGV_END, (char*) NULL, (char*) NULL, (char*) NULL}
-  } ;
-
-  // Read the command line options
-  if(vpParseArgv::parse(&argc, argv, argTable, 
-                        vpParseArgv::ARGV_NO_LEFTOVERS |
-                        vpParseArgv::ARGV_NO_ABBREV |
-                        vpParseArgv::ARGV_NO_DEFAULTS)) {
-    return (false);
-  }
-  
-  time_offset = vpTime::measureTimeSecond();
+    time_offset = vpTime::measureTimeSecond();
 #ifdef VISP_HAVE_PTHREAD
-  pthread_t thread_camera_acq;
-  pthread_t thread_laser_acq;
-  pthread_t thread_laser_display;
-  pthread_create(&thread_camera_acq, NULL, &camera_acq_and_display_loop, NULL);
-  pthread_create(&thread_laser_acq, NULL, &laser_acq_loop, NULL);
-  pthread_create(&thread_laser_display, NULL, &laser_display_and_save_loop, NULL);
-  pthread_join(thread_camera_acq, 0);
-  pthread_join(thread_laser_acq, 0);
-  pthread_join(thread_laser_display, 0);
+    pthread_t thread_camera_acq;
+    pthread_t thread_laser_acq;
+    pthread_t thread_laser_display;
+    pthread_create(&thread_camera_acq, NULL, &camera_acq_and_display_loop, NULL);
+    pthread_create(&thread_laser_acq, NULL, &laser_acq_loop, NULL);
+    pthread_create(&thread_laser_display, NULL, &laser_display_and_save_loop, NULL);
+    pthread_join(thread_camera_acq, 0);
+    pthread_join(thread_laser_acq, 0);
+    pthread_join(thread_laser_display, 0);
 #endif
 
-  return 0;
+    return 0;
+  }
+  catch(vpException e) {
+    std::cout << "Catch an exception: " << e << std::endl;
+    return 1;
+  }
 }
 
 #else // #ifdef UNIX and display

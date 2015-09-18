@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpGenericFeature.h 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpGenericFeature.h 4649 2014-02-07 14:57:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -209,7 +209,7 @@ private:
 public:
   void setInteractionMatrix(const vpMatrix &L) ;
   vpMatrix getInteractionMatrix() const { return L ; }
-  void setError(vpColVector &error)  ;
+  void setError(const vpColVector &error_vector)  ;
   void set_s(const vpColVector &s) ;
   void set_s(const double s0) ;
   void set_s(const double s0, const double s1) ;

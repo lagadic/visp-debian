@@ -1,9 +1,9 @@
 #############################################################################
 #
-# $Id: CMakeLists.txt 4056 2013-01-05 13:04:42Z fspindle $
+# $Id: CMakeLists.txt 4961 2014-11-14 13:06:26Z fspindle $
 #
 # This file is part of the ViSP software.
-# Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+# Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
 # 
 # This software is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -43,25 +43,22 @@
 # the source name.
 #
 # If you want to add/remove a source, modify here
-SET (SOURCE
+set(SOURCE
   test1394TwoResetBus.cpp
   test1394TwoGrabber.cpp
 )
 
 # rule for binary build
-FOREACH(source ${SOURCE})
+foreach(source ${SOURCE})
   # Compute the name of the binary to create
-  GET_FILENAME_COMPONENT(binary ${source} NAME_WE)
+  get_filename_component(binary ${source} NAME_WE)
 
   # From source compile the binary and add link rules
-  ADD_EXECUTABLE(${binary} ${source})
-  TARGET_LINK_LIBRARIES(${binary} ${VISP_INTERN_LIBRARY} ${VISP_EXTERN_LIBRARIES})
+  add_executable(${binary} ${source})
+  target_link_libraries(${binary} ${VISP_INTERN_LIBRARY} ${VISP_EXTERN_LIBRARIES})
 
-  # Add test
-  #ADD_TEST(${binary} ${binary})
-ENDFOREACH(source)
-
-# customize clean target 
-SET_DIRECTORY_PROPERTIES(PROPERTIES 
-  ADDITIONAL_MAKE_CLEAN_FILES "core*;*~;gmon.out;DartTestfile.txt"
-)
+  add_dependencies(visp_tests ${binary})
+  if(ENABLE_SOLUTION_FOLDERS)
+    set_target_properties(${binary} PROPERTIES FOLDER "tests")
+  endif()
+endforeach()

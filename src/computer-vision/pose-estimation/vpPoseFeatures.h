@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpPoseFeatures.h 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpPoseFeatures.h 4660 2014-02-09 14:13:27Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -323,7 +323,7 @@ public:
   \brief Template class that allows to estimate a pose from all kind of specific features if the compiler support C++ 11.
 */
 template< typename featureType, typename RetType, typename ...Args >
-class VISP_EXPORT vpPoseSpecificFeatureTemplate : public vpPoseSpecificFeature
+class vpPoseSpecificFeatureTemplate : public vpPoseSpecificFeature
 {
 private:
   featureType desiredFeature;
@@ -372,7 +372,7 @@ public:
   \brief Template class that allows to estimate a pose from all kind of specific features if the compiler support C++ 11.
 */
 template< typename ObjectType, typename featureType, typename RetType, typename ...Args >
-class VISP_EXPORT vpPoseSpecificFeatureTemplateObject : public vpPoseSpecificFeature
+class vpPoseSpecificFeatureTemplateObject : public vpPoseSpecificFeature
 {
 private:
   featureType desiredFeature;
@@ -440,6 +440,7 @@ private:
   struct vpDuo{
     FeatureType    *desiredFeature;
     FirstParamType firstParam;
+    vpDuo() : desiredFeature(NULL), firstParam() {}
   };
   
   template<typename FeatureType, typename FirstParamType, typename SecondParamType>
@@ -447,6 +448,8 @@ private:
     FeatureType    *desiredFeature;
     FirstParamType  firstParam;
     SecondParamType secondParam;
+
+    vpTrio() : desiredFeature(NULL), firstParam(), secondParam() {}
   };
 #endif //#ifndef DOXYGEN_SHOULD_SKIP_THIS
 

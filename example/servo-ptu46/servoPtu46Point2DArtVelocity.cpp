@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: servoPtu46Point2DArtVelocity.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: servoPtu46Point2DArtVelocity.cpp 4604 2014-01-21 14:15:23Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -63,20 +63,20 @@
 */
 #include <visp/vpConfig.h>
 #include <visp/vpDebug.h> // Debug trace
-#ifdef UNIX
+#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
 #  include <unistd.h>
 #endif
 #include <signal.h>
 
 
 
-#if (defined(VISP_HAVE_PTU46) & defined (VISP_HAVE_DC1394) )
+#if (defined(VISP_HAVE_PTU46) & defined (VISP_HAVE_DC1394_2) )
 
 #ifdef VISP_HAVE_PTHREAD
 #  include <pthread.h>
 #endif
 
-#include <visp/vp1394Grabber.h>
+#include <visp/vp1394TwoGrabber.h>
 #include <visp/vpImage.h>
 #include <visp/vpDisplay.h>
 #include <visp/vpDisplayX.h>
@@ -139,7 +139,7 @@ main()
 
     vpImage<unsigned char> I ;
 
-    vp1394Grabber g;
+    vp1394TwoGrabber g;
 
     g.open(I) ;
 

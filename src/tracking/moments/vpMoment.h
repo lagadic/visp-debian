@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpMoment.h 4219 2013-04-17 10:00:56Z mbakthav $
+ * $Id: vpMoment.h 4708 2014-03-28 17:36:46Z mbakthav $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -87,19 +87,23 @@ class vpMomentObject;
   Some moments can be computed only if they are linked to a a database containing their dependencies.
   Linking to a database is done using the vpMoment::linkTo(...) method.
 
-  There are no constraints about format of the array returned by vpMoment::get: any implementation is fine.
+  There are no constraints about format of the array returned by vpMoment::get(); any implementation is fine.
 
   Each moment must have a string name by implementing the char* vpMoment::name() method which allows to identify the moment in the database.
   Each moment must also implement a compute method describing how to obtain its values from the object.
 
-  \attention Order of moment computation DOES matter: when you compute (vpMoment::compute call) a moment, all moment dependencies must be computed.
-  Moments pre-implementes dans ViSP:
+  \attention Order of moment computation DOES matter: when you compute a moment using vpMoment::compute(),
+  all moment dependencies must be computed.
+  We recall that implemented moments are:
   - vpMomentAlpha
+  - vpMomentArea
+  - vpMomentAreaNormalized
   - vpMomentBasic
   - vpMomentCentered
   - vpMomentCInvariant
-  - vpMomentSInvariant
-  - vpMomentAreaNormalized
+  - vpMomentGravityCenter
+  - vpMomentGravityCenterNormalized
+
 */
 class VISP_EXPORT vpMoment{
  private:
@@ -112,22 +116,21 @@ class VISP_EXPORT vpMoment{
         Returns the linked moment database.
         \return the moment database
         */
-        inline vpMomentDatabase& getMoments(){ return *moments; }
-
-
+        inline vpMomentDatabase& getMoments() const { return *moments; }
  public:
-        inline vpMomentObject& getObject() const { return *object;}
+        inline const vpMomentObject& getObject() const { return *object;}
         vpMoment();
         /*!
         Returns all values computed by the moment.
         \return vector of values
         */
-        std::vector<double>& get(){ return values;}
+        const std::vector<double>& get() const { return values;}
         void linkTo(vpMomentDatabase& moments);
         void update(vpMomentObject& object);
         virtual void compute()=0;
-        virtual const char* name() = 0;
+        virtual const char* name() const = 0;
         friend VISP_EXPORT std::ostream & operator<<(std::ostream & os, const vpMoment& m);
+        virtual void printDependencies(std::ostream& os) const;
 
         /*!
         Virtual destructor.

@@ -4,21 +4,26 @@
 
 int main()
 {
-#ifdef VISP_HAVE_OPENCV
-  vpImage<unsigned char> I;
+#if defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION < 0x020408)
+  try {
+    vpImage<unsigned char> I;
 
-  vpOpenCVGrabber g;
-  g.open(I);
+    vpOpenCVGrabber g;
+    g.open(I);
 
-  std::cout << "Image size: " << I.getWidth() << " " << I.getHeight() << std::endl;
-  vpDisplayOpenCV d(I);
+    std::cout << "Image size: " << I.getWidth() << " " << I.getHeight() << std::endl;
+    vpDisplayOpenCV d(I);
 
-  while(1) {
-    g.acquire(I);
-    vpDisplay::display(I);
-    vpDisplay::flush(I);
-    if (vpDisplay::getClick(I, false))
-      break;
+    while(1) {
+      g.acquire(I);
+      vpDisplay::display(I);
+      vpDisplay::flush(I);
+      if (vpDisplay::getClick(I, false))
+        break;
+    }
+  }
+  catch(vpException e) {
+    std::cout << "Catch an exception: " << e << std::endl;
   }
 #endif
 }

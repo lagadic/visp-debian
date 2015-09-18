@@ -1,9 +1,9 @@
 #############################################################################
 #
-# $Id: CMakeLists.txt 4056 2013-01-05 13:04:42Z fspindle $
+# $Id: CMakeLists.txt 5255 2015-02-03 14:52:43Z strinh $
 #
 # This file is part of the ViSP software.
-# Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+# Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
 # 
 # This software is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -43,6 +43,8 @@
 #
 # If you add/remove a directory, modify here
 SET (SRC_SUBDIRS
+  convert
+  io
   geometry
   time
   xml
@@ -50,8 +52,3 @@ SET (SRC_SUBDIRS
 
 # Build process propagation in the sub directories
 SUBDIRS(${SRC_SUBDIRS})
-
-# customize clean target 
-SET_DIRECTORY_PROPERTIES(PROPERTIES 
-  ADDITIONAL_MAKE_CLEAN_FILES "core*;*~;gmon.out;DartTestfile.txt"
-)

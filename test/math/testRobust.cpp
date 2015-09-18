@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: testRobust.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: testRobust.cpp 4658 2014-02-09 09:50:14Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -57,6 +57,9 @@
 // List of allowed command line options
 #define GETOPTARGS	"ho:"
 
+void usage(const char *name, const char *badparam, std::string ofilename);
+bool getOptions(int argc, const char **argv, std::string &ofilename);
+
 /*!
 
   Print the program options.
@@ -107,16 +110,16 @@ OPTIONS:                                              Default\n\
 */
 bool getOptions(int argc, const char **argv, std::string &ofilename)
 {
-  const char *optarg;
+  const char *optarg_;
   int	c;
-  while ((c = vpParseArgv::parse(argc, argv, GETOPTARGS, &optarg)) > 1) {
+  while ((c = vpParseArgv::parse(argc, argv, GETOPTARGS, &optarg_)) > 1) {
 
     switch (c) {
-    case 'o': ofilename = optarg; break;
+    case 'o': ofilename = optarg_; break;
     case 'h': usage(argv[0], NULL, ofilename); return false; break;
 
     default:
-      usage(argv[0], optarg, ofilename);
+      usage(argv[0], optarg_, ofilename);
       return false; break;
     }
   }
@@ -125,7 +128,7 @@ bool getOptions(int argc, const char **argv, std::string &ofilename)
     // standalone param or error
     usage(argv[0], NULL, ofilename);
     std::cerr << "ERROR: " << std::endl;
-    std::cerr << "  Bad argument " << optarg << std::endl << std::endl;
+    std::cerr << "  Bad argument " << optarg_ << std::endl << std::endl;
     return false;
   }
 
@@ -137,74 +140,81 @@ bool getOptions(int argc, const char **argv, std::string &ofilename)
 int
 main(int argc, const char ** argv)
 {
-  std::string ofilename;
-  std::string username;
+  try {
+    std::string ofilename;
+    std::string username;
 
-  // Set the default output filename
-#ifdef WIN32
-  ofilename = "C:/temp";
+    // Set the default output filename
+#if defined(_WIN32)
+    ofilename = "C:/temp";
 #else
-  ofilename = "/tmp";
+    ofilename = "/tmp";
 #endif
 
-  // Get the user login name
-  vpIoTools::getUserName(username);
+    // Get the user login name
+    vpIoTools::getUserName(username);
 
-  // Append to the output filename string, the login name of the user
-  ofilename = ofilename + "/" + username;
+    // Append to the output filename string, the login name of the user
+    ofilename = ofilename + "/" + username;
 
-  // Test if the output path exist. If no try to create it
-  if (vpIoTools::checkDirectory(ofilename) == false) {
-    try {
-      // Create the dirname
-      vpIoTools::makeDirectory(ofilename);
+    // Test if the output path exist. If no try to create it
+    if (vpIoTools::checkDirectory(ofilename) == false) {
+      try {
+        // Create the dirname
+        vpIoTools::makeDirectory(ofilename);
+      }
+      catch (...) {
+        usage(argv[0], NULL, ofilename);
+        std::cerr << std::endl
+                  << "ERROR:" << std::endl;
+        std::cerr << "  Cannot create " << ofilename << std::endl;
+        std::cerr << "  Check your -o " << ofilename << " option " << std::endl;
+        exit(-1);
+      }
     }
-    catch (...) {
+
+    // Append to the output filename string, the name of the file
+    ofilename = ofilename + "/w.dat";
+
+    // Read the command line options
+    if (getOptions(argc, argv, ofilename) == false) {
+      exit (-1);
+    }
+
+    double sig = 1 ;
+
+    double w ;
+    std::ofstream f;
+    std::cout << "Create file: " << ofilename << std::endl;
+    f.open(ofilename.c_str());
+    if (f.fail()) {
       usage(argv[0], NULL, ofilename);
       std::cerr << std::endl
                 << "ERROR:" << std::endl;
-      std::cerr << "  Cannot create " << ofilename << std::endl;
+      std::cerr << "  Cannot create the file: " << ofilename << std::endl;
       std::cerr << "  Check your -o " << ofilename << " option " << std::endl;
       exit(-1);
+
     }
-  }
-
-  // Append to the output filename string, the name of the file
-  ofilename = ofilename + "/w.dat";
-
-  // Read the command line options
-  if (getOptions(argc, argv, ofilename) == false) {
-    exit (-1);
-  }
-
-  double sig = 1 ;
-
-  double w ;
-  std::ofstream f;
-  std::cout << "Create file: " << ofilename << std::endl;
-  f.open(ofilename.c_str());
-  if (f == NULL) {
-    usage(argv[0], NULL, ofilename);
-    std::cerr << std::endl
-              << "ERROR:" << std::endl;
-    std::cerr << "  Cannot create the file: " << ofilename << std::endl;
-    std::cerr << "  Check your -o " << ofilename << " option " << std::endl;
-    exit(-1);
-
-  }
-  double x = -10 ;
-  while (x<10)
-  {
-    if (fabs(x/sig)<=(4.6851))
+    double x = -10 ;
+    while (x<10)
     {
-      w = vpMath::sqr(1-vpMath::sqr(x/(sig*4.6851)));
+      if (fabs(x/sig)<=(4.6851))
+      {
+        w = vpMath::sqr(1-vpMath::sqr(x/(sig*4.6851)));
+      }
+      else
+      {
+        w = 0;
+      }
+      f << x <<"  "<<w <<std::endl ;
+      x+= 0.01 ;
     }
-    else
-    {
-      w = 0;
-    }
-    f << x <<"  "<<w <<std::endl ;
-    x+= 0.01 ;
+    return 0;
+  }
+  catch(vpException e) {
+    std::cout << "Catch an exception: " << e << std::endl;
+    return 1;
   }
 }
 

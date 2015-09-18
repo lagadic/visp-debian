@@ -1,9 +1,9 @@
 #############################################################################
 #
-# $Id: FindXML2.cmake 4069 2013-01-21 14:28:56Z fspindle $
+# $Id: FindXML2.cmake 5316 2015-02-12 10:58:18Z fspindle $
 #
 # This file is part of the ViSP software.
-# Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+# Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
 # 
 # This software is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -44,37 +44,47 @@
 #############################################################################
 
 
-IF(WIN32)
-  FIND_PACKAGE(ICONV)
-  IF(ICONV_FOUND)
-    FIND_PATH(XML2_INCLUDE_DIR libxml/xmlmemory.h
-      $ENV{XML2_DIR}/include
-      $ENV{XML2_DIR}/include/libxml2
-      $ENV{XML2_HOME}/include
-      $ENV{XML2_HOME}/include/libxml2
-      )
-    FIND_LIBRARY(XML2_LIBRARY libxml2
-      $ENV{XML2_DIR}/lib
-      $ENV{XML2_HOME}/lib
+if(WIN32)
+  find_package(ICONV)
+  if(MINGW)
+    find_path(XML2_INCLUDE_DIR libxml/xmlmemory.h
+      "$ENV{MINGW_DIR}/include/libxml2"
+      C:/mingw/include/libxml2
+    )
+    find_library(XML2_LIBRARY libxml2
+      "$ENV{MINGW_DIR}/lib"
+      "$ENV{MINGW_DIR}/lib64"
+      C:/mingw/lib64
+    )
+  else()
+    find_path(XML2_INCLUDE_DIR libxml/xmlmemory.h
+      "$ENV{XML2_DIR}/include"
+      "$ENV{XML2_DIR}/include/libxml2"
+      "$ENV{XML2_HOME}/include"
+      "$ENV{XML2_HOME}/include/libxml2"
+    )
+    find_library(XML2_LIBRARY libxml2
+      "$ENV{XML2_DIR}/lib"
+      "$ENV{XML2_HOME}/lib"
       /usr/lib
       /usr/local/lib
       "c:/libxml2/lib"
-      )
-  ENDIF(ICONV_FOUND)  
-ELSE(WIN32) 
-  FIND_PATH(XML2_INCLUDE_DIR libxml/xmlmemory.h
-    $ENV{XML2_DIR}/include/libxml2
-    $ENV{XML2_HOME}/include/libxml2
+    )
+  endif()
+else(WIN32) 
+  find_path(XML2_INCLUDE_DIR libxml/xmlmemory.h
+    "$ENV{XML2_DIR}/include/libxml2"
+    "$ENV{XML2_HOME}/include/libxml2"
     /usr/include/libxml2
     /usr/local/include/libxml2
     )
-  FIND_LIBRARY(XML2_LIBRARY xml2
-    $ENV{XML2_DIR}/lib
-    $ENV{XML2_HOME}/lib
+  find_library(XML2_LIBRARY xml2
+    "$ENV{XML2_DIR}/lib"
+    "$ENV{XML2_HOME}/lib"
     /usr/lib
     /usr/local/lib
     )
-ENDIF(WIN32)
+endif(WIN32)
 #MESSAGE("DBG XML2_INCLUDE_DIR=${XML2_INCLUDE_DIR}")  
 
 
@@ -97,10 +107,10 @@ IF(XML2_LIBRARIES AND XML2_INCLUDE_DIR)
   SET(XML2_INCLUDE_DIRS ${XML2_INCLUDE_DIR})
   SET(XML2_FOUND TRUE)
 
-  IF(WIN32)
+  IF(WIN32 AND ICONV_FOUND)
     LIST(APPEND XML2_INCLUDE_DIRS ${ICONV_INCLUDE_DIRS})
     SET(XML2_LIBRARIES ${XML2_LIBRARIES} ${ICONV_LIBRARIES})
-  ENDIF(WIN32)
+  ENDIF()
 
 ELSE(XML2_LIBRARIES AND XML2_INCLUDE_DIR)
   SET(XML2_FOUND FALSE)

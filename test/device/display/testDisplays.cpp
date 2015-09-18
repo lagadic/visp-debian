@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: testDisplays.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: testDisplays.cpp 5126 2015-01-05 22:07:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -68,7 +68,11 @@
 */
 
 // List of allowed command line options
-#define GETOPTARGS	"hl:dc"
+#define GETOPTARGS	"hldc"
+
+void usage(const char *name, const char *badparam);
+bool getOptions(int argc, const char **argv, bool &list, bool &click_allowed, bool &display);
+void draw(vpImage<vpRGBa> &I);
 
 /*!
 
@@ -120,13 +124,12 @@ OPTIONS:                                               Default\n\
   \return false if the program has to be stopped, true otherwise.
 
 */
-bool getOptions(int argc, const char **argv, bool &list,
-                bool &click_allowed, bool &display )
+bool getOptions(int argc, const char **argv, bool &list, bool &click_allowed, bool &display)
 {
-  const char *optarg;
+  const char *optarg_;
   int	c;
   std::string sDisplayType;
-  while ((c = vpParseArgv::parse(argc, argv, GETOPTARGS, &optarg)) > 1) {
+  while ((c = vpParseArgv::parse(argc, argv, GETOPTARGS, &optarg_)) > 1) {
 
     switch (c) {
     case 'l': list = true; break;
@@ -135,16 +138,15 @@ bool getOptions(int argc, const char **argv, bool &list,
     case 'd': display = false; break;
 
     default:
-      usage(argv[0], optarg); return false; break;
+      usage(argv[0], optarg_); return false; break;
     }
   }
-
 
   if ((c == 1) || (c == -1)) {
     // standalone param or error
     usage(argv[0], NULL);
     std::cerr << "ERROR: " << std::endl;
-    std::cerr << "  Bad argument " << optarg << std::endl << std::endl;
+    std::cerr << "  Bad argument " << optarg_ << std::endl << std::endl;
     return false;
   }
 
@@ -165,7 +167,7 @@ void draw(vpImage<vpRGBa> &I)
 
   iP1.set_i(20);
   iP1.set_j(60);
-  vpDisplay::displayCharString (I, iP1, "Test...", vpColor::black);
+  vpDisplay::displayText (I, iP1, "Test...", vpColor::black);
 
   iP1.set_i(80);
   iP1.set_j(220);
@@ -234,8 +236,6 @@ void draw(vpImage<vpRGBa> &I)
   iP1.set_i(380);
   iP1.set_j(400);
   vpDisplay::displayRectangle (I, iP1, 45, w, h, vpColor::green, 3);
-
-
 }
 
 int
@@ -258,23 +258,23 @@ main(int argc, const char ** argv)
       unsigned nbDevices = 0;
       std::cout << "List of video-devices available: \n";
 #if defined VISP_HAVE_GTK
-      std::cout << "  GTK (use \"-t GTK\" option to use it)\n";
+      std::cout << "  GTK\n";
       nbDevices ++;
 #endif
 #if defined VISP_HAVE_X11
-      std::cout << "  X11 (use \"-t X11\" option to use it)\n";
+      std::cout << "  X11\n";
       nbDevices ++;
 #endif
 #if defined VISP_HAVE_GDI
-      std::cout << "  GDI (use \"-t GDI\" option to use it)\n";
+      std::cout << "  GDI\n";
       nbDevices ++;
 #endif
 #if defined VISP_HAVE_D3D9
-      std::cout << "  D3D (use \"-t D3D\" option to use it)\n";
+      std::cout << "  D3D\n";
       nbDevices ++;
 #endif
 #if defined VISP_HAVE_OPENCV
-      std::cout << "  CV (use \"-t CV\" option to use it)\n";
+      std::cout << "  OpenCV\n";
       nbDevices ++;
 #endif   
       if (!nbDevices) {
@@ -310,7 +310,7 @@ main(int argc, const char ** argv)
     }
 #endif
 
-#if defined VISP_HAVE_OPENCV
+#if defined(VISP_HAVE_OPENCV)
     vpDisplayOpenCV *displayCv = NULL;
     displayCv = new vpDisplayOpenCV;
     Icv.init(480, 640, 255);
@@ -380,7 +380,7 @@ main(int argc, const char ** argv)
     delete displayGtk;
 #endif
 
-#if defined VISP_HAVE_OPENCV
+#if defined(VISP_HAVE_OPENCV)
     delete displayCv;
 #endif
 

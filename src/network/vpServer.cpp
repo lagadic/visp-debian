@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpServer.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpServer.cpp 4632 2014-02-03 17:06:40Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -45,11 +45,11 @@
 /*!
   Construct a server on the machine launching it.
 */
-vpServer::vpServer( ) : vpNetwork(), started(false)
+vpServer::vpServer( ) : adress(), port(0), started(false), max_clients(10)
 {
   int protocol = 0;
   emitter.socketFileDescriptorEmitter = socket(AF_INET, SOCK_STREAM, protocol);
-#ifdef UNIX
+#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
   if (emitter.socketFileDescriptorEmitter < 0)
 #else
   if (emitter.socketFileDescriptorEmitter == INVALID_SOCKET)
@@ -57,12 +57,12 @@ vpServer::vpServer( ) : vpNetwork(), started(false)
   {
     vpERROR_TRACE( "vpServer::vpServer(), cannot open socket." );
   }
-  emitter.emitterAdress.sin_family = AF_INET;
-  emitter.emitterAdress.sin_addr.s_addr = INADDR_ANY;
-  emitter.emitterAdress.sin_port = 0; 
+  emitter.emitterAddress.sin_family = AF_INET;
+  emitter.emitterAddress.sin_addr.s_addr = INADDR_ANY;
+  emitter.emitterAddress.sin_port = 0;
   
-  adress = inet_ntoa(emitter.emitterAdress.sin_addr);
-  port = emitter.emitterAdress.sin_port;
+  adress = inet_ntoa(emitter.emitterAddress.sin_addr);
+  port = emitter.emitterAddress.sin_port;
 }
 
 /*!
@@ -70,11 +70,11 @@ vpServer::vpServer( ) : vpNetwork(), started(false)
   
   \param port_serv : server's port.
 */
-vpServer::vpServer( const int &port_serv ) : vpNetwork(), started(false)
+vpServer::vpServer( const int &port_serv ) : adress(), port(0), started(false), max_clients(10)
 {
   int protocol = 0;
   emitter.socketFileDescriptorEmitter = socket(AF_INET, SOCK_STREAM, protocol);
-#ifdef UNIX
+#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
   if (emitter.socketFileDescriptorEmitter < 0)
 #else
   if (emitter.socketFileDescriptorEmitter == INVALID_SOCKET)
@@ -82,11 +82,11 @@ vpServer::vpServer( const int &port_serv ) : vpNetwork(), started(false)
   {
     vpERROR_TRACE( "vpServer::vpServer(const int &port_serv), cannot open socket." );
   }
-  emitter.emitterAdress.sin_family = AF_INET;
-  emitter.emitterAdress.sin_addr.s_addr = INADDR_ANY; //inet_addr("127.0.0.1");;
-  emitter.emitterAdress.sin_port = htons( (unsigned short)port_serv ); 
+  emitter.emitterAddress.sin_family = AF_INET;
+  emitter.emitterAddress.sin_addr.s_addr = INADDR_ANY; //inet_addr("127.0.0.1");;
+  emitter.emitterAddress.sin_port = htons( (unsigned short)port_serv );
   
-  adress = inet_ntoa(emitter.emitterAdress.sin_addr);
+  adress = inet_ntoa(emitter.emitterAddress.sin_addr);
   port = port_serv;
 }
 
@@ -96,11 +96,12 @@ vpServer::vpServer( const int &port_serv ) : vpNetwork(), started(false)
   \param adress_serv : server's adress.
   \param port_serv : server's port.
 */
-vpServer::vpServer( const std::string &adress_serv,const int &port_serv ) : vpNetwork(), started(false)
+vpServer::vpServer( const std::string &adress_serv,const int &port_serv )
+  : adress(), port(0), started(false), max_clients(10)
 {
   int protocol = 0;
   emitter.socketFileDescriptorEmitter = socket(AF_INET, SOCK_STREAM, protocol);
-#ifdef UNIX
+#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
   if (emitter.socketFileDescriptorEmitter < 0)
 #else
   if (emitter.socketFileDescriptorEmitter == INVALID_SOCKET)
@@ -108,9 +109,9 @@ vpServer::vpServer( const std::string &adress_serv,const int &port_serv ) : vpNe
   {
     vpERROR_TRACE( "vpServer::vpServer(const std::string &adress_serv,const int &port_serv), cannot open socket." );
   }
-  emitter.emitterAdress.sin_family = AF_INET;
-  emitter.emitterAdress.sin_addr.s_addr = inet_addr(adress_serv.c_str());
-  emitter.emitterAdress.sin_port = htons( (unsigned short)port_serv );
+  emitter.emitterAddress.sin_family = AF_INET;
+  emitter.emitterAddress.sin_addr.s_addr = inet_addr(adress_serv.c_str());
+  emitter.emitterAddress.sin_port = htons( (unsigned short)port_serv );
   
   adress = adress_serv;
   port = port_serv;
@@ -121,14 +122,14 @@ vpServer::vpServer( const std::string &adress_serv,const int &port_serv ) : vpNe
 */
 vpServer::~vpServer()
 {
-#ifdef UNIX
+#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
   close( emitter.socketFileDescriptorEmitter );
 #else //Win32
   closesocket( (unsigned)emitter.socketFileDescriptorEmitter );
 #endif
 
   for(unsigned int i = 0 ; i < receptor_list.size() ; i++)
-#ifdef UNIX
+#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
     close( receptor_list[i].socketFileDescriptorReceptor );
 #else //Win32
     closesocket( (unsigned)receptor_list[i].socketFileDescriptorReceptor );
@@ -143,11 +144,11 @@ vpServer::~vpServer()
 */
 bool vpServer::start()
 {  
-  int serverStructLength = sizeof(emitter.emitterAdress);
-#ifdef UNIX
-  int bindResult = bind( emitter.socketFileDescriptorEmitter, (struct sockaddr *) &emitter.emitterAdress, (unsigned)serverStructLength );
+  int serverStructLength = sizeof(emitter.emitterAddress);
+#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
+  int bindResult = bind( emitter.socketFileDescriptorEmitter, (struct sockaddr *) &emitter.emitterAddress, (unsigned)serverStructLength );
 #else //Win32
-  int bindResult = bind( (unsigned)emitter.socketFileDescriptorEmitter, (struct sockaddr *) &emitter.emitterAdress, serverStructLength );
+  int bindResult = bind( (unsigned)emitter.socketFileDescriptorEmitter, (struct sockaddr *) &emitter.emitterAddress, serverStructLength );
 #endif
   
   
@@ -176,7 +177,7 @@ bool vpServer::start()
   }
 #endif // SO_NOSIGPIPE
 
-#ifdef UNIX
+#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
   listen( emitter.socketFileDescriptorEmitter, (int)max_clients );
 #else //Win32
   listen( (unsigned)emitter.socketFileDescriptorEmitter, (int)max_clients );
@@ -230,13 +231,13 @@ bool vpServer::checkForConnections()
     if(FD_ISSET((unsigned int)emitter.socketFileDescriptorEmitter,&readFileDescriptor)){
       vpNetwork::vpReceptor client;
       client.receptorAddressSize = sizeof(client.receptorAddress);
-#ifdef UNIX
+#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
       client.socketFileDescriptorReceptor = accept(emitter.socketFileDescriptorEmitter,(struct sockaddr*) &client.receptorAddress, &client.receptorAddressSize);
 #else //Win32
       client.socketFileDescriptorReceptor = accept((unsigned int)emitter.socketFileDescriptorEmitter,(struct sockaddr*) &client.receptorAddress, &client.receptorAddressSize);
 #endif
       
-#ifdef UNIX
+#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
       if((client.socketFileDescriptorReceptor) == -1)
 #else
       if((client.socketFileDescriptorReceptor) == INVALID_SOCKET)
@@ -253,7 +254,7 @@ bool vpServer::checkForConnections()
       for(unsigned int i=0; i<receptor_list.size(); i++){
         if(FD_ISSET((unsigned int)receptor_list[i].socketFileDescriptorReceptor,&readFileDescriptor)){
           char deco;
-#ifdef UNIX
+#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
           int numbytes = recv(receptor_list[i].socketFileDescriptorReceptor, &deco, 1, MSG_PEEK);
 #else //Win32
           int numbytes = recv((unsigned int)receptor_list[i].socketFileDescriptorReceptor, &deco, 1, MSG_PEEK);

@@ -1,9 +1,9 @@
 #############################################################################
 #
-# $Id: CMakeLists.txt 4056 2013-01-05 13:04:42Z fspindle $
+# $Id: CMakeLists.txt 4961 2014-11-14 13:06:26Z fspindle $
 #
 # This file is part of the ViSP software.
-# Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+# Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
 #
 # This software is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -38,20 +38,26 @@
 #
 #############################################################################
 
-# All source and headers in local directory are added to the project before
-# the exacutable is formed.
-
-FILE(GLOB SOURCE "*.cpp")
-FILE(GLOB HEADERS "*.h")
-
-LIST(APPEND FILES ${SOURCE})
-LIST(APPEND FILES ${HEADERS})
-
-
-
-ADD_EXECUTABLE(servoMomentsPoints ${FILES})
-TARGET_LINK_LIBRARIES(servoMomentsPoints ${VISP_INTERN_LIBRARY} ${VISP_EXTERN_LIBRARIES})
-
-SET_DIRECTORY_PROPERTIES(PROPERTIES
-  ADDITIONAL_MAKE_CLEAN_FILES "core*;*~;gmon.out;DartTestfile.txt"
+# SOURCE variable corresponds to the list of all the sources to build binaries.
+# The generate binary comes by removing the .cpp extension to
+# the source name.
+#
+# If you want to add/remove a source, modify here
+set(SOURCE
+  servoMomentPoints.cpp
 )
+
+# rule for binary build
+foreach(source ${SOURCE})
+  # Compute the name of the binary to create
+  get_filename_component(binary ${source} NAME_WE)
+
+  # From source compile the binary and add link rules
+  add_executable(${binary} ${source})
+  target_link_libraries(${binary} ${VISP_INTERN_LIBRARY} ${VISP_EXTERN_LIBRARIES})
+
+  add_dependencies(visp_examples ${binary})
+  if(ENABLE_SOLUTION_FOLDERS)
+    set_target_properties(${binary} PROPERTIES FOLDER "examples")
+  endif()
+endforeach()

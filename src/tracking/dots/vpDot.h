@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpDot.h 4317 2013-07-17 09:40:17Z fspindle $
+ * $Id: vpDot.h 4943 2014-11-03 13:51:09Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -48,20 +48,21 @@
 #ifndef vpDot_hh
 #define vpDot_hh
 
+#include <visp/vpConfig.h>
 #include <visp/vpImage.h>
 #include <visp/vpDisplay.h>
 #include <visp/vpTracker.h>
 #include <visp/vpRect.h>
 #include <visp/vpImagePoint.h>
 
-#ifdef VISP_BUILD_DEPRECATED_FUNCTIONS
-#  include <visp/vpList.h>
-#endif
-
 #include <math.h>
 #include <fstream>
 #include <list>
 #include <vector>
+
+#ifdef VISP_USE_MSVC
+#  pragma comment(linker, "/STACK:256000000") // Increase max recursion depth
+#endif
 
 /*!
   \class vpDot
@@ -200,7 +201,7 @@ public :
   virtual ~vpDot() ;
 
   void display(const vpImage<unsigned char>& I, vpColor color = vpColor::red,
-               unsigned int thickness=1);
+               unsigned int thickness=1) const;
 
   /*!
 
@@ -209,7 +210,7 @@ public :
     \sa getWidth(), getHeight()
 
   */
-  inline vpRect getBBox() {
+  inline vpRect getBBox() const {
     vpRect bbox;
 
     bbox.setRect(this->u_min,
@@ -233,7 +234,7 @@ public :
 
       \warning Doesn't return the image points inside the dot anymore. To get those points see getConnexities().
   */
-  inline std::list<vpImagePoint> getEdges() {
+  inline std::list<vpImagePoint> getEdges() const {
     return this->ip_edges_list;
   };
 
@@ -245,11 +246,11 @@ public :
     This list is updated after a call to track().
 
   */
-  inline std::list<vpImagePoint> getConnexities() {
+  inline std::list<vpImagePoint> getConnexities() const {
     return this->ip_connexities_list;
   };
 
-  inline double getGamma() {return this->gamma;};
+  inline double getGamma() const {return this->gamma;};
   /*!
 
     Return the precision of the gray level of the dot. It is a double
@@ -258,13 +259,13 @@ public :
 
   */
   double getGrayLevelPrecision() const {return grayLevelPrecision;}
-  double getMaxDotSize(){
+  double getMaxDotSize() const {
     return this->maxDotSizePercentage;
   }
   /*!
     Return the mean gray level value of the dot.
   */
-  double getMeanGrayLevel() {
+  double getMeanGrayLevel() const {
     return (this->mean_gray_level);
   };
 
@@ -298,22 +299,15 @@ public :
   vpDot& operator =(const vpDot& d) ;
   bool operator ==(const vpDot& d);
   bool operator !=(const vpDot& d);
-  /*!
-    Writes the dot center of gravity coordinates in the frame (i,j) (For more details
-    about the orientation of the frame see the vpImagePoint documentation) to the stream \e os,
-    and returns a reference to the stream.
-  */
-  friend VISP_EXPORT std::ostream& operator<< (std::ostream& os, vpDot& d) {
-    return (os << "(" << d.getCog() << ")" ) ;
-  } ;
+  friend VISP_EXPORT std::ostream& operator<< (std::ostream& os, vpDot& d);
 
   void print(std::ostream& os) { os << *this << std::endl ; }
 
   /*!
-    Initialize the dot coordinates with \e cog.
+    Initialize the dot coordinates with \e ip.
   */
-  inline void setCog(const vpImagePoint &cog) {
-    this->cog = cog;
+  inline void setCog(const vpImagePoint &ip) {
+    this->cog = ip;
   }
 
   /*!
@@ -335,13 +329,13 @@ public :
   /*!
     Set the type of connexity: 4 or 8.
   */
-  void setConnexity(vpConnexityType connexityType) {this->connexityType = connexityType; };
+  void setConnexity(vpConnexityType type) {this->connexityType = type; };
   void setMaxDotSize(double percentage) ;
-  void setGrayLevelMin( const unsigned int &gray_level_min ) {
-    this->gray_level_min = gray_level_min;
+  void setGrayLevelMin( const unsigned int &level_min ) {
+    this->gray_level_min = level_min;
   };
-  void setGrayLevelMax( const unsigned int &gray_level_max ) {
-    this->gray_level_max = gray_level_max;
+  void setGrayLevelMax( const unsigned int &level_max ) {
+    this->gray_level_max = level_max;
   };
   void setGrayLevelPrecision( const double & grayLevelPrecision );
 
@@ -364,7 +358,7 @@ public :
 
     \sa setGraphics()
     */
-  void setGraphicsThickness(unsigned int thickness) {this->thickness = thickness;};
+  void setGraphicsThickness(unsigned int t) {this->thickness = t;};
 
   void track(const vpImage<unsigned char> & I) ;
   void track(const vpImage<unsigned char> & I, vpImagePoint &ip) ;
@@ -423,45 +417,6 @@ public:
   static void display(const vpImage<vpRGBa>& I,const vpImagePoint &cog,
                       const std::list<vpImagePoint> &edges_list, vpColor color = vpColor::red,
                       unsigned int thickness=1);
-
-#ifdef VISP_BUILD_DEPRECATED_FUNCTIONS
-  /*!
-    @name Deprecated functions
-  */
-  /*!
-
-    \deprecated This method is deprecated since the naming is not representative regarding to its functionality. \n
-    Previously it returned all the points inside the dot. To get the equivalent, use getConnexities(). \n \n
-    If you rather want to get the points on the dot border use getEdges(). 
-
-    \param edges_list : The list of all the images points on the dot
-    border. This list is update after a call to track().
-
-  */
-  vp_deprecated void getEdges(std::list<vpImagePoint> &edges_list) {
-    edges_list = this->ip_edges_list;
-  };
-  
-  /*!
-
-    \deprecated This method is deprecated. You should use
-    getEdges(std::list<vpImagePoint> &) instead.\n \n
-    Return the list of all the image points on the dot
-    border.
-
-    \param connexities_list : The list of all the images points on the dot
-    border. This list is update after a call to track().
-
-  */
-  vp_deprecated void getConnexities(vpList<vpImagePoint> &connexities_list) {
-    // convert a vpList in a std::list
-    connexities_list.kill();
-    std::list<vpImagePoint>::const_iterator it;
-    for (it = ip_connexities_list.begin(); it != ip_connexities_list.end(); ++it) {
-      connexities_list += *it;
-    }
-  };
-#endif
 } ;
 
 #endif

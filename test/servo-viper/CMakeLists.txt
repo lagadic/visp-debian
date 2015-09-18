@@ -1,9 +1,9 @@
 #############################################################################
 #
-# $Id: CMakeLists.txt 4056 2013-01-05 13:04:42Z fspindle $
+# $Id: CMakeLists.txt 4961 2014-11-14 13:06:26Z fspindle $
 #
 # This file is part of the ViSP software.
-# Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+# Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
 # 
 # This software is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -50,25 +50,24 @@ SET (SOURCE
 )
 
 # rule for binary build
-FOREACH(source ${SOURCE})
+foreach(source ${SOURCE})
   # Compute the name of the binary to create
-  GET_FILENAME_COMPONENT(binary ${source} NAME_WE)
+  get_filename_component(binary ${source} NAME_WE)
 
   # From source compile the binary and add link rules
-  ADD_EXECUTABLE(${binary} ${source})
-  TARGET_LINK_LIBRARIES(${binary} ${VISP_INTERN_LIBRARY} ${VISP_EXTERN_LIBRARIES})
+  add_executable(${binary} ${source})
+  target_link_libraries(${binary} ${VISP_INTERN_LIBRARY} ${VISP_EXTERN_LIBRARIES})
 
-ENDFOREACH(source)
+  add_dependencies(visp_tests ${binary})
+  if(ENABLE_SOLUTION_FOLDERS)
+    set_target_properties(${binary} PROPERTIES FOLDER "tests")
+  endif()
+endforeach()
 
 # Add test 
-ADD_TEST(testViper850      testViper850) 
-ADD_TEST(testRobotViper850 testRobotViper850) 
+add_test(testViper850      testViper850)
+add_test(testRobotViper850 testRobotViper850)
 
 # testRobotViper850Pose cannot be run automaticlly, since human interaction is
 # required to click on the dots for the pose computation
-#ADD_TEST(testRobotViper850Pose testRobotViper850Pose.cpp) 
-
-# customize clean target 
-SET_DIRECTORY_PROPERTIES(PROPERTIES 
-  ADDITIONAL_MAKE_CLEAN_FILES "core*;*~;gmon.out;DartTestfile.txt"
-)
+#add_test(testRobotViper850Pose testRobotViper850Pose.cpp)

@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpHistogramValey.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpHistogramValey.cpp 4620 2014-01-27 21:28:32Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -83,7 +83,7 @@ vpHistogramValey::operator==(const vpHistogramValey &v) const
 /*!
   \brief std::cout a valey
 */
-std::ostream &operator <<(std::ostream &s,const vpHistogramValey &v)
+VISP_EXPORT std::ostream &operator <<(std::ostream &s,const vpHistogramValey &v)
 {
   
   s << (int)v.getLevel() << " " << v.getValue();

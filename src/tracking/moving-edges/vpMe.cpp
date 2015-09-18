@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpMe.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpMe.cpp 5060 2014-12-12 18:31:03Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -100,9 +100,9 @@ static point
 point_intersection(droite D1, droite D2)
 {
  point  I;
- double det;  // déterminant des 2 vect.normaux
+ double det;  // determinant des 2 vect.normaux
 
- det = (D1.a*D2.b - D2.a*D1.b); // interdit D1,D2 parallèles
+ det = (D1.a*D2.b - D2.a*D1.b); // interdit D1,D2 paralleles
  I.x = (D2.c*D1.b - D1.c*D2.b)/det;
  I.y = (D1.c*D2.a - D2.c*D1.a)/det;
 
@@ -114,7 +114,7 @@ recale(point & P,
 			 double Xmin, double Ymin, double Xmax, double Ymax)
 {
   if(vpMath::equal(P.x,Xmin))
-		P.x=Xmin; // à peu près => exactement !
+    P.x=Xmin; // a peu pres => exactement !
   if(vpMath::equal(P.x,Xmax))
 		P.x=Xmax;
 
@@ -143,7 +143,7 @@ permute(point &A,  point &B)
 static bool
 clipping  (point  A, point B,
  					 double Xmin, double Ymin, double Xmax, double Ymax,
-					 point  & Ac , point & Bc )// résultat: A,B clippés
+           point  & Ac , point & Bc )// resultat: A,B clippes
 {
  droite AB, D[4];
  D[0].a = 1;     D[0].b = 0;     D[0].c = -Xmin;
@@ -180,10 +180,10 @@ clipping  (point  A, point B,
 
    // 2 CAS OU L'ON PEUT CONCLURE => sortie
    // =====================================
-   if((code_P[0] | code_P[1])==0000)  // Aucun bit à 1
+   if((code_P[0] | code_P[1])==0000)  // Aucun bit a 1
 		/* NE TRIE PLUS LE RESULTAT ! S_relative() en tient compte
         { if(P[0].x < P[1].x) // Rend le couple de points
-                { Ac=P[0];  Bc=P[1]; }  //  clippés (ordonnés selon
+                { Ac=P[0];  Bc=P[1]; }  //  clippes (ordonnes selon
           else  { Ac=P[1];  Bc=P[0]; }  //  leur abscisse x)
 		*/
     {
@@ -191,16 +191,16 @@ clipping  (point  A, point B,
       if(vpMath::equal(Ac.x,Bc.x) && vpMath::equal(Ac.y,Bc.y))
       	return(false);    // AB = 1 point = invisible
       else
-				return(true);    // Partie de AB clippée visible!
+        return(true);    // Partie de AB clippee visible!
     }
 
    if((code_P[0] & code_P[1])!=0000)  // au moins 1 bit commun
    {
-		 return(false);  // AB complètement invisible!
+     return(false);  // AB completement invisible!
    }
 
 
-   // CAS GENERAL (on sait que code_P[0 ou 1] a au moins un bit à 1
+   // CAS GENERAL (on sait que code_P[0 ou 1] a au moins un bit a 1
    //   - clippe le point P[n] qui sort de la fenêtre (coupe Droite i)
    //   - reboucle avec le nouveau couple de points
    // ================================================================
@@ -215,7 +215,7 @@ clipping  (point  A, point B,
       for(i=0,bit_i=1;  !(code_P[1] & bit_i);  i++,bit_i<<=1){;}
    }
 
-   P[n] = point_intersection(AB,D[i]); // clippe le point concerné
+   P[n] = point_intersection(AB,D[i]); // clippe le point concerne
 
 
    // RECALE EXACTEMENT LE POINT (calcul flottant => arrondi)
@@ -228,9 +228,9 @@ clipping  (point  A, point B,
 }
 
 
-// calcule la surface relative des 2 portions définies
-// par le segment PQ sur le carré Xmin,Ymin,Xmax,Ymax
-// Rem : P,Q triés sur x, et donc seulement 6 cas
+// calcule la surface relative des 2 portions definies
+// par le segment PQ sur le carre Xmin,Ymin,Xmax,Ymax
+// Rem : P,Q tries sur x, et donc seulement 6 cas
 static double
 S_relative(point P, point Q,
 	   double Xmin, double Ymin, double Xmax, double Ymax)
@@ -288,11 +288,11 @@ S_relative(point P, point Q,
 
 
 static void
-calcul_masques(vpColVector &angle, // définitions des angles theta
+calcul_masques(vpColVector &angle, // definitions des angles theta
 	       unsigned int n,             // taille masques (PAIRE ou IMPAIRE Ok)
-	       vpMatrix *M)        // résultat M[theta](n,n)
+         vpMatrix *M)        // resultat M[theta](n,n)
 {
-  // Le coef |a| = |1/2n| n'est pas incorporé dans M(i,j) (=> que des int)
+  // Le coef |a| = |1/2n| n'est pas incorpore dans M(i,j) (=> que des int)
 
   unsigned int i_theta,  // indice (boucle sur les masques)
        i,j;      // indices de boucle sur M(i,j)
@@ -338,7 +338,7 @@ calcul_masques(vpColVector &angle, // définitions des angles theta
        // produit vectoriel dir_droite*(X,Y)
        sgn = vpMath::sign(cos_theta*Y - sin_theta*X);
 
-       // Résultat = P,Q
+       // Resultat = P,Q
        if( clipping(P1,Q1, X-0.5,Y-0.5,X+0.5,Y+0.5, P,Q) )
        {
 	 // v dans [0,1]
@@ -411,34 +411,28 @@ vpMe::print( )
 }
 
 vpMe::vpMe()
+  : threshold(1500), mu1(0.5), mu2(0.5), min_samplestep(4), anglestep(1), mask_sign(0),
+    range(4), sample_step(10), ntotal_sample(0), points_to_track(500), mask_size(5),
+    n_mask(180), strip(2), mask(NULL)
+#ifdef VISP_BUILD_DEPRECATED_FUNCTIONS
+  , aberration(2), init_aberration(5.)
+#endif
 {
-  mask = NULL ;
-  threshold = 1500 ;
-  mu1 = 0.5 ;
-  mu2 = 0.5 ;
-  sample_step = 10 ;
-  range = 4 ;
-  mask_size = 5 ;
-  n_mask = 180 ;
-  mask_sign = 0 ;
-  ntotal_sample = 0; // not sure that it is used
-  points_to_track = 500; // not sure that it is used
+  //ntotal_sample = 0; // not sure that it is used
+  //points_to_track = 500; // not sure that it is used
   anglestep = (180 / n_mask) ;
-  strip = 2 ;
-  min_samplestep = 4 ;
-  
-  #ifdef VISP_BUILD_DEPRECATED_FUNCTIONS
-  aberration = 2.0 ;
-  init_aberration = 5.0 ;
-  #endif
-  
+    
   initMask() ;
 }
 
 vpMe::vpMe(const vpMe &me)
+  : threshold(1500), mu1(0.5), mu2(0.5), min_samplestep(4), anglestep(1), mask_sign(0),
+    range(4), sample_step(10), ntotal_sample(0), points_to_track(500), mask_size(5),
+    n_mask(180), strip(2), mask(NULL)
+#ifdef VISP_BUILD_DEPRECATED_FUNCTIONS
+  , aberration(2), init_aberration(5.)
+#endif
 {
-  mask = NULL ;
-  
   *this = me;
 }
 

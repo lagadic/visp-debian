@@ -3,7 +3,7 @@
  * $Id: vpImagePoint.h 2359 2009-11-24 15:09:25Z nmelchio $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -53,6 +53,12 @@
 #include <visp/vpDiskGrabber.h>
 #include <visp/vpFFMPEG.h>
 
+#if VISP_HAVE_OPENCV_VERSION >= 0x020200
+#include "opencv2/highgui/highgui.hpp"
+#elif VISP_HAVE_OPENCV_VERSION >= 0x020000
+#include "opencv/highgui.h"
+#endif
+
 /*!
   \class vpVideoReader
 
@@ -62,9 +68,9 @@
   images. As it inherits from the vpFrameGrabber Class, it can be used like an
   other frame grabber class.
   
-  The following example available in tutorial-grabber-video.cpp shows how this
+  The following example available in tutorial-video-reader.cpp shows how this
   class is really easy to use. It enables to read a video file named video.mpeg.
-  \include tutorial-grabber-video.cpp
+  \include tutorial-video-reader.cpp
 
   As shown in the next example, this class allows also to access to a specific
   frame. But be careful, for video files, the getFrame() method is not precise
@@ -101,7 +107,10 @@ int main()
   The other following example explains how to use the class to read a
   sequence of images. The images are stored in the folder "./image" and are
   named "image0000.jpeg", "image0001.jpeg", "image0002.jpeg", ... As explained
-  in setFirstFrameIndex() it is also possible to set the first and last image numbers.
+  in setFirstFrameIndex() and setLastFrameIndex() it is also possible to set the
+  first and last image numbers to read a portion of the sequence. If these two
+  functions are not used, first and last image numbers are set automatically to
+  match the first and image images of the sequence.
 
   \code
 #include <visp/vpImage.h>
@@ -116,6 +125,8 @@ int main()
 
   // Initialize the reader.
   reader.setFileName("./image/image%04d.jpeg");
+  reader.setFirstFrameIndex(10);
+  reader.setLastFrameIndex(20);
   reader.open(I);
 
   while (! reader.end() )
@@ -157,6 +168,10 @@ class VISP_EXPORT vpVideoReader : public vpFrameGrabber
 #ifdef VISP_HAVE_FFMPEG
     //!To read video files
     vpFFMPEG *ffmpeg;
+#elif VISP_HAVE_OPENCV_VERSION >= 0x020100
+    //!To read video files with OpenCV
+    cv::VideoCapture capture;
+    cv::Mat frame;
 #endif
     //!Types of available formats
     typedef enum
@@ -175,8 +190,12 @@ class VISP_EXPORT vpVideoReader : public vpFrameGrabber
       // Video format
       FORMAT_AVI,
       FORMAT_MPEG,
+      FORMAT_MPEG4,
       FORMAT_MOV,
       FORMAT_OGV,
+      FORMAT_WMV,
+      FORMAT_FLV,
+      FORMAT_MKV,
       FORMAT_UNKNOWN
     } vpVideoFormatType;
     
@@ -190,7 +209,7 @@ class VISP_EXPORT vpVideoReader : public vpFrameGrabber
     //!Indicates if the video is "open".
     bool isOpen;
     //!Count the frame number when the class is used as a grabber.
-    long frameCount;
+    long frameCount; // Index of the next image
     //!The first frame index
     long firstFrame;
     //!The last frame index
@@ -216,10 +235,10 @@ class VISP_EXPORT vpVideoReader : public vpFrameGrabber
     }
     bool getFrame(vpImage<vpRGBa> &I, long frame);
     bool getFrame(vpImage<unsigned char> &I, long frame);
-    double getFramerate() const;
+    double getFramerate();
 
     /*!
-      Get the current frame index. This index is updated at each call of the
+      Get the frame index of the next image. This index is updated at each call of the
       acquire method. It can be used to detect the end of a file (comparison
       with getLastFrameIndex()).
 
@@ -227,6 +246,12 @@ class VISP_EXPORT vpVideoReader : public vpFrameGrabber
     */
     inline long getFrameIndex() const { return frameCount;}
 
+    /*!
+      Gets the first frame index.
+
+      \return Returns the first frame index.
+    */
+    inline long getFirstFrameIndex() const {return firstFrame;}
     /*!
       Gets the last frame index.
 
@@ -250,24 +275,24 @@ class VISP_EXPORT vpVideoReader : public vpFrameGrabber
       Enables to set the first frame index if you want to use the class like a grabber (ie with the
       acquire method).
 
-      \param firstFrame : The first frame index.
+      \param first_frame : The first frame index.
 
       \sa setLastFrameIndex()
     */
-    inline void setFirstFrameIndex(const long firstFrame) {
+    inline void setFirstFrameIndex(const long first_frame) {
       this->firstFrameIndexIsSet = true;
-      this->firstFrame = firstFrame;
+      this->firstFrame = first_frame;
     }
     /*!
       Enables to set the last frame index.
 
-      \param lastFrame : The last frame index.
+      \param last_frame : The last frame index.
 
       \sa setFirstFrameIndex()
     */
-    inline void setLastFrameIndex(const long lastFrame) {
+    inline void setLastFrameIndex(const long last_frame) {
       this->lastFrameIndexIsSet = true;
-      this->lastFrame = lastFrame;
+      this->lastFrame = last_frame;
     }
 
   private:
@@ -275,6 +300,8 @@ class VISP_EXPORT vpVideoReader : public vpFrameGrabber
     static std::string getExtension(const std::string &filename);
     void findFirstFrameIndex();
     void findLastFrameIndex();
+	bool isImageExtensionSupported();
+	bool isVideoExtensionSupported();
 };
 
 #endif

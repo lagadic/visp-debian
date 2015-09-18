@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpDiskGrabber.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpDiskGrabber.cpp 4649 2014-02-07 14:57:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -47,22 +47,30 @@
   Elementary constructor.
 */
 vpDiskGrabber::vpDiskGrabber()
+  : image_number(0), image_step(1), number_of_zero(0), useGenericName(false)
 {
   setDirectory("/tmp");
   setBaseName("I");
-  setImageNumber(0);
-  setStep(1);
-  setNumberOfZero(0);
   setExtension("pgm");
 
   init = false;
-  useGenericName = false;
 }
 
 
-vpDiskGrabber::vpDiskGrabber(const char *genericName)
+vpDiskGrabber::vpDiskGrabber(const char *generic_name)
+  : image_number(0), image_step(1), number_of_zero(0), useGenericName(false)
 {
-  strcpy(this->genericName, genericName);
+  setDirectory("/tmp");
+  setBaseName("I");
+  setExtension("pgm");
+
+  init = false;
+  if (strlen( generic_name ) >= FILENAME_MAX) {
+    throw(vpException(vpException::memoryAllocationError,
+                      "Not enough memory to intialize the generic name"));
+  }
+
+  strcpy(this->genericName, generic_name);
   useGenericName = true;
 }
 
@@ -82,16 +90,13 @@ vpDiskGrabber::vpDiskGrabber(const char *dir, const char *basename,
                              long number,
                              int step, unsigned int noz,
                              const char *ext)
+  : image_number(number), image_step(step), number_of_zero(noz), useGenericName(false)
 {
   setDirectory(dir);
   setBaseName(basename);
-  setImageNumber(number);
-  setStep(step);
-  setNumberOfZero(noz);
   setExtension(ext);
 
   init = false;
-  useGenericName = false;
 }
 
 void
@@ -244,19 +249,19 @@ vpDiskGrabber::acquire(vpImage<float> &I)
   Acquire an image: read a pgm image from the disk.
   After this call, the image number is incremented considering the step.
 
-  \param I the read image
-  \param image_number The index of the desired image.
+  \param I : The image read from a file.
+  \param img_number : The number of the desired image.
  */
 void
-vpDiskGrabber::acquire(vpImage<unsigned char> &I, long image_number)
+vpDiskGrabber::acquire(vpImage<unsigned char> &I, long img_number)
 {
 
   char name[FILENAME_MAX] ;
 
   if(useGenericName)
-    sprintf(name,genericName,image_number) ;
+    sprintf(name,genericName,img_number) ;
   else
-    sprintf(name,"%s/%s%0*ld.%s",directory,base_name,number_of_zero,image_number,extension) ;
+    sprintf(name,"%s/%s%0*ld.%s",directory,base_name,number_of_zero,img_number,extension) ;
 
   vpDEBUG_TRACE(2, "load: %s\n", name);
 
@@ -270,19 +275,19 @@ vpDiskGrabber::acquire(vpImage<unsigned char> &I, long image_number)
   Acquire an image: read a ppm image from the disk.
   After this call, the image number is incremented considering the step.
 
-  \param I the read image
-  \param image_number The index of the desired image.
+  \param I : The image read from a file.
+  \param img_number : The number of the desired image.
  */
 void
-vpDiskGrabber::acquire(vpImage<vpRGBa> &I, long image_number)
+vpDiskGrabber::acquire(vpImage<vpRGBa> &I, long img_number)
 {
 
   char name[FILENAME_MAX] ;
 
   if(useGenericName)
-    sprintf(name,genericName,image_number) ;
+    sprintf(name,genericName,img_number) ;
   else
-    sprintf(name,"%s/%s%0*ld.%s",directory,base_name,number_of_zero,image_number,extension) ;
+    sprintf(name,"%s/%s%0*ld.%s",directory,base_name,number_of_zero,img_number,extension) ;
 
   vpDEBUG_TRACE(2, "load: %s\n", name);
 
@@ -298,19 +303,19 @@ vpDiskGrabber::acquire(vpImage<vpRGBa> &I, long image_number)
   Acquire an image: read a pfm image from the disk.
   After this call, the image number is incremented considering the step.
 
-  \param I the read image
-  \param image_number The index of the desired image.
+  \param I : The image read from a file.
+  \param img_number : The number of the desired image.
  */
 void
-vpDiskGrabber::acquire(vpImage<float> &I, long image_number)
+vpDiskGrabber::acquire(vpImage<float> &I, long img_number)
 {
 
   char name[FILENAME_MAX] ;
 
   if(useGenericName)
-    sprintf(name,genericName,image_number) ;
+    sprintf(name,genericName,img_number) ;
   else
-    sprintf(name,"%s/%s%0*ld.%s",directory,base_name,number_of_zero,image_number,extension) ;
+    sprintf(name,"%s/%s%0*ld.%s",directory,base_name,number_of_zero,img_number,extension) ;
 
   vpDEBUG_TRACE(2, "load: %s\n", name);
 
@@ -399,8 +404,13 @@ vpDiskGrabber::setNumberOfZero(unsigned int noz)
 }
 
 void
-vpDiskGrabber::setGenericName(const char *genericName)
+vpDiskGrabber::setGenericName(const char *generic_name)
 {
-  strcpy(this->genericName, genericName) ;
+  if (strlen( generic_name ) >= FILENAME_MAX) {
+    throw(vpException(vpException::memoryAllocationError,
+                      "Not enough memory to intialize the generic name"));
+  }
+
+  strcpy(this->genericName, generic_name) ;
   useGenericName = true;
 }

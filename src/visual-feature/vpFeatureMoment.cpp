@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpFeatureMoment.cpp 4303 2013-07-04 14:14:00Z fspindle $
+ * $Id: vpFeatureMoment.cpp 5237 2015-01-30 13:52:04Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -142,20 +142,19 @@ void vpFeatureMoment::display (const vpCameraParameters &cam, const vpImage< vpR
 
   \attention The behaviour of this method is not the same as vpMoment::update which only acknowledges the new object. This method also computes the interaction matrices.
 
-  \param A : A coefficient of the plane.
-  \param B : B coefficient of the plane.
-  \param C : C coefficient of the plane.
+  \param A_ : A coefficient of the plane.
+  \param B_ : B coefficient of the plane.
+  \param C_ : C coefficient of the plane.
 */
-void vpFeatureMoment::update (double A, double B, double C){
-    this->A = A;
-    this->B = B;
-    this->C = C;
+void vpFeatureMoment::update (double A_, double B_, double C_){
+    this->A = A_;
+    this->B = B_;
+    this->C = C_;
 
     if(moment==NULL){
         bool found;        
         this->moment = &(moments.get(momentName(),found));
-        if(!found) throw ("Moment not found for feature");
-
+        if(!found) throw vpException(vpException::notInitialized,"Moment not found for feature");
     }
     nbParameters = 1;
     if(this->moment!=NULL){
@@ -235,10 +234,15 @@ vpBasicFeature* vpFeatureMoment::duplicate () const
   
 */
 void vpFeatureMoment::linkTo(vpFeatureMomentDatabase& featureMoments){
-    std::strcpy(_name,name());
-    this->featureMomentsDataBase=&featureMoments;
+  if (strlen( name() ) >= 255) {
+    throw(vpException(vpException::memoryAllocationError,
+                      "Not enough memory to intialize the moment name"));
+  }
 
-    featureMoments.add(*this,_name);
+  std::strcpy(_name,name());
+  this->featureMomentsDataBase=&featureMoments;
+
+  featureMoments.add(*this,_name);
 }
 
 
@@ -247,5 +251,26 @@ void vpFeatureMoment::compute_interaction (){
 }
 
 vpFeatureMoment::~vpFeatureMoment (){
-  delete[] flags;
+}
+
+VISP_EXPORT std::ostream& operator<<(std::ostream & os, const vpFeatureMoment& featM) {
+    /*
+    A const_cast is forced here since interaction() defined in vpBasicFeature() is not const
+    But introducing const in vpBasicFeature() can break a lot of client code
+    */
+    vpMatrix Lcomplete((unsigned int)featM.getDimension(), 6); // 6 corresponds to 6velocities in standard interaction matrix
+    Lcomplete = const_cast<vpFeatureMoment&>(featM).interaction(vpBasicFeature::FEATURE_ALL);
+    Lcomplete.matlabPrint(os);
+    return os;
+}
+
+/*!
+Interface function to display the moments and other interaction matrices
+on which a particular vpFeatureMoment is dependent upon
+Not made pure to maintain compatibility
+Recommended : Types inheriting from vpFeatureMoment should implement this function
+*/
+void
+vpFeatureMoment::printDependencies(std::ostream& os) const{
+    os << " WARNING : Falling back to base class version of printDependencies() in vpFeatureMoment. To prevent that, this has to be implemented in the derived classes!" << std::endl;
 }

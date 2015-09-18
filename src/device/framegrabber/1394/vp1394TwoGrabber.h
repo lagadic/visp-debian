@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vp1394TwoGrabber.h 4323 2013-07-18 09:24:01Z fspindle $
+ * $Id: vp1394TwoGrabber.h 4574 2014-01-09 08:48:51Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -382,10 +382,10 @@ class VISP_EXPORT vp1394TwoGrabber : public vpFrameGrabber
   void getGuid(uint64_t &guid);
   void getHeight(unsigned int &height);
   unsigned int getHeight();
-  void getNumCameras(unsigned int &ncameras);
-  unsigned int getNumCameras();
+  void getNumCameras(unsigned int &ncameras) const;
+  unsigned int getNumCameras() const;
   unsigned int getParameterValue(vp1394TwoParametersType param);
-  unsigned int getRingBufferSize();
+  unsigned int getRingBufferSize() const;
   void getVideoMode(vp1394TwoVideoModeType & videomode);
   uint32_t getVideoModeSupported(std::list<vp1394TwoVideoModeType> & videomodes);
   void getWidth(unsigned int &width);
@@ -406,9 +406,9 @@ class VISP_EXPORT vp1394TwoGrabber : public vpFrameGrabber
 
   void resetBus();
 
-  void setAutoGain();
+  void setAutoGain(bool enable = true);
   void setAutoGain(unsigned int minvalue, unsigned int maxvalue);
-  void setAutoShutter();
+  void setAutoShutter(bool enable = true);
   void setAutoShutter(unsigned int minvalue, unsigned int maxvalue);
   void setCamera(uint64_t camera);
   void setColorCoding(vp1394TwoColorCodingType coding);

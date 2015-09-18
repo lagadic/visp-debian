@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: homographyRansac2DObject.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: homographyRansac2DObject.cpp 4658 2014-02-09 09:50:14Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -74,8 +74,8 @@
 // List of allowed command line options
 #define GETOPTARGS	"h"
 
-#define L 0.1
-#define nbpt 11
+void usage(const char *name, const char *badparam);
+bool getOptions(int argc, const char **argv);
 
 /*!
 
@@ -115,15 +115,15 @@ OPTIONS:                                               Default\n\
 */
 bool getOptions(int argc, const char **argv)
 {
-  const char *optarg;
+  const char *optarg_;
   int	c;
-  while ((c = vpParseArgv::parse(argc, argv, GETOPTARGS, &optarg)) > 1) {
+  while ((c = vpParseArgv::parse(argc, argv, GETOPTARGS, &optarg_)) > 1) {
 
     switch (c) {
     case 'h': usage(argv[0], NULL); return false; break;
 
     default:
-      usage(argv[0], optarg);
+      usage(argv[0], optarg_);
       return false; break;
     }
   }
@@ -132,7 +132,7 @@ bool getOptions(int argc, const char **argv)
     // standalone param or error
     usage(argv[0], NULL);
     std::cerr << "ERROR: " << std::endl;
-    std::cerr << "  Bad argument " << optarg << std::endl << std::endl;
+    std::cerr << "  Bad argument " << optarg_ << std::endl << std::endl;
     return false;
   }
 
@@ -143,76 +143,102 @@ bool getOptions(int argc, const char **argv)
 int
 main(int argc, const char ** argv)
 {
-  // Read the command line options
-  if (getOptions(argc, argv) == false) {
-    exit (-1);
+  try {
+    // Read the command line options
+    if (getOptions(argc, argv) == false) {
+      exit (-1);
+    }
+
+    double L=0.1;
+    unsigned int nbpt = 11;
+
+    std::vector<vpPoint> P(nbpt);  //  Point to be tracked
+    std::vector<double> xa(nbpt), ya(nbpt), xb(nbpt), yb(nbpt);
+
+	std::vector<vpPoint> aP(nbpt);  //  Point to be tracked
+	std::vector<vpPoint> bP(nbpt);  //  Point to be tracked
+
+    P[0].setWorldCoordinates(-L,-L, 0 ) ;   // inlier
+    P[1].setWorldCoordinates(2*L,-L, 0 ) ;  // inlier
+    P[2].setWorldCoordinates(L,L, 0 ) ;  // inlier
+    P[3].setWorldCoordinates(-L,3*L, 0 ) ;  // inlier
+    P[4].setWorldCoordinates(0,0, L ) ;
+    P[5].setWorldCoordinates(L,-2*L, L ) ;
+    P[6].setWorldCoordinates(L,-4*L, 2*L ) ;
+    P[7].setWorldCoordinates(-2*L,-L, -3*L ) ;
+    P[8].setWorldCoordinates(-5*L,-5*L, 0 ) ;  // inlier
+    P[9].setWorldCoordinates(-2*L,+3*L, 4*L ) ;
+    P[10].setWorldCoordinates(-2*L,-0.5*L, 0 ) ; // inlier
+
+    std::vector<bool> inliers_ground_truth(nbpt, false);
+    inliers_ground_truth[0] = true;
+    inliers_ground_truth[1] = true;
+    inliers_ground_truth[2] = true;
+    inliers_ground_truth[3] = true;
+    inliers_ground_truth[8] = true;
+    inliers_ground_truth[10] = true;
+
+    vpHomogeneousMatrix bMo(0,0,1, 0,0,0) ;
+    vpHomogeneousMatrix aMb(0.1,0.1,0.1,vpMath::rad(10),0,vpMath::rad(40)) ;
+    vpHomogeneousMatrix aMo =aMb*bMo ;
+    for(unsigned int i=0 ; i < nbpt ; i++)
+    {
+      P[i].project(aMo) ;
+      aP[i] = P[i] ;
+      xa[i] = P[i].get_x() ;
+      ya[i] = P[i].get_y() ;
+    }
+
+    for(unsigned int i=0 ; i < nbpt ; i++)
+    {
+      P[i].project(bMo) ;
+      bP[i] = P[i] ;
+      xb[i] = P[i].get_x() ;
+      yb[i] = P[i].get_y() ;
+    }
+    std::cout << "-------------------------------" <<std::endl ;
+
+    vpRotationMatrix aRb  ;
+    vpTranslationVector aTb ;
+    vpColVector n ;
+    std::cout << "Compare with built homography H = R + t/d n " << std::endl;
+    vpPlane bp(0,0,1,1) ;
+    vpHomography aHb_built(aMb,bp) ;
+    std::cout << "aHb built from the displacement: \n" << aHb_built/aHb_built[2][2] << std::endl ;
+
+    aHb_built.computeDisplacement(aRb, aTb, n) ;
+    std::cout << "Rotation aRb: " <<std::endl ;
+    std::cout << aRb << std::endl ;
+    std::cout << "Translation: aTb" <<std::endl;
+    std::cout << (aTb).t() <<std::endl ;
+    std::cout << "Normal to the plane: n" <<std::endl;
+    std::cout << (n).t() <<std::endl ;
+
+    std::cout << "-------------------------------" <<std::endl ;
+    vpHomography aHb;
+    std::vector<bool> inliers;
+    double residual;
+    // Suppose px=1000. Set the threshold to 2 pixels => 2/1000
+    // In the data we have 6 inliers. We request that at least 6 are retrieved
+    vpHomography::ransac(xb, yb, xa, ya, aHb, inliers, residual, 6, 2./1000) ;
+
+    std::cout << "aHb estimated using ransac:\n" << aHb << std::endl ;
+    std::cout << "Inliers indexes (should be 0,1,2,3,8,10): ";
+    for (unsigned int i=0; i< inliers.size(); i++)
+      if (inliers[i]) std::cout << i << ",";
+    std::cout << std::endl;
+
+    if (inliers == inliers_ground_truth) {
+      std::cout << "Ransac estimation succeed" << std::endl;
+      return 0;
+    }
+    else {
+      std::cout << "Ransac estimation fails" << std::endl;
+      return 1;
+    }
   }
-
-  int i ;
-
-  vpPoint P[nbpt]  ;  //  Point to be tracked
-  double xa[nbpt], ya[nbpt] ;
-  double xb[nbpt], yb[nbpt] ;
-
-  vpPoint aP[nbpt]  ;  //  Point to be tracked
-  vpPoint bP[nbpt]  ;  //  Point to be tracked
-
-  P[0].setWorldCoordinates(-L,-L, 0 ) ;   // inlier
-  P[1].setWorldCoordinates(2*L,-L, 0 ) ;  // inlier
-  P[2].setWorldCoordinates(L,L, 0 ) ;  // inlier
-  P[3].setWorldCoordinates(-L,3*L, 0 ) ;  // inlier
-  P[4].setWorldCoordinates(0,0, L ) ;
-  P[5].setWorldCoordinates(L,-2*L, L ) ;
-  P[6].setWorldCoordinates(L,-4*L, 2*L ) ;
-  P[7].setWorldCoordinates(-2*L,-L, -3*L ) ;
-  P[8].setWorldCoordinates(-5*L,-5*L, 0 ) ;  // inlier
-  P[9].setWorldCoordinates(-2*L,+3*L, 4*L ) ;
-  P[10].setWorldCoordinates(-2*L,-0.5*L, 0 ) ;
-  /*
-    P[5].setWorldCoordinates(10,20, 0 ) ;
-    P[6].setWorldCoordinates(-10,12, 0 ) ;
-  */
-  vpHomogeneousMatrix bMo(0,0,1, 0,0,0) ;
-  vpHomogeneousMatrix aMb(0.1,0.1,0.1,vpMath::rad(10),0,vpMath::rad(40)) ;
-  vpHomogeneousMatrix aMo =aMb*bMo ;
-  for(i=0 ; i < nbpt ; i++)
-  {
-    P[i].project(aMo) ;
-    aP[i] = P[i] ;
-    xa[i] = P[i].get_x() ;
-    ya[i] = P[i].get_y() ;
+  catch(vpException e) {
+    std::cout << "Catch an exception: " << e << std::endl;
+    return 1;
   }
-
-  for(i=0 ; i < nbpt ; i++)
-  {
-    P[i].project(bMo) ;
-    bP[i] = P[i] ;
-    xb[i] = P[i].get_x() ;
-    yb[i] = P[i].get_y() ;
-  }
-  std::cout << "-------------------------------" <<std::endl ;
-
-  vpRotationMatrix aRb  ;
-  vpTranslationVector aTb ;
-  vpColVector n ;
-  vpTRACE("Compare with built homography H = R + t/d n ") ;
-  vpPlane bp(0,0,1,1) ;
-  vpHomography aHb_built(aMb,bp) ;
-  vpTRACE( "aHb built from the displacement ") ;
-  std::cout <<  std::endl <<aHb_built/aHb_built[2][2] << std::endl ;
-
-  aHb_built.computeDisplacement(aRb, aTb, n) ;
-  std::cout << "Rotation aRb: " <<std::endl ;
-  std::cout << aRb << std::endl ;
-  std::cout << "Translation: aTb" <<std::endl;
-  std::cout << (aTb).t() <<std::endl ;
-  std::cout << "Normal to the plane: n" <<std::endl;
-  std::cout << (n).t() <<std::endl ;
-
-  std::cout << "-------------------------------" <<std::endl ;
-  vpTRACE(" ") ;
-  vpHomography aHb ;
-  vpHomography::ransac(nbpt,xb,yb,xa,ya, aHb) ;
-
-  std::cout << aHb << std::endl ; 
 }

@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpPlane.h 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpPlane.h 4702 2014-03-27 15:33:52Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -54,7 +54,7 @@
   \brief This class defines the container for a plane geometrical structure.
 
   A plane is given by the equation \f$Ax + By + Cz + D = 0\f$ where
-  (x,y,z) are the coordinates of a point and \f$[A,B,C]^T\f$ is normal
+  (x,y,z) are the coordinates of a point and where \f$[A,B,C]^T\f$ is a normal
   vector of the plane.
 
 */
@@ -75,34 +75,37 @@ class VISP_EXPORT vpPlane
 #endif
   double A,B,C,D ;
 
-
 public:
+  typedef enum {
+    object_frame,
+    camera_frame
+  } vpPlaneFrame;
   vpPlane() ;
   vpPlane(const vpPlane& P) ;
   vpPlane(const double A, const double B,const  double C,const  double D) ;
-  vpPlane(const vpPoint& P, const vpColVector &n) ;
-  vpPlane(const vpPoint &P, const vpPoint &Q, const vpPoint &R) ;
-  void init(const vpPoint& P, const vpPoint& Q, const vpPoint& R) ;
+  vpPlane(const vpPoint& P, const vpColVector &n, vpPlaneFrame frame=camera_frame) ;
+  vpPlane(const vpPoint &P, const vpPoint &Q, const vpPoint &R, vpPlaneFrame frame=camera_frame) ;
+  void init(const vpPoint& P, const vpPoint& Q, const vpPoint& R, vpPlaneFrame frame=camera_frame) ;
   void init(const vpColVector& P, const vpColVector &n) ;
   void init(const vpPlane& P) ;
 
   // SET the parameter
   /*! Set plane parameter A. */
-  inline void setA(const double A) {   this->A = A ; }
+  inline void setA(const double a) {   this->A = a ; }
   /*! Set plane parameter B. */
-  inline void setB(const double B) {   this->B = B ; }
+  inline void setB(const double b) {   this->B = b ; }
   /*! Set plane parameter C. */
-  inline void setC(const double C) {   this->C = C ; }
+  inline void setC(const double c) {   this->C = c ; }
   /*! Set plane parameter D. */
-  inline void setD(const double D) {   this->D = D ; }
+  inline void setD(const double d) {   this->D = d ; }
   /*! Set plane parameters A, B, C, D. */
-  inline void setABCD(const double A, const double B, 
-		      const double C, const double D) 
+  inline void setABCD(const double a, const double b,
+                      const double c, const double d)
   {
-    this->A = A;
-    this->B = B;
-    this->C = C;
-    this->D = D; 
+    this->A = a;
+    this->B = b;
+    this->C = c;
+    this->D = d;
   }
 
   vpPlane& operator =(const vpPlane& f) ;
@@ -155,19 +158,7 @@ public:
   vpColVector getNormal() const;
   void getNormal(vpColVector &n) const;
 
-
-  /*!
-
-    Print the plane parameters as a stream like "(A,B,C,D) " where
-    A,B,C and D correspond to the parameters of the plane.
-
-  */
-  friend VISP_EXPORT std::ostream& operator<< (std::ostream& os, vpPlane& p)
-  {
-    return (os  << "("<<p.getA() << ","<<p.getB()
-	    << ","<<p.getC()<< ","<<p.getD() <<") ") ;
-  } ;
-
+  friend VISP_EXPORT std::ostream& operator<< (std::ostream& os, vpPlane& p);
 
   // Operation with  Plane
   void projectionPointOnPlan(const vpPoint& P, vpPoint& Pproj) const ;

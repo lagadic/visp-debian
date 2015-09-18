@@ -1,9 +1,9 @@
 #############################################################################
 #
-# $Id: FindFFMPEG.cmake 4160 2013-03-12 08:34:49Z fspindle $
+# $Id: FindFFMPEG.cmake 5316 2015-02-12 10:58:18Z fspindle $
 #
 # This file is part of the ViSP software.
-# Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+# Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
 # 
 # This software is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -44,7 +44,88 @@
 #############################################################################
 
 # detection of the FFMPEG headers location
-  FIND_PATH(FFMPEG_INCLUDE_DIR_AVCODEC
+if(MINGW)
+  find_path(FFMPEG_INCLUDE_DIR_AVCODEC
+    NAMES
+      libavcodec/avcodec.h
+    PATHS
+    "$ENV{MINGW_DIR}/include"
+    C:/mingw/include
+    PATH_SUFFIXES
+      ffmpeg
+  )
+
+  find_path(FFMPEG_INCLUDE_DIR_AVFORMAT
+    NAMES
+      libavformat/avformat.h
+    PATHS
+    "$ENV{MINGW_DIR}/include"
+    C:/mingw/include
+    PATH_SUFFIXES
+      ffmpeg
+  )
+
+  find_path(FFMPEG_INCLUDE_DIR_AVUTIL
+    NAMES
+      libavutil/avutil.h
+    PATHS
+    "$ENV{MINGW_DIR}/include"
+    C:/mingw/include
+    PATH_SUFFIXES
+      ffmpeg
+  )
+
+  find_path(FFMPEG_INCLUDE_DIR_SWSCALE
+    NAMES
+      libswscale/swscale.h
+    PATHS
+    "$ENV{MINGW_DIR}/include"
+    C:/mingw/include
+    PATH_SUFFIXES
+      libswscale
+      ffmpeg
+  )
+
+  # Detection of the FFMPEG library on Unix
+  find_library(FFMPEG_AVUTIL_LIBRARY
+    NAMES
+      avutil
+    PATHS
+   "$ENV{MINGW_DIR}/lib64"
+    C:/mingw/lib64
+  )
+  find_library(FFMPEG_AVCODEC_LIBRARY
+    NAMES
+      avcodec
+    PATHS
+    "$ENV{MINGW_DIR}/lib64"
+    C:/mingw/lib64
+  )
+  find_library(FFMPEG_AVFORMAT_LIBRARY
+    NAMES
+      avformat
+    PATHS
+    "$ENV{MINGW_DIR}/lib64"
+    C:/mingw/lib64
+  )
+
+  find_library(FFMPEG_AVCORE_LIBRARY
+    NAMES
+      avcore
+    PATHS
+    "$ENV{MINGW_DIR}/lib64"
+    C:/mingw/lib64
+  )
+
+  find_library(FFMPEG_SWSCALE_LIBRARY
+    NAMES
+      swscale
+    PATHS
+    "$ENV{MINGW_DIR}/lib64"
+    C:/mingw/lib64
+  )
+else(MINGW)
+  find_path(FFMPEG_INCLUDE_DIR_AVCODEC
     NAMES
       libavcodec/avcodec.h
     PATHS
@@ -56,7 +137,7 @@
       ffmpeg
   )
 
-  FIND_PATH(FFMPEG_INCLUDE_DIR_AVFORMAT
+  find_path(FFMPEG_INCLUDE_DIR_AVFORMAT
     NAMES
       libavformat/avformat.h
     PATHS
@@ -68,7 +149,7 @@
       ffmpeg
   )
 
-  FIND_PATH(FFMPEG_INCLUDE_DIR_AVUTIL
+  find_path(FFMPEG_INCLUDE_DIR_AVUTIL
     NAMES
       libavutil/avutil.h
     PATHS
@@ -80,7 +161,7 @@
       ffmpeg
   )
 
-  FIND_PATH(FFMPEG_INCLUDE_DIR_SWSCALE
+  find_path(FFMPEG_INCLUDE_DIR_SWSCALE
     NAMES
       libswscale/swscale.h
     PATHS
@@ -94,7 +175,7 @@
   )
 
   # Detection of the FFMPEG library on Unix
-  FIND_LIBRARY(FFMPEG_AVUTIL_LIBRARY
+  find_library(FFMPEG_AVUTIL_LIBRARY
     NAMES
       avutil
     PATHS
@@ -105,7 +186,7 @@
     $ENV{FFMPEG_DIR}/Release
     $ENV{FFMPEG_DIR}
   )
-  FIND_LIBRARY(FFMPEG_AVCODEC_LIBRARY
+  find_library(FFMPEG_AVCODEC_LIBRARY
     NAMES
       avcodec
     PATHS
@@ -116,7 +197,7 @@
     $ENV{FFMPEG_DIR}/Release
     $ENV{FFMPEG_DIR}
   )
-  FIND_LIBRARY(FFMPEG_AVFORMAT_LIBRARY
+  find_library(FFMPEG_AVFORMAT_LIBRARY
     NAMES
       avformat
     PATHS
@@ -128,7 +209,7 @@
     $ENV{FFMPEG_DIR}
   )
 
-  FIND_LIBRARY(FFMPEG_AVCORE_LIBRARY
+  find_library(FFMPEG_AVCORE_LIBRARY
     NAMES
       avcore
     PATHS
@@ -140,7 +221,7 @@
     $ENV{FFMPEG_DIR}
   )
 
-  FIND_LIBRARY(FFMPEG_SWSCALE_LIBRARY
+  find_library(FFMPEG_SWSCALE_LIBRARY
     NAMES
       swscale
     PATHS
@@ -151,6 +232,7 @@
     $ENV{FFMPEG_DIR}/Release
     $ENV{FFMPEG_DIR}
   )
+endif(MINGW)
 
   # FFMpeg depend son Zlib
   FIND_PACKAGE(ZLIB)
@@ -192,6 +274,29 @@ IF(FFMPEG_INCLUDE_DIR_AVCODEC AND FFMPEG_INCLUDE_DIR_AVFORMAT AND FFMPEG_INCLUDE
     LIST(APPEND FFMPEG_LIBRARIES ${FFMPEG_AVCORE_LIBRARY})
   endif()
   list(APPEND FFMPEG_LIBRARIES ${ZLIB_LIBRARIES} ${BZIP2_LIBRARIES})
+  if(ICONV_FOUND)
+    list(APPEND FFMPEG_LIBRARIES ${ICONV_LIBRARIES})
+  endif()
+
+elseif(MINGW AND FFMPEG_INCLUDE_DIR_AVCODEC AND FFMPEG_INCLUDE_DIR_AVFORMAT AND FFMPEG_INCLUDE_DIR_AVUTIL AND FFMPEG_INCLUDE_DIR_SWSCALE AND FFMPEG_SWSCALE_LIBRARY AND FFMPEG_AVFORMAT_LIBRARY AND FFMPEG_AVCODEC_LIBRARY AND FFMPEG_AVUTIL_LIBRARY AND ZLIB_LIBRARIES)
+  # Bzip2 is nor requested with mingw-w64
+  SET(FFMPEG_FOUND TRUE)
+  SET(FFMPEG_INCLUDE_DIRS
+    ${FFMPEG_INCLUDE_DIR_AVCODEC}
+    ${FFMPEG_INCLUDE_DIR_AVFORMAT}
+    ${FFMPEG_INCLUDE_DIR_AVUTIL}
+    ${FFMPEG_INCLUDE_DIR_SWSCALE}
+  )
+  SET(FFMPEG_LIBRARIES
+    ${FFMPEG_SWSCALE_LIBRARY}
+    ${FFMPEG_AVFORMAT_LIBRARY}
+    ${FFMPEG_AVCODEC_LIBRARY}
+    ${FFMPEG_AVUTIL_LIBRARY}
+  )
+  if(FFMPEG_AVCORE_LIBRARY)
+    LIST(APPEND FFMPEG_LIBRARIES ${FFMPEG_AVCORE_LIBRARY})
+  endif()
+  list(APPEND FFMPEG_LIBRARIES ${ZLIB_LIBRARIES})
   if(ICONV_FOUND)
     list(APPEND FFMPEG_LIBRARIES ${ICONV_LIBRARIES})
   endif()

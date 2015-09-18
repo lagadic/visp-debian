@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpHinkley.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpHinkley.cpp 5060 2014-12-12 18:31:03Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -78,11 +78,8 @@
 
 */
 vpHinkley::vpHinkley()
+  : dmin2(0.1), alpha(0.2), nsignal(0), mean(0), Sk(0), Mk(0), Tk(0), Nk(0)
 {
-  init();
-
-  setAlpha(0.2);
-  setDelta(0.2);
 }
 
 /*!
@@ -92,21 +89,18 @@ vpHinkley::vpHinkley()
   Call init() to initialise the Hinkley's test and set \f$\alpha\f$
   and \f$\delta\f$ thresholds.
 
-  \param alpha : \f$\alpha\f$ is a predefined threshold.
+  \param alpha_val : \f$\alpha\f$ is a predefined threshold.
 
-  \param delta : \f$\delta\f$ denotes the jump minimal magnitude that
+  \param delta_val : \f$\delta\f$ denotes the jump minimal magnitude that
   we want to detect.
 
   \sa setAlpha(), setDelta()
 
 */
 
-vpHinkley::vpHinkley(double alpha, double delta)
+vpHinkley::vpHinkley(double alpha_val, double delta_val)
+  : dmin2(delta_val/2.), alpha(alpha_val), nsignal(0), mean(0), Sk(0), Mk(0), Tk(0), Nk(0)
 {
-  init();
-
-  setAlpha(alpha);
-  setDelta(delta);
 }
 
 /*!
@@ -114,21 +108,21 @@ vpHinkley::vpHinkley(double alpha, double delta)
   Call init() to initialise the Hinkley's test and set \f$\alpha\f$
   and \f$\delta\f$ thresholds.
 
-  \param alpha : \f$\alpha\f$ is a predefined threshold.
+  \param alpha_val : \f$\alpha\f$ is a predefined threshold.
 
-  \param delta : \f$\delta\f$ denotes the jump minimal magnitude that
+  \param delta_val : \f$\delta\f$ denotes the jump minimal magnitude that
   we want to detect.
 
   \sa setAlpha(), setDelta()
 
 */
 void
-vpHinkley::init(double alpha, double delta)
+vpHinkley::init(double alpha_val, double delta_val)
 {
   init();
 
-  setAlpha(alpha);
-  setDelta(delta);
+  setAlpha(alpha_val);
+  setDelta(delta_val);
 }
 
 /*!
@@ -178,9 +172,9 @@ void vpHinkley::setDelta(double delta)
   \sa setDelta()
 
 */
-void vpHinkley::setAlpha(double alpha)
+void vpHinkley::setAlpha(double alpha_val)
 {
-  this->alpha = alpha;
+  this->alpha = alpha_val;
 }
 
 /*!
@@ -202,7 +196,7 @@ vpHinkley::vpHinkleyJumpType vpHinkley::testDownwardJump(double signal)
 
   if (nsignal == 1) mean = signal;
 
-  // Calcul des variables cumulées
+  // Calcul des variables cumulees
   computeSk(signal);
 
   computeMk();
@@ -210,7 +204,7 @@ vpHinkley::vpHinkleyJumpType vpHinkley::testDownwardJump(double signal)
   vpCDEBUG(2) << "alpha: " << alpha << " dmin2: " << dmin2
 	    << " signal: " << signal << " Sk: " << Sk << " Mk: " << Mk;
 
-  // teste si les variables cumulées excèdent le seuil
+  // teste si les variables cumulees excedent le seuil
   if ((Mk - Sk) > alpha)
     jump = downwardJump;
 
@@ -260,7 +254,7 @@ vpHinkley::vpHinkleyJumpType vpHinkley::testUpwardJump(double signal)
 
   if (nsignal == 1) mean = signal;
 
-  // Calcul des variables cumulées
+  // Calcul des variables cumulees
   computeTk(signal);
 
   computeNk();
@@ -268,7 +262,7 @@ vpHinkley::vpHinkleyJumpType vpHinkley::testUpwardJump(double signal)
   vpCDEBUG(2) << "alpha: " << alpha << " dmin2: " << dmin2
 	    << " signal: " << signal << " Tk: " << Tk << " Nk: " << Nk;
 
-  // teste si les variables cumulées excèdent le seuil
+  // teste si les variables cumulees excedent le seuil
   if ((Tk - Nk) > alpha)
     jump = upwardJump;
 
@@ -317,7 +311,7 @@ vpHinkley::vpHinkleyJumpType vpHinkley::testDownUpwardJump(double signal)
 
   if (nsignal == 1) mean = signal;
 
-  // Calcul des variables cumulées
+  // Calcul des variables cumulees
   computeSk(signal);
   computeTk(signal);
 
@@ -329,7 +323,7 @@ vpHinkley::vpHinkleyJumpType vpHinkley::testDownUpwardJump(double signal)
 	      << " Sk: " << Sk << " Mk: " << Mk
 	      << " Tk: " << Tk << " Nk: " << Nk << std::endl;
 
-  // teste si les variables cumulées excèdent le seuil
+  // teste si les variables cumulees excedent le seuil
   if ((Mk - Sk) > alpha)
     jump = downwardJump;
   else if ((Tk - Nk) > alpha)
@@ -376,10 +370,10 @@ vpHinkley::vpHinkleyJumpType vpHinkley::testDownUpwardJump(double signal)
 void vpHinkley::computeMean(double signal)
 {
   // Debut modif FS le 03/09/2003
-  // Lors d'une chute ou d'une remontée lente du signal, pariculièrement
-  // après un saut, la moyenne a tendance à "dériver". Pour réduire ces
-  // dérives de la moyenne, elle n'est remise à jour avec la valeur
-  // courante du signal que si un début de saut potentiel n'est pas détecté.
+  // Lors d'une chute ou d'une remontee lente du signal, pariculierement
+  // apres un saut, la moyenne a tendance a "deriver". Pour reduire ces
+  // derives de la moyenne, elle n'est remise a jour avec la valeur
+  // courante du signal que si un debut de saut potentiel n'est pas detecte.
   //if ( ((Mk-Sk) == 0) && ((Tk-Nk) == 0) )
   if ( ( std::fabs(Mk-Sk) <= std::fabs(vpMath::maximum(Mk,Sk))*std::numeric_limits<double>::epsilon() ) 
        && 
@@ -400,7 +394,7 @@ void vpHinkley::computeMean(double signal)
 void vpHinkley::computeSk(double signal)
 {
 
-  // Calcul des variables cumulées
+  // Calcul des variables cumulees
   Sk += signal - mean + dmin2;
 }
 /*!
@@ -421,7 +415,7 @@ void vpHinkley::computeMk()
 void vpHinkley::computeTk(double signal)
 {
 
-  // Calcul des variables cumulées
+  // Calcul des variables cumulees
   Tk += signal - mean - dmin2;
 }
 /*!

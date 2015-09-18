@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpPlot.h 4233 2013-05-02 13:46:42Z fspindle $
+ * $Id: vpPlot.h 5226 2015-01-29 17:05:35Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -151,8 +151,8 @@ class VISP_EXPORT vpPlot
 
     void plot (const unsigned int graphNum, const unsigned int curveNum, const double x, const double y);
     void plot(const unsigned int graphNum, const double x, const vpColVector &v_y);
-    void plot (const unsigned int graphNum, const unsigned int curveNum, const double x, const double y, const double z);
-    void plot(const unsigned int graphNum, const double x, const vpColVector &v_y, const vpColVector &v_z);
+    vpMouseButton::vpMouseButtonType plot (const unsigned int graphNum, const unsigned int curveNum, const double x, const double y, const double z);
+    vpMouseButton::vpMouseButtonType plot(const unsigned int graphNum, const double x, const vpColVector &v_y, const vpColVector &v_z);
 
     void resetPointList (const unsigned int graphNum);
     void resetPointList (const unsigned int graphNum, const unsigned int curveNum);

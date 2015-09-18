@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpHomographyVVS.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpHomographyVVS.cpp 4649 2014-02-07 14:57:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -54,6 +54,8 @@
 
 const double vpHomography::threshold_rotation = 1e-7;
 const double vpHomography::threshold_displacement = 1e-18;
+
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
 
 static void
 updatePoseRotation(vpColVector& dx,vpHomogeneousMatrix&  mati)
@@ -126,14 +128,16 @@ vpHomography::computeRotation(unsigned int nbpoint,
   unsigned int n=0 ;
   for (unsigned int i=0 ; i < nbpoint ; i++) {
     //    if ((c2P[i].get_x() !=-1) && (c1P[i].get_x() !=-1))
-    if ( (std::fabs(c2P[i].get_x() + 1) > std::fabs(vpMath::maximum(c2P[i].get_x(), 1.))) 
-	 && 
-	 (std::fabs(c1P[i].get_x() + 1) > std::fabs(vpMath::maximum(c1P[i].get_x(), 1.))) )
-      {
-	n++ ;
-      }
+    if ( (std::fabs(c2P[i].get_x() + 1) > std::fabs(vpMath::maximum(c2P[i].get_x(), 1.)))
+         &&
+         (std::fabs(c1P[i].get_x() + 1) > std::fabs(vpMath::maximum(c1P[i].get_x(), 1.))) )
+    {
+      n++ ;
+    }
   }
-  if ((only_1==1) || (only_2==1))  ; else n *=2 ;
+  //if ((only_1==1) || (only_2==1))  ; else n *=2 ;
+  if ( (! only_1) && (! only_2) )
+    n *=2 ;
 
   vpRobust robust(n);
   vpColVector res(n) ;
@@ -159,9 +163,9 @@ vpHomography::computeRotation(unsigned int nbpoint,
     int k =0 ;
     for (unsigned int i=0 ; i < nbpoint ; i++) {
       //if ((c2P[i].get_x() !=-1) && (c1P[i].get_x() !=-1))
-      if ( (std::fabs(c2P[i].get_x() + 1) > std::fabs(vpMath::maximum(c2P[i].get_x(), 1.))) 
-	 && 
-	   (std::fabs(c1P[i].get_x() + 1) > std::fabs(vpMath::maximum(c1P[i].get_x(), 1.))) )
+      if ( (std::fabs(c2P[i].get_x() + 1) > std::fabs(vpMath::maximum(c2P[i].get_x(), 1.)))
+           &&
+           (std::fabs(c1P[i].get_x() + 1) > std::fabs(vpMath::maximum(c1P[i].get_x(), 1.))) )
       {
         p2[0] = c2P[i].get_x() ;
         p2[1] = c2P[i].get_y() ;
@@ -240,35 +244,35 @@ vpHomography::computeRotation(unsigned int nbpoint,
     {
       robust.setIteration(0);
 
-      for (unsigned int k=0 ; k < n ; k++)
+      for (unsigned int l=0 ; l < n ; l++)
       {
-        res[k] = vpMath::sqr(e[2*k]) + vpMath::sqr(e[2*k+1]) ;
+        res[l] = vpMath::sqr(e[2*l]) + vpMath::sqr(e[2*l+1]) ;
       }
       robust.MEstimator(vpRobust::TUKEY, res, w);
 
 
       // compute the pseudo inverse of the interaction matrix
-      for (unsigned int k=0 ; k < n ; k++)
+      for (unsigned int l=0 ; l < n ; l++)
       {
-        W[2*k][2*k] = w[k] ;
-        W[2*k+1][2*k+1] = w[k] ;
+        W[2*l][2*l] = w[l] ;
+        W[2*l+1][2*l+1] = w[l] ;
       }
     }
     else
     {
-      for (unsigned int k=0 ; k < 2*n ; k++) W[k][k] = 1 ;
+      for (unsigned int l=0 ; l < 2*n ; l++) W[l][l] = 1 ;
     }
     // CreateDiagonalMatrix(w, W) ;
     (L).pseudoInverse(Lp, 1e-6) ;
     // Compute the camera velocity
-    vpColVector c2Rc1, v(6) ;
+    vpColVector c2rc1, v(6) ;
 
-    c2Rc1 = -2*Lp*W*e  ;
-    for (unsigned int i=0 ; i < 3 ; i++) v[i+3] = c2Rc1[i] ;
+    c2rc1 = -2*Lp*W*e  ;
+    for (unsigned int i=0 ; i < 3 ; i++) v[i+3] = c2rc1[i] ;
 
     // only for simulation
 
-    updatePoseRotation(c2Rc1, c2Mc1) ;
+    updatePoseRotation(c2rc1, c2Mc1) ;
     r =e.sumSquare() ;
 
     if ((W*e).sumSquare() < 1e-10) break ;
@@ -307,12 +311,8 @@ vpHomography::computeDisplacement(unsigned int nbpoint,
                                   int userobust
                                  )
 {
-
-
   vpColVector e(2) ;
   double r_1 = -1 ;
-
-
 
   vpColVector p2(3) ;
   vpColVector p1(3) ;
@@ -324,13 +324,17 @@ vpHomography::computeDisplacement(unsigned int nbpoint,
   vpMatrix H1(2,6) ;
   vpColVector e1(2) ;
 
-  int only_1 = 1 ;
-  int only_2 = 0 ;
+  int only_1;
+  int only_2;
   int iter = 0 ;
-  unsigned int i ;
   unsigned int n=0 ;
   n = nbpoint ;
-  if ((only_1==1) || (only_2==1))  ; else n *=2 ;
+  only_1 = 1 ;
+  only_2 = 0 ;
+
+ //if ((only_1==1) || (only_2==1))  ; else n *=2 ;
+  if ( (! only_1) && (! only_2) )
+    n *=2 ;
 
   vpRobust robust(n);
   vpColVector res(n) ;
@@ -347,10 +351,8 @@ vpHomography::computeDisplacement(unsigned int nbpoint,
   iter =0 ;
   while (vpMath::equal(r_1,r,threshold_displacement) == false )
   {
-
     r_1 =r ;
     // compute current position
-
 
     //Change frame (current)
     vpHomogeneousMatrix c1Mc2, c2Mo ;
@@ -367,10 +369,9 @@ vpHomography::computeDisplacement(unsigned int nbpoint,
     getPlaneInfo(oN, c1Mo, N1, d1) ;
     getPlaneInfo(oN, c2Mo, N2, d2) ;
 
-
     vpMatrix L(2,3), Lp ;
     int k =0 ;
-    for (i=0 ; i < nbpoint ; i++)
+    for (unsigned int i=0 ; i < nbpoint ; i++)
     {
       p2[0] = c2P[i].get_x() ;
       p2[1] = c2P[i].get_y() ;
@@ -405,17 +406,15 @@ vpHomography::computeDisplacement(unsigned int nbpoint,
       vpMatrix c1CFc2(6,6) ;
       {
         vpMatrix sTR = c1Tc2.skew()*(vpMatrix)c1Rc2 ;
-        for (unsigned int k=0 ; k < 3 ; k++)
+        for (unsigned int k_=0 ; k_ < 3 ; k_++)
           for (unsigned int l=0 ; l<3 ; l++)
           {
-            c1CFc2[k][l] = c1Rc2[k][l] ;
-            c1CFc2[k+3][l+3] = c1Rc2[k][l] ;
-            c1CFc2[k][l+3] = sTR[k][l] ;
+            c1CFc2[k_][l] = c1Rc2[k_][l] ;
+            c1CFc2[k_+3][l+3] = c1Rc2[k_][l] ;
+            c1CFc2[k_][l+3] = sTR[k_][l] ;
           }
       }
       H2 = H2*c1CFc2 ;
-
-
 
       // Set up the error vector
       e2[0] = Hp2[0] - c1P[i].get_x() ;
@@ -434,7 +433,6 @@ vpHomography::computeDisplacement(unsigned int nbpoint,
       // Set up the error vector
       e1[0] = Hp1[0] - c2P[i].get_x() ;
       e1[1] = Hp1[1] - c2P[i].get_y() ;
-
 
       if (only_2==1)
       {
@@ -474,23 +472,22 @@ vpHomography::computeDisplacement(unsigned int nbpoint,
     if (userobust)
     {
       robust.setIteration(0);
-      for (unsigned int k=0 ; k < n ; k++)
+      for (unsigned int l=0 ; l < n ; l++)
       {
-        res[k] = vpMath::sqr(e[2*k]) + vpMath::sqr(e[2*k+1]) ;
+        res[l] = vpMath::sqr(e[2*l]) + vpMath::sqr(e[2*l+1]) ;
       }
       robust.MEstimator(vpRobust::TUKEY, res, w);
 
-
       // compute the pseudo inverse of the interaction matrix
-      for (unsigned int k=0 ; k < n ; k++)
+      for (unsigned int l=0 ; l < n ; l++)
       {
-        W[2*k][2*k] = w[k] ;
-        W[2*k+1][2*k+1] = w[k] ;
+        W[2*l][2*l] = w[l] ;
+        W[2*l+1][2*l+1] = w[l] ;
       }
     }
     else
     {
-      for (unsigned int k=0 ; k < 2*n ; k++) W[k][k] = 1 ;
+      for (unsigned int l=0 ; l < 2*n ; l++) W[l][l] = 1 ;
     }
     (W*L).pseudoInverse(Lp, 1e-16) ;
     // Compute the camera velocity
@@ -503,8 +500,6 @@ vpHomography::computeDisplacement(unsigned int nbpoint,
     c2Mc1 = vpExponentialMap::direct(c2Tcc1).inverse()*c2Mc1 ; ;
     //   UpdatePose2(c2Tcc1, c2Mc1) ;
     r =(W*e).sumSquare() ;
-
-
 
     if (r < 1e-15)  {break ; }
     if (iter>1000){break ; }
@@ -532,8 +527,6 @@ vpHomography::computeDisplacement(unsigned int nbpoint,
   vpColVector e(2) ;
   double r_1 = -1 ;
 
-
-
   vpColVector p2(3) ;
   vpColVector p1(3) ;
   vpColVector Hp2(3) ;
@@ -545,13 +538,17 @@ vpHomography::computeDisplacement(unsigned int nbpoint,
   vpColVector e1(2) ;
 
 
-  int only_1 = 1 ;
-  int only_2 = 0 ;
+  int only_1;
+  int only_2;
   int iter = 0 ;
   unsigned int i ;
   unsigned int n=0 ;
+  only_1 = 1 ;
+  only_2 = 0 ;
   n = nbpoint ;
-  if ((only_1==1) || (only_2==1))  ; else n *=2 ;
+ // if ((only_1==1) || (only_2==1))  ; else n *=2 ;
+  if ( (! only_1) && (! only_2) )
+    n *=2 ;
 
   vpRobust robust(n);
   vpColVector res(n) ;
@@ -626,17 +623,15 @@ vpHomography::computeDisplacement(unsigned int nbpoint,
       vpMatrix c1CFc2(6,6) ;
       {
         vpMatrix sTR = c1Tc2.skew()*(vpMatrix)c1Rc2 ;
-        for (unsigned int k=0 ; k < 3 ; k++)
+        for (unsigned int k_=0 ; k_ < 3 ; k_++)
           for (unsigned int l=0 ; l<3 ; l++)
           {
-            c1CFc2[k][l] = c1Rc2[k][l] ;
-            c1CFc2[k+3][l+3] = c1Rc2[k][l] ;
-            c1CFc2[k][l+3] = sTR[k][l] ;
+            c1CFc2[k_][l] = c1Rc2[k_][l] ;
+            c1CFc2[k_+3][l+3] = c1Rc2[k_][l] ;
+            c1CFc2[k_][l+3] = sTR[k_][l] ;
           }
       }
       H2 = H2*c1CFc2 ;
-
-
 
       // Set up the error vector
       e2[0] = Hp2[0] - c1P[i].get_x() ;
@@ -695,23 +690,23 @@ vpHomography::computeDisplacement(unsigned int nbpoint,
     if (userobust)
     {
       robust.setIteration(0);
-      for (unsigned int k=0 ; k < n ; k++)
+      for (unsigned int k_=0 ; k_ < n ; k_++)
       {
-        res[k] = vpMath::sqr(e[2*k]) + vpMath::sqr(e[2*k+1]) ;
+        res[k_] = vpMath::sqr(e[2*k_]) + vpMath::sqr(e[2*k_+1]) ;
       }
       robust.MEstimator(vpRobust::TUKEY, res, w);
 
 
       // compute the pseudo inverse of the interaction matrix
-      for (unsigned int k=0 ; k < n ; k++)
+      for (unsigned int k_=0 ; k_ < n ; k_++)
       {
-        W[2*k][2*k] = w[k] ;
-        W[2*k+1][2*k+1] = w[k] ;
+        W[2*k_][2*k_] = w[k_] ;
+        W[2*k_+1][2*k_+1] = w[k_] ;
       }
     }
     else
     {
-      for (unsigned int k=0 ; k < 2*n ; k++) W[k][k] = 1 ;
+      for (unsigned int k_=0 ; k_ < 2*n ; k_++) W[k_][k_] = 1 ;
     }
     (W*L).pseudoInverse(Lp, 1e-16) ;
     // Compute the camera velocity
@@ -737,3 +732,4 @@ vpHomography::computeDisplacement(unsigned int nbpoint,
 
 }
 
+#endif //#ifndef DOXYGEN_SHOULD_SKIP_THIS

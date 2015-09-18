@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: manGrabDisk.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: manGrabDisk.cpp 4574 2014-01-09 08:48:51Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -59,36 +59,43 @@
 
 int main()
 {
-  vpImage<unsigned char> I; // Grey level image
+  try {
+    vpImage<unsigned char> I; // Grey level image
 
-  // Declare a framegrabber able to read a sequence of successive
-  // images from the disk
-  vpDiskGrabber g;
+    // Declare a framegrabber able to read a sequence of successive
+    // images from the disk
+    vpDiskGrabber g;
 
-  // Set the path to the directory containing the sequence
-  g.setDirectory("/tmp");
-  // Set the image base name. The directory and the base name constitute
-  // the constant part of the full filename
-  g.setBaseName("image");
-  // Set the step between two images of the sequence
-  g.setStep(3);
-  // Set the number of digits to build the image number
-  g.setNumberOfZero(4);
-  // Set the first frame number of the sequence
-  g.setImageNumber(1);
-  // Set the file extension of the images of the sequence
-  g.setExtension("pgm");
+    // Set the path to the directory containing the sequence
+    g.setDirectory("/tmp");
+    // Set the image base name. The directory and the base name constitute
+    // the constant part of the full filename
+    g.setBaseName("image");
+    // Set the step between two images of the sequence
+    g.setStep(3);
+    // Set the number of digits to build the image number
+    g.setNumberOfZero(4);
+    // Set the first frame number of the sequence
+    g.setImageNumber(1);
+    // Set the file extension of the images of the sequence
+    g.setExtension("pgm");
 
-  // Open the framegrabber by loading the first image of the sequence
-  g.open(I) ;
+    // Open the framegrabber by loading the first image of the sequence
+    g.open(I) ;
 
-  // this is the loop over the image sequence
-  for(int cpt = 0; cpt < 100; cpt++)
-  {
-    // read the image and then increment the image counter so that the next
-    // call to acquire(I) will get the next image
-    g.acquire(I) ;
+    // this is the loop over the image sequence
+    for(int cpt = 0; cpt < 100; cpt++)
+    {
+      // read the image and then increment the image counter so that the next
+      // call to acquire(I) will get the next image
+      g.acquire(I) ;
+    }
+
+    return 0;
+    return 0;
   }
-
-  return 0;
+  catch(vpException e) {
+    std::cout << "Catch an exception: " << e << std::endl;
+    return 1;
+  }
 }

@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpMbEdgeKltTracker.cpp 4327 2013-07-19 14:08:01Z fspindle $
+ * $Id: vpMbEdgeKltTracker.cpp 5189 2015-01-21 16:42:18Z ayol $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -39,23 +39,27 @@
  *
  *****************************************************************************/
 
-#include <visp/vpMbEdgeKltTracker.h>
+//#define VP_DEBUG_MODE 1 // Activate debug level 1
 
-#ifdef VISP_HAVE_OPENCV
+#include <visp/vpDebug.h>
+#include <visp/vpMbEdgeKltTracker.h>
+#include <visp/vpTrackingException.h>
+#include <visp/vpVelocityTwistMatrix.h>
+
+#if (defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION >= 0x020100))
 
 vpMbEdgeKltTracker::vpMbEdgeKltTracker()
+  : compute_interaction(true), lambda(0.8), thresholdKLT(2.), thresholdMBT(2.), maxIter(200)
 {
-  compute_interaction = true;
   computeCovariance = false;
   
-  lambda = 0.8;
-  thresholdKLT = 2.0;
-  thresholdMBT = 2.0;
-  maxIter = 200;
   vpMbKltTracker::setMaxIter(30);
+
+  angleAppears = vpMath::rad(65);
+  angleDisappears = vpMath::rad(75);
   
 #ifdef VISP_HAVE_OGRE
-  vpMbKltTracker::faces.getOgreContext()->setWindowName("MBT Hybrid");
+  faces.getOgreContext()->setWindowName("MBT Hybrid");
 #endif
 }
 
@@ -79,18 +83,7 @@ vpMbEdgeKltTracker::init(const vpImage<unsigned char>& I)
   vpMbKltTracker::init(I);
   
   initPyramid(I, Ipyramid);
-  
-  unsigned int n = 0;
-  for(unsigned int i = 0; i < vpMbKltTracker::faces.size() ; i++){
-      if(vpMbKltTracker::faces[i]->isVisible()){
-        vpMbEdgeTracker::faces[i]->isvisible = true;
-        n++;
-      }
-      else
-        vpMbEdgeTracker::faces[i]->isvisible = false;
-  }
-  vpMbEdgeTracker::nbvisiblepolygone = n;
-  
+
   unsigned int i = (unsigned int)scales.size();
   do {
     i--;
@@ -116,32 +109,44 @@ vpMbEdgeKltTracker::init(const vpImage<unsigned char>& I)
 void           
 vpMbEdgeKltTracker::setPose( const vpImage<unsigned char> &I, const vpHomogeneousMatrix& cdMo)
 {
-  if(firstTrack){
     vpMbKltTracker::setPose(I, cdMo);
     
-    vpMbtDistanceLine *l;
-    lines[scaleLevel].front() ;
-    for(std::list<vpMbtDistanceLine*>::const_iterator it=lines[scaleLevel].begin(); it!=lines[scaleLevel].end(); ++it){
-      l = *it;
-      if(l->meline != NULL){
-        delete l->meline;
-        l->meline = NULL;
+    if (! lines[scaleLevel].empty()) {
+      lines[scaleLevel].front() ;
+      for(std::list<vpMbtDistanceLine*>::const_iterator it=lines[scaleLevel].begin(); it!=lines[scaleLevel].end(); ++it){
+        if((*it)->meline != NULL){
+          delete (*it)->meline;
+          (*it)->meline = NULL;
+        }
       }
     }
     
-    initPyramid(I, Ipyramid);
-    
-    unsigned int n = 0;
-    for(unsigned int i = 0; i < vpMbKltTracker::faces.size() ; i++){
-        if(vpMbKltTracker::faces[i]->isVisible()){
-          vpMbEdgeTracker::faces[i]->isvisible = true;
-          n++;
+    if (! cylinders[scaleLevel].empty()) {
+      cylinders[scaleLevel].front() ;
+      for(std::list<vpMbtDistanceCylinder*>::const_iterator it=cylinders[scaleLevel].begin(); it!=cylinders[scaleLevel].end(); ++it){
+        if((*it)->meline1 != NULL){
+          delete (*it)->meline1;
+          (*it)->meline1 = NULL;
         }
-        else
-          vpMbEdgeTracker::faces[i]->isvisible = false;
+        if((*it)->meline2 != NULL){
+          delete (*it)->meline2;
+          (*it)->meline2 = NULL;
+        }
+      }
     }
-    vpMbEdgeTracker::nbvisiblepolygone = n;
-    
+
+    if (! circles[scaleLevel].empty()) {
+      circles[scaleLevel].front() ;
+      for(std::list<vpMbtDistanceCircle*>::const_iterator it=circles[scaleLevel].begin(); it!=circles[scaleLevel].end(); ++it){
+        if((*it)->meEllipse != NULL){
+          delete (*it)->meEllipse;
+          (*it)->meEllipse = NULL;
+        }
+      }
+    }
+
+    initPyramid(I, Ipyramid);
+
     unsigned int i = (unsigned int)scales.size();
     do {
       i--;
@@ -153,7 +158,6 @@ vpMbEdgeKltTracker::setPose( const vpImage<unsigned char> &I, const vpHomogeneou
     } while(i != 0);
     
     cleanPyramid(Ipyramid);
-  }
 }
 
 /*!
@@ -172,6 +176,7 @@ vpMbEdgeKltTracker::initMbtTracking(const unsigned int lvl)
 {
   vpMbtDistanceLine *l ;
   vpMbtDistanceCylinder *cy ;
+  vpMbtDistanceCircle *ci ;
 
   if(lvl  >= scales.size() || !scales[lvl]){
     throw vpException(vpException::dimensionError, "lvl not used.");
@@ -189,7 +194,13 @@ vpMbEdgeKltTracker::initMbtTracking(const unsigned int lvl)
     nbrow += cy->nbFeature ;
     cy->initInteractionMatrixError() ;
   }
-  
+
+  for(std::list<vpMbtDistanceCircle*>::const_iterator it=circles[lvl].begin(); it!=circles[lvl].end(); ++it){
+    ci = *it;
+    nbrow += ci->nbFeature ;
+    ci->initInteractionMatrixError() ;
+  }
+
   return nbrow;  
 }
 
@@ -278,27 +289,64 @@ void
 vpMbEdgeKltTracker::loadConfigFile(const char* configFile)
 {
 #ifdef VISP_HAVE_XML2
-  vpMbEdgeTracker::loadConfigFile(configFile);
-  vpMbKltTracker::loadConfigFile(configFile);
+  vpMbtEdgeKltXmlParser xmlp;
+
+  xmlp.setCameraParameters(cam);
+  xmlp.setAngleAppear(vpMath::deg(angleAppears));
+  xmlp.setAngleDisappear(vpMath::deg(angleDisappears));
+
+  xmlp.setMovingEdge(me);
+
+  xmlp.setMaxFeatures(10000);
+  xmlp.setWindowSize(5);
+  xmlp.setQuality(0.01);
+  xmlp.setMinDistance(5);
+  xmlp.setHarrisParam(0.01);
+  xmlp.setBlockSize(3);
+  xmlp.setPyramidLevels(3);
+  xmlp.setMaskBorder(maskBorder);
+
+  try{
+    std::cout << " *********** Parsing XML for Mb Edge Tracker ************ " << std::endl;
+    xmlp.parse(configFile);
+  }
+  catch(...){
+    vpERROR_TRACE("Can't open XML file \"%s\"\n ", configFile);
+    throw vpException(vpException::ioError, "problem to parse configuration file.");
+  }
+
+  vpCameraParameters camera;
+  xmlp.getCameraParameters(camera);
+  setCameraParameters(camera);
+
+  angleAppears = vpMath::rad(xmlp.getAngleAppear());
+  angleDisappears = vpMath::rad(xmlp.getAngleDisappear());
+
+  if(xmlp.hasNearClippingDistance())
+    setNearClippingDistance(xmlp.getNearClippingDistance());
+
+  if(xmlp.hasFarClippingDistance())
+    setFarClippingDistance(xmlp.getFarClippingDistance());
+
+  if(xmlp.getFovClipping()){
+    setClipping(vpMbEdgeTracker::clippingFlag | vpMbtPolygon::FOV_CLIPPING);
+  }
+
+  vpMe meParser;
+  xmlp.getMe(meParser);
+  vpMbEdgeTracker::setMovingEdge(meParser);
+
+  tracker.setMaxFeatures((int)xmlp.getMaxFeatures());
+  tracker.setWindowSize((int)xmlp.getWindowSize());
+  tracker.setQuality(xmlp.getQuality());
+  tracker.setMinDistance(xmlp.getMinDistance());
+  tracker.setHarrisFreeParameter(xmlp.getHarrisParam());
+  tracker.setBlockSize((int)xmlp.getBlockSize());
+  tracker.setPyramidLevels((int)xmlp.getPyramidLevels());
+  maskBorder = xmlp.getMaskBorder();
 #else
   vpTRACE("You need the libXML2 to read the config file %s", configFile);
 #endif
-}
-
-/*!
-  Load a 3D model from the file in parameter. This file must either be a vrml
-  file (.wrl) or a CAO file (.cao). CAO format is described in the 
-  loadCAOModel() method. 
-
-  \throw vpException::ioError if the file cannot be open, or if its extension is
-  not wrl or cao. 
-
-  \param modelFile : the file containing the model.
-*/
-void
-vpMbEdgeKltTracker::loadModel(const std::string& modelFile)
-{
-  vpMbTracker::loadModel(modelFile);
 }
 
 /*!
@@ -311,7 +359,7 @@ vpMbEdgeKltTracker::postTracking(const vpImage<unsigned char>& I, vpColVector &w
   bool reInit = vpMbKltTracker::postTracking(I, w_klt);
   
   postTrackingMbt(w_mbt,lvl);
-  
+
   if (displayFeatures)
   {
     if(lvl == 0){
@@ -326,7 +374,16 @@ vpMbEdgeKltTracker::postTracking(const vpImage<unsigned char>& I, vpColVector &w
       vpMbtDistanceCylinder *cy ;
       for(std::list<vpMbtDistanceCylinder*>::const_iterator it=cylinders[lvl].begin(); it!=cylinders[lvl].end(); ++it){
         cy = *it;
+        // A cylinder is always visible
         cy->displayMovingEdges(I);
+      }
+
+      vpMbtDistanceCircle *ci ;
+      for(std::list<vpMbtDistanceCircle*>::const_iterator it=circles[lvl].begin(); it!=circles[lvl].end(); ++it){
+        ci = *it;
+        if (ci->isVisible()){
+          ci->displayMovingEdges(I);
+        }
       }
     }
   }
@@ -335,16 +392,6 @@ vpMbEdgeKltTracker::postTracking(const vpImage<unsigned char>& I, vpColVector &w
     return true;
   
   vpMbEdgeTracker::updateMovingEdge(I);
-  unsigned int n = 0;
-  for(unsigned int i = 0; i < vpMbKltTracker::faces.size() ; i++){
-      if(vpMbKltTracker::faces[i]->isVisible()){
-        vpMbEdgeTracker::faces[i]->isvisible = true;
-        n++;
-      }
-      else
-        vpMbEdgeTracker::faces[i]->isvisible = false;
-  }
-  vpMbEdgeTracker::nbvisiblepolygone = n;
   
   vpMbEdgeTracker::initMovingEdge(I, cMo) ;
   vpMbEdgeTracker::reinitMovingEdge(I, cMo);
@@ -353,7 +400,7 @@ vpMbEdgeKltTracker::postTracking(const vpImage<unsigned char>& I, vpColVector &w
 }
 
 /*!
-  post tracking computation. Compute the mean weight of a line and, check the
+  Post tracking computation. Compute the mean weight of a line and, check the
   weight associated to a site (to eventually remove an outlier) and eventually
   set a flag to re-initialize the line.
 
@@ -365,7 +412,6 @@ vpMbEdgeKltTracker::postTracking(const vpImage<unsigned char>& I, vpColVector &w
 void
 vpMbEdgeKltTracker::postTrackingMbt(vpColVector &w, const unsigned int lvl)
 {
-
   if(lvl  >= scales.size() || !scales[lvl]){
     throw vpException(vpException::dimensionError, "_lvl not used.");
   }
@@ -465,6 +511,44 @@ vpMbEdgeKltTracker::postTrackingMbt(vpColVector &w, const unsigned int lvl)
 
     n+= cy->nbFeature ;
   }
+
+  // Same thing with circles as with lines
+  vpMbtDistanceCircle *ci;
+  for(std::list<vpMbtDistanceCircle*>::const_iterator it=circles[scaleLevel].begin(); it!=circles[scaleLevel].end(); ++it){
+    ci = *it;
+    double wmean = 0 ;
+    std::list<vpMeSite>::iterator itListCir;
+
+    if (ci->nbFeature > 0){
+      itListCir = ci->meEllipse->getMeList().begin();
+    }
+
+    wmean = 0;
+    for(unsigned int i=0 ; i < ci->nbFeature ; i++){
+      wmean += w[n+i] ;
+      vpMeSite p = *itListCir;
+      if (w[n+i] < 0.5){
+        p.setState(vpMeSite::M_ESTIMATOR);
+
+        *itListCir = p;
+      }
+
+      ++itListCir;
+    }
+
+    if (ci->nbFeature!=0)
+      wmean /= ci->nbFeature ;
+    else
+      wmean = 1;
+
+    ci->setMeanWeight(wmean);
+
+    if (wmean < 0.8){
+      ci->Reinit = true;
+    }
+
+    n+= ci->nbFeature ;
+  }
 }
 
 /*!
@@ -493,30 +577,31 @@ vpMbEdgeKltTracker::computeVVS(const vpImage<unsigned char>& I, const unsigned i
   double residu_1 = -1;
   unsigned int iter = 0;
 
-  vpMatrix *J;
-  vpMatrix J_mbt, J_klt;     // interaction matrix
+  vpMatrix *L;
+  vpMatrix L_mbt, L_klt;     // interaction matrix
   vpColVector *R;
   vpColVector R_mbt, R_klt;  // residu
-  vpMatrix J_true;
-  vpColVector R_true;
+  vpMatrix L_true;
+  vpMatrix LVJ_true;
+  //vpColVector R_true;
   vpColVector w_true;
   
   if(nbrow != 0){
-    J_mbt.resize(nbrow,6);
+    L_mbt.resize(nbrow,6);
     R_mbt.resize(nbrow);
   }
   
   if(nbInfos != 0){
-    J_klt.resize(2*nbInfos,6);
+    L_klt.resize(2*nbInfos,6);
     R_klt.resize(2*nbInfos);
   }
   
-  vpColVector w;  // weight from MEstimator
+  //vpColVector w;  // weight from MEstimator
   vpColVector v;  // "speed" for VVS
   vpRobust robust_mbt(0), robust_klt(0);
   vpHomography H;
 
-  vpMatrix JTJ, JTR;
+  vpMatrix LTL, LTR;
   
   double factorMBT = 1.0;
   double factorKLT = 1.0;
@@ -527,41 +612,55 @@ vpMbEdgeKltTracker::computeVVS(const vpImage<unsigned char>& I, const unsigned i
   factorMBT = 0.35;
   factorKLT = 0.65;
   
+  if (nbrow < 4)
+    factorKLT = 1.;
+  if (nbInfos < 4)
+    factorMBT = 1.;
+
   double residuMBT = 0;
   double residuKLT = 0;
+
+  vpHomogeneousMatrix cMoPrev;
   
   while( ((int)((residu - residu_1)*1e8) !=0 )  && (iter<maxIter) ){   
-    J = new vpMatrix(); 
+    L = new vpMatrix();
     R = new vpColVector();
     
     if(nbrow >= 4)
-      trackSecondLoop(I,J_mbt,R_mbt,cMo,lvl);
+      trackSecondLoop(I,L_mbt,R_mbt,cMo,lvl);
       
     if(nbInfos >= 4){
       unsigned int shift = 0;
-      for (unsigned int i = 0; i < vpMbKltTracker::faces.size(); i += 1){
-        if(vpMbKltTracker::faces[i]->isVisible() && vpMbKltTracker::faces[i]->hasEnoughPoints()){
-          vpSubColVector subR(R_klt, shift, 2*vpMbKltTracker::faces[i]->getNbPointsCur());
-          vpSubMatrix subJ(J_klt, shift, 0, 2*vpMbKltTracker::faces[i]->getNbPointsCur(), 6);
-          vpMbKltTracker::faces[i]->computeHomography(ctTc0, H);
-          vpMbKltTracker::faces[i]->computeInteractionMatrixAndResidu(subR, subJ);
-          shift += 2*vpMbKltTracker::faces[i]->getNbPointsCur();
+      vpMbtDistanceKltPoints *kltpoly;
+    //  for (unsigned int i = 0; i < faces.size(); i += 1){
+      for(std::list<vpMbtDistanceKltPoints*>::const_iterator it=vpMbKltTracker::kltPolygons.begin(); it!=vpMbKltTracker::kltPolygons.end(); ++it){
+        kltpoly = *it;
+        if(kltpoly->polygon->isVisible() && kltpoly->hasEnoughPoints()){
+          vpSubColVector subR(R_klt, shift, 2*kltpoly->getCurrentNumberPoints());
+          vpSubMatrix subL(L_klt, shift, 0, 2*kltpoly->getCurrentNumberPoints(), 6);
+          kltpoly->computeHomography(ctTc0, H);
+          kltpoly->computeInteractionMatrixAndResidu(subR, subL);
+          shift += 2*kltpoly->getCurrentNumberPoints();
         }
       }
     }
     
     if(iter == 0){
-      w.resize(nbrow + 2*nbInfos);
-      w=1;
-      
-      w_mbt.resize(nbrow);
-      w_mbt = 1;
-      robust_mbt.resize(nbrow);
-      
-      w_klt.resize(2*nbInfos);
-      w_klt = 1;
-      robust_klt.resize(2*nbInfos);
-      
+      m_w.resize(nbrow + 2*nbInfos);
+      m_w=1;
+
+      if(nbrow != 0){
+        w_mbt.resize(nbrow);
+        w_mbt = 1;
+        robust_mbt.resize(nbrow);
+      }
+
+      if(nbInfos != 0){
+        w_klt.resize(2*nbInfos);
+        w_klt = 1;
+        robust_klt.resize(2*nbInfos);
+      }
+
       w_true.resize(nbrow + 2*nbInfos);
     }
 
@@ -575,7 +674,7 @@ vpMbEdgeKltTracker::computeVVS(const vpImage<unsigned char>& I, const unsigned i
       robust_mbt.setIteration(iter);
       robust_mbt.setThreshold(thresholdMBT/cam.get_px());
       robust_mbt.MEstimator( vpRobust::TUKEY, R_mbt, w_mbt);
-      J->stackMatrices(J_mbt);
+      L->stackMatrices(L_mbt);
       R->stackMatrices(R_mbt);
     }
     
@@ -589,23 +688,28 @@ vpMbEdgeKltTracker::computeVVS(const vpImage<unsigned char>& I, const unsigned i
       robust_klt.setThreshold(thresholdKLT/cam.get_px());
       robust_klt.MEstimator( vpRobust::TUKEY, R_klt, w_klt);
       
-      J->stackMatrices(J_klt);
+      L->stackMatrices(L_klt);
       R->stackMatrices(R_klt);
     }
 
     unsigned int cpt = 0;
     while(cpt< (nbrow+2*nbInfos)){
       if(cpt<(unsigned)nbrow){
-        w[cpt] = ((w_mbt[cpt] * factor[cpt]) * factorMBT) ;
+        m_w[cpt] = ((w_mbt[cpt] * factor[cpt]) * factorMBT) ;
       }
       else
-        w[cpt] = (w_klt[cpt-nbrow] * factorKLT);
+        m_w[cpt] = (w_klt[cpt-nbrow] * factorKLT);
       cpt++;
     }
     
+    m_error = (*R);
     if(computeCovariance){
-      R_true = (*R);
-      J_true = (*J);
+      L_true = (*L);
+      if(!isoJoIdentity){
+         vpVelocityTwistMatrix cVo;
+         cVo.buildFrom(cMo);
+         LVJ_true = ((*L)*cVo*oJo);
+      }
     }
 
     residu_1 = residu;
@@ -613,36 +717,57 @@ vpMbEdgeKltTracker::computeVVS(const vpImage<unsigned char>& I, const unsigned i
     double num = 0;
     double den = 0;
     for (unsigned int i = 0; i < static_cast<unsigned int>(R->getRows()); i++){
-      num += w[i]*vpMath::sqr((*R)[i]);
-      den += w[i];
+      num += m_w[i]*vpMath::sqr((*R)[i]);
+      den += m_w[i];
       
-      w_true[i] = w[i]*w[i];
-      (*R)[i] *= w[i];
+      w_true[i] = m_w[i];
+      (*R)[i] *= m_w[i];
       if(compute_interaction){
         for (unsigned int j = 0; j < 6; j += 1){
-          (*J)[i][j] *= w[i];
+          (*L)[i][j] *= m_w[i];
         }
       }
     }
 
     residu = sqrt(num/den);
 
-    JTJ = J->AtA();
-    computeJTR(*J, *R, JTR);
-    v = -lambda * JTJ.pseudoInverse() * JTR;
+    if(isoJoIdentity){
+        LTL = L->AtA();
+        computeJTR(*L, *R, LTR);
+        v = -lambda * LTL.pseudoInverse() * LTR;
+    }
+    else{
+        vpVelocityTwistMatrix cVo;
+        cVo.buildFrom(cMo);
+        vpMatrix LVJ = ((*L)*cVo*oJo);
+        vpMatrix LVJTLVJ = (LVJ).AtA();
+        vpMatrix LVJTR;
+        computeJTR(LVJ, *R, LVJTR);
+        v = -lambda*LVJTLVJ.pseudoInverse(1e-16)*LVJTR;
+        v = cVo * v;
+    }
+
+    cMoPrev = cMo;
     cMo = vpExponentialMap::direct(v).inverse() * cMo;
     ctTc0 = vpExponentialMap::direct(v).inverse() * ctTc0;
     
     iter++;
     
-    delete J;
+    delete L;
     delete R;
   }
   
   if(computeCovariance){
     vpMatrix D;
     D.diag(w_true);
-    covarianceMatrix = vpMatrix::computeCovarianceMatrix(J_true,v,-lambda*R_true,D);
+
+    // Note that here the covariance is computed on cMoPrev for time computation efficiency
+    if(isoJoIdentity){
+        computeCovarianceMatrix(cMoPrev,m_error,L_true,D);
+    }
+    else{
+        computeCovarianceMatrix(cMoPrev,m_error,LVJ_true,D);
+    }
   }
 }
 
@@ -656,11 +781,14 @@ vpMbEdgeKltTracker::computeVVS(const vpImage<unsigned char>& I, const unsigned i
 void
 vpMbEdgeKltTracker::track(const vpImage<unsigned char>& I)
 { 
-  unsigned int nbInfos;
-  unsigned int nbFaceUsed;
+  unsigned int nbInfos  = 0;
+  unsigned int nbFaceUsed = 0;
   vpColVector w_klt;
-  
-  vpMbKltTracker::preTracking(I, nbInfos, nbFaceUsed);
+
+  try{
+    vpMbKltTracker::preTracking(I, nbInfos, nbFaceUsed);
+  }
+  catch(...){}
   
   if(nbInfos >= 4)
     vpMbKltTracker::computeVVS(nbInfos, w_klt);
@@ -673,22 +801,11 @@ vpMbEdgeKltTracker::track(const vpImage<unsigned char>& I)
  
   vpColVector w_mbt;
   computeVVS(I, nbInfos, w_mbt, w_klt);
-  
+
   if(postTracking(I, w_mbt, w_klt)){
     vpMbKltTracker::reinit(I);
     
     initPyramid(I, Ipyramid);
-  
-    unsigned int n = 0;
-    for(unsigned int i = 0; i < vpMbKltTracker::faces.size() ; i++){
-        if(vpMbKltTracker::faces[i]->isVisible()){
-          vpMbEdgeTracker::faces[i]->isvisible = true;
-          n++;
-        }
-        else
-          vpMbEdgeTracker::faces[i]->isvisible = false;
-    }
-    vpMbEdgeTracker::nbvisiblepolygone = n;
     
     unsigned int i = (unsigned int)scales.size();
     do {
@@ -709,6 +826,7 @@ vpMbEdgeKltTracker::trackFirstLoop(const vpImage<unsigned char>& I, vpColVector 
 {
   vpMbtDistanceLine *l ;
   vpMbtDistanceCylinder *cy ;
+  vpMbtDistanceCircle *ci ;
 
   if(lvl  >= scales.size() || !scales[lvl]){
     throw vpException(vpException::dimensionError, "_lvl not used.");
@@ -731,8 +849,8 @@ vpMbEdgeKltTracker::trackFirstLoop(const vpImage<unsigned char>& I, vpColVector 
     l->computeInteractionMatrixError(cMo);
     
     double fac = 1;
-    for(std::list<int>::const_iterator it = l->Lindex_polygon.begin(); it!=l->Lindex_polygon.end(); ++it){
-      int index = *it;
+    for(std::list<int>::const_iterator itindex = l->Lindex_polygon.begin(); itindex!=l->Lindex_polygon.end(); ++itindex){
+      int index = *itindex;
       if (l->hiddenface->isAppearing((unsigned int)index)) {
         fac = 0.2;
         break;
@@ -784,21 +902,42 @@ vpMbEdgeKltTracker::trackFirstLoop(const vpImage<unsigned char>& I, vpColVector 
 
     n+= cy->nbFeature ;
   }
+
+  for(std::list<vpMbtDistanceCircle*>::const_iterator it=circles[scaleLevel].begin(); it!=circles[scaleLevel].end(); ++it){
+    ci = *it;
+    ci->computeInteractionMatrixError(cMo);
+    double fac = 1.0;
+
+    std::list<vpMeSite>::const_iterator itCir;
+    if (ci->meEllipse != NULL) {
+      itCir = ci->meEllipse->getMeList().begin();
+    }
+
+    for(unsigned int i=0 ; i < ci->nbFeature ; i++){
+      factor[n+i] = fac;
+      vpMeSite site = *itCir;
+      if (site.getState() != vpMeSite::NO_SUPPRESSION) factor[n+i] = 0.2;
+      ++itCir;
+    }
+
+    n+= ci->nbFeature ;
+  }
   
   return nbrow;
 }
 
 void 
 vpMbEdgeKltTracker::trackSecondLoop(const vpImage<unsigned char>& I,  vpMatrix &L, vpColVector &error,
-                                    vpHomogeneousMatrix& cMo, const unsigned int lvl)
+                                    vpHomogeneousMatrix& cMo_, const unsigned int lvl)
 {
   vpMbtDistanceLine* l;
   vpMbtDistanceCylinder *cy ;
-  
+  vpMbtDistanceCircle *ci ;
+
   unsigned int n = 0 ;
   for(std::list<vpMbtDistanceLine*>::const_iterator it=lines[lvl].begin(); it!=lines[lvl].end(); ++it){
     l = *it;
-    l->computeInteractionMatrixError(cMo) ;
+    l->computeInteractionMatrixError(cMo_) ;
     for (unsigned int i=0 ; i < l->nbFeature ; i++){
       for (unsigned int j=0; j < 6 ; j++){
         L[n+i][j] = l->L[i][j];
@@ -810,27 +949,38 @@ vpMbEdgeKltTracker::trackSecondLoop(const vpImage<unsigned char>& I,  vpMatrix &
   
   for(std::list<vpMbtDistanceCylinder*>::const_iterator it=cylinders[lvl].begin(); it!=cylinders[lvl].end(); ++it){
     cy = *it;
-    cy->computeInteractionMatrixError(cMo, I) ;
+    cy->computeInteractionMatrixError(cMo_, I) ;
     for(unsigned int i=0 ; i < cy->nbFeature ; i++){
       for(unsigned int j=0; j < 6 ; j++){
         L[n+i][j] = cy->L[i][j];
         error[n+i] = cy->error[i];
       }
     }
-
     n+= cy->nbFeature ;
+  }
+  for(std::list<vpMbtDistanceCircle*>::const_iterator it=circles[scaleLevel].begin(); it!=circles[scaleLevel].end(); ++it){
+    ci = *it;
+    ci->computeInteractionMatrixError(cMo) ;
+    for(unsigned int i=0 ; i < ci->nbFeature ; i++){
+      for(unsigned int j=0; j < 6 ; j++){
+        L[n+i][j] = ci->L[i][j];
+        error[n+i] = ci->error[i];
+      }
+    }
+
+    n+= ci->nbFeature ;
   }
 }
 
 /*!
   Set the camera parameters
 
-  \param cam : the new camera parameters
+  \param camera : the new camera parameters
 */
 void
-vpMbEdgeKltTracker::setCameraParameters(const vpCameraParameters& cam)
+vpMbEdgeKltTracker::setCameraParameters(const vpCameraParameters& camera)
 {
-  this->cam = cam;
+  this->cam = camera;
   
   vpMbEdgeTracker::setCameraParameters(cam);
   vpMbKltTracker::setCameraParameters(cam);
@@ -839,71 +989,104 @@ vpMbEdgeKltTracker::setCameraParameters(const vpCameraParameters& cam)
 /*!
   Initialise a new face from the coordinates given in parameter.
 
-  \param corners : Coordinates of the corners of the face in the object frame.
-  \param indexFace : index of the face (depends on the vrml file organization).
+  \param polygon : The polygon describing the set of lines that has to be tracked.
 */
 void
-vpMbEdgeKltTracker::initFaceFromCorners(const std::vector<vpPoint>& corners, const unsigned int indexFace)
+vpMbEdgeKltTracker::initFaceFromCorners(vpMbtPolygon &polygon)
 {
-  vpMbEdgeTracker::initFaceFromCorners(corners, indexFace);
-  vpMbKltTracker::initFaceFromCorners(corners, indexFace);
+  vpMbEdgeTracker::initFaceFromCorners(polygon);
+  vpMbKltTracker::initFaceFromCorners(polygon);
+}
+/*!
+  Initialise a new face from the coordinates given in parameter.
+
+  \param polygon : The polygon describing the set of lines that has to be tracked.
+*/
+void
+vpMbEdgeKltTracker::initFaceFromLines(vpMbtPolygon &polygon)
+{
+  vpMbEdgeTracker::initFaceFromLines(polygon);
+  vpMbKltTracker::initFaceFromLines(polygon);
+}
+
+/*!
+  Add a circle to track from its center, 3 points (including the center) defining the plane that contain
+  the circle and its radius.
+
+  \param p1 : Center of the circle.
+  \param p2,p3 : Two points on the plane containing the circle. With the center of the circle we have 3 points
+  defining the plane that contains the circle.
+  \param radius : Radius of the circle.
+  \param idFace : Id of the face associated to the circle.
+  \param name : The optional name of the circle.
+*/
+void
+vpMbEdgeKltTracker::initCircle(const vpPoint& p1, const vpPoint &p2, const vpPoint &p3, const double radius,
+    const int idFace, const std::string &name)
+{
+  vpMbEdgeTracker::initCircle(p1, p2, p3, radius, idFace, name);
 }
 
 /*!
   Add a cylinder to track from tow points on the axis (defining the length of
   the cylinder) and its radius.
 
-  \param _p1 : First point on the axis.
-  \param _p2 : Second point on the axis.
-  \param _radius : Radius of the cylinder.
-  \param _indexCylinder : Index of the cylinder.
+  \param p1 : First point on the axis.
+  \param p2 : Second point on the axis.
+  \param radius : Radius of the cylinder.
+  \param idFace : Id of the face associated to the cylinder.
+  \param name : The optional name of the cylinder.
 */
-void    
-vpMbEdgeKltTracker::initCylinder(const vpPoint& _p1, const vpPoint _p2, const double _radius, const unsigned int _indexCylinder)
+void
+vpMbEdgeKltTracker::initCylinder(const vpPoint& p1, const vpPoint &p2, const double radius, const int idFace,
+    const std::string &name)
 {
-  vpMbEdgeTracker::initCylinder(_p1, _p2, _radius, _indexCylinder);
+  vpMbEdgeTracker::initCylinder(p1, p2, radius, idFace, name);
 }
 
 /*!
   Display the 3D model at a given position using the given camera parameters
 
   \param I : The image.
-  \param cMo : Pose used to project the 3D model into the image.
-  \param cam : The camera parameters.
+  \param cMo_ : Pose used to project the 3D model into the image.
+  \param camera : The camera parameters.
   \param col : The desired color.
   \param thickness : The thickness of the lines.
-  \param displayFullModel : boolean to say if all the model has to be displayed.
+  \param displayFullModel : boolean to say if all the model has to be displayed, even the faces that are not visible.
 */
 void
-vpMbEdgeKltTracker::display(const vpImage<unsigned char>& I, const vpHomogeneousMatrix &cMo, const vpCameraParameters & cam,
-                            const vpColor& col , const unsigned int thickness, const bool displayFullModel)
+vpMbEdgeKltTracker::display(const vpImage<unsigned char>& I, const vpHomogeneousMatrix &cMo_, const vpCameraParameters &camera,
+                            const vpColor& col, const unsigned int thickness, const bool displayFullModel)
 {  
-  vpMbtDistanceLine *l ;
-  
   for (unsigned int i = 0; i < scales.size(); i += 1){
     if(scales[i]){
       for(std::list<vpMbtDistanceLine*>::const_iterator it=lines[scaleLevel].begin(); it!=lines[scaleLevel].end(); ++it){
-        l = *it;
-        l->display(I,cMo, cam, col, thickness, displayFullModel);
+        (*it)->display(I,cMo_, camera, col, thickness, displayFullModel);
       }
 
       for(std::list<vpMbtDistanceCylinder*>::const_iterator it=cylinders[scaleLevel].begin(); it!=cylinders[scaleLevel].end(); ++it){
-        (*it)->display(I, cMo, cam, col, thickness);
+        (*it)->display(I, cMo_, camera, col, thickness, displayFullModel);
+      }
+
+      for(std::list<vpMbtDistanceCircle*>::const_iterator it=circles[scaleLevel].begin(); it!=circles[scaleLevel].end(); ++it){
+        (*it)->display(I, cMo_, camera, col, thickness, displayFullModel);
       }
 
       break ; //displaying model on one scale only
     }
   }
   
-  for (unsigned int i = 0; i < vpMbKltTracker::faces.size(); i += 1){
-    if(displayFeatures && vpMbKltTracker::faces[i]->hasEnoughPoints() && vpMbKltTracker::faces[i]->isVisible()) {
-        vpMbKltTracker::faces[i]->displayPrimitive(I);
+  vpMbtDistanceKltPoints *kltpoly;
+  for(std::list<vpMbtDistanceKltPoints*>::const_iterator it=kltPolygons.begin(); it!=kltPolygons.end(); ++it){
+    kltpoly = *it;
+    if(displayFeatures && kltpoly->hasEnoughPoints() && kltpoly->polygon->isVisible()) {
+        kltpoly->displayPrimitive(I);
     }
   }
   
 #ifdef VISP_HAVE_OGRE
-  if(vpMbKltTracker::useOgre)
-    vpMbKltTracker::faces.displayOgre(cMo);
+  if(useOgre)
+    faces.displayOgre(cMo_);
 #endif
 }
 
@@ -911,43 +1094,79 @@ vpMbEdgeKltTracker::display(const vpImage<unsigned char>& I, const vpHomogeneous
   Display the 3D model at a given position using the given camera parameters
 
   \param I : The color image.
-  \param cMo : Pose used to project the 3D model into the image.
-  \param cam : The camera parameters.
+  \param cMo_ : Pose used to project the 3D model into the image.
+  \param camera : The camera parameters.
   \param col : The desired color.
   \param thickness : The thickness of the lines.
-  \param displayFullModel : boolean to say if all the model has to be displayed.
+  \param displayFullModel : boolean to say if all the model has to be displayed, even the faces that are not visible.
 */
 void
-vpMbEdgeKltTracker::display(const vpImage<vpRGBa>& I, const vpHomogeneousMatrix &cMo, const vpCameraParameters & cam,
+vpMbEdgeKltTracker::display(const vpImage<vpRGBa>& I, const vpHomogeneousMatrix &cMo_, const vpCameraParameters &camera,
                             const vpColor& col , const unsigned int thickness, const bool displayFullModel)
-{ 
-  vpMbtDistanceLine *l ;
-  
+{   
   for (unsigned int i = 0; i < scales.size(); i += 1){
     if(scales[i]){
       for(std::list<vpMbtDistanceLine*>::const_iterator it=lines[scaleLevel].begin(); it!=lines[scaleLevel].end(); ++it){
-        l = *it;
-        l->display(I,cMo, cam, col, thickness, displayFullModel);
+        (*it)->display(I,cMo_, camera, col, thickness, displayFullModel);
       }
 
       for(std::list<vpMbtDistanceCylinder*>::const_iterator it=cylinders[scaleLevel].begin(); it!=cylinders[scaleLevel].end(); ++it){
-        (*it)->display(I, cMo, cam, col, thickness);
+        (*it)->display(I, cMo_, camera, col, thickness, displayFullModel);
+      }
+
+      for(std::list<vpMbtDistanceCircle*>::const_iterator it=circles[scaleLevel].begin(); it!=circles[scaleLevel].end(); ++it){
+        (*it)->display(I, cMo_, camera, col, thickness, displayFullModel);
       }
 
       break ; //displaying model on one scale only
     }
   }
   
-  for (unsigned int i = 0; i < vpMbKltTracker::faces.size(); i += 1){
-    if(displayFeatures && vpMbKltTracker::faces[i]->hasEnoughPoints() && vpMbKltTracker::faces[i]->isVisible()) {
-        vpMbKltTracker::faces[i]->displayPrimitive(I);
+  vpMbtDistanceKltPoints *kltpoly;
+  for(std::list<vpMbtDistanceKltPoints*>::const_iterator it=kltPolygons.begin(); it!=kltPolygons.end(); ++it){
+    kltpoly = *it;
+    if(displayFeatures && kltpoly->hasEnoughPoints() && kltpoly->polygon->isVisible()) {
+        kltpoly->displayPrimitive(I);
     }
   }
   
 #ifdef VISP_HAVE_OGRE
-  if(vpMbKltTracker::useOgre)
-    vpMbKltTracker::faces.displayOgre(cMo);
+  if(useOgre)
+    faces.displayOgre(cMo_);
 #endif
+}
+
+/*!
+  Re-initialize the model used by the tracker.
+
+  \param I : The image containing the object to initialize.
+  \param cad_name : Path to the file containing the 3D model description.
+  \param cMo_ : The new vpHomogeneousMatrix between the camera and the new model
+  \param verbose : verbose option to print additional information when loading CAO model files which include other
+  CAO model files.
+*/
+void
+vpMbEdgeKltTracker::reInitModel(const vpImage<unsigned char>& I, const std::string &cad_name,
+                                const vpHomogeneousMatrix& cMo_, const bool verbose)
+{
+  reInitModel(I, cad_name.c_str(), cMo_, verbose);
+}
+
+/*!
+  Re-initialize the model used by the tracker.
+
+  \param I : The image containing the object to initialize.
+  \param cad_name : Path to the file containing the 3D model description.
+  \param cMo_ : The new vpHomogeneousMatrix between the camera and the new model
+  \param verbose : verbose option to print additional information when loading CAO model files which include other
+  CAO model files.
+*/
+void
+vpMbEdgeKltTracker::reInitModel(const vpImage<unsigned char>& I, const char* cad_name,
+                                const vpHomogeneousMatrix& cMo_, const bool verbose)
+{
+  vpMbKltTracker::reInitModel(I, cad_name, cMo_, verbose);
+  vpMbEdgeTracker::reInitModel(I, cad_name, cMo_, verbose);
 }
 
 #endif //VISP_HAVE_OPENCV

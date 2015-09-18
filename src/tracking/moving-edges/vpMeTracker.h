@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpMeTracker.h 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpMeTracker.h 4797 2014-07-23 15:52:28Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -114,6 +114,8 @@ public:
   int outOfImage( int i , int j , int half , int rows , int cols) ;
   int outOfImage( vpImagePoint iP , int half , int rows , int cols) ;
   
+  void reset();
+
   //!Sample pixels at a given interval
   virtual void sample(const vpImage<unsigned char> &image)=0;
   
@@ -135,9 +137,9 @@ public:
   /*!
     Set the moving edges initialisation parameters
   
-    \param me : Moving Edges.
+    \param p_me : Moving Edges.
   */
-  void setMe(vpMe *me) { this->me = me ; }
+  void setMe(vpMe *p_me) { this->me = p_me ; }
   
   /*!
     Return the moving edges initialisation parameters

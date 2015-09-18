@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpDisplayX.h 4323 2013-07-18 09:24:01Z fspindle $
+ * $Id: vpDisplayX.h 5126 2015-01-05 22:07:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -152,7 +152,6 @@ int main()
 class VISP_EXPORT vpDisplayX: public vpDisplay
 {
 private:
-  int num_Xdisplay ;
   Display 	*display ;
   Window   	window ;
   XImage   	*Ximage ;
@@ -169,28 +168,29 @@ private:
   XGCValues     values;
   int size ;
   bool ximage_data_init;
-  
+  unsigned int RMask, GMask, BMask;
+  int RShift, GShift, BShift;
+
 public:
   vpDisplayX() ;
   vpDisplayX(int winx, int winy, const char *title=NULL) ;
   vpDisplayX(vpImage<unsigned char> &I, int winx=-1, int winy=-1,
-	     const char *title=NULL) ;
+             const char *title=NULL) ;
   vpDisplayX(vpImage<vpRGBa> &I, int winx=-1, int winy=-1,
-	     const char *title=NULL) ;
-
+             const char *title=NULL) ;
 
   virtual ~vpDisplayX() ;
 
   void init(vpImage<unsigned char> &I,
-	    int winx=-1, int winy=-1,
-	    const char *title=NULL)  ;
+            int winx=-1, int winy=-1,
+            const char *title=NULL)  ;
   void init(vpImage<vpRGBa> &I,
-	   int winx=-1, int winy=-1,
-	   const char *title=NULL)  ;
+            int winx=-1, int winy=-1,
+            const char *title=NULL)  ;
 
   void init(unsigned int width, unsigned int height,
-	    int winx=-1, int winy=-1 ,
-	    const char *title=NULL) ;
+            int winx=-1, int winy=-1 ,
+            const char *title=NULL) ;
   
   unsigned int getScreenDepth();
   void getScreenSize(unsigned int &width, unsigned int &height);
@@ -263,11 +263,15 @@ protected:
 
   bool getKeyboardEvent(bool blocking=true);
   bool getKeyboardEvent(char *string, bool blocking=true);
+
+  int getMsb(unsigned int u32val);
   bool getPointerMotionEvent (vpImagePoint &ip);
   bool getPointerPosition (vpImagePoint &ip);
 
   inline  unsigned int getWidth() const  { return width ; }
   inline  unsigned int getHeight() const { return height ; }
+
+
 } ; 
 
 

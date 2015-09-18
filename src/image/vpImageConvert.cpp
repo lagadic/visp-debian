@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpImageConvert.cpp 4323 2013-07-18 09:24:01Z fspindle $
+ * $Id: vpImageConvert.cpp 5204 2015-01-24 13:18:18Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -65,8 +65,7 @@ Convert a vpImage\<vpRGBa\> to a vpImage\<unsigned char\>
 \param dest : destination image
 */
 void
-vpImageConvert::convert(const vpImage<unsigned char> &src,
-      vpImage<vpRGBa> & dest)
+vpImageConvert::convert(const vpImage<unsigned char> &src, vpImage<vpRGBa> & dest)
 {
   dest.resize(src.getHeight(), src.getWidth()) ;
 
@@ -80,8 +79,7 @@ Convert a vpImage\<unsigned char\> to a vpImage\<vpRGBa\>
 \param dest : destination image
 */
 void
-vpImageConvert::convert(const vpImage<vpRGBa> &src,
-      vpImage<unsigned char> & dest)
+vpImageConvert::convert(const vpImage<vpRGBa> &src, vpImage<unsigned char> & dest)
 {
   dest.resize(src.getHeight(), src.getWidth()) ;
 
@@ -96,8 +94,7 @@ Convert a vpImage\<float\> to a vpImage\<unsigend char\> by renormalizing betwee
 \param dest : destination image
 */
 void
-vpImageConvert::convert(const vpImage<float> &src,
-          vpImage<unsigned char> &dest)
+vpImageConvert::convert(const vpImage<float> &src, vpImage<unsigned char> &dest)
 {
   dest.resize(src.getHeight(), src.getWidth()) ;
   unsigned int max_xy = src.getWidth()*src.getHeight();
@@ -112,7 +109,7 @@ vpImageConvert::convert(const vpImage<float> &src,
     else if(val > 255)
       dest.bitmap[i] = 255;
     else
-      dest.bitmap[i] = (int)val;
+      dest.bitmap[i] = (unsigned char)val;
   }
 }
 
@@ -122,8 +119,7 @@ Convert a vpImage\<unsigned char\> to a vpImage\<float\> by basic casting.
 \param dest : destination image
 */
 void
-vpImageConvert::convert(const vpImage<unsigned char> &src,
-          vpImage<float> &dest)
+vpImageConvert::convert(const vpImage<unsigned char> &src, vpImage<float> &dest)
 {
   dest.resize(src.getHeight(), src.getWidth()) ;
   for (unsigned int i = 0; i < src.getHeight()*src.getWidth(); i++)
@@ -136,8 +132,7 @@ Convert a vpImage\<double\> to a vpImage\<unsigend char\> by renormalizing betwe
 \param dest : destination image
 */
 void
-vpImageConvert::convert(const vpImage<double> &src,
-          vpImage<unsigned char> &dest)
+vpImageConvert::convert(const vpImage<double> &src, vpImage<unsigned char> &dest)
 {
   dest.resize(src.getHeight(), src.getWidth()) ;
   unsigned int max_xy = src.getWidth()*src.getHeight();
@@ -152,7 +147,7 @@ vpImageConvert::convert(const vpImage<double> &src,
     else if(val > 255)
       dest.bitmap[i] = 255;
     else
-      dest.bitmap[i] = (int)val;
+      dest.bitmap[i] = (unsigned char)val;
   }
 }
 
@@ -162,8 +157,7 @@ Convert a vpImage\<unsigned char\> to a vpImage\<double\> by basic casting.
 \param dest : destination image
 */
 void
-vpImageConvert::convert(const vpImage<unsigned char> &src,
-          vpImage<double> &dest)
+vpImageConvert::convert(const vpImage<unsigned char> &src, vpImage<double> &dest)
 {
   dest.resize(src.getHeight(), src.getWidth()) ;
   for (unsigned int i = 0; i < src.getHeight()*src.getWidth(); i++)
@@ -171,8 +165,12 @@ vpImageConvert::convert(const vpImage<unsigned char> &src,
 }
 
 #ifdef VISP_HAVE_OPENCV
+// Deprecated: will be removed with OpenCV transcient from C to C++ api
 /*!
-  Convert a IplImage to a vpImage\<vpRGBa\>
+  \deprecated Rather then using OpenCV IplImage you should use cv::Mat images.
+  IplImage structure will be removed with OpenCV transcient from C to C++ api.
+
+  Convert an IplImage to a vpImage\<vpRGBa\>.
 
   An IplImage is an OpenCV (Intel's Open source Computer Vision Library)
   image structure. See http://opencvlibrary.sourceforge.net/ for general
@@ -194,7 +192,7 @@ vpImageConvert::convert(const vpImage<unsigned char> &src,
 
 int main()
 {
-#ifdef VISP_HAVE_OPENCV
+#if defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION < 0x020408)
   vpImage<vpRGBa> Ic; // A color image
   IplImage* Ip;
 
@@ -275,7 +273,10 @@ vpImageConvert::convert(const IplImage* src, vpImage<vpRGBa> & dest, bool flip)
 }
 
 /*!
-  Convert a IplImage to a vpImage\<unsigned char\>
+  \deprecated Rather then using OpenCV IplImage you should use cv::Mat images.
+  IplImage structure will be removed with OpenCV transcient from C to C++ api.
+
+  Convert an IplImage to a vpImage\<unsigned char\>.
 
   An IplImage is an OpenCV (Intel's Open source Computer Vision Library)
   image structure. See http://opencvlibrary.sourceforge.net/ for general
@@ -297,7 +298,7 @@ vpImageConvert::convert(const IplImage* src, vpImage<vpRGBa> & dest, bool flip)
 
 int main()
 {
-#ifdef VISP_HAVE_OPENCV
+#if defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION < 0x020408)
   vpImage<unsigned char> Ig; // A grayscale image
   IplImage* Ip;
 
@@ -315,8 +316,7 @@ int main()
   \endcode
 */
 void
-vpImageConvert::convert(const IplImage* src,
-      vpImage<unsigned char> &dest, bool flip)
+vpImageConvert::convert(const IplImage* src, vpImage<unsigned char> &dest, bool flip)
 {
   int nChannel = src->nChannels;
   int depth = src->depth;
@@ -357,26 +357,29 @@ vpImageConvert::convert(const IplImage* src,
   }
   else
   {
-      if(nChannel == 1 && depth == 8){
+    if(nChannel == 1 && depth == 8){
+      dest.resize((unsigned int)height, (unsigned int)width) ;
       unsigned char* beginOutput = (unsigned char*)dest.bitmap;
-        dest.resize((unsigned int)height, (unsigned int)width) ;
-        for (int i =0  ; i < height ; i++){
-          memcpy(beginOutput + lineStep * ( 4 * width * ( height - 1 - i ) ) , src->imageData + i*widthStep,
-                (size_t)width);
-        }
+      for (int i =0  ; i < height ; i++){
+        memcpy(beginOutput + lineStep * ( 4 * width * ( height - 1 - i ) ) , src->imageData + i*widthStep,
+               (size_t)width);
       }
-      if(nChannel == 3 && depth == 8){
-        dest.resize((unsigned int)height, (unsigned int)width) ;
-        //for (int i = 0  ; i < height ; i++){
-          BGRToGrey((unsigned char*)src->imageData /*+ i*widthStep*/,
-                      dest.bitmap /*+ i*width*/, (unsigned int)width, (unsigned int)height/*1*/, true);
-        //}
-      }
+    }
+    if(nChannel == 3 && depth == 8){
+      dest.resize((unsigned int)height, (unsigned int)width) ;
+      //for (int i = 0  ; i < height ; i++){
+      BGRToGrey((unsigned char*)src->imageData /*+ i*widthStep*/,
+                dest.bitmap /*+ i*width*/, (unsigned int)width, (unsigned int)height/*1*/, true);
+      //}
+    }
   }
 }
 
 /*!
-  Convert a vpImage\<vpRGBa\> to a IplImage
+  \deprecated Rather then using OpenCV IplImage you should use cv::Mat images.
+  IplImage structure will be removed with OpenCV transcient from C to C++ api.
+
+  Convert a vpImage\<vpRGBa\> to a IplImage.
 
   An IplImage is an OpenCV (Intel's Open source Computer Vision Library)
   image structure. See http://opencvlibrary.sourceforge.net/ for general
@@ -397,7 +400,7 @@ vpImageConvert::convert(const IplImage* src,
 
 int main()
 {
-#ifdef VISP_HAVE_OPENCV
+#if defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION < 0x020408)
   vpImage<vpRGBa> Ic; // A color image
   IplImage* Ip = NULL;
 
@@ -461,7 +464,10 @@ vpImageConvert::convert(const vpImage<vpRGBa> & src, IplImage *&dest)
 }
 
 /*!
-  Convert a vpImage\<unsigned char\> to a IplImage
+  \deprecated Rather then using OpenCV IplImage you should use cv::Mat images.
+  IplImage structure will be removed with OpenCV transcient from C to C++ api.
+
+  Convert a vpImage\<unsigned char\> to a IplImage.
 
   An IplImage is an OpenCV (Intel's Open source Computer Vision Library)
   image structure. See http://opencvlibrary.sourceforge.net/ for general
@@ -482,7 +488,7 @@ vpImageConvert::convert(const vpImage<vpRGBa> & src, IplImage *&dest)
 
 int main()
 {
-#ifdef VISP_HAVE_OPENCV
+#if defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION < 0x020408)
   vpImage<unsigned char> Ig; // A greyscale image
   IplImage* Ip = NULL;
 
@@ -502,8 +508,7 @@ int main()
   \endcode
 */
 void
-vpImageConvert::convert(const vpImage<unsigned char> & src,
-      IplImage* &dest)
+vpImageConvert::convert(const vpImage<unsigned char> & src, IplImage* &dest)
 {
   unsigned int height = src.getHeight();
   unsigned int width  = src.getWidth();
@@ -535,7 +540,7 @@ vpImageConvert::convert(const vpImage<unsigned char> & src,
 
 #if VISP_HAVE_OPENCV_VERSION >= 0x020100
 /*!
-  Convert a cv::Mat to a vpImage\<vpRGBa\>
+  Convert a cv::Mat to a vpImage\<vpRGBa\>.
 
   A cv::Mat is an OpenCV image class. See http://opencv.willowgarage.com for
   the general OpenCV documentation, or
@@ -577,8 +582,7 @@ int main()
   \endcode
 */
 void
-vpImageConvert::convert(const cv::Mat& src,
-          vpImage<vpRGBa>& dest, const bool flip)
+vpImageConvert::convert(const cv::Mat& src, vpImage<vpRGBa>& dest, const bool flip)
 {
   if(src.type() == CV_8UC4){
     dest.resize((unsigned int)src.rows, (unsigned int)src.cols);
@@ -589,7 +593,7 @@ vpImageConvert::convert(const cv::Mat& src,
         rgbaVal.R = tmp[2];
         rgbaVal.G = tmp[1];
         rgbaVal.B = tmp[0];
-	rgbaVal.A = tmp[3];
+        rgbaVal.A = tmp[3];
         if(flip)
           dest[dest.getRows()-i-1][j] = rgbaVal;
         else
@@ -629,7 +633,7 @@ vpImageConvert::convert(const cv::Mat& src,
 }
 
 /*!
-  Convert a cv::Mat to a vpImage\<unsigned char\>
+  Convert a cv::Mat to a vpImage\<unsigned char\>.
 
   A cv::Mat is an OpenCV image class. See http://opencv.willowgarage.com for
   the general OpenCV documentation, or
@@ -671,8 +675,7 @@ int main()
   \endcode
 */
 void
-vpImageConvert::convert(const cv::Mat& src,
-          vpImage<unsigned char>& dest, const bool flip)
+vpImageConvert::convert(const cv::Mat& src, vpImage<unsigned char>& dest, const bool flip)
 {
   if(src.type() == CV_8UC1){
     dest.resize((unsigned int)src.rows, (unsigned int)src.cols);
@@ -715,7 +718,7 @@ vpImageConvert::convert(const cv::Mat& src,
 
 
 /*!
-  Convert a vpImage\<unsigned char\> to a cv::Mat
+  Convert a vpImage\<unsigned char\> to a cv::Mat.
 
   A cv::Mat is an OpenCV image class. See http://opencv.willowgarage.com for
   the general OpenCV documentation, or
@@ -754,8 +757,7 @@ int main()
   \endcode
 */
 void
-vpImageConvert::convert(const vpImage<vpRGBa> & src,
-          cv::Mat& dest)
+vpImageConvert::convert(const vpImage<vpRGBa> & src, cv::Mat& dest)
 {
   cv::Mat vpToMat((int)src.getRows(), (int)src.getCols(), CV_8UC4, (void*)src.bitmap);
 
@@ -768,7 +770,7 @@ vpImageConvert::convert(const vpImage<vpRGBa> & src,
 }
 
 /*!
-  Convert a vpImage\<unsigned char\> to a cv::Mat
+  Convert a vpImage\<unsigned char\> to a cv::Mat.
 
   A cv::Mat is an OpenCV image class. See http://opencv.willowgarage.com for
   the general OpenCV documentation, or
@@ -799,18 +801,17 @@ int main()
   vpImageIo::read(Ig, "image.pgm");
   // Convert the vpImage<unsigned char> in to greyscale cv::Mat
   vpImageConvert::convert(Ig, Ip);
-  // Treatments on cv::MatIp
+  // Treatments on cv::Mat Ip
   //...
   // Save the cv::Mat on the disk
-  cv::imwrite("image.pgm", Ip);
+  cv::imwrite("image-cv.pgm", Ip);
 #endif
 }
 
   \endcode
 */
 void
-vpImageConvert::convert(const vpImage<unsigned char> & src,
-          cv::Mat& dest, const bool copyData)
+vpImageConvert::convert(const vpImage<unsigned char> & src, cv::Mat& dest, const bool copyData)
 {
   if(copyData){
     cv::Mat tmpMap((int)src.getRows(), (int)src.getCols(), CV_8UC1, (void*)src.bitmap);
@@ -857,7 +858,7 @@ int main()
   \endcode
 */
 void vpImageConvert::convert(const vpImage<unsigned char> & src,
-	yarp::sig::ImageOf< yarp::sig::PixelMono > *dest, const bool copyData)
+                             yarp::sig::ImageOf< yarp::sig::PixelMono > *dest, const bool copyData)
 {
   if(copyData)
   {
@@ -905,7 +906,7 @@ int main()
   \endcode
 */
 void vpImageConvert::convert(const yarp::sig::ImageOf< yarp::sig::PixelMono > *src,
-	vpImage<unsigned char> & dest,const bool copyData )
+                             vpImage<unsigned char> & dest,const bool copyData)
 {
   dest.resize(src->height(),src->width());
   if(copyData)
@@ -948,7 +949,7 @@ int main()
   \endcode
 */	
 void vpImageConvert::convert(const vpImage<vpRGBa> & src,
-	yarp::sig::ImageOf< yarp::sig::PixelRgba > *dest, const bool copyData)
+                             yarp::sig::ImageOf< yarp::sig::PixelRgba > *dest, const bool copyData)
 {
   if(copyData){
     dest->resize(src.getWidth(),src.getHeight());
@@ -996,7 +997,7 @@ int main()
   \endcode
 */
 void vpImageConvert::convert(const yarp::sig::ImageOf< yarp::sig::PixelRgba > *src,
-	vpImage<vpRGBa> & dest,const bool copyData)
+                             vpImage<vpRGBa> & dest,const bool copyData)
 {
   dest.resize(src->height(),src->width());
   if(copyData)
@@ -1037,8 +1038,7 @@ int main()
 }
   \endcode
 */
-void vpImageConvert::convert(const vpImage<vpRGBa> & src,
-	yarp::sig::ImageOf< yarp::sig::PixelRgb > *dest)
+void vpImageConvert::convert(const vpImage<vpRGBa> & src, yarp::sig::ImageOf< yarp::sig::PixelRgb > *dest)
 {
   dest->resize(src.getWidth(),src.getHeight());
   for(unsigned int i = 0 ; i < src.getRows() ; i++){
@@ -1086,8 +1086,7 @@ int main()
 }
   \endcode
 */
-void vpImageConvert::convert(const yarp::sig::ImageOf< yarp::sig::PixelRgb > *src,
-	vpImage<vpRGBa> & dest)
+void vpImageConvert::convert(const yarp::sig::ImageOf< yarp::sig::PixelRgb > *src, vpImage<vpRGBa> & dest)
 {
   dest.resize(src->height(),src->width());
   for(int i = 0 ; i < src->height() ; i++){
@@ -1213,7 +1212,7 @@ void vpImageConvert::convertToJPEGBuffer(unsigned char *src, long unsigned int s
   \sa YUV422ToRGBa()
 */
 void vpImageConvert::YUYVToRGBa(unsigned char* yuyv, unsigned char* rgba,
-        unsigned int width, unsigned int height)
+                                unsigned int width, unsigned int height)
 {
   unsigned char *s;
   unsigned char *d;
@@ -1269,7 +1268,7 @@ void vpImageConvert::YUYVToRGBa(unsigned char* yuyv, unsigned char* rgba,
   \sa YUV422ToRGB()
 */
 void vpImageConvert::YUYVToRGB(unsigned char* yuyv, unsigned char* rgb,
-             unsigned int width, unsigned int height)
+                               unsigned int width, unsigned int height)
 {
   unsigned char *s;
   unsigned char *d;
@@ -1321,8 +1320,7 @@ void vpImageConvert::YUYVToRGB(unsigned char* yuyv, unsigned char* rgb,
 
   \sa YUV422ToGrey()
 */
-void vpImageConvert::YUYVToGrey(unsigned char* yuyv, unsigned char* grey,
-        unsigned int size)
+void vpImageConvert::YUYVToGrey(unsigned char* yuyv, unsigned char* grey, unsigned int size)
 {
   unsigned int i=0,j=0;
 
@@ -1341,9 +1339,7 @@ Convert YUV411 into RGB32
 yuv411 : u y1 y2 v y3 y4
 
 */
-void vpImageConvert::YUV411ToRGBa(unsigned char* yuv,
-          unsigned char* rgba,
-          unsigned int size)
+void vpImageConvert::YUV411ToRGBa(unsigned char* yuv, unsigned char* rgba, unsigned int size)
 {
 #if 1
   //  std::cout << "call optimized ConvertYUV411ToRGBa()" << std::endl;
@@ -1470,9 +1466,7 @@ void vpImageConvert::YUV411ToRGBa(unsigned char* yuv,
 
   \sa YUYVToRGBa()
 */
-void vpImageConvert::YUV422ToRGBa(unsigned char* yuv,
-          unsigned char* rgba,
-          unsigned int size)
+void vpImageConvert::YUV422ToRGBa(unsigned char* yuv, unsigned char* rgba, unsigned int size)
 {
 
 #if 1
@@ -1552,12 +1546,8 @@ Convert YUV411 into Grey
 yuv411 : u y1 y2 v y3 y4
 
 */
-void vpImageConvert::YUV411ToGrey(unsigned char* yuv,
-          unsigned char* grey,
-          unsigned int size)
+void vpImageConvert::YUV411ToGrey(unsigned char* yuv, unsigned char* grey, unsigned int size)
 {
-
-
   unsigned int i=0,j=0;
   while( j < size*3/2)
   {
@@ -1581,9 +1571,7 @@ void vpImageConvert::YUV411ToGrey(unsigned char* yuv,
   \sa YUYVToRGB()
 
 */
-void vpImageConvert::YUV422ToRGB(unsigned char* yuv,
-         unsigned char* rgb,
-         unsigned int size)
+void vpImageConvert::YUV422ToRGB(unsigned char* yuv, unsigned char* rgb, unsigned int size)
 {
 #if 1
   //  std::cout << "call optimized convertYUV422ToRGB()" << std::endl;
@@ -1661,9 +1649,7 @@ void vpImageConvert::YUV422ToRGB(unsigned char* yuv,
   \sa YUYVToGrey()
 
 */
-void vpImageConvert::YUV422ToGrey(unsigned char* yuv,
-          unsigned char* grey,
-          unsigned int size)
+void vpImageConvert::YUV422ToGrey(unsigned char* yuv, unsigned char* grey, unsigned int size)
 {
  unsigned int i=0,j=0;
 
@@ -1681,9 +1667,7 @@ Convert YUV411 into RGB
 yuv411 : u y1 y2 v y3 y4
 
 */
-void vpImageConvert::YUV411ToRGB(unsigned char* yuv,
-         unsigned char* rgb,
-         unsigned int size)
+void vpImageConvert::YUV411ToRGB(unsigned char* yuv, unsigned char* rgb, unsigned int size)
 {
 #if 1
   //  std::cout << "call optimized ConvertYUV411ToRGB()" << std::endl;
@@ -1806,9 +1790,8 @@ void vpImageConvert::YUV411ToRGB(unsigned char* yuv,
   yuv420 : Y(NxM), U(N/2xM/2), V(N/2xM/2)
 
 */
-void vpImageConvert::YUV420ToRGBa(unsigned char* yuv,
-         unsigned char* rgba,
-         unsigned int width, unsigned int height)
+void vpImageConvert::YUV420ToRGBa(unsigned char* yuv, unsigned char* rgba,
+                                  unsigned int width, unsigned int height)
 {
   //  std::cout << "call optimized ConvertYUV420ToRGBa()" << std::endl;
   register int U, V, R, G, B, V2, U5, UV;
@@ -1908,8 +1891,8 @@ void vpImageConvert::YUV420ToRGBa(unsigned char* yuv,
 
 */
 void vpImageConvert::YUV420ToRGB(unsigned char* yuv,
-         unsigned char* rgb,
-         unsigned int width, unsigned int height)
+                                 unsigned char* rgb,
+                                 unsigned int width, unsigned int height)
 {
   //  std::cout << "call optimized ConvertYUV420ToRGB()" << std::endl;
   register int U, V, R, G, B, V2, U5, UV;
@@ -2005,9 +1988,7 @@ void vpImageConvert::YUV420ToRGB(unsigned char* yuv,
   yuv420 : Y(NxM), U(N/2xM/2), V(N/2xM/2)
 
 */
-void vpImageConvert::YUV420ToGrey(unsigned char* yuv,
-         unsigned char* grey,
-         unsigned int size)
+void vpImageConvert::YUV420ToGrey(unsigned char* yuv, unsigned char* grey, unsigned int size)
 {
   for(unsigned int i=0 ; i < size ; i++)
   {
@@ -2021,9 +2002,7 @@ void vpImageConvert::YUV420ToGrey(unsigned char* yuv,
   yuv444 :  u y v
 
 */
-void vpImageConvert::YUV444ToRGBa(unsigned char* yuv,
-         unsigned char* rgba,
-         unsigned int size)
+void vpImageConvert::YUV444ToRGBa(unsigned char* yuv, unsigned char* rgba, unsigned int size)
 {
   register int U, V, R, G, B, V2, U5, UV;
   register int Y;
@@ -2062,9 +2041,7 @@ void vpImageConvert::YUV444ToRGBa(unsigned char* yuv,
   yuv444 : u y v
 
 */
-void vpImageConvert::YUV444ToRGB(unsigned char* yuv,
-         unsigned char* rgb,
-         unsigned int size)
+void vpImageConvert::YUV444ToRGB(unsigned char* yuv, unsigned char* rgb, unsigned int size)
 {
   register int U, V, R, G, B, V2, U5, UV;
   register int Y;
@@ -2103,9 +2080,7 @@ void vpImageConvert::YUV444ToRGB(unsigned char* yuv,
   yuv444 : u y v
 
 */
-void vpImageConvert::YUV444ToGrey(unsigned char* yuv,
-         unsigned char* grey,
-         unsigned int size)
+void vpImageConvert::YUV444ToGrey(unsigned char* yuv, unsigned char* grey, unsigned int size)
 {
   yuv++;
   for(unsigned int i=0 ; i < size ; i++)
@@ -2121,9 +2096,8 @@ void vpImageConvert::YUV444ToGrey(unsigned char* yuv,
   yuv420 : Y(NxM), V(N/2xM/2), U(N/2xM/2)
 
 */
-void vpImageConvert::YV12ToRGBa(unsigned char* yuv,
-         unsigned char* rgba,
-         unsigned int width, unsigned int height)
+void vpImageConvert::YV12ToRGBa(unsigned char* yuv, unsigned char* rgba,
+                                unsigned int width, unsigned int height)
 {
   //  std::cout << "call optimized ConvertYV12ToRGBa()" << std::endl;
   register int U, V, R, G, B, V2, U5, UV;
@@ -2222,9 +2196,8 @@ void vpImageConvert::YV12ToRGBa(unsigned char* yuv,
   yuv420 : Y(NxM),  V(N/2xM/2), U(N/2xM/2)
 
 */
-void vpImageConvert::YV12ToRGB(unsigned char* yuv,
-         unsigned char* rgb,
-         unsigned int height, unsigned int width)
+void vpImageConvert::YV12ToRGB(unsigned char* yuv, unsigned char* rgb,
+                               unsigned int height, unsigned int width)
 {
   //  std::cout << "call optimized ConvertYV12ToRGB()" << std::endl;
   register int U, V, R, G, B, V2, U5, UV;
@@ -2320,9 +2293,8 @@ void vpImageConvert::YV12ToRGB(unsigned char* yuv,
   yuv420 : Y(NxM), V(N/4xM/4), U(N/4xM/4)
 
 */
-void vpImageConvert::YVU9ToRGBa(unsigned char* yuv,
-         unsigned char* rgba,
-         unsigned int width, unsigned int height)
+void vpImageConvert::YVU9ToRGBa(unsigned char* yuv, unsigned char* rgba,
+                                unsigned int width, unsigned int height)
 {
   //  std::cout << "call optimized ConvertYVU9ToRGBa()" << std::endl;
   register int U, V, R, G, B, V2, U5, UV;
@@ -2614,9 +2586,8 @@ void vpImageConvert::YVU9ToRGBa(unsigned char* yuv,
   yuv420 : Y(NxM),  V(N/4xM/4), U(N/4xM/4)
 
 */
-void vpImageConvert::YVU9ToRGB(unsigned char* yuv,
-         unsigned char* rgb,
-         unsigned int height, unsigned int width)
+void vpImageConvert::YVU9ToRGB(unsigned char* yuv, unsigned char* rgb,
+                               unsigned int height, unsigned int width)
 {
   //  std::cout << "call optimized ConvertYVU9ToRGB()" << std::endl;
   register int U, V, R, G, B, V2, U5, UV;
@@ -2892,8 +2863,7 @@ void vpImageConvert::YVU9ToRGB(unsigned char* yuv,
   Convert RGB into RGBa
 
 */
-void vpImageConvert::RGBToRGBa(unsigned char* rgb, unsigned char* rgba,
-             unsigned int size)
+void vpImageConvert::RGBToRGBa(unsigned char* rgb, unsigned char* rgba, unsigned int size)
 {
   unsigned char *pt_input = rgb;
   unsigned char *pt_end = rgb + 3*size;
@@ -2912,8 +2882,7 @@ void vpImageConvert::RGBToRGBa(unsigned char* rgb, unsigned char* rgba,
   Convert RGB into RGBa
 
 */
-void vpImageConvert::RGBaToRGB(unsigned char* rgba, unsigned char* rgb,
-             unsigned int size)
+void vpImageConvert::RGBaToRGB(unsigned char* rgba, unsigned char* rgb, unsigned int size)
 {
   unsigned char *pt_input = rgba;
   unsigned char *pt_end = rgba + 4*size;
@@ -2932,8 +2901,7 @@ void vpImageConvert::RGBaToRGB(unsigned char* rgba, unsigned char* rgb,
   http://www.poynton.com/notes/colour_and_gamma/ColorFAQ.html
 
 */
-void vpImageConvert::RGBToGrey(unsigned char* rgb, unsigned char* grey,
-             unsigned int size)
+void vpImageConvert::RGBToGrey(unsigned char* rgb, unsigned char* grey, unsigned int size)
 {
   unsigned char *pt_input = rgb;
   unsigned char* pt_end = rgb + size*3;
@@ -2953,8 +2921,7 @@ void vpImageConvert::RGBToGrey(unsigned char* rgb, unsigned char* grey,
   http://www.poynton.com/notes/colour_and_gamma/ColorFAQ.html
 
 */
-void vpImageConvert::RGBaToGrey(unsigned char* rgba, unsigned char* grey,
-        unsigned int size)
+void vpImageConvert::RGBaToGrey(unsigned char* rgba, unsigned char* grey, unsigned int size)
 {
   unsigned char *pt_input = rgba;
   unsigned char* pt_end = rgba + size*4;
@@ -2974,8 +2941,7 @@ void vpImageConvert::RGBaToGrey(unsigned char* rgba, unsigned char* grey,
 
 */
 void
-vpImageConvert::GreyToRGBa(unsigned char* grey,
-         unsigned char* rgba, unsigned int size)
+vpImageConvert::GreyToRGBa(unsigned char* grey, unsigned char* rgba, unsigned int size)
 {
   unsigned char *pt_input = grey;
   unsigned char *pt_end = grey + size;
@@ -2998,8 +2964,7 @@ vpImageConvert::GreyToRGBa(unsigned char* grey,
 
 */
 void
-vpImageConvert::GreyToRGB(unsigned char* grey,
-        unsigned char* rgb, unsigned int size)
+vpImageConvert::GreyToRGB(unsigned char* grey, unsigned char* rgb, unsigned int size)
 {
   unsigned char *pt_input = grey;
   unsigned char* pt_end = grey + size;
@@ -3024,7 +2989,7 @@ vpImageConvert::GreyToRGB(unsigned char* grey,
 */
 void
 vpImageConvert::BGRToRGBa(unsigned char * bgr, unsigned char * rgba,
-        unsigned int width, unsigned int height, bool flip)
+                          unsigned int width, unsigned int height, bool flip)
 {
   //if we have to flip the image, we start from the end last scanline so the
   //step is negative
@@ -3062,7 +3027,7 @@ vpImageConvert::BGRToRGBa(unsigned char * bgr, unsigned char * rgba,
 */
 void
 vpImageConvert::BGRToGrey(unsigned char * bgr, unsigned char * grey,
-        unsigned int width, unsigned int height, bool flip)
+                          unsigned int width, unsigned int height, bool flip)
 {
   //if we have to flip the image, we start from the end last scanline so the
   //step is negative
@@ -3097,7 +3062,7 @@ vpImageConvert::BGRToGrey(unsigned char * bgr, unsigned char * grey,
 */
 void
 vpImageConvert::RGBToRGBa(unsigned char * rgb, unsigned char * rgba,
-        unsigned int width, unsigned int height, bool flip)
+                          unsigned int width, unsigned int height, bool flip)
 {
   //if we have to flip the image, we start from the end last scanline so the
   //step is negative
@@ -3132,7 +3097,7 @@ vpImageConvert::RGBToRGBa(unsigned char * rgb, unsigned char * rgba,
 */
 void
 vpImageConvert::RGBToGrey(unsigned char * rgb, unsigned char * grey,
-        unsigned int width, unsigned int height, bool flip)
+                          unsigned int width, unsigned int height, bool flip)
 {
   //if we have to flip the image, we start from the end last scanline so the
   //step is negative
@@ -3206,8 +3171,7 @@ void vpImageConvert::computeYCbCrLUT()
 
 
 */
-void vpImageConvert::YCbCrToRGB(unsigned char *ycbcr, unsigned char *rgb,
-        unsigned int size)
+void vpImageConvert::YCbCrToRGB(unsigned char *ycbcr, unsigned char *rgb, unsigned int size)
 {
   unsigned char *cbv;
   unsigned char *crv;
@@ -3265,8 +3229,7 @@ void vpImageConvert::YCbCrToRGB(unsigned char *ycbcr, unsigned char *rgb,
 
 
 */
-void vpImageConvert::YCbCrToRGBa(unsigned char *ycbcr, unsigned char *rgba,
-         unsigned int size)
+void vpImageConvert::YCbCrToRGBa(unsigned char *ycbcr, unsigned char *rgba, unsigned int size)
 {
   unsigned char *cbv;
   unsigned char *crv;
@@ -3321,9 +3284,7 @@ void vpImageConvert::YCbCrToRGBa(unsigned char *ycbcr, unsigned char *rgba,
   - In grey format, each pixel is coded using 8 bytes.
 
 */
-void vpImageConvert::YCbCrToGrey(unsigned char* yuv,
-          unsigned char* grey,
-          unsigned int size)
+void vpImageConvert::YCbCrToGrey(unsigned char* yuv, unsigned char* grey, unsigned int size)
 {
  unsigned int i=0,j=0;
 
@@ -3353,8 +3314,7 @@ void vpImageConvert::YCbCrToGrey(unsigned char* yuv,
     Byte 2: Blue
 
 */
-void vpImageConvert::YCrCbToRGB(unsigned char *ycrcb, unsigned char *rgb,
-        unsigned int size)
+void vpImageConvert::YCrCbToRGB(unsigned char *ycrcb, unsigned char *rgb, unsigned int size)
 {
   unsigned char *cbv;
   unsigned char *crv;
@@ -3410,8 +3370,7 @@ void vpImageConvert::YCrCbToRGB(unsigned char *ycrcb, unsigned char *rgb,
 
 
 */
-void vpImageConvert::YCrCbToRGBa(unsigned char *ycrcb, unsigned char *rgba,
-         unsigned int size)
+void vpImageConvert::YCrCbToRGBa(unsigned char *ycrcb, unsigned char *rgba, unsigned int size)
 {
   unsigned char *cbv;
   unsigned char *crv;
@@ -3485,10 +3444,10 @@ int main()
   \endcode
 */
 void vpImageConvert::split(const vpImage<vpRGBa> &src,
-                    vpImage<unsigned char>* pR,
-                    vpImage<unsigned char>* pG,
-                    vpImage<unsigned char>* pB,
-                    vpImage<unsigned char>* pa)
+                           vpImage<unsigned char>* pR,
+                           vpImage<unsigned char>* pG,
+                           vpImage<unsigned char>* pB,
+                           vpImage<unsigned char>* pa)
 {
   register size_t n = src.getNumberOfPixel();
   unsigned int height = src.getHeight();
@@ -3549,8 +3508,7 @@ void vpImageConvert::split(const vpImage<vpRGBa> &src,
   \param size : The image size or the number of pixels.
 
 */
-void vpImageConvert::MONO16ToGrey(unsigned char *grey16, unsigned char *grey,
-          unsigned int size)
+void vpImageConvert::MONO16ToGrey(unsigned char *grey16, unsigned char *grey, unsigned int size)
 {
   register int i = (((int)size)<<1)-1;
   register int j = (int)size-1;
@@ -3572,8 +3530,7 @@ void vpImageConvert::MONO16ToGrey(unsigned char *grey16, unsigned char *grey,
   \param size : The image size or the number of pixels.
 
 */
-void vpImageConvert::MONO16ToRGBa(unsigned char *grey16, unsigned char *rgba,
-          unsigned int size)
+void vpImageConvert::MONO16ToRGBa(unsigned char *grey16, unsigned char *rgba, unsigned int size)
 {
   register int i = (((int)size)<<1)-1;
   register int j = (int)(size*4-1);

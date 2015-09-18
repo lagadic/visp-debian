@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpDisplayGDI.cpp 4174 2013-03-22 10:28:41Z fspindle $
+ * $Id: vpDisplayGDI.cpp 4642 2014-02-05 12:42:30Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -61,17 +61,19 @@ vpDisplayGDI::vpDisplayGDI(): vpDisplayWin32(new vpGDIRenderer()){}
   \brief Constructor : Initialize a display.
 
   \param winx, winy The window is set at position x,y (column index, row index).
-  \param _title  Window's title.
+  \param title  Window's title.
 
 */
-vpDisplayGDI::vpDisplayGDI(int winx, int winy, const char *_title)
+vpDisplayGDI::vpDisplayGDI(int winx, int winy, const char *title)
   : vpDisplayWin32(new vpGDIRenderer())
 {
   windowXPosition = winx;
   windowYPosition = winy;
 
-  if (_title != NULL)
-    strcpy(this->title, _title);
+  if (title != NULL)
+    title_ = std::string(title);
+  else
+    title_ = std::string(" ");
 }
 
 /*!
@@ -81,15 +83,15 @@ vpDisplayGDI::vpDisplayGDI(int winx, int winy, const char *_title)
 
   \param I : image to be displayed (note that image has to be initialized).
   \param winx, winy The window is set at position x,y (column index, row index).
-  \param _title  Window's title.
+  \param title  Window's title.
 
 */
 vpDisplayGDI::vpDisplayGDI(vpImage<vpRGBa> &I,
 			   int winx, int winy,
-			   const char *_title)
+         const char *title)
   : vpDisplayWin32(new vpGDIRenderer())
 {
-  init(I,winx,winy,_title);
+  init(I,winx,winy,title);
 }
 
 /*!
@@ -99,15 +101,15 @@ vpDisplayGDI::vpDisplayGDI(vpImage<vpRGBa> &I,
 
   \param I Image to be displayed (note that image has to be initialized).
   \param winx, winy The window is set at position x,y (column index, row index).
-  \param _title  Window's title.
+  \param title  Window's title.
 
 */
 vpDisplayGDI::vpDisplayGDI(vpImage<unsigned char> &I,
 			   int winx, int winy,
-			   const char *_title)
+         const char *title)
   : vpDisplayWin32(new vpGDIRenderer())
 {
-  init(I,winx,winy,_title);
+  init(I,winx,winy,title);
 }
 
 /*!

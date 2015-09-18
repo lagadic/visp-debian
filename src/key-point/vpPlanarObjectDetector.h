@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpPlanarObjectDetector.h 4303 2013-07-04 14:14:00Z fspindle $
+ * $Id: vpPlanarObjectDetector.h 5203 2015-01-24 09:33:54Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -44,7 +44,7 @@
 
 #include <visp/vpConfig.h>
 
-#if (VISP_HAVE_OPENCV_VERSION >= 0x020000) // Require opencv >= 2.0.0
+#if (VISP_HAVE_OPENCV_VERSION >= 0x020000) && (VISP_HAVE_OPENCV_VERSION < 0x030000) // Require opencv >= 2.0.0 and < 3.0.0
 
 #if (VISP_HAVE_OPENCV_VERSION >= 0x020101) // Require opencv >= 2.1.1
 #  include <opencv2/imgproc/imgproc.hpp>
@@ -69,6 +69,8 @@
   \class vpPlanarObjectDetector
   \ingroup PlanarSurfaceDetector
   \brief Class used to detect a planar surface. 
+
+  \deprecated This class is deprecated with OpenCV 3.0.0 or more recent.
   
   This class allows to learn and recognise a surface in an image based on the 
   Fern Classifier or any other point of interest matching class.

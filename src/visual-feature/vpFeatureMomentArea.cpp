@@ -3,7 +3,7 @@
  * $Id: vpFeatureMomentArea.cpp 3317 2011-09-06 14:14:47Z fnovotny $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -78,21 +78,21 @@ void vpFeatureMomentArea::compute_interaction(){
 		interaction_matrices[0][0][5] = 0.;
 	}
 	else {
-		// Get Xg and Yg
+        // Get Xg and Yg
 		bool found_xgyg;
-		vpMomentGravityCenter& momentGravity = static_cast<vpMomentGravityCenter&>(moments.get("vpMomentGravityCenter",found_xgyg));
+		const vpMomentGravityCenter& momentGravity = static_cast<const vpMomentGravityCenter&>(moments.get("vpMomentGravityCenter",found_xgyg));
 		if (!found_xgyg) throw vpException(vpException::notInitialized,"vpMomentGravityCenter not found");
 
 		bool found_m00;
-		vpMomentArea& areamoment = static_cast<vpMomentArea&>(moments.get("vpMomentArea", found_m00));
+		const vpMomentArea& areamoment = static_cast<const vpMomentArea&>(moments.get("vpMomentArea", found_m00));
 		if (!found_m00) throw vpException(vpException::notInitialized,"vpMomentArea not found");
 
 		double Xg = momentGravity.getXg();
 		double Yg = momentGravity.getYg();
 
 		double a = areamoment.get()[0];	// Area scalar
-    //assert(a==mobj.get(0,0));
-    assert(std::fabs(a-mobj.get(0,0)) < a*std::numeric_limits<double>::epsilon());
+        
+        assert(std::fabs(a-mobj.get(0,0)) < a*std::numeric_limits<double>::epsilon());
 
 		interaction_matrices[0][0][0] = -a*A;
 		interaction_matrices[0][0][1] = -a*B;

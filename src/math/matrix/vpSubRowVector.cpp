@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpSubRowVector.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpSubRowVector.cpp 4632 2014-02-03 17:06:40Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -46,16 +46,10 @@
 #include <visp/vpDebug.h>
 #include <stdlib.h>
 
-    vpSubRowVector::vpSubRowVector(){
-       data=NULL;
-       parent=NULL;
-       rowPtrs=NULL;
-       rowNum=0;
-       colNum=0;
-       pColNum=0;
-       dsize=0;
-       trsize=0;
-    }
+vpSubRowVector::vpSubRowVector()
+  : pColNum(0), parent(NULL)
+{
+}
 
 /*!
   \brief Constructor
@@ -63,8 +57,10 @@
   \param offset : offset where subRowVector start in the parent vector
   \param ncols : size of the subRowVector
 */
-vpSubRowVector::vpSubRowVector(vpRowVector &v, const unsigned int & offset,const unsigned int & ncols){
-    init(v,offset,ncols);
+vpSubRowVector::vpSubRowVector(vpRowVector &v, const unsigned int & offset,const unsigned int & ncols)
+  : pColNum(0), parent(NULL)
+{
+  init(v, offset, ncols);
 }
 
 /*!

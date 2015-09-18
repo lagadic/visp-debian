@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpKeyPointSurf.h 4201 2013-04-08 08:20:47Z fspindle $
+ * $Id: vpKeyPointSurf.h 5205 2015-01-26 08:56:41Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -58,10 +58,9 @@
 #include <list>
 #include <vector>
 
-#if defined (VISP_HAVE_OPENCV_NONFREE)
+#if defined (VISP_HAVE_OPENCV_NONFREE) && (VISP_HAVE_OPENCV_VERSION < 0x030000)
 
-
-#if (VISP_HAVE_OPENCV_VERSION >= 0x020400) // Require opencv >= 2.4.0
+#if (VISP_HAVE_OPENCV_VERSION >= 0x020400)  // Require opencv >= 1.1.0 < 3.0.0
 #  include <opencv2/features2d/features2d.hpp>
 #  include <opencv2/legacy/compat.hpp>
 #  include <opencv2/nonfree/nonfree.hpp>
@@ -76,14 +75,17 @@
   \class vpKeyPointSurf
 
   \brief Class that implements the SURF key points and technics thanks
-  to the OpenCV library.
+  to OpenCV library.
+
+  \deprecated This class is deprecated with OpenCV 3.0.0 or more recent.
+  You should rather use vpKeyPoint class that is more generic.
 
   The goal of this class is to provide a tool to match points from a
   model and points belonging to an image in which the model appears.
   The coordinates of the different reference points and matched points
   are given in pixel thanks to the class vpImagePoint. In this
   documentation we do not explain the SURF technics. So if you want to
-  learn more about it you can refere to the following article :
+  learn more about it you can refer to the following article :
   Herbert Bay, Tinne Tuytelaars and Luc Van Gool "SURF: Speeded Up
   Robust Features", Proceedings of the 9th European Conference on
   Computer Vision, Springer LNCS volume 3951, part 1, pp 404--417,
@@ -105,31 +107,29 @@
 #include <visp/vpImage.h>
 #include <visp/vpKeyPointSurf.h>
 
-#if VISP_HAVE_OPENCV_VERSION >= 0x010100 // Surf key-points only available since OpenCV-1.1.0
 int main()
 {
+#if defined (VISP_HAVE_OPENCV_NONFREE) && (VISP_HAVE_OPENCV_VERSION < 0x030000)
   vpImage<unsigned char> Ireference;
   vpImage<unsigned char> Icurrent;
   vpKeyPointSurf surf;
 
-  //First grab the reference image Ireference
+  // First grab the reference image Ireference
 
-  //Build the reference SURF points.
+  // Build the reference SURF points.
   surf.buildReference(Ireference);
 
-  //Then grab another image which represents the current image Icurrent
+  // Then grab another image which represents the current image Icurrent
 
-  //Match points between the reference points and the SURF points computed in the current image.
+  // Match points between the reference points and the SURF points computed in the current image.
   surf.matchPoint(Icurrent);
 
-  //Display the matched points
+  // Display the matched points
   surf.display(Ireference, Icurrent);
 
   return (0);
-}
-#else
-int main() {}
 #endif
+}
   \endcode
 
   It is also possible to create the reference thanks to only a part of the
@@ -142,9 +142,9 @@ int main() {}
 #include <visp/vpDisplay.h>
 #include <visp/vpKeyPointSurf.h>
 
-#if VISP_HAVE_OPENCV_VERSION >= 0x010100 // Surf key-points only available since OpenCV-1.1.0
 int main()
 {
+#if defined (VISP_HAVE_OPENCV_NONFREE) && (VISP_HAVE_OPENCV_VERSION < 0x030000)
   vpImage<unsigned char> Ireference;
   vpImage<unsigned char> Icurrent;
   vpKeyPointSurf surf;
@@ -183,11 +183,11 @@ int main()
   surf.display(Ireference, Icurrent);
 
   return(0);
-}
-#else
-int main() {}
 #endif
+}
   \endcode
+
+  This class is also described in \ref tutorial-matching.
 */
 
 class VISP_EXPORT vpKeyPointSurf : public vpBasicKeyPoint
@@ -239,10 +239,10 @@ class VISP_EXPORT vpKeyPointSurf : public vpBasicKeyPoint
       Computer Vision, Springer LNCS volume 3951, part 1, pp 404--417,
       2006.
 
-      \param hessianThreshold : Desired hessian threshold value.
+      \param hessian_threshold : Desired hessian threshold value.
     */
-    void setHessianThreshold (double hessianThreshold) {
-			this->hessianThreshold = hessianThreshold;
+    void setHessianThreshold (double hessian_threshold) {
+      this->hessianThreshold = hessian_threshold;
 			params = cvSURFParams(this->hessianThreshold, this->descriptorType);
     } ;
 
@@ -250,10 +250,10 @@ class VISP_EXPORT vpKeyPointSurf : public vpBasicKeyPoint
 
       Sets the type of descriptors to use.
 
-      \param descriptorType : Type of descriptor to use.
+      \param descriptor_type : Type of descriptor to use.
     */
-    void setDescriptorType (vpDescriptorType descriptorType) {
-			this->descriptorType = descriptorType;
+    void setDescriptorType (vpDescriptorType descriptor_type) {
+      this->descriptorType = descriptor_type;
 			params = cvSURFParams(this->hessianThreshold, this->descriptorType);
     } ;
 

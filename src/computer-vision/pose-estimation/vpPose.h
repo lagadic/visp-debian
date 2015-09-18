@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpPose.h 4303 2013-07-04 14:14:00Z fspindle $
+ * $Id: vpPose.h 5211 2015-01-26 17:44:35Z strinh $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -102,7 +102,7 @@ protected :
 private:
   int vvsIterMax ; //! define the maximum number of iteration in VVS
   //! variable used in the Dementhon approach
-  vpPoint *c3d ;
+  std::vector<vpPoint> c3d ;
   //! Flag used to specify if the covariance matrix has to be computed or not.
   bool computeCovariance;
   //! Covariance matrix
@@ -120,7 +120,7 @@ protected:
   int calculArbreDementhon(vpMatrix &b, vpColVector &U, vpHomogeneousMatrix &cMo) ;
 
 public:
-  //! constructor
+  // constructor
   vpPose() ;
   //! destructor
   virtual ~vpPose() ;
@@ -130,7 +130,7 @@ public:
   void clearPoint() ;
 
   //! compute the pose for a given method
-  void computePose(vpPoseMethodType methode, vpHomogeneousMatrix &cMo) ;
+  bool computePose(vpPoseMethodType methode, vpHomogeneousMatrix &cMo, bool (*func)(vpHomogeneousMatrix *)=NULL) ;
   //! compute the residual (i.e., the quality of the result)
   //! compute the residual (in meter for pose M)
   double computeResidual(const vpHomogeneousMatrix &cMo) const ;
@@ -156,7 +156,7 @@ public:
   //! Levenberg Marquartd non linear minimization approach)
   void poseLowe(vpHomogeneousMatrix & cMo) ;
   //! compute the pose using the Ransac approach 
-  void poseRansac(vpHomogeneousMatrix & cMo) ;  
+  bool poseRansac(vpHomogeneousMatrix & cMo, bool (*func)(vpHomogeneousMatrix *)=NULL) ;
   //! compute the pose using a robust virtual visual servoing approach
   void poseVirtualVSrobust(vpHomogeneousMatrix & cMo) ;
   //! compute the pose using virtual visual servoing approach
@@ -167,10 +167,17 @@ public:
   void setVvsIterMax(int nb) { vvsIterMax = nb ; }
   
   void setRansacNbInliersToReachConsensus(const unsigned int &nbC){ ransacNbInlierConsensus = nbC; }
-  void setRansacThreshold(const double &t){ ransacThreshold = t; }
+  void setRansacThreshold(const double &t) {
+    //Test whether or not t is > 0
+    if(t > 0) {
+      ransacThreshold = t;
+    } else {
+      throw vpException(vpException::badValue, "The Ransac threshold must be positive as we deal with distance.");
+    }
+  }
   void setRansacMaxTrials(const int &rM){ ransacMaxTrials = rM; }
-  unsigned int getRansacNbInliers(){ return (unsigned int) ransacInliers.size(); }
-  std::vector<vpPoint> getRansacInliers(){ return ransacInliers; }
+  unsigned int getRansacNbInliers() const { return (unsigned int) ransacInliers.size(); }
+  std::vector<vpPoint> getRansacInliers() const{ return ransacInliers; }
   
   /*!
     Set if the covaraince matrix has to be computed in the Virtual Visual Servoing approach.

@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpImagePoint.h 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpImagePoint.h 5175 2015-01-15 17:06:07Z nmeriaux $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -55,6 +55,7 @@
 #include <ostream>
 #include <cmath>    // std::fabs
 #include <limits>   // numeric_limits
+#include <vector>
 
 class vpHomography;
 class vpRect;
@@ -96,18 +97,12 @@ class VISP_EXPORT vpImagePoint
     Default constructor that initialize the coordinates of the image
     point to zero.
   */
-  inline vpImagePoint() {
-    i = 0;
-    j = 0;
-  }
+  inline vpImagePoint() : i(0), j(0) {}
   /*!
     Default constructor that initialize the coordinates of the image
-    thanks to the parameters \f$ i \f$ and \f$ j \f$.
+    thanks to the parameters \f$ ii \f$ and \f$ jj \f$.
   */
-  inline vpImagePoint(double i, double j) {
-    this->i = i;
-    this->j = j;
-  }
+  inline vpImagePoint(double ii, double jj) : i(ii), j(jj) {}
   /*!
     Copy constructor.
 
@@ -115,15 +110,12 @@ class VISP_EXPORT vpImagePoint
 
     \param ip : An image point.
   */
-  inline vpImagePoint(const vpImagePoint &ip) {
-    this->i = ip.i;
-    this->j = ip.j;
-  }
+  inline vpImagePoint(const vpImagePoint &ip) : i(ip.i), j(ip.j) {}
   //! Destructor.
   inline virtual ~vpImagePoint() { ; }
 
   /*!
-  
+
     Copy operator.
 
   */
@@ -132,41 +124,63 @@ class VISP_EXPORT vpImagePoint
     this->j = ip.j;
     return *this;
   }
+   vpImagePoint& operator+=(const vpImagePoint &ip);
+
+  /*!
+
+    Operator -=.
+
+  */
+  inline vpImagePoint& operator-=(const vpImagePoint &ip) {
+    this->i -= ip.i;
+    this->j -= ip.j;
+    return *this;
+  }
+  vpImagePoint& operator/=(const double scale);
+  /*!
+
+    Operator *=.
+*/
+  inline vpImagePoint& operator*=(const double scale) {
+    this->i *= scale;
+    this->j *= scale;
+    return *this;
+  }
 
   /*!
 
     Sets the point coordinate corresponding to the \f$ i \f$ axes in
     the frame (i,j).
 
-    \param i : The desired value for the coordinate along the \f$ i \f$ axes.
+    \param ii : The desired value for the coordinate along the \f$ i \f$ axes.
 
     \sa set_j(), set_u(), set_v()
   */
-  inline void set_i(const double i) {  this->i = i ; }
+  inline void set_i(const double ii) {  this->i = ii ; }
 
   /*!
 
     Sets the point coordinate corresponding to the \f$ j \f$ axes in
     the frame (i,j).
 
-    \param j : The desired value for the coordinate along the \f$ j \f$ axes.
+    \param jj : The desired value for the coordinate along the \f$ j \f$ axes.
 
     \sa set_i(), set_u(), set_v()
   */
-  inline void set_j(const double j) {  this->j = j ; }
+  inline void set_j(const double jj) {  this->j = jj ; }
 
   /*!
 
     Sets the point coordinates in the frame (i,j).
 
-    \param i : The desired value for the coordinate along the \f$ i \f$ axes.
-    \param j : The desired value for the coordinate along the \f$ j \f$ axes.
+    \param ii : The desired value for the coordinate along the \f$ i \f$ axes.
+    \param jj : The desired value for the coordinate along the \f$ j \f$ axes.
 
     \sa set_i(), set_j(), set_u(), set_v()
   */
-  inline void set_ij(const double i, const double j) {
-    this->i = i ;
-    this->j = j ;
+  inline void set_ij(const double ii, const double jj) {
+    this->i = ii ;
+    this->j = jj ;
   }
 
   /*!
@@ -260,6 +274,9 @@ class VISP_EXPORT vpImagePoint
   */
   static double distance (const vpImagePoint &iP1, const vpImagePoint &iP2) {
     return(sqrt(vpMath::sqr(iP1.get_i()-iP2.get_i())+vpMath::sqr(iP1.get_j()-iP2.get_j())));}
+
+
+  static vpRect getBBox(const std::vector<vpImagePoint>& ipVec);
     
   /*!
 
@@ -276,268 +293,23 @@ class VISP_EXPORT vpImagePoint
   
   bool inRectangle( const vpRect &rect ) const;
 
+  friend VISP_EXPORT bool operator==( const vpImagePoint &ip1, const vpImagePoint &ip2 );
+  friend VISP_EXPORT bool operator!=( const vpImagePoint &ip1, const vpImagePoint &ip2 );
+  friend VISP_EXPORT vpImagePoint operator+=( const vpImagePoint &ip1, const vpImagePoint &ip2 );
+  friend VISP_EXPORT vpImagePoint operator+( const vpImagePoint &ip1, const vpImagePoint &ip2 );
+  friend VISP_EXPORT vpImagePoint operator+( const vpImagePoint &ip1, const int offset );
+  friend VISP_EXPORT vpImagePoint operator+( const vpImagePoint &ip1, const double offset );
+  friend VISP_EXPORT vpImagePoint operator-( const vpImagePoint &ip1, const vpImagePoint &ip2 );
+  friend VISP_EXPORT vpImagePoint operator-( const vpImagePoint &ip1, const int offset );
+  friend VISP_EXPORT vpImagePoint operator-( const vpImagePoint &ip1, const double offset );
+  friend VISP_EXPORT vpImagePoint operator*( const vpImagePoint &ip1, const double scale );
+  friend VISP_EXPORT vpImagePoint operator/( const vpImagePoint &ip1, const double scale );
+  friend VISP_EXPORT std::ostream& operator<< (std::ostream &os, const vpImagePoint& ip);
+
   vpImagePoint projection(const vpHomography& aHb);
 
  private:
   double i,j;
 };
 
-/*!
-  \relates vpImagePoint
-
-  Returns true if ip1 and ip2 are equal; otherwire returns false.
-
-*/
-VISP_EXPORT inline bool operator==( const vpImagePoint &ip1, 
-				    const vpImagePoint &ip2 ) {
-  //return ( ( ip1.get_i() == ip2.get_i() ) && ( ip1.get_j() == ip2.get_j() ) );
-
-  double i1 = ip1.get_i();
-  double j1 = ip1.get_j();
-  double i2 = ip2.get_i();
-  double j2 = ip2.get_j();
-
-  return (
-	  ( std::fabs(i1-i2) <= std::fabs(vpMath::maximum(i1, i2))*std::numeric_limits<double>::epsilon() )
-	  && 
-	  ( std::fabs(j1-j2) <= std::fabs(vpMath::maximum(j1, j2))*std::numeric_limits<double>::epsilon() )
-	  );
-}
-
-/*!
-
-  \relates vpImagePoint
-
-  Returns true if ip1 and ip2 are different; otherwire returns true.
-
-*/
-VISP_EXPORT inline bool operator!=( const vpImagePoint &ip1, 
-				    const vpImagePoint &ip2 ) {
-  //return ( ( ip1.get_i() != ip2.get_i() ) || ( ip1.get_j() != ip2.get_j() ) );
-  double i1 = ip1.get_i();
-  double j1 = ip1.get_j();
-  double i2 = ip2.get_i();
-  double j2 = ip2.get_j();
-
-  return (
-	  ( std::fabs(i1-i2) > std::fabs(vpMath::maximum(i1, i2))*std::numeric_limits<double>::epsilon() )
-	  || 
-	  ( std::fabs(j1-j2) > std::fabs(vpMath::maximum(j1, j2))*std::numeric_limits<double>::epsilon() )
-	  );
-}
-
-/*!
-
-  \relates vpImagePoint
-
-  Returns a vpImagePoint wich is the sum of \f$ ip1 \f$ and \f$ ip2 \f$.
-
-*/
-VISP_EXPORT inline vpImagePoint operator+( const vpImagePoint &ip1, 
-				           const vpImagePoint &ip2 ) {
-  return ( vpImagePoint(ip1.get_i()+ip2.get_i(), ip1.get_j()+ip2.get_j()));
-}
-/*!
-
-  \relates vpImagePoint
-
-  Returns a vpImagePoint with an offset added to the two coordinates.
-
-  \code
-#include <iostream>
-#include <visp/vpImagePoint.h>
-
-int main()
-{
-  vpImagePoint ip(100, 200); // Create an image point with coordinates i=100, j=200
-  std::cout << "ip: " << ip << std::endl; // coordinates (100, 200)
-  std::cout << "ip+10: " << ip+10 << std::endl; // new coordinates (110, 210)
- 
-  return 0;
-}
-  \endcode
-*/
-VISP_EXPORT inline vpImagePoint operator+( const vpImagePoint &ip1, 
-				           const int offset ) {
-  return ( vpImagePoint(ip1.get_i()+offset, ip1.get_j()+offset));
-}
-/*!
-
-  \relates vpImagePoint
-
-  Returns a vpImagePoint with an offset added to the two coordinates.
-
-  \code
-#include <iostream>
-#include <visp/vpImagePoint.h>
-
-int main()
-{
-  vpImagePoint ip(100, 200); // Create an image point with coordinates i=100, j=200
-  std::cout << "ip: " << ip << std::endl; // coordinates (100, 200)
-  std::cout << "ip+12.34: " << ip+12.34 << std::endl; // new coordinates (112.34, 212.34)
-
-  return 0;
-}
-  \endcode
-*/
-VISP_EXPORT inline vpImagePoint operator+( const vpImagePoint &ip1, 
-				           const double offset ) {
-  return ( vpImagePoint(ip1.get_i()+offset, ip1.get_j()+offset));
-}
-
-/*!
-
-  \relates vpImagePoint
-
-  Returns a vpImagePoint wich is the difference between \f$ ip1 \f$ and \f$ ip2 \f$.
-
-*/
-VISP_EXPORT inline vpImagePoint operator-( const vpImagePoint &ip1, 
-				           const vpImagePoint &ip2 ) {
-  return ( vpImagePoint(ip1.get_i()-ip2.get_i(), ip1.get_j()-ip2.get_j()));
-}
-/*!
-
-  \relates vpImagePoint
-
-  Returns a vpImagePoint with an offset substracted to the two coordinates.
-
-  \code
-#include <iostream>
-#include <visp/vpImagePoint.h>
-
-int main()
-{
-  vpImagePoint ip(100, 200); // Create an image point with coordinates i=100, j=200
-  std::cout << "ip: " << ip << std::endl; // coordinates (100, 200)
-  std::cout << "ip-10: " << ip-10 << std::endl; // new coordinates (90, 190)
-
-  return 0;
-}
-  \endcode
-*/
-VISP_EXPORT inline vpImagePoint operator-( const vpImagePoint &ip1, 
-				           const int offset ) {
-  return ( vpImagePoint(ip1.get_i()-offset, ip1.get_j()-offset));
-}
-/*!
-
-  \relates vpImagePoint
-
-  Returns a vpImagePoint with an offset substracted to the two coordinates.
-
-  \code
-#include <iostream>
-#include <visp/vpImagePoint.h>
-
-int main()
-{
-  vpImagePoint ip(100, 200); // Create an image point with coordinates i=100, j=200
-  std::cout << "ip: " << ip << std::endl; // coordinates (100, 200)
-  std::cout << "ip-12.34: " << ip-12.34 << std::endl; // new coordinates (87.66, 187.66)
-
-  return 0;
-}
-  \endcode
-*/
-VISP_EXPORT inline vpImagePoint operator-( const vpImagePoint &ip1, 
-				           const double offset ) {
-  return ( vpImagePoint(ip1.get_i()-offset, ip1.get_j()-offset));
-}
-/*!
-
-  \relates vpImagePoint
-
-  Returns a vpImagePoint with coordinates multiplied by a scale factor.
-
-  \code
-#include <iostream>
-#include <visp/vpImagePoint.h>
-
-int main()
-{
-  vpImagePoint ip(100, 200); // Create an image point with coordinates i=100, j=200
-  std::cout << "ip: " << ip << std::endl; // coordinates (100, 200)
-  std::cout << "ip*2: " << ip*2 << std::endl; // new coordinates (200, 400)
-
-  return 0;
-}
-  \endcode
-*/
-VISP_EXPORT inline vpImagePoint operator*( const vpImagePoint &ip1, 
-				           const double scale ) {
-  return ( vpImagePoint(ip1.get_i()*scale, ip1.get_j()*scale));
-}
-/*!
-
-  \relates vpImagePoint
-
-  Returns a vpImagePoint with coordinates divided by a scale factor.
-
-  \code
-#include <iostream>
-#include <visp/vpImagePoint.h>
-
-int main()
-{
-  vpImagePoint ip(100, 200); // Create an image point with coordinates i=100, j=200
-  std::cout << "ip: " << ip << std::endl; // coordinates (100, 200)
-  std::cout << "ip/2: " << ip/2 << std::endl; // new coordinates (50, 100)
-
-  return 0;
-}
-  \endcode
-*/
-VISP_EXPORT inline vpImagePoint operator/( const vpImagePoint &ip1, 
-				           const double scale ) {
-  return ( vpImagePoint(ip1.get_i()/scale, ip1.get_j()/scale));
-}
-
-/*!
-
-  \relates vpImagePoint
-
-  Writes the image point coordinates \e ip to the stream \e os, and
-  returns a reference to the stream. Writes the first coordinate along
-  the \e i axis and then the second one along the \e j axis. The
-  coordinates are separated by a comma.
-
-  The following code
-  \code
-#include <iostream>
-
-#include <visp/vpImagePoint.h>
-int main()
-{
-  vpImagePoint ip;
-
-  ip.set_i(10);
-  ip.set_j(11.1);
-
-  std::cout << "Image point with coordinates: " << ip << std::endl;
-
-  return 0;
-}
-  \endcode
-
-  The previous sample code produces the output:
-  \verbatim
-Image point with coordinates: 10, 11.1
-  \endverbatim
-*/
-VISP_EXPORT inline std::ostream& operator<< (std::ostream &os,
-					     const vpImagePoint& ip)
- {
-  os << ip.get_i() << ", " << ip.get_j();
-  return os;
-}
-
-
 #endif
-
-/*
- * Local variables:
- * c-basic-offset: 2
- * End:
- */

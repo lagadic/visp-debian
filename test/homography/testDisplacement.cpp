@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: testDisplacement.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: testDisplacement.cpp 4833 2014-08-28 14:21:46Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -63,6 +63,9 @@
 // List of allowed command line options
 #define GETOPTARGS	"h"
 
+void usage(const char *name, const char *badparam);
+bool getOptions(int argc, const char **argv);
+
 /*!
 
   Print the program options.
@@ -93,15 +96,15 @@ OPTIONS:                                               Default\n\
 */
 bool getOptions(int argc, const char **argv)
 {
-  const char *optarg;
+  const char *optarg_;
   int	c;
-  while ((c = vpParseArgv::parse(argc, argv, GETOPTARGS, &optarg)) > 1) {
+  while ((c = vpParseArgv::parse(argc, argv, GETOPTARGS, &optarg_)) > 1) {
 
     switch (c) {
     case 'h': usage(argv[0], NULL); return false; break;
 
     default:
-      usage(argv[0], optarg);
+      usage(argv[0], optarg_);
       return false; break;
     }
   }
@@ -110,7 +113,7 @@ bool getOptions(int argc, const char **argv)
     // standalone param or error
     usage(argv[0], NULL);
     std::cerr << "ERROR: " << std::endl;
-    std::cerr << "  Bad argument " << optarg << std::endl << std::endl;
+    std::cerr << "  Bad argument " << optarg_ << std::endl << std::endl;
     return false;
   }
 
@@ -121,131 +124,114 @@ bool getOptions(int argc, const char **argv)
 int
 main(int argc, const char ** argv)
 {
-  // Read the command line options
-  if (getOptions(argc, argv) == false) {
-    exit (-1);
+  try {
+    // Read the command line options
+    if (getOptions(argc, argv) == false) {
+      exit (-1);
+    }
+
+    {
+      vpThetaUVector tu(vpMath::rad(90), vpMath::rad(120), vpMath::rad(45)) ;
+
+      std::cout << "Initialization " <<std::endl ;
+      // std::cout << tu << std::endl ;
+
+      std::cout << "From vpThetaUVector to vpRotationMatrix " << std::endl ;
+      vpRotationMatrix R(tu)  ;
+
+      // pure rotation
+      vpHomogeneousMatrix M ;
+      M.insert(R) ;
+
+      std::cout << "M" <<std::endl <<M << std::endl ;
+      vpPlane p(0,0,1,1) ;
+
+      vpHomography H(M,p) ;
+
+      std::cout << "H" <<std::endl <<H << std::endl ;
+
+      vpColVector n ;
+      vpTranslationVector T ;
+
+      H.computeDisplacement(R,T,n) ;
+
+      std::cout << "R" <<std::endl << R ;
+      std::cout << "T" <<std::endl << T.t() << std::endl;
+      std::cout << "n" <<std::endl << n.t() << std::endl;
+    }
+    std::cout <<"------------------------------------------------------" << std::endl ;
+
+    {
+      vpThetaUVector tu(vpMath::rad(90), vpMath::rad(120), vpMath::rad(45)) ;
+
+      std::cout << "Initialization " << std::endl ;
+      // std::cout << tu << std::endl ;
+
+      std::cout << "From vpThetaUVector to vpRotationMatrix " << std::endl ;
+      vpRotationMatrix R(tu)  ;
+
+      // pure rotation
+      vpHomogeneousMatrix M ;
+      M.insert(R) ;
+
+      M[0][3] = 0.21 ;
+      M[1][3] = 0.31 ;
+      M[2][3] = 0.5 ;
+
+      std::cout << "M" << std::endl << M << std::endl ;
+      vpPlane p(0,0,1,1) ;
+
+      vpHomography H(M,p) ;
+
+      std::cout << "H" << std::endl << H << std::endl ;
+
+      vpColVector n ;
+      vpTranslationVector T ;
+
+      H.computeDisplacement(R,T,n) ;
+
+      std::cout << "R" <<std::endl << R ;
+      std::cout << "T" <<std::endl << T.t() << std::endl;
+      std::cout << "n" <<std::endl << n.t() << std::endl;
+    }
+
+    std::cout <<"------------------------------------------------------" << std::endl ;
+    {
+      vpThetaUVector  tu(vpMath::rad(-190), vpMath::rad(12), vpMath::rad(-45)) ;
+
+      vpRotationMatrix R(tu)  ;
+
+      // pure rotation
+      vpHomogeneousMatrix M ;
+      M.insert(R) ;
+
+      M[0][3] =  0.21 ;
+      M[1][3] = -0.31 ;
+      M[2][3] =  0.5 ;
+
+      std::cout << "M" << std::endl << M << std::endl ;
+      vpPlane p(0.4,-0.5,0.5,1) ;
+
+      vpHomography H(M,p) ;
+
+      std::cout << "H" << std::endl << H << std::endl ;
+
+      vpColVector n ;
+      vpTranslationVector T ;
+      H.computeDisplacement(R,T,n) ;
+
+      std::cout << "R" <<std::endl << R ;
+      std::cout << "T" <<std::endl << T.t() << std::endl;
+      std::cout << "n" <<std::endl << n.t() << std::endl;
+
+      vpPlane p1(n[0],n[1],n[2],1.0) ;
+      H.buildFrom(R,T,p1) ;
+      std::cout << "H" << std::endl << H << std::endl ;
+    }
+    return 0;
   }
-
-  {
-    vpThetaUVector tu(vpMath::rad(90), vpMath::rad(120), vpMath::rad(45)) ;
-
-    std::cout << "Initialization " <<std::endl ;
-    // std::cout << tu << std::endl ;
-
-
-    std::cout << "From vpThetaUVector to vpRotationMatrix " << std::endl ;
-    vpRotationMatrix R(tu)  ;
-
-
-    // pure rotation
-    vpHomogeneousMatrix M ;
-    M.insert(R) ;
-
-
-
-    std::cout << "M" <<std::endl <<M << std::endl ;
-    vpPlane p(0,0,1,1) ;
-
-    vpHomography H(M,p) ;
-
-    vpTRACE(" ") ;
-    std::cout << "H" <<std::endl <<H << std::endl ;
-
-
-    vpTRACE(" ") ;
-
-    vpColVector n ;
-    vpTranslationVector T ;
-
-    H.computeDisplacement(R,T,n) ;
-
-    std::cout << "R" <<std::endl << R ;
-    std::cout << "T" <<std::endl << T.t()  ;
-    std::cout << "n" <<std::endl << n.t()  ;
-    vpTRACE(" ") ;
-    vpTRACE(" ") ;
-  }
-  std::cout <<"------------------------------------------------------" << std::endl ;
-
-  {
-    vpThetaUVector tu(vpMath::rad(90), vpMath::rad(120), vpMath::rad(45)) ;
-
-    std::cout << "Initialization " <<std::endl ;
-    // std::cout << tu << std::endl ;
-
-
-    std::cout << "From vpThetaUVector to vpRotationMatrix " << std::endl ;
-    vpRotationMatrix R(tu)  ;
-
-
-    // pure rotation
-    vpHomogeneousMatrix M ;
-    M.insert(R) ;
-
-
-    M[0][3] = 0.21 ;
-    M[1][3] = 0.31 ;
-    M[2][3] = 0.5 ;
-
-
-    std::cout << "M" <<std::endl <<M << std::endl ;
-    vpPlane p(0,0,1,1) ;
-
-    vpHomography H(M,p) ;
-
-    vpTRACE(" ") ;
-    std::cout << "H" <<std::endl <<H << std::endl ;
-
-
-    vpTRACE(" ") ;
-
-    vpColVector n ;
-    vpTranslationVector T ;
-
-    H.computeDisplacement(R,T,n) ;
-
-    std::cout << "R" <<std::endl << R ;
-    std::cout << "T" <<std::endl << T.t()  ;
-    std::cout << "n" <<std::endl << n.t()  ;
-    vpTRACE(" ") ;
-    vpTRACE(" ") ;
-  }
-
-  std::cout <<"------------------------------------------------------" << std::endl ;
-  {
-    vpThetaUVector  tu(vpMath::rad(-190), vpMath::rad(12), vpMath::rad(-45)) ;
-
-    vpRotationMatrix R(tu)  ;
-
-
-    // pure rotation
-    vpHomogeneousMatrix M ;
-    M.insert(R) ;
-
-    M[0][3] = 0.21 ;
-    M[1][3] =- 0.31 ;
-    M[2][3] = 0.5 ;
-
-    std::cout << "M" <<std::endl <<M << std::endl ;
-    vpPlane p(0.4,-0.5,0.5,1) ;
-
-    vpHomography H(M,p) ;
-
-    vpTRACE(" ") ;
-    std::cout << "H" <<std::endl <<H << std::endl ;
-
-    vpTRACE(" ") ;
-    vpColVector n ;
-    vpTranslationVector T ;
-    H.computeDisplacement(R,T,n) ;
-
-    std::cout << "R" <<std::endl << R ;
-    std::cout << "T" <<std::endl << T.t()  ;
-    std::cout << "n" <<std::endl << n.t()  ;
-
-    vpPlane p1(n[0],n[1],n[2],1.0) ;
-    H.buildFrom(R,T,p1) ;
-    std::cout << "H" <<std::endl <<H << std::endl ;
-
+  catch(vpException e) {
+    std::cout << "Catch an exception: " << e << std::endl;
+    return 1;
   }
 }

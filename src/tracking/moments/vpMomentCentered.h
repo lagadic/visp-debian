@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpMomentCentered.h 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpMomentCentered.h 4712 2014-03-28 17:55:43Z mbakthav $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -81,16 +81,23 @@ public:
 
   vpMomentCentered();
 
-	void compute();
-  double get(unsigned int i,unsigned int j);
+  void compute();
+  double get(unsigned int i,unsigned int j) const;
 
-  inline std::vector<double>& get();
+  inline const std::vector<double>& get() const;
   /*!
      Moment name.
   */
-  inline const char* name(){return "vpMomentCentered";}
+  inline const char* name() const {return "vpMomentCentered";}
 
-  friend VISP_EXPORT std::ostream & operator<<(std::ostream & os, vpMomentCentered& v);
+  friend VISP_EXPORT std::ostream & operator<<(std::ostream & os, const vpMomentCentered& v);
+  void printWithIndices(std::ostream& os) const;
+  void printDependencies(std::ostream& os) const;
+
+protected:
+
+  void set(unsigned int i, unsigned int j, double value);
+
 };
 
 /*!
@@ -120,7 +127,7 @@ mu12 = mc.get()[2*(obj.getOrder()+1)+1]; // i=1 and j=2
 mu12 = mc.get(1,2); // the same
   \endcode
 */
-inline std::vector<double>& vpMomentCentered::get()
+inline const std::vector<double>& vpMomentCentered::get() const
 {
   return vpMoment::get();
 }

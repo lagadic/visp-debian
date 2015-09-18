@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpRobotViper850.cpp 4218 2013-04-17 09:55:47Z fspindle $
+ * $Id: vpRobotViper850.cpp 4594 2014-01-20 15:08:07Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -217,6 +217,8 @@ vpRobotViper850::vpRobotViper850 (bool verbose)
     throw ;
   }
   positioningVelocity  = defaultPositioningVelocity ;
+
+  maxRotationVelocity_joint6 = maxRotationVelocity;
 
   vpRobotViper850::robotAlreadyCreated = true;
 
@@ -680,7 +682,7 @@ void
   \sa powerOn(), powerOff()
 */
 bool
-    vpRobotViper850::getPowerState(void)
+    vpRobotViper850::getPowerState(void) const
 {
   InitTry;
   bool status = false;
@@ -713,7 +715,7 @@ bool
 
 */
 void
-    vpRobotViper850::get_cVe(vpVelocityTwistMatrix &cVe)
+    vpRobotViper850::get_cVe(vpVelocityTwistMatrix &cVe) const
 {
   vpHomogeneousMatrix cMe ;
   vpViper850::get_cMe(cMe) ;
@@ -733,7 +735,7 @@ void
 
 */
 void
-    vpRobotViper850::get_cMe(vpHomogeneousMatrix &cMe)
+    vpRobotViper850::get_cMe(vpHomogeneousMatrix &cMe) const
 {
   vpViper850::get_cMe(cMe) ;
 }
@@ -862,7 +864,7 @@ void
   \sa setPositioningVelocity()
 */
 double
-    vpRobotViper850::getPositioningVelocity (void)
+    vpRobotViper850::getPositioningVelocity (void) const
 {
   return positioningVelocity;
 }
@@ -1537,8 +1539,15 @@ void vpRobotViper850::setVelocity(const vpRobot::vpControlFrameType frame,
   case vpRobot::ARTICULAR_FRAME : {
       vpColVector vel_max(6);
 
-      for (unsigned int i=0; i<6; i++)
-        vel_max[i] = getMaxRotationVelocity();
+      if (getMaxRotationVelocity() == getMaxRotationVelocityJoint6()) {
+        for (unsigned int i=0; i<6; i++)
+          vel_max[i] = getMaxRotationVelocity();
+      }
+      else {
+        for (unsigned int i=0; i<5; i++)
+          vel_max[i] = getMaxRotationVelocity();
+        vel_max[5] = getMaxRotationVelocityJoint6();
+      }
 
       vel_sat = vpRobot::saturateVelocities(vel, vel_max, true);
     }
@@ -2006,7 +2015,7 @@ bool
     return false;
 
   fprintf(fd, "\
-#Viper - Position - Version 1.0\n\
+#Viper850 - Position - Version 1.00\n\
 #\n\
 # R: A B C D E F\n\
 # Joint position in degrees\n\
@@ -2181,7 +2190,7 @@ void
 
 */
 void
-    vpRobotViper850::biasForceTorqueSensor()
+    vpRobotViper850::biasForceTorqueSensor() const
 {
   InitTry;
 
@@ -2238,7 +2247,7 @@ int main()
 
 */
 void
-    vpRobotViper850::getForceTorque(vpColVector &H)
+    vpRobotViper850::getForceTorque(vpColVector &H) const
 {
   InitTry;
 
@@ -2280,7 +2289,7 @@ void
   \sa openGripper()
 
 */
-void vpRobotViper850::closeGripper()
+void vpRobotViper850::closeGripper() const
 {
   InitTry;
   Try( PrimitiveGripper_Viper850(0) );
@@ -2298,7 +2307,7 @@ void vpRobotViper850::closeGripper()
 
   \sa disbleJoint6Limits()
 */
-void vpRobotViper850::enableJoint6Limits()
+void vpRobotViper850::enableJoint6Limits() const
 {
   InitTry;
   Try( PrimitiveREMOVE_JOINT6_LIMITS_Viper850(0) );
@@ -2320,7 +2329,7 @@ void vpRobotViper850::enableJoint6Limits()
 
   \sa enableJoint6Limits()
 */
-void vpRobotViper850::disableJoint6Limits()
+void vpRobotViper850::disableJoint6Limits() const
 {
   InitTry;
   Try( PrimitiveREMOVE_JOINT6_LIMITS_Viper850(1) );
@@ -2331,6 +2340,60 @@ void vpRobotViper850::disableJoint6Limits()
     throw vpRobotException (vpRobotException::lowLevelError,
                             "Cannot disable joint limits on axis 6.");
   }
+}
+
+/*!
+
+  Set the maximal rotation velocity that can be sent to the robot  during a velocity control.
+
+  \param w_max : Maximum rotation velocity expressed in rad/s.
+*/
+
+void
+vpRobotViper850::setMaxRotationVelocity (double w_max)
+{
+  vpRobot::setMaxRotationVelocity(w_max);
+  setMaxRotationVelocityJoint6(w_max);
+
+  return;
+}
+
+/*!
+
+  Set the maximal rotation velocity on joint 6 that is used only during velocity joint control.
+
+  This function affects only the velocities that are sent as joint velocities.
+
+  \code
+  vpRobotViper850 robot;
+  robot.setMaxRotationVelocity( vpMath::rad(20) );
+  robot.setMaxRotationVelocityJoint6( vpMath::rad(50) );
+
+  robot.setRobotState(vpRobot::STATE_VELOCITY_CONTROL);
+  robot.setVelocity(ARTICULAR_FRAME, v);
+  \endcode
+
+
+  \param w6_max : Maximum rotation velocity expressed in rad/s on joint 6.
+*/
+
+void
+vpRobotViper850::setMaxRotationVelocityJoint6 (const double w6_max)
+{
+  maxRotationVelocity_joint6 = w6_max;
+  return;
+}
+
+/*!
+
+  Get the maximal rotation velocity on joint 6 that is used only during velocity joint control.
+
+  \return Maximum rotation velocity on joint 6 expressed in rad/s.
+*/
+double
+vpRobotViper850::getMaxRotationVelocityJoint6() const
+{
+  return maxRotationVelocity_joint6;
 }
 
 #endif

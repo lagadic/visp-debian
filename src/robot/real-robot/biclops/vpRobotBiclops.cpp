@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpRobotBiclops.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpRobotBiclops.cpp 4574 2014-01-09 08:48:51Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -127,6 +127,8 @@ vpRobotBiclops::vpRobotBiclops ()
   pthread_mutex_init (&vpShm_mutex, NULL);
   pthread_mutex_init (&vpEndThread_mutex, NULL);
   pthread_mutex_init (&vpMeasure_mutex, NULL);
+
+  positioningVelocity = defaultPositioningVelocity ;
 }
 
 /*!
@@ -175,8 +177,9 @@ vpRobotBiclops::vpRobotBiclops (const char * filename)
   // Initialize the mutex dedicated to she shm protection
   pthread_mutex_init (&vpShm_mutex, NULL);
   pthread_mutex_init (&vpEndThread_mutex, NULL);
-  pthread_mutex_init (&vpMeasure_mutex
-, NULL);
+  pthread_mutex_init (&vpMeasure_mutex, NULL);
+
+  positioningVelocity = defaultPositioningVelocity ;
 
   init();
 
@@ -274,8 +277,6 @@ vpRobotBiclops::init ()
   }
 
   vpRobotBiclops::robotAlreadyCreated = true;
-
-  positioningVelocity = defaultPositioningVelocity ;
 
   // Initialize previous articular position to manage getDisplacement()
   q_previous.resize(vpBiclops::ndof);
@@ -670,7 +671,7 @@ vpRobotBiclops::stopMotion(void)
 
 */
 void
-vpRobotBiclops::get_cVe(vpVelocityTwistMatrix &cVe)
+vpRobotBiclops::get_cVe(vpVelocityTwistMatrix &cVe) const
 {
   vpHomogeneousMatrix cMe ;
   cMe = vpBiclops::get_cMe() ;
@@ -688,7 +689,7 @@ vpRobotBiclops::get_cVe(vpVelocityTwistMatrix &cVe)
 
 */
 void
-vpRobotBiclops::get_cMe(vpHomogeneousMatrix &cMe)
+vpRobotBiclops::get_cMe(vpHomogeneousMatrix &cMe) const
 {
   cMe = vpBiclops::get_cMe() ;
 }
@@ -1279,16 +1280,19 @@ vpRobotBiclops::readPositionFile(const char *filename, vpColVector &q)
     // skip lines begining with # for comments
     if (fgets (line, 100, pt_f) != NULL) {
       if ( strncmp (line, "#", 1) != 0) {
-	// this line is not a comment
-	if ( fscanf (pt_f, "%s", line) != EOF)   {
-	  if ( strcmp (line, head) == 0)
-	    end = true; 	// robot position was found
-	}
-	else
-	  return (false); // end of file without position
+        // this line is not a comment
+        if ( fscanf (pt_f, "%s", line) != EOF)   {
+          if ( strcmp (line, head) == 0)
+            end = true; 	// robot position was found
+        }
+        else {
+          fclose(pt_f);
+          return (false); // end of file without position
+        }
       }
     }
     else {
+      fclose(pt_f);
       return (false);// end of file
     }
 
@@ -1298,6 +1302,7 @@ vpRobotBiclops::readPositionFile(const char *filename, vpColVector &q)
   double q1,q2;
   // Read positions
   if (fscanf(pt_f, "%lf %lf", &q1, &q2) == EOF) {
+    fclose(pt_f);
     std::cout << "Cannot read joint positions." << std::endl;
     return false;
   }

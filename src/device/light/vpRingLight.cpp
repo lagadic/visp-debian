@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpRingLight.cpp 4317 2013-07-17 09:40:17Z fspindle $
+ * $Id: vpRingLight.cpp 5126 2015-01-05 22:07:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -74,7 +74,7 @@
 
   Turn the ring light off.
 */
-vpRingLight::vpRingLight()
+vpRingLight::vpRingLight() : parport()
 {
   off();
 }

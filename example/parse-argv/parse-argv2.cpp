@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: parse-argv2.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: parse-argv2.cpp 5311 2015-02-11 17:42:01Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -63,37 +63,48 @@
 int
 main(int argc, const char ** argv)
 {
-  using ::std::cout;
-  using ::std::endl;
+  try {
+    using ::std::cout;
+    using ::std::endl;
 
-  int    i_val = 3;
-  float  f_val = 3.14f;
-  double d_val = 3.1415;
+    int    i_val = 3;
+    float  f_val = 3.14f;
+    double d_val = 3.1415;
+    int    flag = 0;
 
-  vpParseArgv::vpArgvInfo argTable[] =
-  {
-    {"-integer", vpParseArgv::ARGV_INT, (char*) NULL, (char *) &i_val,
-     "An integer value."},
-    {"-float", vpParseArgv::ARGV_FLOAT, (char*) NULL, (char *) &f_val,
-     "A float value."},
-    {"-double", vpParseArgv::ARGV_DOUBLE, (char*) NULL, (char *) &d_val,
-     "A double value."},
-    {(char*) NULL, vpParseArgv::ARGV_END, (char*) NULL, (char*) NULL, (char*) NULL}
-  } ;
+    vpParseArgv::vpArgvInfo argTable[] =
+    {
+      {"-flag", vpParseArgv::ARGV_CONSTANT, 0, (char *) &flag,
+       "Flag enabled."},
+      {"-integer", vpParseArgv::ARGV_INT, (char*) NULL, (char *) &i_val,
+       "An integer value."},
+      {"-float", vpParseArgv::ARGV_FLOAT, (char*) NULL, (char *) &f_val,
+       "A float value."},
+      {"-double", vpParseArgv::ARGV_DOUBLE, (char*) NULL, (char *) &d_val,
+       "A double value."},
+      {(char*) NULL, vpParseArgv::ARGV_END, (char*) NULL, (char*) NULL, (char*) NULL}
+    } ;
 
-  // Read the command line options
-  if(vpParseArgv::parse(&argc, argv, argTable, 0)) {
-    return (-1);
+    // Read the command line options
+    if(vpParseArgv::parse(&argc, argv, argTable, 0)) {
+      return (-1);
+    }
+
+    cout << "Your parameters: " << endl;
+    cout << "  Integer value: " << i_val << endl;
+    cout << "  Float   value: " << f_val << endl;
+    cout << "  Double  value: " << d_val << endl << endl;
+    cout << "  Flag         : " << flag << endl << endl;
+
+    cout << "Call  " << argv[0]
+         << " -h to see how to change these parameters." << endl;
+
+    return 0;
   }
-
-  cout << "Your parameters: " << endl;
-  cout << "  Integer value: " << i_val << endl;
-  cout << "  Float   value: " << f_val << endl;
-  cout << "  Double  value: " << d_val << endl << endl;
-  cout << "Call  " << argv[0]
-       << " -h to see how to change these parameters." << endl;
-
-  return 0;
+  catch(vpException e) {
+    std::cout << "Catch a ViSP exception: " << e << std::endl;
+    return 1;
+  }
 }
 
 

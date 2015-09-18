@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpFeaturePoint.h 4233 2013-05-02 13:46:42Z fspindle $
+ * $Id: vpFeaturePoint.h 5237 2015-01-30 13:52:04Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -197,7 +197,7 @@ public:
 
   vpFeaturePoint() ;
   //! Destructor.
-  virtual ~vpFeaturePoint() { if (flags != NULL) delete [] flags; }
+  virtual ~vpFeaturePoint() {}
 
 
   /*

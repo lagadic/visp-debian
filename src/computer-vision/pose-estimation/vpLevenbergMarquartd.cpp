@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpLevenbergMarquartd.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpLevenbergMarquartd.cpp 5107 2015-01-05 07:47:13Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -40,12 +40,13 @@
  *
  *****************************************************************************/
 
-#include <visp/vpLevenbergMarquartd.h>
-#include <visp/vpMath.h>
-
 #include <cmath>    // std::fabs
 #include <limits>   // numeric_limits
 #include <iostream>
+#include <algorithm>    // std::min
+
+#include <visp/vpLevenbergMarquartd.h>
+#include <visp/vpMath.h>
 
 #define	SIGN(x)		((x) < 0 ? -1 : 1)
 #define	SWAP(a,b,c)	{(c) = (a); (a) = (b); (b) = (c);}
@@ -233,7 +234,7 @@ double	enorm (const double *x, int n)
  *
  */
 int	lmpar(int n, double *r, int ldr, int *ipvt, double *diag, double *qtb,
-	      double *delta, double *par, double *x, double *sdiag, double *wa1, double *wa2)
+          double *delta, double *par, double *x, double *sdiag, double *wa1, double *wa2)
 {
   const double	tol1 = 0.1, tol001 = 0.001;	/* tolerance a 0.1 et a 0.001	*/
 
@@ -276,8 +277,8 @@ int	lmpar(int n, double *r, int ldr, int *ipvt, double *diag, double *qtb,
 
       if (jm1 >= 0)
       {
-	for (unsigned int j = 0; j <= (unsigned int)jm1; j++)
-	  wa1[j] -= *MIJ(r, i, j, ldr) * temp;
+        for (unsigned int j = 0; j <= (unsigned int)jm1; j++)
+          wa1[j] -= *MIJ(r, i, j, ldr) * temp;
       }
     }
   }
@@ -315,22 +316,22 @@ int	lmpar(int n, double *r, int ldr, int *ipvt, double *diag, double *qtb,
     {
       for (int i = 0; i < n; i++)
       {
-	l = ipvt[i];
-	wa1[i] = diag[l] * (wa2[l] / dxnorm);
+        l = ipvt[i];
+        wa1[i] = diag[l] * (wa2[l] / dxnorm);
       }
 
       for (int i = 0; i <  n; i++)
       {
-	long	im1;
-	sum = 0.0;
-	im1 = (i - 1L);
+        long	im1;
+        sum = 0.0;
+        im1 = (i - 1L);
 
-	if (im1 >= 0)
-	{
-	  for (unsigned int j = 0; j <= (unsigned int)im1; j++)
-	    sum += (*MIJ(r, i, j, ldr) * wa1[j]);
-	}
-	wa1[i] = (wa1[i] - sum) / *MIJ(r, i, i, ldr);
+        if (im1 >= 0)
+        {
+          for (unsigned int j = 0; j <= (unsigned int)im1; j++)
+            sum += (*MIJ(r, i, j, ldr) * wa1[j]);
+        }
+        wa1[i] = (wa1[i] - sum) / *MIJ(r, i, i, ldr);
       }
 
       temp = enorm(wa1, n);
@@ -346,7 +347,7 @@ int	lmpar(int n, double *r, int ldr, int *ipvt, double *diag, double *qtb,
       sum = 0.0;
 
       for (int j = 0; j <= i; j++)
-	sum += *MIJ(r, i, j, ldr) * qtb[j];
+        sum += *MIJ(r, i, j, ldr) * qtb[j];
 
       l = ipvt[i];
       wa1[i] = sum / diag[l];
@@ -384,17 +385,17 @@ int	lmpar(int n, double *r, int ldr, int *ipvt, double *diag, double *qtb,
        */
       //if (*par == 0.0)
       if (std::fabs(*par) <= std::numeric_limits<double>::epsilon() )
-	*par = vpMath::maximum(dwarf, (tol001 * paru));
+        *par = vpMath::maximum(dwarf, (tol001 * paru));
 
       temp = sqrt(*par);
 
       for (int i = 0; i < n; i++)
-	wa1[i] = temp * diag[i];
+        wa1[i] = temp * diag[i];
 
       qrsolv(n, r, ldr, ipvt, wa1, qtb, x, sdiag, wa2);
 
       for (int i = 0; i < n; i++)
-	wa2[i] = diag[i] * x[i];
+        wa2[i] = diag[i] * x[i];
 
       dxnorm = enorm(wa2, n);
       temp = fp;
@@ -409,16 +410,15 @@ int	lmpar(int n, double *r, int ldr, int *ipvt, double *diag, double *qtb,
       //if ((std::fabs(fp) <= tol1 * (*delta)) || ((parl == 0.0) && (fp <= temp)
       //	  && (temp < 0.0)) || (iter == 10))
       if ((std::fabs(fp) <= tol1 * (*delta)) || ((std::fabs(parl) <= std::numeric_limits<double>::epsilon()) && (fp <= temp)
-	  && (temp < 0.0)) || (iter == 10))
+                                                 && (temp < 0.0)) || (iter == 10))
       {
-	/*
-	 *	terminaison.
-	 */
+        // terminaison.
 
-	if (iter == 0)
-	  *par = 0.0;
+        // Remove the two next lines since this is a dead code
+        /* if (iter == 0)
+          *par = 0.0; */
 
-	return (0);
+        return (0);
       }
 
       /*
@@ -427,20 +427,20 @@ int	lmpar(int n, double *r, int ldr, int *ipvt, double *diag, double *qtb,
 
       for (int i = 0; i < n; i++)
       {
-	l = ipvt[i];
-	wa1[i] = diag[l] * (wa2[l] / dxnorm);
+        l = ipvt[i];
+        wa1[i] = diag[l] * (wa2[l] / dxnorm);
       }
 
       for (unsigned int i = 0; i < (unsigned int)n; i++)
       {
-	wa1[i] = wa1[i] / sdiag[i];
-	temp = wa1[i];
-	jp1 = i + 1;
-	if (  (unsigned int) n >= jp1)
-	{
-	  for (unsigned int j = jp1; j <  (unsigned int)n; j++)
-	    wa1[j] -= (*MIJ(r, i, j, ldr) * temp);
-	}
+        wa1[i] = wa1[i] / sdiag[i];
+        temp = wa1[i];
+        jp1 = i + 1;
+        if (  (unsigned int) n >= jp1)
+        {
+          for (unsigned int j = jp1; j <  (unsigned int)n; j++)
+            wa1[j] -= (*MIJ(r, i, j, ldr) * temp);
+        }
       }
 
       temp = enorm(wa1, n);
@@ -451,10 +451,10 @@ int	lmpar(int n, double *r, int ldr, int *ipvt, double *diag, double *qtb,
        *	de parl ou paru.
        */
       if (fp > 0.0)
-	parl = vpMath::maximum(parl, *par);
+        parl = vpMath::maximum(parl, *par);
 
       if (fp < 0.0)
-	paru = vpMath::minimum(paru, *par);
+        paru = vpMath::minimum(paru, *par);
 
       /*
        *	calcul d'une estimee ameliree de "par".
@@ -575,7 +575,7 @@ int	qrfac(int m, int n, double *a, int lda, int *pivot, int *ipvt,
   /*
    *	epsmch est la precision machine.
    */
-  epsmch = DBL_EPSILON;
+  epsmch = std::numeric_limits<double>::epsilon();
 
   /*
    *	calcul des normes initiales des lignes et initialisation
@@ -857,7 +857,7 @@ int	qrsolv (int n, double *r, int ldr, int *ipvt, double *diag, double *qtb,
 
   /*
    *	resolution du systeme triangulaire pour z. Si le systeme est
-   *	singulier, on obtient une solution au moindres carrés.
+   *	singulier, on obtient une solution au moindres carres.
    */
   nsing =  n;
 
@@ -917,7 +917,7 @@ int	qrsolv (int n, double *r, int ldr, int *ipvt, double *diag, double *qtb,
  * xtol		Erreur relative desiree dans la solution approximee. La
  *		terminaison survient quand l'erreur relative entre deux
  *		iterations consecutives est au moins egal a xtol.
- * gtol		Mesure de l'orthogonalité entre le vecteur des fonctions et les
+ * gtol		Mesure de l'orthogonalite entre le vecteur des fonctions et les
  *		colonnes du jacobien. La terminaison survient quand le cosinus
  *		de l'angle entre fvec et n'importe quelle colonne du jacobien
  *		est au moins egal a gtol, en valeur absolue.
@@ -1025,12 +1025,12 @@ int	lmder (void (*ptr_fcn)(int m, int n, double *xc, double *fvecc,
   int count = 0;
   int		i, j, l;
   double		actred, delta, dirder, epsmch, fnorm, fnorm1, gnorm;
-  double		ratio = DBL_EPSILON;
+  double		ratio = std::numeric_limits<double>::epsilon();
   double		par, pnorm, prered;
   double		sum, temp, temp1, temp2, xnorm = 0.0;
 
   /* epsmch est la precision machine.	*/
-  epsmch = DBL_EPSILON;
+  epsmch = std::numeric_limits<double>::epsilon();
 
   *info = 0;
   iflag = 0;

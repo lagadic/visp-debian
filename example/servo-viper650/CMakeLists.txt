@@ -3,7 +3,7 @@
 # $Id: CMakeLists.txt 3750 2012-06-01 09:39:38Z fspindle $
 #
 # This file is part of the ViSP software.
-# Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+# Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
 # 
 # This software is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -43,19 +43,24 @@
 # the source name.
 #
 # If you want to add/remove a source, modify here
-SET (SOURCE
+set(SOURCE
   servoViper650Point2DCamVelocity.cpp
   servoViper650FourPoints2DArtVelocityInteractionCurrent.cpp
   servoViper650FourPoints2DCamVelocityInteractionCurrent.cpp
 )
 
 # rule for binary build
-FOREACH(source ${SOURCE})
+foreach(source ${SOURCE})
   # Compute the name of the binary to create
-  GET_FILENAME_COMPONENT(binary ${source} NAME_WE)
+  get_filename_component(binary ${source} NAME_WE)
 
   # From source compile the binary and add link rules
-  ADD_EXECUTABLE(${binary} ${source})
-  TARGET_LINK_LIBRARIES(${binary} ${VISP_INTERN_LIBRARY} ${VISP_EXTERN_LIBRARIES})
-ENDFOREACH(source)
+  add_executable(${binary} ${source})
+  target_link_libraries(${binary} ${VISP_INTERN_LIBRARY} ${VISP_EXTERN_LIBRARIES})
+
+  add_dependencies(visp_examples ${binary})
+  if(ENABLE_SOLUTION_FOLDERS)
+    set_target_properties(${binary} PROPERTIES FOLDER "examples")
+  endif()
+endforeach()
 

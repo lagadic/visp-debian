@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpColVector.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpColVector.cpp 5218 2015-01-28 10:27:40Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -64,22 +64,15 @@
 vpColVector
 vpColVector::operator+(const vpColVector &m) const
 {
-  vpColVector v ;
-
-  try {
-    v.resize(rowNum) ;
+  if (getRows() != m.getRows() ) {
+    throw(vpException(vpException::dimensionError,
+                      "Bad size during vpColVector (%dx1) and vpColVector (%dx1) addition",
+                      getRows(), m.getRows())) ;
   }
-  catch(vpException me)
-  {
-    vpERROR_TRACE("Error caught") ;
-    throw ;
-  }
-
-  double *vd = v.data ;   double *d = data ;  double *md = m.data ;
+  vpColVector v(rowNum);
 
   for (unsigned int i=0;i<rowNum;i++)
-      *(vd++) = *(d++) + *(md++);
-
+    v[i] = (*this)[i] + m[i];
   return v;
 }
 
@@ -104,19 +97,15 @@ vpMatrix vpColVector::operator*(const vpRowVector &m) const
   //! operator substraction of two vectors V = A-v
 vpColVector vpColVector::operator-(const vpColVector &m) const
 {
-  vpColVector v ;
-
-  try {
-    v.resize(rowNum) ;
+  if (getRows() != m.getRows() ) {
+    throw(vpException(vpException::dimensionError,
+                      "Bad size during vpColVector (%dx1) and vpColVector (%dx1) substraction",
+                      getRows(), m.getRows())) ;
   }
-  catch(vpException me)
-  {
-    vpERROR_TRACE("Error caught") ;
-    throw ;
-  }
+  vpColVector v(rowNum);
 
   for (unsigned int i=0;i<rowNum;i++)
-      v[i] = (*this)[i] - m[i];
+    v[i] = (*this)[i] - m[i];
   return v;
 }
 
@@ -138,8 +127,8 @@ vpColVector::vpColVector (const vpRotationVector &v){
 }
 
   
- //! operator A = -A
-vpColVector vpColVector::operator-()
+ //! Operator A = -A
+vpColVector vpColVector::operator-() const
 {
   vpColVector A ;
   try {
@@ -180,17 +169,15 @@ vpColVector vpColVector::operator*(double x) const
 }
 
 /*!
-  \brief copy from a matrix
-  \warning  Handled with care m should be a 1 row matrix
+  Copy from a matrix
+  \warning  Handled with care m should be a 1 row matrix.
 */
 vpColVector &vpColVector::operator=(const vpMatrix &m)
 {
-
-
   if (m.getCols() !=1)
   {
     vpTRACE(" m should be a 1 cols matrix ") ;
-    throw (vpException(vpException::dimensionError)," m should be a 1 cols matrix ");
+    throw (vpException(vpException::dimensionError,"m should be a 1 cols matrix "));
   }
 
   try {
@@ -250,27 +237,66 @@ vpColVector &vpColVector::operator=(const vpColVector &v)
   return *this;
 }
 
-//! Copy operator.   Allow operation such as A = v
+/*!
+  Copy operator.
+  Allows operation such as A << v
+  \code
+#include <visp/vpColVector.h>
+
+int main()
+{
+  vpColVector A, B(5);
+  for (unsigned int i=0; i<B.size(); i++)
+    B[i] = i;
+  A << B;
+  std::cout << "A: \n" << A << std::endl;
+}
+  \endcode
+  In column vector A we get:
+  \code
+A:
+0
+1
+2
+3
+4
+  \endcode
+  */
 vpColVector & vpColVector::operator<<(const vpColVector &v)
 {
-  try {
-    resize(v.getRows());
-  }
-  catch(vpException me)
-  {
-    vpERROR_TRACE("Error caught") ;
-    throw ;
-  }
-
-  for (unsigned int i=0; i<rowNum; i++) {
-    for (unsigned int j=0; j<colNum; j++) {
-      rowPtrs[i][j] = v.rowPtrs[i][j];
-    }
-  }
+  *this = v;
   return *this;
 }
 
-//! Assigment operator.   Allow operation such as A = *v
+/*!
+  Assigment operator.   Allow operation such as A = *v
+
+  The following example shows how to use this operator.
+  \code
+#include <visp/vpColVector.h>
+
+int main()
+{
+  size_t n = 5;
+  vpColVector A(n);
+  double *B = new double [n];
+  for (unsigned int i = 0; i < n; i++)
+    B[i] = i;
+  A << B;
+  std::cout << "A: \n" << A << std::endl;
+  delete [] B;
+}
+  \endcode
+  It produces the following output:
+  \code
+A:
+0
+1
+2
+3
+4
+  \endcode
+  */
 vpColVector & vpColVector::operator<<( double *x )
 {
   for (unsigned int i=0; i<rowNum; i++) {
@@ -404,11 +430,11 @@ vpColVector::dotProd(const vpColVector &a, const vpColVector &b)
 vpColVector &vpColVector::normalize()
 {
 
-  double sum = sumSquare() ;
+  double sum_square = sumSquare() ;
 
   //if (sum != 0.0)
-  if (std::fabs(sum) > std::numeric_limits<double>::epsilon())
-    *this /= sqrt(sum) ;
+  if (std::fabs(sum_square) > std::numeric_limits<double>::epsilon())
+    *this /= sqrt(sum_square) ;
 
   // If sum = 0, we have a nul vector. So we return just.
   return *this;
@@ -784,8 +810,54 @@ void vpColVector::reshape(vpMatrix & m,const unsigned int &nrows,const unsigned 
 	  m[i][j]=data[j*ncols+i];
 }
 
-/*
- * Local variables:
- * c-basic-offset: 2
- * End:
+/*!
+  Insert a column vector.
+  \param i : Index of the first element to introduce. This index starts from 0.
+  \param v : Column vector to insert.
+
+  The following example shows how to use this function:
+  \code
+#include <visp/vpColVector.h>
+
+int main()
+{
+  vpColVector v(4);
+  for (unsigned int i=0; i < v.size(); i++)
+    v[i] = i;
+  std::cout << "v:\n" << v << std::endl;
+
+  vpColVector w(2);
+  for (unsigned int i=0; i < w.size(); i++)
+    w[i] = i+10;
+  std::cout << "w:\n" << w << std::endl;
+
+  v.insert(1, w);
+  std::cout << "v:\n" << v << std::endl;
+}
+  \endcode
+  It produces the following output:
+  \code
+v:
+0
+1
+2
+3
+
+w:
+10
+11
+
+v:
+0
+10
+11
+3
+  \endcode
  */
+void vpColVector::insert(unsigned int i, const vpColVector &v)
+{
+  if (i+v.size() > this->size())
+    throw(vpException(vpException::dimensionError, "Unable to insert a column vector"));
+  for (unsigned int j=0; j < v.size(); j++)
+    (*this)[i+j] = v[j];
+}

@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: servoBiclopsPoint2DArtVelocity.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: servoBiclopsPoint2DArtVelocity.cpp 4604 2014-01-21 14:15:23Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -69,14 +69,13 @@
 #include <visp/vpDebug.h> // Debug trace
 #include <signal.h>
 #include <stdlib.h>
-#if ( defined (VISP_HAVE_BICLOPS) && (defined (VISP_HAVE_DC1394_2) /*|| defined (VISP_HAVE_DC1394_1)*/ || defined(VISP_HAVE_DIRECTSHOW)) )
+#if ( defined (VISP_HAVE_BICLOPS) && (defined (VISP_HAVE_DC1394_2) || defined(VISP_HAVE_DIRECTSHOW)) )
 
 #ifdef VISP_HAVE_PTHREAD
 #  include <pthread.h>
 #endif
 
 #include <visp/vp1394TwoGrabber.h>
-//#include <visp/vp1394Grabber.h>
 #include <visp/vpDirectShowGrabber.h>
 #include <visp/vpImage.h>
 #include <visp/vpDisplay.h>
@@ -224,9 +223,9 @@ main(int argc, const char ** argv)
     std::string opt_debugdir;
 
     // Set the default output path
-#ifdef UNIX
+#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
     opt_debugdir = "/tmp";
-#elif WIN32
+#elif defined(_WIN32)
     opt_debugdir = "C:/temp";
 #endif
 
@@ -279,8 +278,6 @@ main(int argc, const char ** argv)
 
 #if defined VISP_HAVE_DC1394_2
     vp1394TwoGrabber g;
-    // #elif defined VISP_HAVE_DC1394_1
-    //     vp1394Grabber g;
 #elif defined VISP_HAVE_DIRECTSHOW
     vpDirectShowGrabber g;
 #endif
@@ -302,11 +299,10 @@ main(int argc, const char ** argv)
     vpDisplayX display(I, 100, 100,"Display X...") ;
 #elif defined VISP_HAVE_GTK
     vpDisplayGTK display(I, 100, 100,"Display GTK...") ;
-#elif defined WIN32
+#elif defined(_WIN32)
     vpDisplayGDI display(I, 100, 100,"Display GDI...") ;
 #endif
 
-    
     try{
       vpDisplay::display(I) ;
       vpDisplay::flush(I) ;

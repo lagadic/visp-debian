@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpMouseButton.h 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpMouseButton.h 5232 2015-01-30 11:53:30Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -48,7 +48,7 @@
 /*!
   \class vpMouseButton
   \ingroup ImageGUI
-  \brief Class that defines mouse button identiers.
+  \brief Class that defines mouse button identifiers.
 */
 class VISP_EXPORT vpMouseButton
 {
@@ -56,7 +56,8 @@ public:
   typedef enum {
     button1 = 1, /*!< Mouse left button. */
     button2 = 2, /*!< Mouse middle button, or roll. */
-    button3 = 3  /*!< Mouse right button. */
+    button3 = 3,  /*!< Mouse right button. */
+    none = 0  /*!< No button. */
   } vpMouseButtonType ;
 } ;
 

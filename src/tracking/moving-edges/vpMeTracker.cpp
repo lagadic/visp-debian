@@ -1,9 +1,9 @@
 /****************************************************************************
 *
-* $Id: vpMeTracker.cpp 4303 2013-07-04 14:14:00Z fspindle $
+* $Id: vpMeTracker.cpp 4797 2014-07-23 15:52:28Z fspindle $
 *
 * This file is part of the ViSP software.
-* Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+* Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
 * 
 * This software is free software; you can redistribute it and/or
 * modify it under the terms of the GNU General Public License
@@ -66,19 +66,20 @@ vpMeTracker::init()
 }
 
 vpMeTracker::vpMeTracker()
+  : list(), me(NULL), init_range(1), nGoodElement(0), selectDisplay(vpMeSite::NONE)
+#ifdef VISP_BUILD_DEPRECATED_FUNCTIONS
+  , query_range (0), display_point(false)
+#endif
 {
   init();
-  me = NULL ;
-  nGoodElement = 0;
-  init_range = 1;
-  
-  #ifdef VISP_BUILD_DEPRECATED_FUNCTIONS
-  query_range = 0;
-  display_point = false ;
-  #endif
 }
 
-vpMeTracker::vpMeTracker(const vpMeTracker& meTracker):vpTracker(meTracker)
+vpMeTracker::vpMeTracker(const vpMeTracker& meTracker)
+  : vpTracker(meTracker),
+    list(), me(NULL), init_range(1), nGoodElement(0), selectDisplay(vpMeSite::NONE)
+#ifdef VISP_BUILD_DEPRECATED_FUNCTIONS
+    , query_range (0), display_point(false)
+#endif
 {
   init();
 
@@ -94,17 +95,26 @@ vpMeTracker::vpMeTracker(const vpMeTracker& meTracker):vpTracker(meTracker)
   #endif
 }
 
-vpMeTracker::~vpMeTracker()
+/*!
+ Reset the tracker by removing all the moving edges.
+ */
+void vpMeTracker::reset()
 {
+  nGoodElement = 0;
   list.clear();
 }
 
-vpMeTracker&
-vpMeTracker::operator = (vpMeTracker& p)
+vpMeTracker::~vpMeTracker()
 {
-  list = p.list;
-  me = p.me;
-  selectDisplay = p.selectDisplay ;
+  reset();
+}
+
+vpMeTracker&
+vpMeTracker::operator = (vpMeTracker& p_me)
+{
+  list = p_me.list;
+  me = p_me.me;
+  selectDisplay = p_me.selectDisplay ;
 
   return *this;
 }
@@ -331,8 +341,8 @@ vpMeTracker::display(const vpImage<unsigned char>& I)
   }
 #endif
   for(std::list<vpMeSite>::const_iterator it=list.begin(); it!=list.end(); ++it){
-    vpMeSite p = *it;
-    p.display(I);
+    vpMeSite p_me = *it;
+    p_me.display(I);
   }
 }
 

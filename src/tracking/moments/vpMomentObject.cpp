@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpMomentObject.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpMomentObject.cpp 5301 2015-02-10 16:36:52Z mbakthav $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -44,8 +44,11 @@
 #include <visp/vpCameraParameters.h>
 #include <visp/vpPixelMeterConversion.h>
 #include <visp/vpConfig.h>
+#include <stdexcept>
+
 #include <cmath>
 #include <limits>
+
 #ifdef VISP_HAVE_OPENMP
 #include <omp.h>
 #endif
@@ -133,6 +136,32 @@ void vpMomentObject::cacheValues(std::vector<double>& cache,double x, double y){
         }
     }
 }
+
+/*!
+ * Manikandan.B
+ * Need to cache intensity along with the coordinates for photometric moments
+ */
+void vpMomentObject::cacheValues(std::vector<double>& cache,double x, double y, double IntensityNormalized) {
+
+    cache[0]=IntensityNormalized;
+
+    double invIntensityNormalized = 0.;
+    if (std::fabs(IntensityNormalized)>=std::numeric_limits<double>::epsilon())
+         invIntensityNormalized = 1.0/IntensityNormalized;
+
+    for(register unsigned int i=1;i<order;i++)
+        cache[i]=cache[i-1]*x;
+
+    for(register unsigned int j=order;j<order*order;j+=order)
+        cache[j]=cache[j-order]*y;
+
+    for(register unsigned int j=1;j<order;j++){
+        for(register unsigned int i=1;i<order-j;i++){
+            cache[j*order+i] = cache[j*order]*cache[i]*invIntensityNormalized;
+        }
+    }
+}
+
 
 /*!
   Computes basic moments from a vector of points.
@@ -262,10 +291,10 @@ int main()
 */
 
 void vpMomentObject::fromImage(const vpImage<unsigned char>& image, unsigned char threshold, const vpCameraParameters& cam){
-#ifdef VISP_HAVE_OPENMP    
+#ifdef VISP_HAVE_OPENMP
   #pragma omp parallel shared(threshold)
-  {        
-    std::vector<double> curvals(order*order); 
+  {
+    std::vector<double> curvals(order*order);
     curvals.assign(order*order,0.);
     unsigned int i_, j_;
 
@@ -281,36 +310,35 @@ void vpMomentObject::fromImage(const vpImage<unsigned char>& image, unsigned cha
 
           double xval=1.;
           double yval=1.;
-          for(register unsigned int k=0;k<order;k++){            
+          for(register unsigned int k=0;k<order;k++){
             xval=1.;
             for(register unsigned int l=0;l<order-k;l++){
               curvals[(k*order+l)]+=(xval*yval);
               xval*=x;
             }
             yval*=y;
-          }          
+          }
         }
       }
-    }    
-    
+    }
+
     #pragma omp master //only set this variable in master thread
-    {      
-      values.assign(order*order, 0.);      
+    {
+      values.assign(order*order, 0.);
     }
 
     #pragma omp barrier
-    
-    for(register unsigned int k=0;k<order;k++){    
+
+    for(register unsigned int k=0;k<order;k++){
       for(register unsigned int l=0;l<order-k;l++){
         #pragma omp atomic
         values[k*order+l]+= curvals[k*order+l];
       }
     }
-    
-  }    
-  
+
+  }
 #else
-  std::vector<double> cache(order*order,0.);
+    std::vector<double> cache(order*order,0.);
     values.assign(order*order,0);
     for(register unsigned int i=0;i<image.getCols();i++){
         for(register unsigned int j=0;j<image.getRows();j++){
@@ -328,9 +356,128 @@ void vpMomentObject::fromImage(const vpImage<unsigned char>& image, unsigned cha
         }
     }
 #endif
+
+    //Normalisation equivalent to sampling interval/pixel size delX x delY
+    double norm_factor = 1./(cam.get_px()*cam.get_py());
+    for (std::vector<double>::iterator it = values.begin(); it!=values.end(); it++) {
+        *it = (*it) * norm_factor;
+    }
 }
 
+/*!
+ * Manikandan. B
+ * Photometric moments v2
+ * Intended to be used by 'vpMomentObject's of type DENSE_FULL_OBJECT
+ * @param image                   : Grayscale image
+ * @param cam                     : Camera parameters (to change to )
+ * @param bg_type                 : White/Black background surrounding the image
+ * @param normalize_with_pix_size : This flag if SET, the moments, after calculation are normalized w.r.t  pixel size
+ *                                  available from camera parameters
+ */
+void vpMomentObject::fromImage(const vpImage<unsigned char>& image, const vpCameraParameters& cam,
+    vpCameraImgBckGrndType bg_type, bool normalize_with_pix_size)
+{
+  std::vector<double> cache(order*order,0.);
+  values.assign(order*order,0);
 
+  // (x,y) - Pixel co-ordinates in metres
+  double x=0;
+  double y=0;
+  //for indexing into cache[] and values[]
+  unsigned int idx = 0;
+  unsigned int kidx = 0;
+
+  double intensity = 0;
+  double intensity_white = 0;
+
+  //double Imax = static_cast<double>(image.getMaxValue());
+  double Imax = 255.;                                                     // To check the effect of gray level change. ISR Coimbra
+
+  double iscale = 1.0;
+  if (flg_normalize_intensity)                                            // This makes the image a probability density function
+    iscale = 1.0/Imax;
+
+  if (bg_type == vpMomentObject::WHITE) {
+      /////////// WHITE BACKGROUND ///////////
+      for(register unsigned int j=0;j<image.getRows();j++){
+          for(register unsigned int i=0;i<image.getCols();i++){
+              x = 0;
+              y = 0;
+              intensity = (double)(image[j][i])*iscale;
+              intensity_white = 1. - intensity;
+
+              vpPixelMeterConversion::convertPoint(cam,i,j,x,y);
+              cacheValues(cache,x,y, intensity_white);			// Modify 'cache' which has x^p*y^q to x^p*y^q*(1 - I(x,y))
+
+              // Copy to "values"
+              for(register unsigned int k=0;k<order;k++){
+                  kidx = k*order;
+                  for(register unsigned int l=0;l<order-k;l++){
+                      idx = kidx+l;
+                      values[idx]+= cache[idx];
+                  }
+              }
+          }
+      }
+  }
+  else {
+      /////////// BLACK BACKGROUND	///////////
+      for(register unsigned int j=0;j<image.getRows();j++){
+          for(register unsigned int i=0;i<image.getCols();i++){
+              x = 0;
+              y = 0;
+              intensity = (double)(image[j][i])*iscale;
+              vpPixelMeterConversion::convertPoint(cam,i,j,x,y);
+
+              // Cache values for fast moment calculation
+              cacheValues(cache,x,y, intensity);					// Modify 'cache' which has x^p*y^q to x^p*y^q*I(x,y)
+
+              // Copy to moments array 'values'
+              for(register unsigned int k=0;k<order;k++){
+                  kidx = k*order;
+                  for(register unsigned int l=0;l<order-k;l++){
+                      idx = kidx+l;
+                      values[idx]+= cache[idx];
+                  }
+              }
+
+          }
+      }
+  }
+
+  if (normalize_with_pix_size){
+      // Normalisation equivalent to sampling interval/pixel size delX x delY
+      double norm_factor = 1./(cam.get_px()*cam.get_py());
+      for (std::vector<double>::iterator it = values.begin(); it!=values.end(); it++) {
+          *it = (*it) * norm_factor;
+      }
+  }
+}
+
+/*!
+  Does exactly the work of the default constructor as it existed in the very
+  first version of vpMomentObject
+ */
+void
+vpMomentObject::init(unsigned int orderinp) {
+    order = orderinp + 1;
+    type = vpMomentObject::DENSE_FULL_OBJECT;
+    flg_normalize_intensity = true;                 // By default, the intensity values are normalized
+    values.resize((order+1)*(order+1));
+    values.assign((order+1)*(order+1),0);
+}
+
+/*!
+  Helper to copy constructor
+ */
+void
+vpMomentObject::init(const vpMomentObject& objin){
+    order = objin.getOrder()+1;
+    type = objin.getType();
+    flg_normalize_intensity = objin.flg_normalize_intensity;
+    values.resize(objin.values.size());
+    values = objin.values;
+}
 
 /*!
   Default constructor.
@@ -338,14 +485,28 @@ void vpMomentObject::fromImage(const vpImage<unsigned char>& image, unsigned cha
   The parameter specified is the highest desired included order.
   All orders up to this values will be computed. In other words, a vpMomentObject will compute all \f$ m_{ij} \f$ moments with \f$ i+j \in [0..order] \f$.
 
-  \param order : Maximum reached order (i+j) to be used. All
+  \param max_order : Maximum reached order (i+j) to be used. All
   considered i+j will be of order smaller or equal than this
   parameter. For example if this parameter is 5, all moment values of
   order 0 to 5 included will be computed.
+
+  Mani : outsourced the constructor work to void init (unsigned int orderinp);
 */
-vpMomentObject::vpMomentObject(unsigned int order) : order(order+1),type(DENSE_FULL_OBJECT){
-    values.resize((order+1)*(order+1)*12);
-    values.assign((order+1)*(order+1)*12,0);
+vpMomentObject::vpMomentObject(unsigned int max_order)
+  : flg_normalize_intensity(true), order(max_order+1), type(vpMomentObject::DENSE_FULL_OBJECT),
+    values()
+{
+    init(max_order);
+}
+
+/*!
+  Copy constructor
+ */
+vpMomentObject::vpMomentObject(const vpMomentObject& srcobj)
+  : flg_normalize_intensity(true), order(1), type(vpMomentObject::DENSE_FULL_OBJECT),
+    values()
+{
+    init(srcobj);
 }
 
 /*!
@@ -367,7 +528,7 @@ double m12;
 m12 = mij[2*(obj.getOrder()+1)+1]; // i=1 and j=2
   \endcode
 */
-std::vector<double>& vpMomentObject::get() {
+const std::vector<double>& vpMomentObject::get() const {
     return values;
 
 }
@@ -386,7 +547,19 @@ double vpMomentObject::get(unsigned int i, unsigned int j) const {
 }
 
 /*!
-  Outputs the basic moment's values \f$m_{ij}\f$ to a stream presented as a matrix.    
+  Sets the basic moment value \f$m_{ij}\f$ corresponding to i,j indexes
+  \param i : First moment index, with \f$i+j \leq order\f$.
+  \param j : Second moment index, with \f$i+j \leq order\f$.
+  \param value_ij : Moment value.
+*/
+void vpMomentObject::set(unsigned int i, unsigned int j, const double& value_ij){
+    assert(i+j<=getOrder());
+    if(i+j>=order) throw vpException(vpException::badValue,"The requested value cannot be set, you should specify a higher order for the moment object.");
+    values[j*order+i] = value_ij;
+}
+
+/*!
+  Outputs the basic moment's values \f$m_{ij}\f$ to a stream presented as a matrix.
   The first line corresponds to \f$m_{0[0:order]}\f$, the second one to \f$m_{1[0:order]}\f$
   Values in table corresponding to a higher order are marked with an "x" and not computed.
 
@@ -400,7 +573,7 @@ double vpMomentObject::get(unsigned int i, unsigned int j) const {
   \endcode
 
 */
-std::ostream & operator<<(std::ostream & os, const vpMomentObject& m){
+VISP_EXPORT std::ostream & operator<<(std::ostream & os, const vpMomentObject& m){
     for(unsigned int i = 0;i<m.values.size();i++){
 
         if(i%(m.order)==0)
@@ -416,4 +589,72 @@ std::ostream & operator<<(std::ostream & os, const vpMomentObject& m){
     }
 
     return os;
+}
+
+/*!
+  Outputs the raw moment values \f$m_{ij}\f$ in indexed form.
+  The moment values are same as provided by the operator << which outputs x for uncalculated moments.
+ */
+void
+vpMomentObject::printWithIndices(const vpMomentObject& momobj, std::ostream& os) {
+    std::vector<double> moment = momobj.get();
+    os << std::endl <<"Order of vpMomentObject: "<<momobj.getOrder()<<std::endl;
+    // Print out values. This is same as printing using operator <<
+    for(unsigned int k=0; k<=momobj.getOrder(); k++) {
+            for(unsigned int l=0; l<(momobj.getOrder()+1)-k; l++){
+                    os << "m[" << l << "," << k << "] = " << moment[k*(momobj.getOrder()+1)+ l] << "\t";
+            }
+            os << std::endl;
+    }
+    os <<std::endl;
+}
+
+/*!
+ This function returns a vpMatrix of size (order+1, order+1).
+\code
+ vpMomentObject obj(8);
+ obj.setType(vpMomentObject::DENSE_FULL_OBJECT);
+ obj.fromImageWeighted(I, cam, vpMomentObject::BLACK); // cam should have the camera parameters
+ vpMatrix Mpq = vpMomentObject::convertTovpMatrix(obj);
+\endcode
+ Instead of accessing the moment m21 as obj.get(2,1), you can now do Mpq[2][1].
+ This is useful when you want to use the functions available in vpMatrix.
+ One use case i see now is to copy the contents of the matrix to a file or std::cout.
+ For instance, like
+ \code
+ // Print to console
+ Mpq.maplePrint(std::cout);
+ // Or write to a file
+ std::ofstream fileMpq("Mpq.csv");
+ Mpq.maplePrint(fileMpq);
+\endcode
+
+The output can be copied and pasted to MAPLE as a matrix.
+
+\warning
+The moments that are not calculated have zeros. For instance, for a vpMomentObject of order 8,
+the moment m[7,2] is not calculated. It will have 0 by default. User discretion is advised.
+*/
+vpMatrix
+vpMomentObject::convertTovpMatrix(const vpMomentObject& momobj) {
+    std::vector<double> moment = momobj.get();
+    unsigned int order = momobj.getOrder();
+    vpMatrix M(order+1, order+1);
+    for(unsigned int k=0; k<=order; k++) {
+        for(unsigned int l=0; l<(order+1)-k; l++){
+            M[l][k] = moment[k*(order+1)+ l];
+        }
+    }
+    return M;
+}
+
+/*!
+  Nothing to destruct. This will allow for a polymorphic usage
+  For instance,
+  \code
+  vpMomentObject* obj = new vpWeightedMomentObject(weightfunc,ORDER); where vpWeightedMomentObject is child class of vpMomentObject
+  \endcode
+ */
+vpMomentObject::~vpMomentObject(){
+// deliberate empty
 }

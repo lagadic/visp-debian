@@ -1,9 +1,9 @@
 #############################################################################
 #
-# $Id: FindMyJPEG.cmake 4056 2013-01-05 13:04:42Z fspindle $
+# $Id: FindMyJPEG.cmake 5316 2015-02-12 10:58:18Z fspindle $
 #
 # This file is part of the ViSP software.
-# Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+# Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
 # 
 # This software is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -45,7 +45,25 @@
 
 
 # detection of the Libjpeg headers location
-  FIND_PATH(JPEG_INCLUDE_DIR 
+if(MINGW)
+  find_path(JPEG_INCLUDE_DIR 
+    NAMES
+    jpeglib.h
+    PATHS
+    "$ENV{MINGW_DIR}/include"
+    C:/mingw/include
+    )
+  # Detection of the Libjpeg library on Unix
+  find_library(JPEG_LIBRARY
+    NAMES
+    jpeg libjpeg
+    PATHS
+    "$ENV{MINGW_DIR}/lib"
+    "$ENV{MINGW_DIR}/lib64"
+    C:/mingw/lib64
+    )
+else()
+  find_path(JPEG_INCLUDE_DIR 
     NAMES
     jpeglib.h
     PATHS
@@ -55,10 +73,8 @@
     $ENV{LIBJPEG_DIR}
     "C:/Program Files/GnuWin32/include"
     )
-  #MESSAGE("JPEG_INCLUDE_DIR=${JPEG_INCLUDE_DIR}")
-
   # Detection of the Libjpeg library on Unix
-  FIND_LIBRARY(JPEG_LIBRARY
+  find_library(JPEG_LIBRARY
     NAMES
     jpeg libjpeg
     PATHS
@@ -70,6 +86,8 @@
     $ENV{LIBJPEG_DIR}
     "C:/Program Files/GnuWin32/lib"
     )
+endif()
+  #MESSAGE("JPEG_INCLUDE_DIR=${JPEG_INCLUDE_DIR}")
   #MESSAGE("JPEG_LIBRARY=${JPEG_LIBRARY}")
 
 

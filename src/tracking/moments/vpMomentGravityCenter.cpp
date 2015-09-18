@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpMomentGravityCenter.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpMomentGravityCenter.cpp 4713 2014-03-28 18:02:26Z mbakthav $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -60,15 +60,26 @@ vpMomentGravityCenter::vpMomentGravityCenter() : vpMoment(){
   Returns a vector of the two gravity center coordinates.
   \return Coordinates in the following moment: \f$(x_g,y_g)\f$.
 */
-std::vector<double>& vpMomentGravityCenter::get(){
+const std::vector<double>& vpMomentGravityCenter::get() const{
     return values;
 }
 
 /*!
   Outputs the moment's values to a stream.
 */
-std::ostream & operator<<(std::ostream & os, const vpMomentGravityCenter& m){
-    os << "Xg=" << m.values[0] << ", Yg=" << m.values[1];
-    
+VISP_EXPORT std::ostream & operator<<(std::ostream & os, const vpMomentGravityCenter& m){
+    os << (__FILE__) << std::endl;
+    os << "(Xg,Yg) = (" << m.values[0] << ", " << m.values[1] << ")" << std::endl;
     return os;    
+}
+
+/*!
+Prints its dependencies
+Basic moments m10, m01 and m00 from vpMomentObject
+*/
+void  vpMomentGravityCenter::printDependencies(std::ostream& os) const{
+    os << (__FILE__) << std::endl;
+    os << "m10 = " << getObject().get(1,0) << "\t";
+    os << "m00 = " << getObject().get(0,1) << "\t";
+    os << "m00 = " << getObject().get(0,0) << std::endl;
 }

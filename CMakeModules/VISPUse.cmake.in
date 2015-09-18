@@ -1,9 +1,9 @@
 #############################################################################
 #
-# $Id: VISPUse.cmake.in 4057 2013-01-05 13:10:29Z fspindle $
+# $Id: VISPUse.cmake.in 4616 2014-01-24 18:43:25Z fspindle $
 #
 # This file is part of the ViSP software.
-# Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+# Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
 # 
 # This software is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -38,26 +38,12 @@
 #
 #############################################################################
 
-# Add extra build flags to be able to consider especially for OpenMP
-list(APPEND CMAKE_CXX_FLAGS "@VISP_OPENMP_FLAGS@")
-list(APPEND CMAKE_CXX_FLAGS "@VISP_CPP11_FLAGS@")
-
-# Remove duplicates compilation flags
-separate_arguments(CMAKE_CXX_FLAGS)
-list(REMOVE_DUPLICATES CMAKE_CXX_FLAGS)
-string(REPLACE ";" " " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" CACHE STRING "common C++ build flags" FORCE)
 
 # Tell the compiler where to find ViSP's header files
 # and the third party headers we depend on
-INCLUDE_DIRECTORIES(${VISP_INCLUDE_DIRS})
-
-# Add the required definitions
-ADD_DEFINITIONS(${VISP_DEFINITIONS}) 
+include_directories(${VISP_INCLUDE_DIRS})
 
 # Tell the compiler where to find ViSP's libraries
 # and the third party libraries we depend on
-LINK_DIRECTORIES(${VISP_LIBRARY_DIRS})
-
-LINK_LIBRARIES(${VISP_LIBRARIES})
+link_libraries(${VISP_LIBRARIES})
 

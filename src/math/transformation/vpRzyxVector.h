@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpRzyxVector.h 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpRzyxVector.h 4632 2014-02-03 17:06:40Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -154,11 +154,10 @@ class VISP_EXPORT vpRzyxVector : public vpRotationVector
   friend class vpThetaUVector;
 
 public:
-  //! Default constructor. Initialize the angles to zero.
-  vpRzyxVector() { ; }
-
-  // Copy constructor.
-  vpRzyxVector(const vpRzyxVector &m);
+  /*! Default constructor that initialize all the angles to zero. */
+  vpRzyxVector() {}
+  /*! Copy constructor. */
+  vpRzyxVector(const vpRzyxVector &rzyx) : vpRotationVector(rzyx) {}
 
   /*!
     Constructor from 3 angles (in radian).
@@ -173,10 +172,7 @@ public:
   vpRzyxVector(const vpRotationMatrix& R) ;
 
   // initialize a Rzyx vector from a ThetaU vector
-  vpRzyxVector(const vpThetaUVector&  tu) ;
-
-  // Affectation of two vectors.
-  vpRzyxVector &operator=(const vpRzyxVector &m);
+  vpRzyxVector(const vpThetaUVector& tu) ;
 
   /*!
     Construction from 3 angles (in radian).

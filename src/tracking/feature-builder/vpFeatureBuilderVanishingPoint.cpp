@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpFeatureBuilderVanishingPoint.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpFeatureBuilderVanishingPoint.cpp 4574 2014-01-09 08:48:51Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -116,8 +116,9 @@ vpFeatureBuilder::create(vpFeatureVanishingPoint &s, const vpFeatureLine &L1, co
   if(fabs(theta_r-theta_l)<min || fabs(fabs(theta_r-theta_l)-M_PI)<min \
      || fabs(fabs(theta_r-theta_l)-2*M_PI)<min)
   {
-    vpCERROR<<"there is no vanishing point : the lines are parallel in the image plane"<<std::endl;
-    throw(" ");
+    vpCERROR<<"There is no vanishing point : the lines are parallel in the image plane"<<std::endl;
+    throw(vpFeatureException(vpFeatureException::badInitializationError,
+           "There is no vanishing point : the lines are parallel in the image plane")) ;
   }
 
   y = (rho_r *c_l - rho_l * c_r) / (-s_l * c_r + s_r * c_l );

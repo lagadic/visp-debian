@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpFeaturePointPolar.h 4276 2013-06-25 12:36:48Z fspindle $
+ * $Id: vpFeaturePointPolar.h 5237 2015-01-30 13:52:04Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -276,7 +276,7 @@ public:
   // basic constructor
   vpFeaturePointPolar() ;
   //! Destructor. Does nothing.
-  virtual ~vpFeaturePointPolar() { if (flags != NULL) delete [] flags; }
+  virtual ~vpFeaturePointPolar() { }
 
   void buildFrom(const double rho, const double theta, const double Z) ;
 

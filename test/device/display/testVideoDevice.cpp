@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: testVideoDevice.cpp 4323 2013-07-18 09:24:01Z fspindle $
+ * $Id: testVideoDevice.cpp 5023 2014-12-03 16:07:48Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -76,6 +76,11 @@ typedef enum {
   vpD3D,
   vpCV 
 } vpDisplayType;
+
+void usage(const char *name, const char *badparam, std::string ipath, vpDisplayType &dtype);
+bool getOptions(int argc, const char **argv,
+                std::string &ipath, vpDisplayType &dtype, bool &list,
+                bool &click_allowed, bool &display );
 
 /*!
 
@@ -161,15 +166,15 @@ bool getOptions(int argc, const char **argv,
                 std::string &ipath, vpDisplayType &dtype, bool &list,
                 bool &click_allowed, bool &display )
 {
-  const char *optarg;
+  const char *optarg_;
   int	c;
   std::string sDisplayType;
-  while ((c = vpParseArgv::parse(argc, argv, GETOPTARGS, &optarg)) > 1) {
+  while ((c = vpParseArgv::parse(argc, argv, GETOPTARGS, &optarg_)) > 1) {
 
     switch (c) {
-    case 'i': ipath = optarg; break;
+    case 'i': ipath = optarg_; break;
     case 'l': list = true; break;
-    case 't': sDisplayType = optarg;
+    case 't': sDisplayType = optarg_;
       // Parse the display type option
       if (sDisplayType.compare("X11") == 0) {
         dtype = vpX11;
@@ -193,7 +198,7 @@ bool getOptions(int argc, const char **argv,
     case 'd': display = false; break;
 
     default:
-      usage(argv[0], optarg, ipath,dtype); return false; break;
+      usage(argv[0], optarg_, ipath,dtype); return false; break;
     }
   }
 
@@ -202,7 +207,7 @@ bool getOptions(int argc, const char **argv,
     // standalone param or error
     usage(argv[0], NULL, ipath, dtype);
     std::cerr << "ERROR: " << std::endl;
-    std::cerr << "  Bad argument " << optarg << std::endl << std::endl;
+    std::cerr << "  Bad argument " << optarg_ << std::endl << std::endl;
     return false;
   }
 
@@ -235,10 +240,8 @@ main(int argc, const char ** argv)
     opt_dtype = vpCV;  
 #endif
 
-    // Get the VISP_IMAGE_PATH environment variable value
-    char *ptenv = getenv("VISP_INPUT_IMAGE_PATH");
-    if (ptenv != NULL)
-      env_ipath = ptenv;
+    // Get the visp-images-data package path or VISP_INPUT_IMAGE_PATH environment variable value
+    env_ipath = vpIoTools::getViSPImagesDataPath();
 
     // Set the default input path
     if (! env_ipath.empty())
@@ -280,7 +283,6 @@ main(int argc, const char ** argv)
       return (0);
     }
 
-
     // Get the option values
     if (!opt_ipath.empty())
       ipath = opt_ipath;
@@ -315,12 +317,12 @@ main(int argc, const char ** argv)
     vpImage<vpRGBa> Irgba ;
 
     // Load a grey image from the disk
-    filename = ipath +  vpIoTools::path("/ViSP-images/Klimt/Klimt.pgm");
+    filename = vpIoTools::createFilePath(ipath, "ViSP-images/Klimt/Klimt.pgm");
     vpCTRACE << "Load " <<  filename << std::endl;
     vpImageIo::read(I, filename) ;
 
     // Load a color image from the disk
-    filename = ipath +  vpIoTools::path("/ViSP-images/Klimt/Klimt.ppm");
+    filename = vpIoTools::createFilePath(ipath, "ViSP-images/Klimt/Klimt.ppm");
     vpCTRACE << "Load " <<  filename << std::endl;
     vpImageIo::read(Irgba, filename) ;
 
@@ -375,7 +377,7 @@ main(int argc, const char ** argv)
       break;
     case vpCV:
       std::cout << "Requested OpenCV display functionnalities..." << std::endl;
-#if defined VISP_HAVE_OPENCV
+#if defined(VISP_HAVE_OPENCV)
       display = new vpDisplayOpenCV;
 #else
       std::cout << "  Sorry, OpenCV video device is not available.\n";

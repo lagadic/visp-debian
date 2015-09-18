@@ -672,7 +672,8 @@ INPUT                  = "@VISP_SOURCE_DIR@/src" \
                          "@VISP_SOURCE_DIR@/tutorial" \
                          "@VISP_SOURCE_DIR@/demo" \
                          "@VISP_SOURCE_DIR@/test" \
-                         "@VISP_SOURCE_DIR@/doc"
+                         "@VISP_SOURCE_DIR@/doc" \
+                         "@VISP_BINARY_DIR@/doc"
 
 # This tag can be used to specify the character encoding of the source files
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding, which is
@@ -1552,7 +1553,7 @@ PREDEFINED             = DOXYGEN_SHOULD_SKIP_THIS \
                          VISP_HAVE_LAPACK \
                          VISP_HAVE_OPENCV \
                          VISP_HAVE_OPENCV_NONFREE \
-                         VISP_HAVE_OPENCV_VERSION=0x111111 \
+                         VISP_HAVE_OPENCV_VERSION=0x020408 \
                          VISP_HAVE_OGRE \
                          VISP_HAVE_OGRE_PLUGINS_PATH \
                          VISP_HAVE_OGRE_RESOURCES_PATH \
@@ -1564,7 +1565,6 @@ PREDEFINED             = DOXYGEN_SHOULD_SKIP_THIS \
                          VISP_HAVE_SOQT \
                          VISP_HAVE_SOWIN \
                          VISP_HAVE_SOXT \
-                         VISP_HAVE_DC1394_1 \
                          VISP_HAVE_DC1394_2 \
                          VISP_HAVE_CMU1394 \
                          VISP_HAVE_V4L2 \
@@ -1575,7 +1575,6 @@ PREDEFINED             = DOXYGEN_SHOULD_SKIP_THIS \
                          VISP_HAVE_PTU46 \
                          VISP_HAVE_VIPER650 \
                          VISP_HAVE_VIPER850 \
-                         VISP_HAVE_CYCABTK \
                          VISP_HAVE_PIONEER \
                          VISP_HAVE_PARPORT \
                          VISP_HAVE_XML2 \
@@ -1586,13 +1585,16 @@ PREDEFINED             = DOXYGEN_SHOULD_SKIP_THIS \
                          VISP_HAVE_LIBFREENECT \
                          VISP_HAVE_LIBUSB_1 \
                          VISP_HAVE_YARP \
+                         VISP_HAVE_ZBAR \
+                         VISP_HAVE_DMTX \
                          VISP_HAVE_ACCESS_TO_NAS \
                          VISP_HAVE_CPP11_COMPATIBILITY \
                          VISP_BUILD_DEPRECATED_FUNCTIONS \
                          WIN32 \
                          APPLE \
                          UNIX \
-                         VP_DEBUG
+                         VP_DEBUG \
+                         VP_TRACE
 
 # If the MACRO_EXPANSION and EXPAND_ONLY_PREDEF tags are set to YES then
 # this tag can be used to specify a list of macro names that should be expanded.

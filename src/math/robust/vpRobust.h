@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpRobust.h 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpRobust.h 4796 2014-07-23 15:51:16Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -201,9 +201,9 @@ public:
   //! Swap two value
   void exch(double &A, double &B){swap = A; A = B;  B = swap;}
   //! Sort function using partition method
-  unsigned int partition(vpColVector &a, unsigned int l, unsigned int r);
+  int partition(vpColVector &a, int l, int r);
   //! Sort the vector and select a value in the sorted vector
-  double select(vpColVector &a, unsigned int l, unsigned int r, unsigned int k);
+  double select(vpColVector &a, int l, int r, int k);
   //@}
 };
 

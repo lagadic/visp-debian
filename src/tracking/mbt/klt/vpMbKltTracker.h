@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpMbKltTracker.h 4338 2013-07-23 14:29:30Z fspindle $
+ * $Id: vpMbKltTracker.h 5126 2015-01-05 22:07:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -48,11 +48,10 @@
 
 #include <visp/vpConfig.h>
 
-#ifdef VISP_HAVE_OPENCV
+#if (defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION >= 0x020100))
 
 #include <visp/vpMbTracker.h>
 #include <visp/vpKltOpencv.h>
-#include <visp/vpMbtKltPolygon.h>
 #include <visp/vpMeterPixelConversion.h>
 #include <visp/vpPixelMeterConversion.h>
 #include <visp/vpDisplayX.h>
@@ -62,7 +61,10 @@
 #include <visp/vpSubColVector.h>
 #include <visp/vpSubMatrix.h>
 #include <visp/vpExponentialMap.h>
-#include <visp/vpMbtKltPolygon.h>
+//#include <visp/vpMbtKltPolygon.h>
+#include <visp/vpMbtDistanceKltPoints.h>
+#include <visp/vpMbtDistanceCircle.h>
+#include <visp/vpMbtDistanceCylinder.h>
 
 /*!
   \class vpMbKltTracker
@@ -228,13 +230,13 @@ class VISP_EXPORT vpMbKltTracker: virtual public vpMbTracker
 {
 protected:
   //! Temporary OpenCV image for fast conversion.
-  IplImage* cur;
+#if (VISP_HAVE_OPENCV_VERSION >= 0x020408)
+  cv::Mat cur;
+#else
+  IplImage *cur;
+#endif
   //! Initial pose.
   vpHomogeneousMatrix c0Mo;
-  //! Angle used to detect a face appearance
-  double angleAppears;
-  //! Angle used to detect a face disappearance
-  double angleDisappears;
   //! If true, compute the interaction matrix at each iteration of the minimization. Otherwise, compute it only on the first iteration.
   bool compute_interaction;
   //! Flag to specify whether the init method is called the first or not (specific calls to realize in this case).
@@ -249,28 +251,25 @@ protected:
   double threshold_outlier;
   //! Percentage of good points, according to the initial number, that must have the tracker.
   double percentGood;
-  //! Use Ogre3d for visibility tests
-  bool useOgre;
   //! The estimated displacement of the pose between the current instant and the initial position.
   vpHomogeneousMatrix ctTc0;
   //! Points tracker.
   vpKltOpencv tracker;
-  //! Set of faces describing the object. 
-  vpMbHiddenFaces<vpMbtKltPolygon> faces;
   //! First track() called
   bool firstTrack;
-  //! Distance for near clipping
-  double distNearClip;
-  //! Distance for near clipping
-  double distFarClip;
-  //! Flags specifying which clipping to used
-  unsigned int clippingFlag;
-  
+  //! Vector of the cylinders used here only to display the full model.
+  std::list<vpMbtDistanceKltPoints*> kltPolygons;
+  //! Vector of the cylinders used here only to display the full model.
+  std::list<vpMbtDistanceCylinder*> cylinders_disp;
+  //! Vector of the circles used here only to display the full model.
+  std::list<vpMbtDistanceCircle*> circles_disp;
+
 public:
-  
             vpMbKltTracker();
   virtual   ~vpMbKltTracker();
   
+            void addCircle(const vpPoint &P1, const vpPoint &P2, const vpPoint &P3, const double r, const std::string &name="");
+            void addCylinder(const vpPoint &P1, const vpPoint &P2, const double r, const std::string &name="");
   virtual void            display(const vpImage<unsigned char>& I, const vpHomogeneousMatrix &cMo,
                                   const vpCameraParameters &cam, const vpColor& col, const unsigned int thickness=1,
                                   const bool displayFullModel = false);
@@ -282,40 +281,25 @@ protected:
   virtual void            reinit(const vpImage<unsigned char>& I);
   
 public:
+  /*! Return the address of the circle feature list. */
+  std::list<vpMbtDistanceCircle*> &getFeaturesCircle() { return circles_disp; }
+  /*! Return the address of the cylinder feature list. */
+  std::list<vpMbtDistanceCylinder*> &getFeaturesCylinder() { return cylinders_disp; }
+  /*! Return the address of the Klt feature list. */
+  std::list<vpMbtDistanceKltPoints*> &getFeaturesKlt() { return kltPolygons; }
   virtual void            loadConfigFile(const std::string& configFile);
           void            loadConfigFile(const char* configFile);
           
-          /*! Return the angle used to test polygons appearance. */
-  virtual inline  double  getAngleAppear() const { return angleAppears; }   
-  
-          /*! Return the angle used to test polygons disappearance. */
-  virtual inline  double  getAngleDisappear() const { return angleDisappears; } 
-  
-          /*!
-            Get the clipping used.
-            
-            \sa vpMbtPolygonClipping
-            
-            \return Clipping flags.
-          */          
-  virtual inline  unsigned int getClipping() const { return clippingFlag; } 
-    
-          /*! Return a reference to the faces structure. */
-  inline  vpMbHiddenFaces<vpMbtKltPolygon>& getFaces() { return faces;}
-          
-          /*!
-            Get the far distance for clipping.
-            
-            \return Far clipping value.
-          */
-  virtual inline  double  getFarClippingDistance() const { return distFarClip; }
-
           /*!
             Get the current list of KLT points.
             
             \return the list of KLT points through vpKltOpencv.
           */
-  inline  CvPoint2D32f*   getKltPoints() {return tracker.getFeatures();}
+#if (VISP_HAVE_OPENCV_VERSION >= 0x020408)
+          inline  std::vector<cv::Point2f> getKltPoints() {return tracker.getFeatures();}
+#else
+          inline  CvPoint2D32f*   getKltPoints() {return tracker.getFeatures();}
+#endif
   
           std::vector<vpImagePoint> getKltImagePoints() const;
           
@@ -355,14 +339,7 @@ public:
             \return the number of features
           */
   inline  int             getNbKltPoints() const {return tracker.getNbFeatures();}
-       
-          /*!
-            Get the near distance for clipping.
-            
-            \return Near clipping value.
-          */
-  virtual inline double   getNearClippingDistance() const { return distNearClip; }
-  
+        
           /*!
             Get the threshold for the acceptation of a point.
 
@@ -370,44 +347,22 @@ public:
           */
   inline  double          getThresholdAcceptation() const { return threshold_outlier;}
   
+  void reInitModel(const vpImage<unsigned char>& I, const std::string &cad_name, const vpHomogeneousMatrix& cMo_,
+		  const bool verbose=false);
+  void reInitModel(const vpImage<unsigned char>& I, const char* cad_name, const vpHomogeneousMatrix& cMo,
+		  const bool verbose=false);
           void            resetTracker();
-          
-          /*! 
-            Set the angle used to test polygons appearance.
-            If the angle between the normal of the polygon and the line going
-            from the camera to the polygon center has a value lower than
-            this parameter, the polygon is considered as appearing.
-            The polygon will then be tracked.
             
-            \param a : new angle in radian.
-          */
-  virtual inline  void    setAngleAppear(const double &a) { angleAppears = a; }   
-  
-          /*! 
-            Set the angle used to test polygons disappearance.
-            If the angle between the normal of the polygon and the line going
-            from the camera to the polygon center has a value greater than
-            this parameter, the polygon is considered as disappearing.
-            The tracking of the polygon will then be stopped.
-
-            \param a : new angle in radian.
-          */
-  virtual inline  void    setAngleDisappear(const double &a) { angleDisappears = a; } 
-  
           void            setCameraParameters(const vpCameraParameters& cam);
-          
-  virtual void            setClipping(const unsigned int &flags);
-          
-  virtual void            setFarClippingDistance(const double &dist);
-          
+
           void            setKltOpencv(const vpKltOpencv& t);
           
           /*!
             Set the value of the gain used to compute the control law.
             
-            \param lambda : the desired value for the gain.
+            \param gain : the desired value for the gain.
           */
-  virtual inline  void    setLambda(const double lambda) {this->lambda = lambda;}
+  virtual inline  void    setLambda(const double gain) {this->lambda = gain;}
   
           /*!
             Set the erosion of the mask used on the Model faces.
@@ -422,10 +377,20 @@ public:
             \param max : the desired number of iteration
           */
   virtual inline  void    setMaxIter(const unsigned int max) {maxIter = max;}
-  
-  virtual void            setNearClippingDistance(const double &dist);
-  
-  virtual void            setOgreVisibilityTest(const bool &v);
+
+          /*!
+            Use Ogre3D for visibility tests
+
+            \warning This function has to be called before the initialization of the tracker.
+
+            \param v : True to use it, False otherwise
+          */
+  virtual         void    setOgreVisibilityTest(const bool &v){
+      vpMbTracker::setOgreVisibilityTest(v);
+#ifdef VISP_HAVE_OGRE
+      faces.getOgreContext()->setWindowName("MBT Klt");
+#endif
+  }
   
   virtual void            setPose(const vpImage<unsigned char> &I, const vpHomogeneousMatrix& cdMo);
   
@@ -442,9 +407,13 @@ public:
 protected:
           void            computeVVS(const unsigned int &nbInfos, vpColVector &w);
           
-  virtual void            initFaceFromCorners(const std::vector<vpPoint>& corners, const unsigned int indexFace = -1);
-  virtual void            initCylinder(const vpPoint& , const vpPoint , const double , const unsigned int ){};
-  
+          virtual void            initFaceFromCorners(vpMbtPolygon &polygon);
+          virtual void            initFaceFromLines(vpMbtPolygon &polygon);
+          virtual void    initCircle(const vpPoint&, const vpPoint &, const vpPoint &, const double, const int,
+              const std::string &name="");
+          virtual void    initCylinder(const vpPoint&, const vpPoint &, const double, const int,
+              const std::string &name="");
+
           void            preTracking(const vpImage<unsigned char>& I, unsigned int &nbInfos, unsigned int &nbFaceUsed);
           bool            postTracking(const vpImage<unsigned char>& I, vpColVector &w);
 };

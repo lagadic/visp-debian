@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: grab1394CMU.cpp 4323 2013-07-18 09:24:01Z fspindle $
+ * $Id: grab1394CMU.cpp 4659 2014-02-09 14:11:51Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -64,6 +64,10 @@
 // List of allowed command line options
 #define GETOPTARGS	"dhn:o:"
 
+void usage(const char *name, const char *badparam, unsigned &nframes, std::string &opath);
+bool getOptions(int argc, const char **argv, bool &display,
+                unsigned int &nframes, bool &save, std::string &opath);
+
 /*!
 
   Print the program options.
@@ -123,21 +127,21 @@ OPTIONS:                                               Default\n\
 bool getOptions(int argc, const char **argv, bool &display,
                 unsigned int &nframes, bool &save, std::string &opath)
 {
-  const char *optarg;
+  const char *optarg_;
   int	c;
-  while ((c = vpParseArgv::parse(argc, argv, GETOPTARGS, &optarg)) > 1) {
+  while ((c = vpParseArgv::parse(argc, argv, GETOPTARGS, &optarg_)) > 1) {
 
     switch (c) {
     case 'd': display = false; break;
     case 'n':
-      nframes = (unsigned int)atoi(optarg); break;
+      nframes = (unsigned int)atoi(optarg_); break;
     case 'o':
       save = true;
-      opath = optarg; break;
+      opath = optarg_; break;
     case 'h': usage(argv[0], NULL, nframes, opath); return false; break;
 
     default:
-      usage(argv[0], optarg, nframes, opath);
+      usage(argv[0], optarg_, nframes, opath);
       return false; break;
     }
   }
@@ -146,7 +150,7 @@ bool getOptions(int argc, const char **argv, bool &display,
     // standalone param or error
     usage(argv[0], NULL, nframes, opath);
     std::cerr << "ERROR: " << std::endl;
-    std::cerr << "  Bad argument " << optarg << std::endl << std::endl;
+    std::cerr << "  Bad argument " << optarg_ << std::endl << std::endl;
     return false;
   }
 
@@ -255,10 +259,9 @@ main(int argc, const char ** argv)
     std::cout << "Mean loop time: " << ttotal / nframes << " ms" << std::endl;
     std::cout << "Mean frequency: " << 1000./(ttotal / nframes) << " fps" << std::endl;
   }
-  catch(...)
-  {
-    std::cout << "Failure: exit" << std::endl;
-    return(-1);
+  catch(vpException e) {
+    std::cout << "Catch an exception: " << e << std::endl;
+    return 1;
   }
 }
 #else

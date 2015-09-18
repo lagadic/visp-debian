@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpRGBa.h 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpRGBa.h 4649 2014-02-07 14:57:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -74,27 +74,22 @@ public:
     Build a black value.
     
   */
-  inline vpRGBa() 
-    : R(0), G(0), B(0), A(0) 
-    {
-    };
+  inline vpRGBa() : R(0), G(0), B(0), A(0) {};
   
   /*!
     Constructor.
     
     Initialize the color with R, G, B, A values.
     
-    \param R : Red value.
-    \param G : Green value.
-    \param B : Blue value.
-    \param A : Additional value.
+    \param r : Red value.
+    \param g : Green value.
+    \param b : Blue value.
+    \param a : Additional value.
     
   */
-  inline vpRGBa(const unsigned char &R, const unsigned char &G,
-		const unsigned char &B, const unsigned char &A=0) 
-    : R(R), G(G), B(B), A(A)
-  {
-  };
+  inline vpRGBa(const unsigned char &r, const unsigned char &g,
+    const unsigned char &b, const unsigned char &a=0)
+    : R(r), G(g), B(b), A(a) {};
 
 
   /*!
@@ -105,19 +100,13 @@ public:
     \param v : Value to set.
     
   */
-  inline vpRGBa(const unsigned char &v) 
-    : R(v), G(v), B(v), A(v)
-  {
-  };
+  inline vpRGBa(const unsigned char &v) : R(v), G(v), B(v), A(v) {};
 
 
   /*!
     Copy constructor.
   */
-  inline vpRGBa(const vpRGBa &v)
-  {
-    *this = v ;
-  };
+  inline vpRGBa(const vpRGBa &v) : R(v.R), G(v.G), B(v.B), A(v.A) {};
 
   /*!
     Create a RGBa value from a 4 dimension column vector.
@@ -128,14 +117,18 @@ public:
     A=v[3]
     
   */
-  inline vpRGBa(const vpColVector &v)
+  inline vpRGBa(const vpColVector &v) : R(0), G(0), B(0), A(0)
   {
-    *this = v ;
-  }
+    *this = v;
+  };
 
-  void operator=(const unsigned char &v) ;
-  void operator=(const vpRGBa &v) ;
-  void operator=(const vpColVector &v) ;
+  // We cannot add here the following destructor without changing the hypothesis that the size of this class is 4.
+  // With the destructor it becomes 16 that does break a lot of things arround image conversions
+  // virtual ~vpRGBa() {}; // Not to implement
+
+  vpRGBa & operator=(const unsigned char &v) ;
+  vpRGBa & operator=(const vpRGBa &v) ;
+  vpRGBa & operator=(const vpColVector &v) ;
   bool operator==(const vpRGBa &v);
   bool operator!=(const vpRGBa &v);
 

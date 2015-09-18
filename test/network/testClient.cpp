@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: testClient.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: testClient.cpp 4574 2014-01-09 08:48:51Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -50,27 +50,32 @@
 
 int main()
 {
-  std::string servername = "localhost";
-  unsigned int port = 35000;
+  try {
+    std::string servername = "localhost";
+    unsigned int port = 35000;
 
-  vpClient client;
-  client.connectToHostname(servername, port);
-  //client.connectToIP("127.0.0.1",port);
+    vpClient client;
+    client.connectToHostname(servername, port);
+    //client.connectToIP("127.0.0.1",port);
 
-  int val = 0;
+    int val = 0;
 
-  while(1)
-  {
-    if(client.send(&val) != sizeof(int)) //Sending the new value to the first client
-      std::cout << "Error while sending" << std::endl;
-    else
-      std::cout << "Sending : " << val << std::endl;
-    
-    if(client.receive(&val) != sizeof(int)) //Receiving a value from the first client
+    while(1)
+    {
+      if(client.send(&val) != sizeof(int)) //Sending the new value to the first client
+        std::cout << "Error while sending" << std::endl;
+      else
+        std::cout << "Sending : " << val << std::endl;
+
+      if(client.receive(&val) != sizeof(int)) //Receiving a value from the first client
         std::cout << "Error while receiving" << std::endl;
-    else
-      std::cout << "Received : " << val << std::endl;
+      else
+        std::cout << "Received : " << val << std::endl;
+    }
+    return 0;
   }
-
-  return 0;
+  catch(vpException e) {
+    std::cout << "Catch an exception: " << e << std::endl;
+    return 1;
+  }
 }

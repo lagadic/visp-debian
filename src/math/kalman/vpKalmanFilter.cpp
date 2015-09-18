@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpKalmanFilter.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpKalmanFilter.cpp 5060 2014-12-12 18:31:03Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -53,20 +53,20 @@
 /*!
   Initialize the Kalman filter.
   
-  \param size_state : Size of the state vector \f${\bf x}_{k}\f$ for one signal.
+  \param size_state_vector : Size of the state vector \f${\bf x}_{k}\f$ for one signal.
 
-  \param size_measure : Size of the measure vector \f${\bf z}_{k}\f$
+  \param size_measure_vector : Size of the measure vector \f${\bf z}_{k}\f$
   for one signal.
 
-  \param nsignal : Number of signal to filter.
+  \param n_signal : Number of signal to filter.
 */
 void
-vpKalmanFilter::init(unsigned int size_state, unsigned int size_measure, 
-		     unsigned int nsignal)
+vpKalmanFilter::init(unsigned int size_state_vector, unsigned int size_measure_vector,
+                     unsigned int n_signal)
 {
-  this->size_state = size_state;
-  this->size_measure = size_measure ;
-  this->nsignal = nsignal ;
+  this->size_state = size_state_vector;
+  this->size_measure = size_measure_vector ;
+  this->nsignal = n_signal ;
   F.resize(size_state*nsignal, size_state*nsignal) ;
   H.resize(size_measure*nsignal,  size_state*nsignal) ;
 
@@ -91,14 +91,9 @@ vpKalmanFilter::init(unsigned int size_state, unsigned int size_measure,
   
 */
 vpKalmanFilter::vpKalmanFilter()
+  : iter(0), size_state(0), size_measure(0), nsignal(0), verbose_mode(false),
+    Xest(), Xpre(), F(), H(), R(), Q(), dt(-1), Ppre(), Pest(), W(), I()
 {
-  verbose(false);
-  //  init_done = false ;
-  this->size_state = 0;
-  this->size_measure = 0 ;
-  this->nsignal = 0 ;
-  iter = 0 ;
-  dt = -1 ;
 }
 
 /*!
@@ -106,17 +101,12 @@ vpKalmanFilter::vpKalmanFilter()
 
   The verbose mode is by default desactivated.
   
-  \param nsignal : Number of signal to filter.
+  \param n_signal : Number of signal to filter.
 */
-vpKalmanFilter::vpKalmanFilter(unsigned int nsignal)
+vpKalmanFilter::vpKalmanFilter(unsigned int n_signal)
+  : iter(0), size_state(0), size_measure(0), nsignal(n_signal), verbose_mode(false),
+    Xest(), Xpre(), F(), H(), R(), Q(), dt(-1), Ppre(), Pest(), W(), I()
 {
-  verbose(false);
-  // init_done = false;
-  this->size_state = 0;
-  this->size_measure = 0 ;
-  this->nsignal = nsignal;
-  iter = 0 ;
-  dt = -1 ;
 }
 
 /*!
@@ -124,17 +114,18 @@ vpKalmanFilter::vpKalmanFilter(unsigned int nsignal)
 
   The verbose mode is by default desactivated.
   
-  \param size_state : Size of the state vector \f${\bf x}_{(k)}\f$ for one signal.
+  \param size_state_vector : Size of the state vector \f${\bf x}_{(k)}\f$ for one signal.
 
-  \param size_measure : Size of the measure vector \f${\bf z}_{(k)}\f$
+  \param size_measure_vector : Size of the measure vector \f${\bf z}_{(k)}\f$
   for one signal.
 
-  \param nsignal : Number of signal to filter.
+  \param n_signal : Number of signal to filter.
 */
-vpKalmanFilter::vpKalmanFilter(unsigned int size_state, unsigned int size_measure, unsigned int nsignal)
+vpKalmanFilter::vpKalmanFilter(unsigned int size_state_vector, unsigned int size_measure_vector, unsigned int n_signal)
+  : iter(0), size_state(0), size_measure(0), nsignal(0), verbose_mode(false),
+    Xest(), Xpre(), F(), H(), R(), Q(), dt(-1), Ppre(), Pest(), W(), I()
 {
-  verbose(false);
-  init( size_state, size_measure, nsignal) ;
+  init( size_state_vector, size_measure_vector, n_signal) ;
 }
 
 /*!
@@ -264,11 +255,11 @@ vpKalmanFilter::filtering(vpColVector &z)
   \param Vn : Variance of measure noise
   \param Vw : Variance of the state noise
 
-  modèle d'état
+  State model:
   \f[ S = \left[\; y  \quad \frac{\partial y}{\partial t}\;\right]^T = \left[\;  y  \quad \dot{ y}\;\right]^T
   \f]
 
-  Modélisation des filtres
+  Filter model:
   \f[
   \begin{array}{rclll} \\
   S(t+1) &= & F S(t) + W(t)&~~~~~~~~~~~& S(t+1) \mbox{ est un vecteur} \left[\;
@@ -278,16 +269,15 @@ vpKalmanFilter::filtering(vpColVector &z)
   \f]
 
 
-  La matrice F décrit le modèle d'évolution de l'état. Dans le cas présent elle
-  est donnée par :
+  Matrix F describes the evolution of the state. This matrix is given by:
   \f[
   F= \left( \begin{array}{cc} 1 & \Delta t  \\ 0 & 1 \end{array} \right)
   \f]
 
-  Le bruit \f$W = \left( \begin{array}{c} \;W_1 \quad W_2\;  \end{array} \right)^T\f$
-  vient modéliser les variations sur le modèle à vitesse constante (dues aux accélérations)
+  The noise \f$W = \left( \begin{array}{c} \;W_1 \quad W_2\;  \end{array} \right)^T\f$
+  take into account the variations of the constant velocity model due to the accelerations.
 
-  En effet on a:
+  Thus we have:
   \f[
   \left\{
   \begin{array}{rcl}

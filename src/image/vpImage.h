@@ -1,10 +1,10 @@
 /****************************************************************************
  *
- * $Id: vpImage.h 4323 2013-07-18 09:24:01Z fspindle $
+ * $Id: vpImage.h 5126 2015-01-05 22:07:11Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
- * 
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
+ *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * ("GPL") version 2 as published by the Free Software Foundation.
@@ -12,11 +12,11 @@
  * distribution for additional information about the GNU GPL.
  *
  * For using ViSP with software that can not be combined with the GNU
- * GPL, please contact INRIA about acquiring a ViSP Professional 
+ * GPL, please contact INRIA about acquiring a ViSP Professional
  * Edition License.
  *
  * See http://www.irisa.fr/lagadic/visp/visp.html for more information.
- * 
+ *
  * This software was developed at:
  * INRIA Rennes - Bretagne Atlantique
  * Campus Universitaire de Beaulieu
@@ -26,7 +26,7 @@
  *
  * If you have questions regarding the use of this file, please contact
  * INRIA at visp@inria.fr
- * 
+ *
  * This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
  * WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
@@ -134,8 +134,10 @@ public:
   void init(unsigned int height, unsigned int width) ;
   //! set the size of the image
   void init(unsigned int height, unsigned int width, Type value) ;
-  //! set the size of the image
-  void resize(const unsigned int height, const unsigned int width) ;
+  //! set the size of the image without initializing it.
+  void resize(const unsigned int h, const unsigned int w) ;
+  //! set the size of the image and initialize it.
+  void resize(const unsigned int h, const unsigned int w, const Type val) ;
   //! destructor
   void destroy() ;
 
@@ -168,7 +170,7 @@ public:
   */
   inline  unsigned int getRows() const { return height ; }
 
-  /*!  
+  /*!
     Get the number of columns in the image.
 
     \return The image number of column, or image width.
@@ -177,7 +179,7 @@ public:
    */
    inline  unsigned int getCols() const { return width ; }
 
-  /*!  
+  /*!
     Get the image size.
 
     \return The image size = width * height.
@@ -217,9 +219,11 @@ public:
 
   //! operator[] allows operation like I[i] = x.
   inline Type *operator[]( const unsigned int i)   { return row[i];}
+  inline Type *operator[]( const int i)   { return row[i];}
 
   //! operator[] allows operation like x = I[i]
   inline const  Type *operator[](unsigned int i) const { return row[i];}
+  inline const  Type *operator[](int i) const { return row[i];}
 
   /*!
     Get the value of an image point.
@@ -244,15 +248,15 @@ public:
 
   */
   inline  void  operator()(const unsigned int i, const  unsigned int j,
-			   const Type &v)
+         const Type &v)
   {
     bitmap[i*width+j] = v ;
   }
   /*!
     Get the value of an image point.
 
-    \param ip : An image point with sub-pixel coordinates. Sub-pixel 
-	coordinates are roughly transformed to insigned int coordinates by cast.
+    \param ip : An image point with sub-pixel coordinates. Sub-pixel
+  coordinates are roughly transformed to insigned int coordinates by cast.
 
     \return Value of the image point \e ip.
 
@@ -269,14 +273,14 @@ public:
   /*!
     Set the value of an image point.
 
-    \param ip : An image point with sub-pixel coordinates. Sub-pixel 
-	coordinates are roughly transformed to insigned int coordinates by cast.
+    \param ip : An image point with sub-pixel coordinates. Sub-pixel
+  coordinates are roughly transformed to insigned int coordinates by cast.
 
     \param v : Value to set for the image point.
 
   */
   inline  void  operator()(const vpImagePoint &ip,
-			   const Type &v)
+         const Type &v)
   {
     unsigned int i = (unsigned int) ip.get_i();
     unsigned int j = (unsigned int) ip.get_j();
@@ -287,9 +291,9 @@ public:
   vpImage<Type> operator-(const vpImage<Type> &B);
 
   //! Copy operator
-  void operator=(const vpImage<Type> &I) ;
+  vpImage<Type>&  operator=(const vpImage<Type> &I) ;
 
-  void operator=(const Type &v);
+  vpImage<Type>& operator=(const Type &v);
   bool operator==(const vpImage<Type> &I);
   bool operator!=(const vpImage<Type> &I);
 
@@ -331,21 +335,23 @@ private:
 /*!
   \brief Image initialisation
 
-  Allocate memory for an [height x width] image
+  Allocate memory for an [h x w] image.
 
-  Set all the element of the bitmap to value
+  \param w : Image width.
+  \param h : Image height.
+  \param value : Set all the element of the bitmap to \e value.
 
   \exception vpException::memoryAllocationError
 
-  \sa vpImage::init(height, width)
+  \sa vpImage::init(h, w)
 */
 template<class Type>
 void
-vpImage<Type>::init(unsigned int height, unsigned int width, Type value)
+vpImage<Type>::init(unsigned int h, unsigned int w, Type value)
 {
   try
   {
-    init(height,width) ;
+    init(h,w) ;
   }
   catch(vpException me)
   {
@@ -361,7 +367,10 @@ vpImage<Type>::init(unsigned int height, unsigned int width, Type value)
 /*!
   \brief Image initialization
 
-  Allocate memory for an [height x width] image
+  Allocate memory for an [h x w] image.
+
+  \param w : Image width.
+  \param h : Image height.
 
   Element of the bitmap are not initialized
 
@@ -374,10 +383,10 @@ vpImage<Type>::init(unsigned int height, unsigned int width, Type value)
 */
 template<class Type>
 void
-vpImage<Type>::init(unsigned int height, unsigned int width)
+vpImage<Type>::init(unsigned int h, unsigned int w)
 {
 
-  if (height != this->height) {
+  if (h != this->height) {
     if (row != NULL)  {
       vpDEBUG_TRACE(10,"Destruction row[]");
       delete [] row;
@@ -385,7 +394,7 @@ vpImage<Type>::init(unsigned int height, unsigned int width)
     }
   }
 
-  if ((height != this->height) || (width != this->width))
+  if ((h != this->height) || (w != this->width))
   {
     if (bitmap != NULL) {
       vpDEBUG_TRACE(10,"Destruction bitmap[]") ;
@@ -394,13 +403,10 @@ vpImage<Type>::init(unsigned int height, unsigned int width)
     }
   }
 
-
-
-  this->width = width ;
-  this->height = height ;
+  this->width = w ;
+  this->height = h;
 
   npixels=width*height;
-
 
   if (bitmap == NULL)  bitmap = new  Type[npixels] ;
 
@@ -409,7 +415,7 @@ vpImage<Type>::init(unsigned int height, unsigned int width)
   {
         vpERROR_TRACE("cannot allocate bitmap ") ;
     throw(vpException(vpException::memoryAllocationError,
-		      "cannot allocate bitmap ")) ;
+          "cannot allocate bitmap ")) ;
   }
 
   if (row == NULL)  row = new  Type*[height] ;
@@ -418,7 +424,7 @@ vpImage<Type>::init(unsigned int height, unsigned int width)
   {
     vpERROR_TRACE("cannot allocate row ") ;
     throw(vpException(vpException::memoryAllocationError,
-		      "cannot allocate row ")) ;
+          "cannot allocate row ")) ;
   }
 
   unsigned int i ;
@@ -429,9 +435,12 @@ vpImage<Type>::init(unsigned int height, unsigned int width)
 /*!
   \brief Constructor
 
-  Allocate memory for an [height x width] image
+  Allocate memory for an [h x w] image.
 
-  Element of the bitmap are set to zero
+  \param w : Image width.
+  \param h : Image height.
+
+  Element of the bitmap are set to zero.
 
   If the image has been already initialized, memory allocation is done
   only if the new image size is different, else we re-use the same
@@ -442,20 +451,15 @@ vpImage<Type>::init(unsigned int height, unsigned int width)
   \sa vpImage::init(height, width)
 */
 template<class Type>
-vpImage<Type>::vpImage(unsigned int height, unsigned int width)
+vpImage<Type>::vpImage(unsigned int h, unsigned int w)
+  : bitmap(NULL), display(NULL), npixels(0), width(0), height(0), row(NULL)
 {
-  bitmap = NULL ;
-  row = NULL ;
-
-  display =  NULL ;
-  this->height = this->width = 0 ;
   try
   {
-    init(height,width,0) ;
+    init(h,w,0) ;
   }
-  catch(vpException me)
+  catch(...)
   {
-    vpERROR_TRACE(" ") ;
     throw ;
   }
 }
@@ -463,9 +467,11 @@ vpImage<Type>::vpImage(unsigned int height, unsigned int width)
 /*!
   \brief Constructor
 
-  Allocate memory for an [height x width] image
+  Allocate memory for an [height x width] image.
 
-  set all the element of the bitmap to value
+  \param w : Image width.
+  \param h : Image height.
+  \param value : Set all the element of the bitmap to value.
 
   If the image has been already initialized, memory allocation is done
   only if the new image size is different, else we re-use the same
@@ -476,16 +482,12 @@ vpImage<Type>::vpImage(unsigned int height, unsigned int width)
   \sa vpImage::init(height, width, value)
 */
 template<class Type>
-vpImage<Type>::vpImage (unsigned int height, unsigned int width, Type value)
+vpImage<Type>::vpImage (unsigned int h, unsigned int w, Type value)
+  : bitmap(NULL), display(NULL), npixels(0), width(0), height(0), row(NULL)
 {
-  bitmap = NULL ;
-  row = NULL ;
-
-  display =  NULL ;
-  this->height = this->width = 0 ;
   try
   {
-    init(height,width,value) ;
+    init(h,w,value) ;
   }
   catch(vpException me)
   {
@@ -505,20 +507,19 @@ vpImage<Type>::vpImage (unsigned int height, unsigned int width, Type value)
 */
 template<class Type>
 vpImage<Type>::vpImage()
+  : bitmap(NULL), display(NULL), npixels(0), width(0), height(0), row(NULL)
 {
-  bitmap = NULL ;
-  row = NULL ;
-
-  display =  NULL ;
-
-  this->height = this->width = 0 ;
-  this->npixels = 0;
 }
 
 /*!
   \brief resize the image : Image initialization
 
-  Allocate memory for an [height x width] image
+  Allocate memory for an [height x width] image.
+
+  \warning The image is not initialized.
+
+  \param w : Image width.
+  \param h : Image height.
 
   Element of the bitmap are not initialized
 
@@ -532,11 +533,11 @@ vpImage<Type>::vpImage()
 */
 template<class Type>
 void
-vpImage<Type>::resize(unsigned int height, unsigned int width)
+vpImage<Type>::resize(unsigned int h, unsigned int w)
 {
   try
   {
-    init(height, width) ;
+    init(h, w) ;
   }
   catch(vpException me)
   {
@@ -544,6 +545,41 @@ vpImage<Type>::resize(unsigned int height, unsigned int width)
     throw ;
   }
 }
+
+/*!
+  \brief resize the image : Image initialization
+
+  Allocate memory for an [height x width] image and initialize the image.
+
+  \param w : Image width.
+  \param h : Image height.
+  \param val : Pixels value.
+
+  Element of the bitmap are not initialized
+
+  If the image has been already initialized, memory allocation is done
+  only if the new image size is different, else we re-use the same
+  memory space.
+
+  \exception vpException::memoryAllocationError
+
+  \sa init(unsigned int, unsigned int)
+*/
+template<class Type>
+void
+vpImage<Type>::resize(unsigned int h, unsigned int w, const Type val)
+{
+  try
+  {
+    init(h, w, val) ;
+  }
+  catch(vpException me)
+  {
+    vpERROR_TRACE(" ") ;
+    throw ;
+  }
+}
+
 
 /*!
   \brief Destructor : Memory de-allocation
@@ -596,23 +632,13 @@ vpImage<Type>::~vpImage()
 */
 template<class Type>
 vpImage<Type>::vpImage(const vpImage<Type>& I)
+  : bitmap(NULL), display(NULL), npixels(0), width(0), height(0), row(NULL)
 {
-  bitmap = NULL ;
-  row = NULL ;  
-    /* we first have to set the initial values of the image because resize function calls init function that test the actual size of the image */
-  this->width = 0;
-  this->height = 0;
-  this->npixels = 0;
   try
   {
-    //if (I.bitmap!=NULL)
-//    if(I.getHeight() != 0 || I.getWidth() != 0)
-    {
-      resize(I.getHeight(),I.getWidth());
-      unsigned int i;
-      memcpy(bitmap, I.bitmap, I.npixels*sizeof(Type)) ;
-      for (i =0  ; i < this->height ; i++) row[i] = bitmap + i*this->width ;
-    }
+    resize(I.getHeight(),I.getWidth());
+    memcpy(bitmap, I.bitmap, I.npixels*sizeof(Type)) ;
+    for (unsigned int i =0  ; i < this->height ; i++) row[i] = bitmap + i*this->width ;
   }
   catch(vpException me)
   {
@@ -673,14 +699,14 @@ void vpImage<Type>::getMinMaxValue(Type &min, Type &max) const
   \brief Copy operator
 */
 template<class Type>
-void vpImage<Type>::operator=(const vpImage<Type> &I)
+vpImage<Type> & vpImage<Type>::operator=(const vpImage<Type> &I)
 {
     /* we first have to set the initial values of the image because resize function calls init function that test the actual size of the image */
   if(bitmap != NULL){
     delete[] bitmap;
     bitmap = NULL ;
   }
-  
+
   if(row != NULL){
     delete[] row;
     row = NULL ;
@@ -692,28 +718,28 @@ void vpImage<Type>::operator=(const vpImage<Type> &I)
   {
     if(I.npixels != 0)
     {
-      if (bitmap == NULL){  
+      if (bitmap == NULL){
         bitmap = new  Type[npixels] ;
       }
 
       if (bitmap == NULL){
             vpERROR_TRACE("cannot allocate bitmap ") ;
         throw(vpException(vpException::memoryAllocationError,
-		          "cannot allocate bitmap ")) ;
+              "cannot allocate bitmap ")) ;
       }
 
-      if (row == NULL){  
+      if (row == NULL){
         row = new  Type*[height] ;
       }
       if (row == NULL){
         vpERROR_TRACE("cannot allocate row ") ;
         throw(vpException(vpException::memoryAllocationError,
-		          "cannot allocate row ")) ;
-      }      
+              "cannot allocate row ")) ;
+      }
 
       memcpy(bitmap, I.bitmap, I.npixels*sizeof(Type)) ;
 
-      for (unsigned int i=0; i<this->height; i++){ 
+      for (unsigned int i=0; i<this->height; i++){
         row[i] = bitmap + i*this->width;
       }
     }
@@ -723,6 +749,7 @@ void vpImage<Type>::operator=(const vpImage<Type> &I)
     vpERROR_TRACE(" ") ;
     throw ;
   }
+  return (* this);
 }
 
 
@@ -733,10 +760,12 @@ void vpImage<Type>::operator=(const vpImage<Type> &I)
    \warning = must be defined for \f$ <\f$ Type \f$ > \f$
 */
 template<class Type>
-void vpImage<Type>::operator=(const Type &v)
+vpImage<Type>& vpImage<Type>::operator=(const Type &v)
 {
   for (unsigned int i=0 ; i < npixels ; i++)
     bitmap[i] = v ;
+
+  return *this;
 }
 
 /*!
@@ -747,15 +776,15 @@ void vpImage<Type>::operator=(const Type &v)
 template<class Type>
 bool vpImage<Type>::operator==(const vpImage<Type> &I)
 {
-	if (this->width != I.getWidth())
-		return false;
-	if (this->height != I.getHeight())
-		return false;
-		
-  for (unsigned int i=0 ; i < npixels ; i++) 
+  if (this->width != I.getWidth())
+    return false;
+  if (this->height != I.getHeight())
+    return false;
+
+  for (unsigned int i=0 ; i < npixels ; i++)
   {
     if (bitmap[i] != I.bitmap[i])
-    	return false;
+      return false;
   }
   return true ;
 }
@@ -824,53 +853,53 @@ vpImage<Type> vpImage<Type>::operator-(const vpImage<Type> &B)
 */
 template<class Type>
 void vpImage<Type>::insert(const vpImage<Type> &src,
-			const vpImagePoint topLeft)
+      const vpImagePoint topLeft)
 {
   Type* srcBitmap;
   Type* destBitmap;
-  
+
   int itl = (int)topLeft.get_i();
   int jtl = (int)topLeft.get_j();
-  
+
   int dest_ibegin = 0;
   int dest_jbegin = 0;
   int src_ibegin = 0;
   int src_jbegin = 0;
-  int dest_w = this->getWidth();
-  int dest_h = this->getHeight();
-  int src_w = src.getWidth();
-  int src_h = src.getHeight();
-  int wsize = src.getWidth();
-  int hsize = src.getHeight();
-  
+  int dest_w = (int)this->getWidth();
+  int dest_h = (int)this->getHeight();
+  int src_w = (int)src.getWidth();
+  int src_h = (int)src.getHeight();
+  int wsize = (int)src.getWidth();
+  int hsize = (int)src.getHeight();
+
   if (itl >= dest_h || jtl >= dest_w)
     return;
-  
+
   if (itl < 0)
-    src_ibegin = -itl;  
+    src_ibegin = -itl;
   else
     dest_ibegin = itl;
-  
+
   if (jtl < 0)
     src_jbegin = -jtl;
   else
     dest_jbegin = jtl;
-  
+
   if (src_w - src_jbegin > dest_w - dest_jbegin)
     wsize = dest_w - dest_jbegin;
   else
     wsize = src_w - src_jbegin;
-  
+
   if (src_h - src_ibegin > dest_h - dest_ibegin)
     hsize = dest_h - dest_ibegin;
   else
     hsize = src_h - src_ibegin;
-  
+
   for (int i = 0; i < hsize; i++)
   {
     srcBitmap = src.bitmap + ((src_ibegin+i)*src_w+src_jbegin);
     destBitmap = this->bitmap + ((dest_ibegin+i)*dest_w+dest_jbegin);
-  
+
     memcpy(destBitmap,srcBitmap,wsize*sizeof(Type));
   }
 }
@@ -979,7 +1008,7 @@ vpImage<Type>::quarterSizeImage(vpImage<Type> &res)
   I.doubleSizeImage(I2);
   vpImageIo::write(I2, "myDoubleSizeImage.pgm");
   \endcode
- 
+
   See halfSizeImage(vpImage<Type> &) for an example of pyramid construction.
 
 */
@@ -1007,22 +1036,22 @@ vpImage<Type>::doubleSizeImage(vpImage<Type> &res)
   //interpolate pixels B and I
   for(int i = 0; i < h; i += 2)
     for(int j = 1; j < w - 1; j += 2)
-      res[i][j] = (Type)(0.5 * ((*this)[i>>1][j>>1] 
-				+ (*this)[i>>1][(j>>1) + 1]));
+      res[i][j] = (Type)(0.5 * ((*this)[i>>1][j>>1]
+        + (*this)[i>>1][(j>>1) + 1]));
 
   //interpolate pixels E and G
   for(int i = 1; i < h - 1; i += 2)
     for(int j = 0; j < w; j += 2)
-      res[i][j] = (Type)(0.5 * ((*this)[i>>1][j>>1] 
-				+ (*this)[(i>>1)+1][j>>1]));
+      res[i][j] = (Type)(0.5 * ((*this)[i>>1][j>>1]
+        + (*this)[(i>>1)+1][j>>1]));
 
   //interpolate pixel F
   for(int i = 1; i < h - 1; i += 2)
     for(int j = 1; j < w - 1; j += 2)
-      res[i][j] = (Type)(0.25 * ((*this)[i>>1][j>>1] 
-				 + (*this)[i>>1][(j>>1)+1] 
-				 + (*this)[(i>>1)+1][j>>1] 
-				 + (*this)[(i>>1)+1][(j>>1)+1]));
+      res[i][j] = (Type)(0.25 * ((*this)[i>>1][j>>1]
+         + (*this)[i>>1][(j>>1)+1]
+         + (*this)[(i>>1)+1][j>>1]
+         + (*this)[(i>>1)+1][(j>>1)+1]));
 }
 
 /*!
@@ -1070,7 +1099,7 @@ inline unsigned char vpImage<unsigned char>::getValue(double i, double j) const
   if (iround >= height || jround >= width) {
     vpERROR_TRACE("Pixel outside the image") ;
     throw(vpException(vpImageException::notInTheImage,
-		      "Pixel outside the image"));
+          "Pixel outside the image"));
   }
 
   if (i > height - 1)
@@ -1083,7 +1112,7 @@ inline unsigned char vpImage<unsigned char>::getValue(double i, double j) const
   if(rratio < 0)
     rratio=-rratio;
   double cratio = j - (double) jround;
-  if(cratio < 0) 
+  if(cratio < 0)
     cratio=-cratio;
 
   rfrac = 1.0f - rratio;
@@ -1125,7 +1154,7 @@ inline double vpImage<double>::getValue(double i, double j) const
   if (iround >= height || jround >= width) {
     vpERROR_TRACE("Pixel outside the image") ;
     throw(vpException(vpImageException::notInTheImage,
-		      "Pixel outside the image"));
+          "Pixel outside the image"));
   }
 
   if (i > height - 1)
@@ -1138,7 +1167,7 @@ inline double vpImage<double>::getValue(double i, double j) const
   if(rratio < 0)
     rratio=-rratio;
   double cratio = j - (double) jround;
-  if(cratio < 0) 
+  if(cratio < 0)
     cratio=-cratio;
 
   rfrac = 1.0f - rratio;
@@ -1162,7 +1191,7 @@ inline vpRGBa vpImage<vpRGBa>::getValue(double i, double j) const
   if (iround >= height || jround >= width) {
     vpERROR_TRACE("Pixel outside the image") ;
     throw(vpException(vpImageException::notInTheImage,
-		      "Pixel outside the image"));
+          "Pixel outside the image"));
   }
 
   if (i > height - 1)
@@ -1175,7 +1204,7 @@ inline vpRGBa vpImage<vpRGBa>::getValue(double i, double j) const
   if(rratio < 0)
     rratio=-rratio;
   double cratio = j - (double) jround;
-  if(cratio < 0) 
+  if(cratio < 0)
     cratio=-cratio;
 
   rfrac = 1.0f - rratio;
@@ -1218,7 +1247,7 @@ inline unsigned char vpImage<unsigned char>::getValue(vpImagePoint &ip) const
   if (iround >= height || jround >= width) {
     vpERROR_TRACE("Pixel outside the image") ;
     throw(vpException(vpImageException::notInTheImage,
-		      "Pixel outside the image"));
+          "Pixel outside the image"));
   }
 
   if (ip.get_i() > height - 1)
@@ -1231,7 +1260,7 @@ inline unsigned char vpImage<unsigned char>::getValue(vpImagePoint &ip) const
   if(rratio < 0)
     rratio=-rratio;
   double cratio = ip.get_j() - (double) jround;
-  if(cratio < 0) 
+  if(cratio < 0)
     cratio=-cratio;
 
   rfrac = 1.0f - rratio;
@@ -1256,7 +1285,7 @@ inline double vpImage<double>::getValue(vpImagePoint &ip) const
   if (iround >= height || jround >= width) {
     vpERROR_TRACE("Pixel outside the image") ;
     throw(vpException(vpImageException::notInTheImage,
-		      "Pixel outside the image"));
+          "Pixel outside the image"));
   }
 
   if (ip.get_i() > height - 1)
@@ -1269,7 +1298,7 @@ inline double vpImage<double>::getValue(vpImagePoint &ip) const
   if(rratio < 0)
     rratio=-rratio;
   double cratio = ip.get_j() - (double) jround;
-  if(cratio < 0) 
+  if(cratio < 0)
     cratio=-cratio;
 
   rfrac = 1.0f - rratio;
@@ -1293,7 +1322,7 @@ inline vpRGBa vpImage<vpRGBa>::getValue(vpImagePoint &ip) const
   if (iround >= height || jround >= width) {
     vpERROR_TRACE("Pixel outside the image") ;
     throw(vpException(vpImageException::notInTheImage,
-		      "Pixel outside the image"));
+          "Pixel outside the image"));
   }
 
   if (ip.get_i() > height - 1)
@@ -1306,7 +1335,7 @@ inline vpRGBa vpImage<vpRGBa>::getValue(vpImagePoint &ip) const
   if(rratio < 0)
     rratio=-rratio;
   double cratio = ip.get_j() - (double) jround;
-  if(cratio < 0) 
+  if(cratio < 0)
     cratio=-cratio;
 
   rfrac = 1.0f - rratio;
@@ -1570,10 +1599,3 @@ vpImage<Type>::doubleSizeImage(vpImage<Type>* res)
 #endif // VISP_BUILD_DEPRECATED_FUNCTIONS
 
 #endif
-
-
-/*
- * Local variables:
- * c-basic-offset: 2
- * End:
- */

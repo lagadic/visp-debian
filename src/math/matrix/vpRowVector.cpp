@@ -1,9 +1,9 @@
 /****************************************************************************
  *
- * $Id: vpRowVector.cpp 4056 2013-01-05 13:04:42Z fspindle $
+ * $Id: vpRowVector.cpp 5185 2015-01-21 14:36:41Z fspindle $
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2013 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
  * 
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -115,9 +115,9 @@ double vpRowVector::operator*(const vpColVector &x) const
 {
   unsigned int nelements = x.getRows();
   if (getCols() != nelements ) {
-    vpERROR_TRACE("\n\t\t Illegal matrix operation") ;
-    throw(vpMatrixException(vpMatrixException::matrixError,
-			    "\n\t\t Illegal matrix operation, bad vector size")) ;
+    throw(vpException(vpException::dimensionError,
+                      "Bad size during vpRowVector (1x%d) by vpColVector (%dx1) multiplication",
+                      colNum, x.getRows())) ;
   }
 
   double scalar = 0.0;
@@ -144,13 +144,13 @@ double vpRowVector::operator*(const vpColVector &x) const
 */
 vpRowVector vpRowVector::operator*(const vpMatrix &A) const
 {
-
   vpRowVector c(A.getCols());
 
   if (colNum != A.getRows())
   {
     vpERROR_TRACE("vpMatrix mismatch in vpRowVector/matrix multiply") ;
-    throw(vpMatrixException::incorrectMatrixSizeError) ;
+    throw(vpMatrixException(vpMatrixException::incorrectMatrixSizeError,
+                            "vpMatrix mismatch in vpRowVector/matrix multiply")) ;
   }
 
   c = 0.0;
@@ -165,6 +165,87 @@ vpRowVector vpRowVector::operator*(const vpMatrix &A) const
   }
 
   return c ;
+}
+
+//! Operator A = -A
+vpRowVector vpRowVector::operator-() const
+{
+ vpRowVector A ;
+ try {
+   A.resize(colNum)  ;
+ }
+ catch(vpException me)
+ {
+   vpERROR_TRACE("Error caught") ;
+   throw ;
+ }
+
+ double *vd = A.data ;   double *d = data ;
+
+ for (unsigned int i=0; i<colNum; i++)
+   *(vd++)= - (*d++);
+
+ return A;
+}
+
+//! Substraction of two vectors V = A-v
+vpRowVector vpRowVector::operator-(const vpRowVector &m) const
+{
+  if (getCols() != m.getCols() ) {
+    throw(vpException(vpException::dimensionError,
+                      "Bad size during vpRowVector (1x%d) and vpRowVector (1x%d) substraction",
+                      getCols(), m.getCols())) ;
+  }
+
+  vpRowVector v(colNum) ;
+
+  for (unsigned int i=0;i<colNum;i++)
+    v[i] = (*this)[i] - m[i];
+  return v;
+}
+
+//! Addition of two vectors V = A-v
+vpRowVector vpRowVector::operator+(const vpRowVector &m) const
+{
+  if (getCols() != m.getCols() ) {
+    throw(vpException(vpException::dimensionError,
+                      "Bad size during vpRowVector (1x%d) and vpRowVector (1x%d) substraction",
+                      getCols(), m.getCols())) ;
+  }
+
+  vpRowVector v(colNum) ;
+
+  for (unsigned int i=0;i<colNum;i++)
+    v[i] = (*this)[i] + m[i];
+  return v;
+}
+
+/*!
+  Copy operator.
+  Allows operation such as A << v
+  \code
+#include <visp/vpRowVector.h>
+
+int main()
+{
+  vpRowVector A, B(5);
+  for (unsigned int i=0; i<B.size(); i++)
+    B[i] = i;
+  A << B;
+  std::cout << "A: \n" << A << std::endl;
+}
+  \endcode
+  In row vector A we get:
+  \code
+A:
+0  1  2  3  4
+  \endcode
+
+  */
+vpRowVector & vpRowVector::operator<<(const vpRowVector &v)
+{
+  *this = v;
+  return *this;
 }
 
 /*!
@@ -221,9 +302,8 @@ vpRowVector &vpRowVector::normalize(vpRowVector &x) const
 */
 vpRowVector &vpRowVector::normalize()
 {
-
-  double sum = sumSquare() ;
-  *this /= sum ;
+  double sum_square = sumSquare() ;
+  *this /= sum_square ;
 
   return *this;
 }
@@ -266,4 +346,47 @@ void vpRowVector::reshape(vpMatrix & m,const unsigned int &nrows,const unsigned 
      for(unsigned int i =0; i< nrows; i++)
          for(unsigned int j =0; j< ncols; j++)
          	  m[i][j]=data[i*nrows+j];
+}
+
+/*!
+  Insert a row vector.
+  \param i : Index of the first element to introduce. This index starts from 0.
+  \param v : Row vector to insert.
+
+  The following example shows how to use this function:
+  \code
+#include <visp/vpRowVector.h>
+
+int main()
+{
+  vpRowVector v(4);
+  for (unsigned int i=0; i < v.size(); i++)
+    v[i] = i;
+  std::cout << "v:\n" << v << std::endl;
+
+  vpRowVector w(2);
+  for (unsigned int i=0; i < w.size(); i++)
+    w[i] = i+10;
+  std::cout << "w:\n" << w << std::endl;
+
+  v.insert(1, w);
+  std::cout << "v:\n" << v << std::endl;
+}
+  \endcode
+  It produces the following output:
+  \code
+v:
+0  1  2  3
+w:
+10  11
+v:
+0  10  11  3
+  \endcode
+ */
+void vpRowVector::insert(unsigned int i, const vpRowVector &v)
+{
+  if (i+v.size() > this->size())
+    throw(vpException(vpException::dimensionError, "Unable to insert a row vector"));
+  for (unsigned int j=0; j < v.size(); j++)
+    (*this)[i+j] = v[j];
 }
