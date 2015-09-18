@@ -1,7 +1,7 @@
 From 5e0cfb715a74209f1af039198cf4b82488fea677 Mon Sep 17 00:00:00 2001
 From: Fabien Spindler <Fabien.Spindler@inria.fr>
 Date: Tue, 12 May 2015 10:56:07 +0200
-Subject: [PATCH 3/4] Fix segfault on sparc, powerpc...
+Subject: [PATCH 3/5] Fix segfault on sparc, powerpc...
 
 ---
  src/tools/io/vpParseArgv.cpp | 2 +-
@@ -21,5 +21,5 @@ index a662226..6dd569f 100644
        case ARGV_INT:
           nargs = (uintptr_t) infoPtr->src;
 -- 
-2.1.4
+2.5.1
 

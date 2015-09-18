@@ -1,7 +1,7 @@
 From 40d0e02748bb6c6eee1a8b57a4f1208f5ab934f9 Mon Sep 17 00:00:00 2001
 From: Fabien Spindler <Fabien.Spindler@inria.fr>
 Date: Wed, 15 Jul 2015 10:24:18 +0200
-Subject: [PATCH 4/4] Turn off HTML_TIMESTAMP to be able to reproduce same
+Subject: [PATCH 4/5] Turn off HTML_TIMESTAMP to be able to reproduce same
  build
 
 ---
@@ -22,5 +22,5 @@ index 2a21e8e..fbc55b4 100644
  # If the HTML_DYNAMIC_SECTIONS tag is set to YES then the generated HTML
  # documentation will contain sections that can be hidden and shown after the
 -- 
-2.1.4
+2.5.1
 

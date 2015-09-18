@@ -2,6 +2,9 @@ Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: ViSP
 Upstream-Contact: visp@inria.fr
 Source: http://www.irisa.fr/lagadic/visp/download.html
+    The pristine upstream source contains obfuscated files (lena), that are
+    thereby not appropriate for use as source files. This violates DFSG §2.
+Files-Excluded: tutorial/image/lena.* doc/image/img-lena*
 
 Files: *
 Copyright: 2005-2015, Inria

@@ -2,3 +2,4 @@
 0002-Fix-to-be-able-to-use-the-library-either-from-build-.patch
 0003-Fix-segfault-on-sparc-powerpc.patch
 0004-Turn-off-HTML_TIMESTAMP-to-be-able-to-reproduce-same.patch
+0005-Use-monkey-instead-of-lena-images.patch

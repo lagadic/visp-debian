@@ -1,0 +1,247 @@
+From 2686f645c3263b9fbb36ae24c738240567b8007e Mon Sep 17 00:00:00 2001
+From: Fabien Spindler <Fabien.Spindler@inria.fr>
+Date: Thu, 17 Sep 2015 14:34:50 +0200
+Subject: [PATCH 5/5] Use monkey instead of lena images
+
+---
+ doc/tutorial-getting-started.doc            | 20 +++++---------------
+ doc/tutorial-image-filtering.doc            | 20 ++++++++++----------
+ tutorial/image/CMakeLists.txt               | 10 +++++-----
+ tutorial/image/tutorial-image-converter.cpp |  6 +++---
+ tutorial/image/tutorial-image-reader.cpp    |  4 ++--
+ tutorial/image/tutorial-image-viewer.cpp    |  8 ++++----
+ 6 files changed, 29 insertions(+), 39 deletions(-)
+
+diff --git a/doc/tutorial-getting-started.doc b/doc/tutorial-getting-started.doc
+index 2a51888..117c232 100644
+--- a/doc/tutorial-getting-started.doc
++++ b/doc/tutorial-getting-started.doc
+@@ -3,17 +3,7 @@
+   \page tutorial-getting-started Tutorial: How to create and build a CMake project that uses ViSP on Unix or Windows 
+   \tableofcontents
+ 
+-\note We assume in this tutorial that you have successfully installed ViSP. Information on ViSP installation is provided in:
+-- \ref tutorial-install-ubuntu
+-- \ref tutorial-install-fedora
+-- \ref tutorial-install-opensuse
+-- \ref tutorial-install-raspberry
+-- \ref tutorial-install-win7
+-- \ref tutorial-install-win81-msvc
+-- \ref tutorial-install-win81-mingw64
+-- \ref tutorial-install-iOS
+-- \ref tutorial-install-ubuntu-package
+-- or on <a href="http://www.irisa.fr/lagadic/visp/install.html">Install from source page</a>
++\note We assume in this tutorial that you have successfully installed ViSP either with an \ref tuto_install_sdk or with an \ref tuto_install_src.
+ 
+ In this tutorial you will learn how to use ViSP either on Unix-like systems (including OSX, Fedora, Ubuntu, Debian, ...) or on Windows.
+ 
+@@ -148,17 +138,17 @@ make
+ By now you should have an executable called \c tutorial-viewer. You just have to run it giving an image location as an argument:
+ 
+ \code
+-./tutorial_viewer lena.ppm
++./tutorial_viewer monkey.ppm
+ \endcode
+ 
+ 
+ Here is a screen shot of the resulting output window :
+ 
+-  \image html img-lena.png
++  \image html img-monkey.png
+ 
+ \section image_win On Windows
+ 
+-We suppose from now, that you have created a folder (let say \c C:/ViSP/ViSP-started) that contains the following files: CMakeLists.txt, tutorial_viewer.cpp and lena.ppm. These files are also provider in ViSP source code, in \c tutorial/image folder.
++We suppose from now, that you have created a folder (let say \c C:/ViSP/ViSP-started) that contains the following files: CMakeLists.txt, tutorial_viewer.cpp and monkey.ppm. These files are also provider in ViSP source code, in \c tutorial/image folder.
+ 
+ 
+ \subsection image_win_config Configure your project
+@@ -202,7 +192,7 @@ We suppose from now, that you have created a folder (let say \c C:/ViSP/ViSP-sta
+ 
+ - Here is a screen shot of the resulting output window :
+ 
+-  \image html img-lena-win.jpg
++  \image html img-monkey-win.jpg
+ 
+ 
+ You are now ready to see the \ref tutorial-grabber or \ref tutorial-image-filtering.
+diff --git a/doc/tutorial-image-filtering.doc b/doc/tutorial-image-filtering.doc
+index df5b59e..edfc646 100644
+--- a/doc/tutorial-image-filtering.doc
++++ b/doc/tutorial-image-filtering.doc
+@@ -13,21 +13,21 @@ Let us consider the following source code that comes from tutorial-image-filter.
+ 
+ \include tutorial-image-filter.cpp
+ 
+-Once build, you should have \c tutorial-image-filter binary. It shows how to apply different filters on an input image. Here we will consider lena.pgm as input image. 
++Once build, you should have \c tutorial-image-filter binary. It shows how to apply different filters on an input image. Here we will consider monkey.pgm as input image.
+ 
+-\image html img-lena-gray.png
++\image html img-monkey-gray.png
+ 
+ To see the resulting filtered images, just run:
+ 
+ \code 
+-./tutorial-image-filter lena.pgm
++./tutorial-image-filter monkey.pgm
+ \endcode 
+ 
+ The following sections give a line by line explanation of the source code dedicated to image filtering capabilities.
+  
+ \section blur Gaussian blur
+ 
+-Lena input image is read from disk and is stored in  \c I which is a gray level image declared as 
++Monkey input image is read from disk and is stored in  \c I which is a gray level image declared as
+ 
+ \snippet tutorial-image-filter.cpp vpImage construction
+ 
+@@ -37,7 +37,7 @@ To apply a Gaussian blur to this image we first have to declare a resulting floa
+ 
+ The resulting image is the following:
+ 
+-\image html img-lena-blured-default.png
++\image html img-monkey-blured-default.png
+ 
+ It is also possible to specify the Gaussian filter kernel size and the Gaussian standard deviation (sigma) using:
+ 
+@@ -47,7 +47,7 @@ vpImageFilter::gaussianBlur(I, F, 7, 2); // Kernel size: 7, sigma: 2
+ 
+ We thus obtain the following image:
+ 
+-\image html img-lena-blured-var2.png
++\image html img-monkey-blured-var2.png
+ 
+ \section gradient Gradients computation
+ 
+@@ -61,7 +61,7 @@ Gradients along Y could be obtained using:
+ 
+ The resulting floating-point images \c dIx, \c dIy are the following:
+ 
+-\image html img-lena-dIxy.png
++\image html img-monkey-dIxy.png
+ 
+ \section canny Canny edge detector
+ 
+@@ -77,7 +77,7 @@ Where:
+ 
+ The resulting image \c C is the following:
+  
+-\image html img-lena-canny.png
++\image html img-monkey-canny.png
+ 
+ \section convolution Convolution 
+ 
+@@ -103,7 +103,7 @@ After the declaration of a new floating-point image \c Gx, the convolution is ob
+ 
+ The content of the filtered image \c Gx is the following.
+ 
+-\image html img-lena-sobel.png
++\image html img-monkey-sobel.png
+ 
+ \section pyramid Gaussian image pyramid
+ 
+@@ -111,7 +111,7 @@ To construct a pyramid of Gaussian filtered images as a vector of images impleme
+ \snippet tutorial-image-filter.cpp Gaussian pyramid
+ 
+ The content of \c pyr[0], \c pyr[1], \c pyr[2] is the following:
+-\image html img-lena-pyr.png
++\image html img-monkey-pyr.png
+ 
+ You are now ready to see the next \ref tutorial-tracking-blob.
+ 
+diff --git a/tutorial/image/CMakeLists.txt b/tutorial/image/CMakeLists.txt
+index 3f72d7f..f7d7e23 100644
+--- a/tutorial/image/CMakeLists.txt
++++ b/tutorial/image/CMakeLists.txt
+@@ -13,11 +13,11 @@ set(tutorial_cpp
+   tutorial-viewer.cpp
+   tutorial-image-filter.cpp)
+ 
+-list(APPEND tutorial_data "${CMAKE_CURRENT_SOURCE_DIR}/lena.bmp" )
+-list(APPEND tutorial_data "${CMAKE_CURRENT_SOURCE_DIR}/lena.ppm" )
+-list(APPEND tutorial_data "${CMAKE_CURRENT_SOURCE_DIR}/lena.pgm" )
+-list(APPEND tutorial_data "${CMAKE_CURRENT_SOURCE_DIR}/lena.jpeg" )
+-list(APPEND tutorial_data "${CMAKE_CURRENT_SOURCE_DIR}/lena.png" )
++list(APPEND tutorial_data "${CMAKE_CURRENT_SOURCE_DIR}/monkey.bmp" )
++list(APPEND tutorial_data "${CMAKE_CURRENT_SOURCE_DIR}/monkey.ppm" )
++list(APPEND tutorial_data "${CMAKE_CURRENT_SOURCE_DIR}/monkey.pgm" )
++list(APPEND tutorial_data "${CMAKE_CURRENT_SOURCE_DIR}/monkey.jpeg" )
++list(APPEND tutorial_data "${CMAKE_CURRENT_SOURCE_DIR}/monkey.png" )
+ list(APPEND tutorial_data "${CMAKE_CURRENT_SOURCE_DIR}/chessboard.pgm" )
+ list(APPEND tutorial_data "${CMAKE_CURRENT_SOURCE_DIR}/camera.xml" )
+ 
+diff --git a/tutorial/image/tutorial-image-converter.cpp b/tutorial/image/tutorial-image-converter.cpp
+index 76f55aa..8ef871d 100644
+--- a/tutorial/image/tutorial-image-converter.cpp
++++ b/tutorial/image/tutorial-image-converter.cpp
+@@ -8,16 +8,16 @@ int main()
+   try {
+     cv::Mat A;
+ #if (VISP_HAVE_OPENCV_VERSION >= 0x030000)
+-    A = cv::imread("lena.bmp", cv::IMREAD_GRAYSCALE);
++    A = cv::imread("monkey.bmp", cv::IMREAD_GRAYSCALE);
+ #else
+-    A = cv::imread("lena.bmp", CV_LOAD_IMAGE_GRAYSCALE);
++    A = cv::imread("monkey.bmp", CV_LOAD_IMAGE_GRAYSCALE);
+ #endif
+ 
+     vpImage<unsigned char> I;
+     vpImageConvert::convert(A, I);
+ 
+ #  ifdef VISP_HAVE_LIBPNG
+-    vpImageIo::write(I, "lena.png"); // Gray
++    vpImageIo::write(I, "monkey.png"); // Gray
+ #  endif
+   }
+   catch(vpException e) {
+diff --git a/tutorial/image/tutorial-image-reader.cpp b/tutorial/image/tutorial-image-reader.cpp
+index 109b806..fdcf2b5 100644
+--- a/tutorial/image/tutorial-image-reader.cpp
++++ b/tutorial/image/tutorial-image-reader.cpp
+@@ -5,8 +5,8 @@ int main()
+ {
+   try {
+     vpImage<vpRGBa> I;
+-    vpImageIo::read(I, "lena.jpeg");
+-    vpImageIo::write(I, "lena.png");
++    vpImageIo::read(I, "monkey.jpeg");
++    vpImageIo::write(I, "monkey.png");
+   }
+   catch(vpException e) {
+     std::cout << e.getMessage() << std::endl;
+diff --git a/tutorial/image/tutorial-image-viewer.cpp b/tutorial/image/tutorial-image-viewer.cpp
+index a3a6dfa..1e4c09d 100644
+--- a/tutorial/image/tutorial-image-viewer.cpp
++++ b/tutorial/image/tutorial-image-viewer.cpp
+@@ -9,7 +9,7 @@ int main()
+ {
+   try {
+     vpImage<vpRGBa> I;
+-    vpImageIo::read(I, "lena.ppm");
++    vpImageIo::read(I, "monkey.ppm");
+ 
+ #if defined(VISP_HAVE_X11)
+     vpDisplayX d(I);
+@@ -20,7 +20,7 @@ int main()
+ #else
+     std::cout << "No image viewer is available..." << std::endl;
+ #endif
+-    vpDisplay::setTitle(I, "Lena");
++    vpDisplay::setTitle(I, "Monkey");
+     vpDisplay::display(I);
+ 
+     vpDisplay::displayRectangle(I, vpImagePoint(90,90), 70, 90, vpColor::red, false, 2);
+@@ -30,8 +30,8 @@ int main()
+     vpDisplay::getImage(I, O);
+ 
+     try {
+-      vpImageIo::write(I, "lena-out.jpg");
+-      vpImageIo::write(O, "lena-out-with-overlay.jpg");
++      vpImageIo::write(I, "monkey-out.jpg");
++      vpImageIo::write(O, "monkey-out-with-overlay.jpg");
+     }
+     catch(...) {
+       std::cout << "Cannot write the image: unsupported format..." << std::endl;
+-- 
+2.5.1
+

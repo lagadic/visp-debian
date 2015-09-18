@@ -1,3 +1,10 @@
+visp (2.10.0+dfsg-1) unstable; urgency=medium
+
+  * Replace lena non dfsg images by monkey images (Closes: #794861)
+  * Bashism in /bin/sh script already fixed since 2.10.0-1 (Closes: #772331)
+
+ -- Fabien Spindler <Fabien.Spindler@inria.fr>  Fri, 18 Sep 2015 10:43:50 +0200
+
 visp (2.10.0-4) unstable; urgency=medium
 
   * Add patch to make build reproductible (Closes: #790074).

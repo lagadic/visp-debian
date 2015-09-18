@@ -75,6 +75,10 @@ override_dh_auto_clean:
 	rm -rf .pc
 
 override_dh_auto_configure:
+	# Copy monkey images to replace lena 
+	cp debian/new-images/img-monkey* doc/image
+	cp debian/new-images/monkey.* tutorial/image
+	# Continue with dh_auto_configure
 	dh_auto_configure -- $(CONFIGURE_ARGS)
 
 override_dh_auto_build-indep:
