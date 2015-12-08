@@ -103,7 +103,9 @@ else
 DH_AUTOTEST_CAN_FAIL=false
 endif
 
-override_dh_auto_test:
+override_dh_auto_test-indep:
+
+override_dh_auto_test-arch:
 	export VISP_INPUT_IMAGE_PATH=/usr/share/visp-images-data/ \
 	 && dh_auto_test --max-parallel=1 || ${DH_AUTOTEST_CAN_FAIL}
 

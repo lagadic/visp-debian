@@ -1,3 +1,11 @@
+visp (2.10.0+dfsg-2) unstable; urgency=medium
+
+  * Make testing arch dependent (Closes: #806876)
+  * Update build dependencies for GSL 2, change libgsl0-dev to libgsl-dev
+    (Closes: #807228)
+
+ -- Fabien Spindler <Fabien.Spindler@inria.fr>  Mon, 07 Dec 2015 21:54:33 +0100
+
 visp (2.10.0+dfsg-1) unstable; urgency=medium
 
   * Replace lena non dfsg images by monkey images (Closes: #794861)
