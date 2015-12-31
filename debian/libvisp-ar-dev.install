@@ -1,0 +1,4 @@
+# header files
+usr/include/*/visp3/ar/*
+# libraries
+usr/lib/*/libvisp_ar.so

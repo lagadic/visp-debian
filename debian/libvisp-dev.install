@@ -1,6 +1,7 @@
+# visp detection helpers
 usr/bin/visp-config
-usr/include/*/visp/*
-usr/lib/*/libvisp.so
 usr/lib/*/cmake/*
 usr/lib/*/pkgconfig/*
-#usr/lib/*/visp/*
+# data specific to ogre-simulator, robot-simulator and wireframe-simulator
+usr/share/visp*/data/
+

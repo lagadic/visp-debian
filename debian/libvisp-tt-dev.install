@@ -1,0 +1,4 @@
+# header files
+usr/include/*/visp3/tt/*
+# libraries
+usr/lib/*/libvisp_tt.so

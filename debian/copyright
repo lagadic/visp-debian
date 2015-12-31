@@ -1,29 +1,26 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: ViSP
 Upstream-Contact: visp@inria.fr
-Source: http://www.irisa.fr/lagadic/visp/download.html
-    The pristine upstream source contains obfuscated files (lena), that are
-    thereby not appropriate for use as source files. This violates DFSG §2.
-Files-Excluded: tutorial/image/lena.* doc/image/img-lena*
+Source: http://visp.inria.fr/download
 
 Files: *
 Copyright: 2005-2015, Inria
 License: GPL-2
 
-Files: CMakeModules/GNUInstallDirs.cmake
+Files: cmake/GNUInstallDirs.cmake
 Copyright: 2011, Nikita Krupen'ko <krnekit@gmail.com>
 License: BSD-3-clause
 
-Files: src/tools/io/vpParseArgv.h
+Files: modules/io/include/visp3/io/vpParseArgv.h
 Copyright: 1989-1992 Regents of the University of California
 License: Tcl/Tk-license
 
-Files: src/tools/io/vpParseArgv.cpp
+Files: modules/io/src/tools/vpParseArgv.cpp
 Copyright: 1990 Regents of the University of California
 License: Tcl/Tk-license
 
 Files: debian/*
-Copyright: 2014, Thomas Moulard <thomas.moulard@gmail.com>
+Copyright: 2015, Fabien Spindler <Fabien.Spindler@inria.fr>
 License: GPL-2
 
 

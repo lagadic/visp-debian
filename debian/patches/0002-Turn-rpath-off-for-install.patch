@@ -1,0 +1,36 @@
+From 0613cc40d48410928fd85015b254865fe92b965d Mon Sep 17 00:00:00 2001
+From: Fabien Spindler <Fabien.Spindler@inria.fr>
+Date: Sat, 12 Dec 2015 15:54:50 +0100
+Subject: [PATCH 2/2] Turn rpath off for install
+
+---
+ CMakeLists.txt | 10 ++--------
+ 1 file changed, 2 insertions(+), 8 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index c53d54a..0fa3760 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -104,17 +104,11 @@ set(CMAKE_SKIP_BUILD_RPATH  FALSE)
+ # (but later on when installing)
+ set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+ 
+-set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
++set(CMAKE_INSTALL_RPATH "")
+ 
+ # add the automatically determined parts of the RPATH
+ # which point to directories outside the build tree to the install RPATH
+-set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+-
+-# the RPATH to be used when installing, but only if it's not a system directory
+-list(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}" isSystemDir)
+-if("${isSystemDir}" STREQUAL "-1")
+-  set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
+-endif("${isSystemDir}" STREQUAL "-1")
++set(CMAKE_INSTALL_RPATH_USE_LINK_PATH FALSE)
+ 
+ # ----------------------------------------------------------------------------
+ #  Path for additional contrib modules
+-- 
+2.6.2
+

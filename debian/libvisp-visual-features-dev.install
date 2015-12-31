@@ -1,0 +1,4 @@
+# header files
+usr/include/*/visp3/visual_features/*
+# libraries
+usr/lib/*/libvisp_visual_features.so

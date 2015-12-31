@@ -1,0 +1,6 @@
+# header files
+usr/include/*/visp3/core/*
+usr/include/*/visp3/visp_modules.h
+usr/include/*/visp/*
+# libraries
+usr/lib/*/libvisp_core.so

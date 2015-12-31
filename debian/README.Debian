@@ -1,0 +1,31 @@
+Notes for the Debian ViSP packages
+----------------------------------
+
+The visp package of Debian is divided in different modules.
+This allow the user to install only the useful modules. For
+example, the libvisp_ar library is not necessary when augmented
+reality capabilities are not used.
+
+ - libvisp-ar*
+ - libvisp-blob*
+ - libvisp-core*
+ - libvisp-detection*
+ - libvisp-gui*
+ - libvisp-io
+ - libvisp-klt*
+ - libvisp-me*
+ - libvisp-mbt*
+ - libvisp-robot*
+ - libvisp-sensor*
+ - libvisp-tt*
+ - libvisp-tt-mi*
+ - libvisp-vision*
+ - libvisp-visual-features*
+ - libvisp-vs*
+
+Please install the packages including the necessary libraries 
+when you want to make a package using visp.
+
+Note that visp package provides pkg-config file and cmake config file
+to help ViSP detection.
+

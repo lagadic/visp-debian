@@ -4,91 +4,88 @@
 # Hardening flags.
 export DEB_BUILD_MAINT_OPTIONS=hardening=+all,-pie
 
-CPPFLAGS:=$(shell dpkg-buildflags --get CPPFLAGS)
-CFLAGS:=$(shell dpkg-buildflags --get CFLAGS)
-CXXFLAGS:=$(shell dpkg-buildflags --get CXXFLAGS)
-LDFLAGS:=$(shell dpkg-buildflags --get LDFLAGS) -Wl,--as-needed
-
-# Duplicate flags as CMake is ignoring CPPFLAGS.
-CFLAGS+=$(CPPFLAGS)
-CXXFLAGS+=$(CPPFLAGS)
-
 # Retrieve environment information.
 DEB_HOST_ARCH ?= $(shell dpkg-architecture -qDEB_HOST_ARCH)
 DEB_HOST_ARCH_OS ?= $(shell dpkg-architecture -qDEB_HOST_ARCH_OS)
 DEB_HOST_MULTIARCH ?= $(shell dpkg-architecture -qDEB_HOST_MULTIARCH)
 
-
-# Configure package and enable dependencies available on all platforms.
-# opencv: available on all platforms
-# coin3: available on all platforms
-# lapack: available on all platforms
-# libgsl0: available on all platforms
-# ogre: available on all platforms
-# xml2: available on all platforms
-# libjpeg: available on all platforms
-# libpng: available on all platforms
-# libx11: available on all platforms
-CONFIGURE_ARGS=	\
- -DCMAKE_INSTALL_LIBDIR:STRING="lib/$(DEB_HOST_MULTIARCH)"      \
- -DCMAKE_BUILD_TYPE=Release                                     \
- -DBUILD_DEMOS=ON -DBUILD_TESTS=ON -DBUILD_EXAMPLES=ON          \
- -DBUILD_TUTORIALS=ON                                           \
- -DBUILD_SHARED_LIBS=ON                                         \
- -DUSE_FFMPEG=OFF                                               \
- -DUSE_OPENCV=ON                                                \
- -DUSE_COIN=ON                                                  \
- -DUSE_LAPACK=ON -DUSE_GSL=ON -DUSE_OGRE=ON			\
- -DUSE_XML2=ON -DUSE_GTK2=ON -DUSE_LIBJPEG=ON                   \
- -DUSE_LIBPNG=ON -DUSE_X11=ON                                   \
- -DUSE_ZBAR=ON -DUSE_DMTX=ON
-
-# dc1394, v4l and ois are only available on Linux.
-ifneq ($(DEB_HOST_ARCH_OS),linux)
-  CONFIGURE_ARGS += -DUSE_DC1394=OFF -DUSE_V4L2=OFF -DUSE_OIS=OFF
-# OGRE support triggers ICE on FreeBSD, disable for now.
-  CONFIGURE_ARGS += -DUSE_OGRE=OFF
+# Linux-specific stuff (dc1394, v4l, ois only available on linux)
+ifeq ($(DEB_HOST_ARCH_OS),linux)
+  CMAKE_ARCH_FLAGS = -DUSE_DC1394=ON -DUSE_V4L2=ON -DUSE_OIS=ON
 else
-  CONFIGURE_ARGS += -DUSE_DC1394=ON -DUSE_V4L2=ON -DUSE_OIS=ON
+  CMAKE_ARCH_FLAGS = -DUSE_DC1394=OFF -DUSE_V4L2=OFF -DUSE_OIS=OFF
 endif
 
 # freenect is not available on hurd.
 ifeq ($(DEB_HOST_ARCH_OS),hurd)
-  CONFIGURE_ARGS += -DUSE_LIBFREENECT=OFF
+  CMAKE_ARCH_FLAGS += -DUSE_LIBFREENECT=OFF
 else
-  CONFIGURE_ARGS += -DUSE_LIBFREENECT=ON
+  CMAKE_ARCH_FLAGS += -DUSE_LIBFREENECT=ON
 endif
 
-
-.PHONY: override_dh_auto_configure	\
-	override_dh_auto_build-indep	\
-	override_dh_strip		\
-	override_dh_auto_test           \
-        override_dh_install
+# CMake flags
+CMAKE_FLAGS = \
+	-DCMAKE_INSTALL_PREFIX=/usr \
+	-DCMAKE_INSTALL_LIBDIR="lib/$(DEB_HOST_MULTIARCH)" \
+	-DCMAKE_VERBOSE_MAKEFILE=ON \
+	-DCMAKE_C_FLAGS_RELEASE="$(CFLAGS)" \
+	-DCMAKE_CXX_FLAGS_RELEASE="$(CXXFLAGS)" \
+	-DCMAKE_SHARED_LINKER_FLAGS_RELEASE="$(LDFLAGS)" \
+	-DCMAKE_EXE_LINKER_FLAGS_RELEASE="$(LDFLAGS)" \
+	-DCMAKE_BUILD_TYPE=Release \
+	-DBUILD_DEMOS=ON \
+	-DBUILD_TESTS=ON \
+	-DBUILD_EXAMPLES=ON \
+	-DBUILD_TUTORIALS=ON \
+	-DBUILD_SHARED_LIBS=ON \
+	-DUSE_FFMPEG=OFF \
+	-DUSE_OPENCV=ON \
+	-DUSE_COIN3D=ON \
+	-DUSE_LAPACK=ON \
+	-DUSE_GSL=ON \
+	-DUSE_OGRE=ON \
+	-DUSE_XML2=ON \
+	-DUSE_GTK2=OFF \
+	-DUSE_JPEG=ON \
+	-DUSE_PNG=ON \
+	-DUSE_X11=ON \
+	-DUSE_ZBAR=ON \
+	-DUSE_DMTX=ON \
+	$(CMAKE_ARCH_FLAGS)
 
 %:
-	dh  $@ --parallel
+	dh $@ --buildsystem=cmake --parallel
 
-override_dh_auto_clean:
-	dh_auto_clean
-	rm -f doc/mainpage.doc
-	rm -rf .pc
+override_dh_clean:
+	dh_clean -O--buildsystem=cmake
 
 override_dh_auto_configure:
-	# Copy monkey images to replace lena 
-	cp debian/new-images/img-monkey* doc/image
-	cp debian/new-images/monkey.* tutorial/image
-	# Continue with dh_auto_configure
-	dh_auto_configure -- $(CONFIGURE_ARGS)
+	dh_auto_configure -- $(CMAKE_FLAGS)
 
 override_dh_auto_build-indep:
-	dh_auto_build -- html-doc # Generate Doxygen HTML documentation.
-
-override_dh_strip:
-	dh_strip -a --dbg-package=libvisp2.10-dbg
+	dh_auto_build -- visp_doc # Generate Doxygen HTML documentation.
 
 override_dh_installdocs:
 	dh_installdocs -X.md5
+
+override_dh_strip:
+	dh_strip -plibvisp-core3.0 --dbg-package=libvisp-core3.0-dbg
+	dh_strip -plibvisp-gui3.0 --dbg-package=libvisp-gui3.0-dbg
+	dh_strip -plibvisp-io3.0 --dbg-package=libvisp-io3.0-dbg
+	dh_strip -plibvisp-detection3.0 --dbg-package=libvisp-detection3.0-dbg
+	dh_strip -plibvisp-ar3.0 --dbg-package=libvisp-ar3.0-dbg
+	dh_strip -plibvisp-blob3.0 --dbg-package=libvisp-blob3.0-dbg
+	dh_strip -plibvisp-me3.0 --dbg-package=libvisp-me3.0-dbg
+	dh_strip -plibvisp-klt3.0 --dbg-package=libvisp-klt3.0-dbg
+	dh_strip -plibvisp-sensor3.0 --dbg-package=libvisp-sensor3.0-dbg
+	dh_strip -plibvisp-robot3.0 --dbg-package=libvisp-robot3.0-dbg
+	dh_strip -plibvisp-visual-features3.0 --dbg-package=libvisp-visual-features3.0-dbg
+	dh_strip -plibvisp-vision3.0 --dbg-package=libvisp-vision3.0-dbg
+	dh_strip -plibvisp-vs3.0 --dbg-package=libvisp-vs3.0-dbg
+	dh_strip -plibvisp-mbt3.0 --dbg-package=libvisp-mbt3.0-dbg
+	dh_strip -plibvisp-tt3.0 --dbg-package=libvisp-tt3.0-dbg
+	dh_strip -plibvisp-tt-mi3.0 --dbg-package=libvisp-tt-mi3.0-dbg
+	dh_strip
 
 # Parallelism is disabled in tests as some cannot run at the same
 # time
@@ -98,9 +95,9 @@ override_dh_installdocs:
 # architecture for now.
 # See http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=723803
 ifeq ($(DEB_HOST_ARCH),ia64)
-DH_AUTOTEST_CAN_FAIL=true
+  DH_AUTOTEST_CAN_FAIL=true
 else
-DH_AUTOTEST_CAN_FAIL=false
+  DH_AUTOTEST_CAN_FAIL=false
 endif
 
 override_dh_auto_test-indep:

@@ -1,103 +1,1108 @@
 Source: visp
 Maintainer: Debian Science Maintainers <debian-science-maintainers@lists.alioth.debian.org>
-Uploaders: Thomas Moulard <thomas.moulard@gmail.com>, Fabien Spindler <Fabien.Spindler@inria.fr>
+Uploaders: Olivier Sallou <osallou@debian.org>, Fabien Spindler <Fabien.Spindler@inria.fr>
 Section: libs
 Priority: extra
 Build-Depends: debhelper (>= 9),
-               cmake,
-               doxygen,
-               doxygen-latex,
-               libopencv-dev [!any-sparc64 !x32],
-               liblapack-dev,
-               libgsl-dev,
-               libcoin80-dev | libcoin60-dev,
-               libsoqt4-dev,
-               libogre-1.9-dev [!any-sh4] | libogre-1.8-dev [!any-sh4] | libogre-dev [!any-sh4],
-               libdc1394-22-dev [linux-any],
-               libxml2-dev,
-               libjpeg-dev,
-               libpng-dev,
-               graphviz,
-               libx11-dev,
-               libv4l-dev [!hurd-any],
-               libusb-dev,
-               libfreenect-dev [!hurd-any],
-               libois-dev [linux-any],
-               libzbar-dev,
-               libdmtx-dev,
-	       visp-images-data
+	cmake,
+	doxygen,
+	doxygen-latex,
+	libopencv-dev,
+	liblapack-dev,
+	libgsl-dev,
+	libcoin80-dev,
+	libsoqt4-dev,
+	libogre-1.9-dev [!any-sh4] | libogre-dev [!any-sh4],
+	libois-dev [linux-any],
+	libdc1394-22-dev [linux-any],
+	libv4l-dev [linux-any],
+	libusb-dev,
+	libfreenect-dev [!hurd-any],
+	libxml2-dev,
+	libjpeg-dev,
+	libpng-dev,
+	libx11-dev,
+	libzbar-dev,
+	libdmtx-dev,
+	visp-images-data
 Standards-Version: 3.9.6
 Vcs-Browser: http://anonscm.debian.org/gitweb/?p=debian-science/packages/visp.git
 Vcs-Git: git://anonscm.debian.org/debian-science/packages/visp.git
-Homepage: http://www.irisa.fr/lagadic/visp/visp.html
-XS-Testsuite: autopkgtest
+Homepage: http://visp.inria.fr
 
 Package: libvisp-dev
-Architecture: any
 Section: libdevel
-Depends: libopencv-dev [!any-sparc64 !x32],
-         liblapack-dev,
-         libgsl-dev,
-         libcoin80-dev | libcoin60-dev,
-         libsoqt4-dev,
-         libogre-1.9-dev [!any-sh4] | libogre-1.8-dev [!any-sh4] | libogre-dev [!any-sh4],
-         libdc1394-22-dev [linux-any],
-         libxml2-dev,
-         libjpeg-dev,
-         libpng-dev,
-         libx11-dev,
-         libv4l-dev [!hurd-any],
-         libusb-dev,
-         libfreenect-dev [!hurd-any],
-         libois-dev [linux-any],
-         libzbar-dev,
-         libdmtx-dev,
-         libvisp2.10 (= ${binary:Version}),
-         ${misc:Depends}
+Architecture: any
+Depends: ${misc:Depends}, ${shlibs:Depends},
+	libvisp-core-dev (= ${binary:Version}),
+	libvisp-gui-dev (= ${binary:Version}),
+	libvisp-io-dev (= ${binary:Version}),
+	libvisp-detection-dev (= ${binary:Version}),
+	libvisp-ar-dev (= ${binary:Version}),
+	libvisp-blob-dev (= ${binary:Version}),
+	libvisp-me-dev (= ${binary:Version}),
+	libvisp-klt-dev (= ${binary:Version}),
+	libvisp-sensor-dev (= ${binary:Version}),
+	libvisp-robot-dev (= ${binary:Version}),
+	libvisp-visual-features-dev (= ${binary:Version}),
+	libvisp-vision-dev (= ${binary:Version}),
+	libvisp-vs-dev (= ${binary:Version}),
+	libvisp-mbt-dev (= ${binary:Version}),
+	libvisp-tt-dev (= ${binary:Version}),
+	libvisp-tt-mi-dev (= ${binary:Version})
 Suggests: libvisp-doc
-Multi-Arch: same
-Description: visual servoing library - development files
- ViSP, standing for Visual Servoing Platform, is unique. This software
- is a complete cross-platform solution that allows prototyping and
- developing applications in visual tracking and visual servoing.
+Description: development files for ViSP
+ This is a metapackage providing development package necessary for
+ development of ViSP (Visual Servoing Platform).
  .
- ViSP can be useful in robotics, computer vision, augmented reality and
- computer animation.
- .
- This package contains development files (headers and shared library
- symbolic link).
-
-Package: libvisp2.10
-Architecture: any
-Multi-Arch: same
-Depends: ${shlibs:Depends},
-         ${misc:Depends}
-Pre-Depends: ${misc:Pre-Depends}
-Replaces: libvisp2
-Breaks: libvisp2
-Description: visual servoing library
- ViSP, standing for Visual Servoing Platform, is unique. This software
- is a complete cross-platform solution that allows prototyping and
- developing applications in visual tracking and visual servoing.
+ ViSP standing for Visual Servoing Platform is a modular cross
+ platform library that allows prototyping and developing applications
+ using visual tracking and visual servoing technics at the heart of the
+ researches done by Inria Lagadic team. ViSP is able to compute control
+ laws that can be applied to robotic systems. It provides a set of visual
+ features that can be tracked using real time image processing or computer
+ vision algorithms. ViSP provides also simulation capabilities. 
  .
  ViSP can be useful in robotics, computer vision, augmented reality and
  computer animation.
 
-Package: libvisp2.10-dbg
+Package: libvisp-core-dev
+Section: libdevel
 Architecture: any
+Multi-Arch: same
+Depends: ${misc:Depends}, 
+	libvisp-core3.0 (= ${binary:Version}),
+	libopencv-dev,
+	liblapack-dev,
+	libgsl-dev,
+	libxml2-dev
+Description: development files for libvisp-core
+ This package contains the header files and static library needed to compile
+ applications that use ViSP (Visual Servoing Platform) core.
+ .
+ ViSP standing for Visual Servoing Platform is a modular cross
+ platform library that allows prototyping and developing applications
+ using visual tracking and visual servoing technics at the heart of the
+ researches done by Inria Lagadic team. ViSP is able to compute control
+ laws that can be applied to robotic systems. It provides a set of visual
+ features that can be tracked using real time image processing or computer
+ vision algorithms. ViSP provides also simulation capabilities. 
+ .
+ ViSP can be useful in robotics, computer vision, augmented reality and
+ computer animation.
+
+Package: libvisp-core3.0
+Architecture: any
+Multi-Arch: same
+Depends: ${misc:Depends}, ${shlibs:Depends}
+Description: visual servoing platform core library
+ This package contains the ViSP (Visual Servoing Platform) core runtime
+ libraries.
+ .
+ ViSP standing for Visual Servoing Platform is a modular cross
+ platform library that allows prototyping and developing applications
+ using visual tracking and visual servoing technics at the heart of the
+ researches done by Inria Lagadic team. ViSP is able to compute control
+ laws that can be applied to robotic systems. It provides a set of visual
+ features that can be tracked using real time image processing or computer
+ vision algorithms. ViSP provides also simulation capabilities. 
+ .
+ ViSP can be useful in robotics, computer vision, augmented reality and
+ computer animation.
+
+Package: libvisp-core3.0-dbg
 Section: debug
-Depends: libvisp2.10 (= ${binary:Version}),
-         ${misc:Depends}
-Multi-Arch: same
-Description: visual servoing library - debugging symbols
- ViSP, standing for Visual Servoing Platform, is unique. This software
- is a complete cross-platform solution that allows prototyping and
- developing applications in visual tracking and visual servoing.
+Architecture: any
+Depends: ${misc:Depends}, libvisp-core3.0 (= ${binary:Version})
+Description: Debugging symbol for libvisp-core3.0
+ This package contains detached debugging symbol for ViSP 
+ (Visual Servoing Platform) core library.
+ .
+ ViSP standing for Visual Servoing Platform is a modular cross
+ platform library that allows prototyping and developing applications
+ using visual tracking and visual servoing technics at the heart of the
+ researches done by Inria Lagadic team. ViSP is able to compute control
+ laws that can be applied to robotic systems. It provides a set of visual
+ features that can be tracked using real time image processing or computer
+ vision algorithms. ViSP provides also simulation capabilities. 
  .
  ViSP can be useful in robotics, computer vision, augmented reality and
  computer animation.
+
+Package: libvisp-gui-dev
+Section: libdevel
+Architecture: any
+Multi-Arch: same
+Depends: ${misc:Depends},
+	libvisp-core-dev (= ${binary:Version}),
+	libvisp-gui3.0 (= ${binary:Version}),
+	libx11-dev
+Description: development files for libvisp-gui
+ This package contains the header files and static library needed to compile
+ applications that use ViSP (Visual Servoing Platform) graphical user
+ interface (GUI) library.
  .
- This package contains the debugging symbols for the shared libraries.
+ ViSP standing for Visual Servoing Platform is a modular cross
+ platform library that allows prototyping and developing applications
+ using visual tracking and visual servoing technics at the heart of the
+ researches done by Inria Lagadic team. ViSP is able to compute control
+ laws that can be applied to robotic systems. It provides a set of visual
+ features that can be tracked using real time image processing or computer
+ vision algorithms. ViSP provides also simulation capabilities. 
+ .
+ ViSP can be useful in robotics, computer vision, augmented reality and
+ computer animation.
+
+Package: libvisp-gui3.0
+Architecture: any
+Multi-Arch: same
+Depends: ${misc:Depends},
+	${shlibs:Depends},
+	libvisp-core3.0 (= ${binary:Version})
+Description: visual servoing platform gui library
+ This package contains the ViSP (Visual Servoing Platform) graphical user
+ interface (GUI) runtime library.
+ .
+ ViSP standing for Visual Servoing Platform is a modular cross
+ platform library that allows prototyping and developing applications
+ using visual tracking and visual servoing technics at the heart of the
+ researches done by Inria Lagadic team. ViSP is able to compute control
+ laws that can be applied to robotic systems. It provides a set of visual
+ features that can be tracked using real time image processing or computer
+ vision algorithms. ViSP provides also simulation capabilities. 
+ .
+ ViSP can be useful in robotics, computer vision, augmented reality and
+ computer animation.
+
+Package: libvisp-gui3.0-dbg
+Section: debug
+Architecture: any
+Depends: ${misc:Depends}, libvisp-gui3.0 (= ${binary:Version})
+Description: Debugging symbol for libvisp-gui3.0
+ This package contains detached debugging symbol for ViSP 
+ (Visual Servoing Platform) graphical user interface library.
+ .
+ ViSP standing for Visual Servoing Platform is a modular cross
+ platform library that allows prototyping and developing applications
+ using visual tracking and visual servoing technics at the heart of the
+ researches done by Inria Lagadic team. ViSP is able to compute control
+ laws that can be applied to robotic systems. It provides a set of visual
+ features that can be tracked using real time image processing or computer
+ vision algorithms. ViSP provides also simulation capabilities. 
+ .
+ ViSP can be useful in robotics, computer vision, augmented reality and
+ computer animation.
+
+Package: libvisp-io-dev
+Section: libdevel
+Architecture: any
+Multi-Arch: same
+Depends: ${misc:Depends},
+	libvisp-core-dev (= ${binary:Version}),
+	libvisp-io3.0 (= ${binary:Version}),
+	libjpeg-dev,
+	libpng-dev
+Description: development files for libvisp-io
+ This package contains the header files and static library needed to compile
+ applications that use ViSP (Visual Servoing Platform) input/output
+ (io) library.
+ .
+ ViSP standing for Visual Servoing Platform is a modular cross
+ platform library that allows prototyping and developing applications
+ using visual tracking and visual servoing technics at the heart of the
+ researches done by Inria Lagadic team. ViSP is able to compute control
+ laws that can be applied to robotic systems. It provides a set of visual
+ features that can be tracked using real time image processing or computer
+ vision algorithms. ViSP provides also simulation capabilities. 
+ .
+ ViSP can be useful in robotics, computer vision, augmented reality and
+ computer animation.
+
+Package: libvisp-io3.0
+Architecture: any
+Multi-Arch: same
+Depends: ${misc:Depends},
+	${shlibs:Depends},
+	libvisp-core3.0 (= ${binary:Version})
+Description: visual servoing platform io library
+ This package contains the ViSP (Visual Servoing Platform) input/output
+ (io) runtime library.
+ .
+ ViSP standing for Visual Servoing Platform is a modular cross
+ platform library that allows prototyping and developing applications
+ using visual tracking and visual servoing technics at the heart of the
+ researches done by Inria Lagadic team. ViSP is able to compute control
+ laws that can be applied to robotic systems. It provides a set of visual
+ features that can be tracked using real time image processing or computer
+ vision algorithms. ViSP provides also simulation capabilities. 
+ .
+ ViSP can be useful in robotics, computer vision, augmented reality and
+ computer animation.
+
+Package: libvisp-io3.0-dbg
+Section: debug
+Architecture: any
+Depends: ${misc:Depends}, libvisp-io3.0 (= ${binary:Version})
+Description: Debugging symbol for libvisp-io3.0
+ This package contains detached debugging symbol for ViSP 
+ (Visual Servoing Platform) input/output library.
+ .
+ ViSP standing for Visual Servoing Platform is a modular cross
+ platform library that allows prototyping and developing applications
+ using visual tracking and visual servoing technics at the heart of the
+ researches done by Inria Lagadic team. ViSP is able to compute control
+ laws that can be applied to robotic systems. It provides a set of visual
+ features that can be tracked using real time image processing or computer
+ vision algorithms. ViSP provides also simulation capabilities. 
+ .
+ ViSP can be useful in robotics, computer vision, augmented reality and
+ computer animation.
+
+Package: libvisp-detection-dev
+Section: libdevel
+Architecture: any
+Multi-Arch: same
+Depends: ${misc:Depends},
+	libvisp-core-dev (= ${binary:Version}),
+	libvisp-detection3.0 (= ${binary:Version}),
+	libzbar-dev,
+	libdmtx-dev
+Description: development files for libvisp-detection
+ This package contains the header files and static library needed to compile
+ applications that use ViSP (Visual Servoing Platform) detection
+ library.
+ .
+ ViSP standing for Visual Servoing Platform is a modular cross
+ platform library that allows prototyping and developing applications
+ using visual tracking and visual servoing technics at the heart of the
+ researches done by Inria Lagadic team. ViSP is able to compute control
+ laws that can be applied to robotic systems. It provides a set of visual
+ features that can be tracked using real time image processing or computer
+ vision algorithms. ViSP provides also simulation capabilities. 
+ .
+ ViSP can be useful in robotics, computer vision, augmented reality and
+ computer animation.
+
+Package: libvisp-detection3.0
+Architecture: any
+Multi-Arch: same
+Depends: ${misc:Depends},
+	${shlibs:Depends},
+	libvisp-core3.0 (= ${binary:Version})
+Description: visual servoing platform detection library
+ This package contains the ViSP (Visual Servoing Platform) detection
+ runtime library.
+ .
+ ViSP standing for Visual Servoing Platform is a modular cross
+ platform library that allows prototyping and developing applications
+ using visual tracking and visual servoing technics at the heart of the
+ researches done by Inria Lagadic team. ViSP is able to compute control
+ laws that can be applied to robotic systems. It provides a set of visual
+ features that can be tracked using real time image processing or computer
+ vision algorithms. ViSP provides also simulation capabilities. 
+ .
+ ViSP can be useful in robotics, computer vision, augmented reality and
+ computer animation.
+
+Package: libvisp-detection3.0-dbg
+Section: debug
+Architecture: any
+Depends: ${misc:Depends}, libvisp-detection3.0 (= ${binary:Version})
+Description: Debugging symbol for libvisp-detection3.0
+ This package contains detached debugging symbol for ViSP 
+ (Visual Servoing Platform) detection library.
+ .
+ ViSP standing for Visual Servoing Platform is a modular cross
+ platform library that allows prototyping and developing applications
+ using visual tracking and visual servoing technics at the heart of the
+ researches done by Inria Lagadic team. ViSP is able to compute control
+ laws that can be applied to robotic systems. It provides a set of visual
+ features that can be tracked using real time image processing or computer
+ vision algorithms. ViSP provides also simulation capabilities. 
+ .
+ ViSP can be useful in robotics, computer vision, augmented reality and
+ computer animation.
+
+Package: libvisp-ar-dev
+Section: libdevel
+Architecture: any
+Multi-Arch: same
+Depends: ${misc:Depends},
+	libvisp-core-dev (= ${binary:Version}),
+	libvisp-io-dev (= ${binary:Version}),
+	libvisp-ar3.0 (= ${binary:Version}),
+	libcoin80-dev,
+	libsoqt4-dev,
+	libogre-1.9-dev [!any-sh4] | libogre-dev [!any-sh4],
+	libois-dev [linux-any]
+Description: development files for libvisp-ar
+ This package contains the header files and static library needed to compile
+ applications that use ViSP (Visual Servoing Platform) augmented reality
+ (ar) library.
+ .
+ ViSP standing for Visual Servoing Platform is a modular cross
+ platform library that allows prototyping and developing applications
+ using visual tracking and visual servoing technics at the heart of the
+ researches done by Inria Lagadic team. ViSP is able to compute control
+ laws that can be applied to robotic systems. It provides a set of visual
+ features that can be tracked using real time image processing or computer
+ vision algorithms. ViSP provides also simulation capabilities. 
+ .
+ ViSP can be useful in robotics, computer vision, augmented reality and
+ computer animation.
+
+Package: libvisp-ar3.0
+Architecture: any
+Multi-Arch: same
+Depends: ${misc:Depends},
+	${shlibs:Depends},
+	libvisp-core3.0 (= ${binary:Version}),
+	libvisp-io3.0 (= ${binary:Version})
+Description: visual servoing platform ar library
+ This package contains the ViSP (Visual Servoing Platform) augmented reality
+ (ar) runtime library.
+ .
+ ViSP standing for Visual Servoing Platform is a modular cross
+ platform library that allows prototyping and developing applications
+ using visual tracking and visual servoing technics at the heart of the
+ researches done by Inria Lagadic team. ViSP is able to compute control
+ laws that can be applied to robotic systems. It provides a set of visual
+ features that can be tracked using real time image processing or computer
+ vision algorithms. ViSP provides also simulation capabilities. 
+ .
+ ViSP can be useful in robotics, computer vision, augmented reality and
+ computer animation.
+
+Package: libvisp-ar3.0-dbg
+Section: debug
+Architecture: any
+Depends: ${misc:Depends}, libvisp-ar3.0 (= ${binary:Version})
+Description: Debugging symbol for libvisp-ar3.0
+ This package contains detached debugging symbol for ViSP 
+ (Visual Servoing Platform) augmented reality library.
+ .
+ ViSP standing for Visual Servoing Platform is a modular cross
+ platform library that allows prototyping and developing applications
+ using visual tracking and visual servoing technics at the heart of the
+ researches done by Inria Lagadic team. ViSP is able to compute control
+ laws that can be applied to robotic systems. It provides a set of visual
+ features that can be tracked using real time image processing or computer
+ vision algorithms. ViSP provides also simulation capabilities. 
+ .
+ ViSP can be useful in robotics, computer vision, augmented reality and
+ computer animation.
+
+Package: libvisp-blob-dev
+Section: libdevel
+Architecture: any
+Multi-Arch: same
+Depends: ${misc:Depends},
+	libvisp-core-dev (= ${binary:Version}),
+	libvisp-blob3.0 (= ${binary:Version})
+Description: development files for libvisp-blob
+ This package contains the header files and static library needed to compile
+ applications that use ViSP (Visual Servoing Platform) blob tracking
+ library.
+ .
+ ViSP standing for Visual Servoing Platform is a modular cross
+ platform library that allows prototyping and developing applications
+ using visual tracking and visual servoing technics at the heart of the
+ researches done by Inria Lagadic team. ViSP is able to compute control
+ laws that can be applied to robotic systems. It provides a set of visual
+ features that can be tracked using real time image processing or computer
+ vision algorithms. ViSP provides also simulation capabilities. 
+ .
+ ViSP can be useful in robotics, computer vision, augmented reality and
+ computer animation.
+
+Package: libvisp-blob3.0
+Architecture: any
+Multi-Arch: same
+Depends: ${misc:Depends},
+	${shlibs:Depends},
+	libvisp-core3.0 (= ${binary:Version})
+Description: visual servoing platform blob tracking library
+ This package contains the ViSP (Visual Servoing Platform) blob tracking
+ runtime library.
+ .
+ ViSP standing for Visual Servoing Platform is a modular cross
+ platform library that allows prototyping and developing applications
+ using visual tracking and visual servoing technics at the heart of the
+ researches done by Inria Lagadic team. ViSP is able to compute control
+ laws that can be applied to robotic systems. It provides a set of visual
+ features that can be tracked using real time image processing or computer
+ vision algorithms. ViSP provides also simulation capabilities. 
+ .
+ ViSP can be useful in robotics, computer vision, augmented reality and
+ computer animation.
+
+Package: libvisp-blob3.0-dbg
+Section: debug
+Architecture: any
+Depends: ${misc:Depends}, libvisp-blob3.0 (= ${binary:Version})
+Description: Debugging symbol for libvisp-blob3.0
+ This package contains detached debugging symbol for ViSP 
+ (Visual Servoing Platform) blob tracking library.
+ .
+ ViSP standing for Visual Servoing Platform is a modular cross
+ platform library that allows prototyping and developing applications
+ using visual tracking and visual servoing technics at the heart of the
+ researches done by Inria Lagadic team. ViSP is able to compute control
+ laws that can be applied to robotic systems. It provides a set of visual
+ features that can be tracked using real time image processing or computer
+ vision algorithms. ViSP provides also simulation capabilities. 
+ .
+ ViSP can be useful in robotics, computer vision, augmented reality and
+ computer animation.
+
+Package: libvisp-me-dev
+Section: libdevel
+Architecture: any
+Multi-Arch: same
+Depends: ${misc:Depends},
+	libvisp-core-dev (= ${binary:Version}),
+	libvisp-me3.0 (= ${binary:Version})
+Description: development files for libvisp-me
+ This package contains the header files and static library needed to compile
+ applications that use ViSP (Visual Servoing Platform) moving edges tracking
+ (me) library.
+ .
+ ViSP standing for Visual Servoing Platform is a modular cross
+ platform library that allows prototyping and developing applications
+ using visual tracking and visual servoing technics at the heart of the
+ researches done by Inria Lagadic team. ViSP is able to compute control
+ laws that can be applied to robotic systems. It provides a set of visual
+ features that can be tracked using real time image processing or computer
+ vision algorithms. ViSP provides also simulation capabilities. 
+ .
+ ViSP can be useful in robotics, computer vision, augmented reality and
+ computer animation.
+
+Package: libvisp-me3.0
+Architecture: any
+Multi-Arch: same
+Depends: ${misc:Depends},
+	${shlibs:Depends},
+	libvisp-core3.0 (= ${binary:Version})
+Description: visual servoing platform me tracking library
+ This package contains the ViSP (Visual Servoing Platform) moving edges 
+ (me) tracking runtime library.
+ .
+ ViSP standing for Visual Servoing Platform is a modular cross
+ platform library that allows prototyping and developing applications
+ using visual tracking and visual servoing technics at the heart of the
+ researches done by Inria Lagadic team. ViSP is able to compute control
+ laws that can be applied to robotic systems. It provides a set of visual
+ features that can be tracked using real time image processing or computer
+ vision algorithms. ViSP provides also simulation capabilities. 
+ .
+ ViSP can be useful in robotics, computer vision, augmented reality and
+ computer animation.
+
+Package: libvisp-me3.0-dbg
+Section: debug
+Architecture: any
+Depends: ${misc:Depends}, libvisp-me3.0 (= ${binary:Version})
+Description: Debugging symbol for libvisp-me3.0
+ This package contains detached debugging symbol for ViSP 
+ (Visual Servoing Platform) moving edges tracking library.
+ .
+ ViSP standing for Visual Servoing Platform is a modular cross
+ platform library that allows prototyping and developing applications
+ using visual tracking and visual servoing technics at the heart of the
+ researches done by Inria Lagadic team. ViSP is able to compute control
+ laws that can be applied to robotic systems. It provides a set of visual
+ features that can be tracked using real time image processing or computer
+ vision algorithms. ViSP provides also simulation capabilities. 
+ .
+ ViSP can be useful in robotics, computer vision, augmented reality and
+ computer animation.
+
+Package: libvisp-klt-dev
+Section: libdevel
+Architecture: any
+Multi-Arch: same
+Depends: ${misc:Depends},
+	libvisp-core-dev (= ${binary:Version}),
+	libvisp-klt3.0 (= ${binary:Version})
+Description: development files for libvisp-klt
+ This package contains the header files and static library needed to compile
+ applications that use ViSP (Visual Servoing Platform) Lucas-Kanade-Tomasi 
+ (klt) tracking library.
+ .
+ ViSP standing for Visual Servoing Platform is a modular cross
+ platform library that allows prototyping and developing applications
+ using visual tracking and visual servoing technics at the heart of the
+ researches done by Inria Lagadic team. ViSP is able to compute control
+ laws that can be applied to robotic systems. It provides a set of visual
+ features that can be tracked using real time image processing or computer
+ vision algorithms. ViSP provides also simulation capabilities. 
+ .
+ ViSP can be useful in robotics, computer vision, augmented reality and
+ computer animation.
+
+Package: libvisp-klt3.0
+Architecture: any
+Multi-Arch: same
+Depends: ${misc:Depends},
+	${shlibs:Depends},
+	libvisp-core3.0 (= ${binary:Version})
+Description: visual servoing platform klt tracking library
+ This package contains the ViSP (Visual Servoing Platform) 
+ Lucas-Kanade-Tomasi (klt) tracking library runtime library.
+ .
+ ViSP standing for Visual Servoing Platform is a modular cross
+ platform library that allows prototyping and developing applications
+ using visual tracking and visual servoing technics at the heart of the
+ researches done by Inria Lagadic team. ViSP is able to compute control
+ laws that can be applied to robotic systems. It provides a set of visual
+ features that can be tracked using real time image processing or computer
+ vision algorithms. ViSP provides also simulation capabilities. 
+ .
+ ViSP can be useful in robotics, computer vision, augmented reality and
+ computer animation.
+
+Package: libvisp-klt3.0-dbg
+Section: debug
+Architecture: any
+Depends: ${misc:Depends}, libvisp-klt3.0 (= ${binary:Version})
+Description: Debugging symbol for libvisp-klt3.0
+ This package contains detached debugging symbol for ViSP 
+ (Visual Servoing Platform) Lucas-Kanade-Tomasi tracking library.
+ .
+ ViSP standing for Visual Servoing Platform is a modular cross
+ platform library that allows prototyping and developing applications
+ using visual tracking and visual servoing technics at the heart of the
+ researches done by Inria Lagadic team. ViSP is able to compute control
+ laws that can be applied to robotic systems. It provides a set of visual
+ features that can be tracked using real time image processing or computer
+ vision algorithms. ViSP provides also simulation capabilities. 
+ .
+ ViSP can be useful in robotics, computer vision, augmented reality and
+ computer animation.
+
+Package: libvisp-sensor-dev
+Section: libdevel
+Architecture: any
+Multi-Arch: same
+Depends: ${misc:Depends},
+	libvisp-core-dev (= ${binary:Version}),
+	libvisp-sensor3.0 (= ${binary:Version}),
+	libdc1394-22-dev [linux-any],
+	libv4l-dev [linux-any],
+	libusb-dev,
+	libfreenect-dev [!hurd-any]
+Description: development files for libvisp-sensor
+ This package contains the header files and static library needed to compile
+ applications that use ViSP (Visual Servoing Platform) sensor library.
+ .
+ ViSP standing for Visual Servoing Platform is a modular cross
+ platform library that allows prototyping and developing applications
+ using visual tracking and visual servoing technics at the heart of the
+ researches done by Inria Lagadic team. ViSP is able to compute control
+ laws that can be applied to robotic systems. It provides a set of visual
+ features that can be tracked using real time image processing or computer
+ vision algorithms. ViSP provides also simulation capabilities. 
+ .
+ ViSP can be useful in robotics, computer vision, augmented reality and
+ computer animation.
+
+Package: libvisp-sensor3.0
+Architecture: any
+Multi-Arch: same
+Depends: ${misc:Depends},
+	${shlibs:Depends},
+	libvisp-core3.0 (= ${binary:Version})
+Description: visual servoing platform sensor library
+ This package contains the ViSP (Visual Servoing Platform) sensor
+ runtime library.
+ .
+ ViSP standing for Visual Servoing Platform is a modular cross
+ platform library that allows prototyping and developing applications
+ using visual tracking and visual servoing technics at the heart of the
+ researches done by Inria Lagadic team. ViSP is able to compute control
+ laws that can be applied to robotic systems. It provides a set of visual
+ features that can be tracked using real time image processing or computer
+ vision algorithms. ViSP provides also simulation capabilities. 
+ .
+ ViSP can be useful in robotics, computer vision, augmented reality and
+ computer animation.
+
+Package: libvisp-sensor3.0-dbg
+Section: debug
+Architecture: any
+Depends: ${misc:Depends}, libvisp-sensor3.0 (= ${binary:Version})
+Description: Debugging symbol for libvisp-sensor3.0
+ This package contains detached debugging symbol for ViSP 
+ (Visual Servoing Platform) sensor library.
+ .
+ ViSP standing for Visual Servoing Platform is a modular cross
+ platform library that allows prototyping and developing applications
+ using visual tracking and visual servoing technics at the heart of the
+ researches done by Inria Lagadic team. ViSP is able to compute control
+ laws that can be applied to robotic systems. It provides a set of visual
+ features that can be tracked using real time image processing or computer
+ vision algorithms. ViSP provides also simulation capabilities. 
+ .
+ ViSP can be useful in robotics, computer vision, augmented reality and
+ computer animation.
+
+Package: libvisp-robot-dev
+Section: libdevel
+Architecture: any
+Multi-Arch: same
+Depends: ${misc:Depends},
+	libvisp-gui-dev (= ${binary:Version}),
+	libvisp-io-dev (= ${binary:Version}),
+	libvisp-robot3.0 (= ${binary:Version})
+Description: development files for libvisp-robot
+ This package contains the header files and static library needed to compile
+ applications that use ViSP (Visual Servoing Platform) robot library.
+ .
+ ViSP standing for Visual Servoing Platform is a modular cross
+ platform library that allows prototyping and developing applications
+ using visual tracking and visual servoing technics at the heart of the
+ researches done by Inria Lagadic team. ViSP is able to compute control
+ laws that can be applied to robotic systems. It provides a set of visual
+ features that can be tracked using real time image processing or computer
+ vision algorithms. ViSP provides also simulation capabilities. 
+ .
+ ViSP can be useful in robotics, computer vision, augmented reality and
+ computer animation.
+
+Package: libvisp-robot3.0
+Architecture: any
+Multi-Arch: same
+Depends: ${misc:Depends},
+	${shlibs:Depends},
+	libvisp-gui3.0 (= ${binary:Version}),
+	libvisp-io3.0 (= ${binary:Version})
+Description: visual servoing platform robot library
+ This package contains the ViSP (Visual Servoing Platform) robot
+ runtime library.
+ .
+ ViSP standing for Visual Servoing Platform is a modular cross
+ platform library that allows prototyping and developing applications
+ using visual tracking and visual servoing technics at the heart of the
+ researches done by Inria Lagadic team. ViSP is able to compute control
+ laws that can be applied to robotic systems. It provides a set of visual
+ features that can be tracked using real time image processing or computer
+ vision algorithms. ViSP provides also simulation capabilities. 
+ .
+ ViSP can be useful in robotics, computer vision, augmented reality and
+ computer animation.
+
+Package: libvisp-robot3.0-dbg
+Section: debug
+Architecture: any
+Depends: ${misc:Depends}, libvisp-robot3.0 (= ${binary:Version})
+Description: Debugging symbol for libvisp-robot3.0
+ This package contains detached debugging symbol for ViSP 
+ (Visual Servoing Platform) robot library.
+ .
+ ViSP standing for Visual Servoing Platform is a modular cross
+ platform library that allows prototyping and developing applications
+ using visual tracking and visual servoing technics at the heart of the
+ researches done by Inria Lagadic team. ViSP is able to compute control
+ laws that can be applied to robotic systems. It provides a set of visual
+ features that can be tracked using real time image processing or computer
+ vision algorithms. ViSP provides also simulation capabilities. 
+ .
+ ViSP can be useful in robotics, computer vision, augmented reality and
+ computer animation.
+
+Package: libvisp-visual-features-dev
+Section: libdevel
+Architecture: any
+Multi-Arch: same
+Depends: ${misc:Depends},
+	libvisp-blob-dev (= ${binary:Version}),
+	libvisp-me-dev (= ${binary:Version}),
+	libvisp-visual-features3.0 (= ${binary:Version})
+Description: development files for libvisp-visual-features
+ This package contains the header files and static library needed to compile
+ applications that use ViSP (Visual Servoing Platform) visual features
+ library.
+ .
+ ViSP standing for Visual Servoing Platform is a modular cross
+ platform library that allows prototyping and developing applications
+ using visual tracking and visual servoing technics at the heart of the
+ researches done by Inria Lagadic team. ViSP is able to compute control
+ laws that can be applied to robotic systems. It provides a set of visual
+ features that can be tracked using real time image processing or computer
+ vision algorithms. ViSP provides also simulation capabilities. 
+ .
+ ViSP can be useful in robotics, computer vision, augmented reality and
+ computer animation.
+
+Package: libvisp-visual-features3.0
+Architecture: any
+Multi-Arch: same
+Depends: ${misc:Depends},
+	${shlibs:Depends},
+	libvisp-blob3.0 (= ${binary:Version}),
+	libvisp-me3.0 (= ${binary:Version})
+Description: visual servoing platform visual-features library
+ This package contains the ViSP (Visual Servoing Platform) visual features
+ runtime library.
+ .
+ ViSP standing for Visual Servoing Platform is a modular cross
+ platform library that allows prototyping and developing applications
+ using visual tracking and visual servoing technics at the heart of the
+ researches done by Inria Lagadic team. ViSP is able to compute control
+ laws that can be applied to robotic systems. It provides a set of visual
+ features that can be tracked using real time image processing or computer
+ vision algorithms. ViSP provides also simulation capabilities. 
+ .
+ ViSP can be useful in robotics, computer vision, augmented reality and
+ computer animation.
+
+Package: libvisp-visual-features3.0-dbg
+Section: debug
+Architecture: any
+Depends: ${misc:Depends}, libvisp-visual-features3.0 (= ${binary:Version})
+Description: Debugging symbol for libvisp-visual-features3.0
+ This package contains detached debugging symbol for ViSP 
+ (Visual Servoing Platform) visual features library.
+ .
+ ViSP standing for Visual Servoing Platform is a modular cross
+ platform library that allows prototyping and developing applications
+ using visual tracking and visual servoing technics at the heart of the
+ researches done by Inria Lagadic team. ViSP is able to compute control
+ laws that can be applied to robotic systems. It provides a set of visual
+ features that can be tracked using real time image processing or computer
+ vision algorithms. ViSP provides also simulation capabilities. 
+ .
+ ViSP can be useful in robotics, computer vision, augmented reality and
+ computer animation.
+
+Package: libvisp-vision-dev
+Section: libdevel
+Architecture: any
+Multi-Arch: same
+Depends: ${misc:Depends},
+	libvisp-io-dev (= ${binary:Version}),
+	libvisp-visual-features-dev (= ${binary:Version}),
+	libvisp-vision3.0 (= ${binary:Version})
+Description: development files for libvisp-vision
+ This package contains the header files and static library needed to compile
+ applications that use ViSP (Visual Servoing Platform) computer vision
+ (vision) library.
+ .
+ ViSP standing for Visual Servoing Platform is a modular cross
+ platform library that allows prototyping and developing applications
+ using visual tracking and visual servoing technics at the heart of the
+ researches done by Inria Lagadic team. ViSP is able to compute control
+ laws that can be applied to robotic systems. It provides a set of visual
+ features that can be tracked using real time image processing or computer
+ vision algorithms. ViSP provides also simulation capabilities. 
+ .
+ ViSP can be useful in robotics, computer vision, augmented reality and
+ computer animation.
+
+Package: libvisp-vision3.0
+Architecture: any
+Multi-Arch: same
+Depends: ${misc:Depends},
+	${shlibs:Depends},
+	libvisp-io3.0 (= ${binary:Version}),
+	libvisp-visual-features3.0 (= ${binary:Version})
+Description: visual servoing platform vision library
+ This package contains the ViSP (Visual Servoing Platform) computer vision
+ (vision) runtime library.
+ .
+ ViSP standing for Visual Servoing Platform is a modular cross
+ platform library that allows prototyping and developing applications
+ using visual tracking and visual servoing technics at the heart of the
+ researches done by Inria Lagadic team. ViSP is able to compute control
+ laws that can be applied to robotic systems. It provides a set of visual
+ features that can be tracked using real time image processing or computer
+ vision algorithms. ViSP provides also simulation capabilities. 
+ .
+ ViSP can be useful in robotics, computer vision, augmented reality and
+ computer animation.
+
+Package: libvisp-vision3.0-dbg
+Section: debug
+Architecture: any
+Depends: ${misc:Depends}, libvisp-vision3.0 (= ${binary:Version})
+Description: Debugging symbol for libvisp-vision3.0
+ This package contains detached debugging symbol for ViSP 
+ (Visual Servoing Platform) vision library.
+ .
+ ViSP standing for Visual Servoing Platform is a modular cross
+ platform library that allows prototyping and developing applications
+ using visual tracking and visual servoing technics at the heart of the
+ researches done by Inria Lagadic team. ViSP is able to compute control
+ laws that can be applied to robotic systems. It provides a set of visual
+ features that can be tracked using real time image processing or computer
+ vision algorithms. ViSP provides also simulation capabilities. 
+ .
+ ViSP can be useful in robotics, computer vision, augmented reality and
+ computer animation.
+
+Package: libvisp-vs-dev
+Section: libdevel
+Architecture: any
+Multi-Arch: same
+Depends: ${misc:Depends},
+	libvisp-visual-features-dev (= ${binary:Version}),
+	libvisp-robot-dev (= ${binary:Version}),
+	libvisp-vs3.0 (= ${binary:Version})
+Description: development files for libvisp-vs
+ This package contains the header files and static library needed to compile
+ applications that use ViSP (Visual Servoing Platform) visual serving
+ (vs) library.
+ .
+ ViSP standing for Visual Servoing Platform is a modular cross
+ platform library that allows prototyping and developing applications
+ using visual tracking and visual servoing technics at the heart of the
+ researches done by Inria Lagadic team. ViSP is able to compute control
+ laws that can be applied to robotic systems. It provides a set of visual
+ features that can be tracked using real time image processing or computer
+ vision algorithms. ViSP provides also simulation capabilities. 
+ .
+ ViSP can be useful in robotics, computer vision, augmented reality and
+ computer animation.
+
+Package: libvisp-vs3.0
+Architecture: any
+Multi-Arch: same
+Depends: ${misc:Depends},
+	${shlibs:Depends},
+	libvisp-visual-features3.0 (= ${binary:Version}),
+	libvisp-robot3.0 (= ${binary:Version})
+Description: visual servoing platform vs library
+ This package contains the ViSP (Visual Servoing Platform) visual serving
+ (vs) runtime library.
+ .
+ ViSP standing for Visual Servoing Platform is a modular cross
+ platform library that allows prototyping and developing applications
+ using visual tracking and visual servoing technics at the heart of the
+ researches done by Inria Lagadic team. ViSP is able to compute control
+ laws that can be applied to robotic systems. It provides a set of visual
+ features that can be tracked using real time image processing or computer
+ vision algorithms. ViSP provides also simulation capabilities. 
+ .
+ ViSP can be useful in robotics, computer vision, augmented reality and
+ computer animation.
+
+Package: libvisp-vs3.0-dbg
+Section: debug
+Architecture: any
+Depends: ${misc:Depends}, libvisp-vs3.0 (= ${binary:Version})
+Description: Debugging symbol for libvisp-vs3.0
+ This package contains detached debugging symbol for ViSP 
+ (Visual Servoing Platform) visual servoing library.
+ .
+ ViSP standing for Visual Servoing Platform is a modular cross
+ platform library that allows prototyping and developing applications
+ using visual tracking and visual servoing technics at the heart of the
+ researches done by Inria Lagadic team. ViSP is able to compute control
+ laws that can be applied to robotic systems. It provides a set of visual
+ features that can be tracked using real time image processing or computer
+ vision algorithms. ViSP provides also simulation capabilities. 
+ .
+ ViSP can be useful in robotics, computer vision, augmented reality and
+ computer animation.
+
+Package: libvisp-mbt-dev
+Section: libdevel
+Architecture: any
+Multi-Arch: same
+Depends: ${misc:Depends},
+	libvisp-vision-dev (= ${binary:Version}),
+	libvisp-me-dev (= ${binary:Version}),
+	libvisp-klt-dev (= ${binary:Version}),
+	libvisp-ar-dev (= ${binary:Version}),
+	libvisp-gui-dev (= ${binary:Version}),
+	libvisp-mbt3.0 (= ${binary:Version})
+Description: development files for libvisp-mbt
+ This package contains the header files and static library needed to compile
+ applications that use ViSP (Visual Servoing Platform) markerless
+ 3D model-based tracker (mbt) library.
+ .
+ ViSP standing for Visual Servoing Platform is a modular cross
+ platform library that allows prototyping and developing applications
+ using visual tracking and visual servoing technics at the heart of the
+ researches done by Inria Lagadic team. ViSP is able to compute control
+ laws that can be applied to robotic systems. It provides a set of visual
+ features that can be tracked using real time image processing or computer
+ vision algorithms. ViSP provides also simulation capabilities. 
+ .
+ ViSP can be useful in robotics, computer vision, augmented reality and
+ computer animation.
+
+Package: libvisp-mbt3.0
+Architecture: any
+Multi-Arch: same
+Depends: ${misc:Depends},
+	${shlibs:Depends},
+	libvisp-vision3.0 (= ${binary:Version}),
+	libvisp-me3.0 (= ${binary:Version}),
+	libvisp-klt3.0 (= ${binary:Version}),
+	libvisp-ar3.0 (= ${binary:Version}),
+	libvisp-gui3.0 (= ${binary:Version})
+Description: visual servoing platform mbt library
+ This package contains the ViSP (Visual Servoing Platform) markerless
+ 3D model-based tracker (mbt) runtime library.
+ .
+ ViSP standing for Visual Servoing Platform is a modular cross
+ platform library that allows prototyping and developing applications
+ using visual tracking and visual servoing technics at the heart of the
+ researches done by Inria Lagadic team. ViSP is able to compute control
+ laws that can be applied to robotic systems. It provides a set of visual
+ features that can be tracked using real time image processing or computer
+ vision algorithms. ViSP provides also simulation capabilities. 
+ .
+ ViSP can be useful in robotics, computer vision, augmented reality and
+ computer animation.
+
+Package: libvisp-mbt3.0-dbg
+Section: debug
+Architecture: any
+Depends: ${misc:Depends}, libvisp-mbt3.0 (= ${binary:Version})
+Description: Debugging symbol for libvisp-mbt3.0
+ This package contains detached debugging symbol for ViSP 
+ (Visual Servoing Platform) markerless 3D model-based tracker library.
+ .
+ ViSP standing for Visual Servoing Platform is a modular cross
+ platform library that allows prototyping and developing applications
+ using visual tracking and visual servoing technics at the heart of the
+ researches done by Inria Lagadic team. ViSP is able to compute control
+ laws that can be applied to robotic systems. It provides a set of visual
+ features that can be tracked using real time image processing or computer
+ vision algorithms. ViSP provides also simulation capabilities. 
+ .
+ ViSP can be useful in robotics, computer vision, augmented reality and
+ computer animation.
+
+Package: libvisp-tt-dev
+Section: libdevel
+Architecture: any
+Multi-Arch: same
+Depends: ${misc:Depends},
+	libvisp-vision-dev (= ${binary:Version}),
+	libvisp-tt3.0 (= ${binary:Version})
+Description: development files for libvisp-tt
+ This package contains the header files and static library needed to compile
+ applications that use ViSP (Visual Servoing Platform) template tracker 
+ (tt) library.
+ .
+ ViSP standing for Visual Servoing Platform is a modular cross
+ platform library that allows prototyping and developing applications
+ using visual tracking and visual servoing technics at the heart of the
+ researches done by Inria Lagadic team. ViSP is able to compute control
+ laws that can be applied to robotic systems. It provides a set of visual
+ features that can be tracked using real time image processing or computer
+ vision algorithms. ViSP provides also simulation capabilities. 
+ .
+ ViSP can be useful in robotics, computer vision, augmented reality and
+ computer animation.
+
+Package: libvisp-tt3.0
+Architecture: any
+Multi-Arch: same
+Depends: ${misc:Depends},
+	${shlibs:Depends},
+	libvisp-vision3.0 (= ${binary:Version})
+Description: visual servoing platform tt library
+ This package contains the ViSP (Visual Servoing Platform) template tracker 
+ (tt) runtime library.
+ .
+ ViSP standing for Visual Servoing Platform is a modular cross
+ platform library that allows prototyping and developing applications
+ using visual tracking and visual servoing technics at the heart of the
+ researches done by Inria Lagadic team. ViSP is able to compute control
+ laws that can be applied to robotic systems. It provides a set of visual
+ features that can be tracked using real time image processing or computer
+ vision algorithms. ViSP provides also simulation capabilities. 
+ .
+ ViSP can be useful in robotics, computer vision, augmented reality and
+ computer animation.
+
+Package: libvisp-tt3.0-dbg
+Section: debug
+Architecture: any
+Depends: ${misc:Depends}, libvisp-tt3.0 (= ${binary:Version})
+Description: Debugging symbol for libvisp-tt3.0
+ This package contains detached debugging symbol for ViSP 
+ (Visual Servoing Platform) template tracker library.
+ .
+ ViSP standing for Visual Servoing Platform is a modular cross
+ platform library that allows prototyping and developing applications
+ using visual tracking and visual servoing technics at the heart of the
+ researches done by Inria Lagadic team. ViSP is able to compute control
+ laws that can be applied to robotic systems. It provides a set of visual
+ features that can be tracked using real time image processing or computer
+ vision algorithms. ViSP provides also simulation capabilities. 
+ .
+ ViSP can be useful in robotics, computer vision, augmented reality and
+ computer animation.
+
+Package: libvisp-tt-mi-dev
+Section: libdevel
+Architecture: any
+Multi-Arch: same
+Depends: ${misc:Depends},
+	libvisp-tt-dev (= ${binary:Version}),
+	libvisp-tt-mi3.0 (= ${binary:Version})
+Description: development files for libvisp-tt-mi
+ This package contains the header files and static library needed to compile
+ applications that use ViSP (Visual Servoing Platform) template tracker 
+ based on mutual information (tt-mi) library.
+ .
+ ViSP standing for Visual Servoing Platform is a modular cross
+ platform library that allows prototyping and developing applications
+ using visual tracking and visual servoing technics at the heart of the
+ researches done by Inria Lagadic team. ViSP is able to compute control
+ laws that can be applied to robotic systems. It provides a set of visual
+ features that can be tracked using real time image processing or computer
+ vision algorithms. ViSP provides also simulation capabilities. 
+ .
+ ViSP can be useful in robotics, computer vision, augmented reality and
+ computer animation.
+
+Package: libvisp-tt-mi3.0
+Architecture: any
+Multi-Arch: same
+Depends: ${misc:Depends},
+	${shlibs:Depends},
+	libvisp-tt3.0 (= ${binary:Version})
+Description: visual servoing platform tt-mi library
+ This package contains the ViSP (Visual Servoing Platform) template tracker 
+ based on mutual information (tt) runtime library.
+ .
+ ViSP standing for Visual Servoing Platform is a modular cross
+ platform library that allows prototyping and developing applications
+ using visual tracking and visual servoing technics at the heart of the
+ researches done by Inria Lagadic team. ViSP is able to compute control
+ laws that can be applied to robotic systems. It provides a set of visual
+ features that can be tracked using real time image processing or computer
+ vision algorithms. ViSP provides also simulation capabilities. 
+ .
+ ViSP can be useful in robotics, computer vision, augmented reality and
+ computer animation.
+
+Package: libvisp-tt-mi3.0-dbg
+Section: debug
+Architecture: any
+Depends: ${misc:Depends}, libvisp-tt-mi3.0 (= ${binary:Version})
+Description: Debugging symbol for libvisp-tt-mi3.0
+ This package contains detached debugging symbol for ViSP 
+ (Visual Servoing Platform) template tracker based on mutual
+ information library.
+ .
+ ViSP standing for Visual Servoing Platform is a modular cross
+ platform library that allows prototyping and developing applications
+ using visual tracking and visual servoing technics at the heart of the
+ researches done by Inria Lagadic team. ViSP is able to compute control
+ laws that can be applied to robotic systems. It provides a set of visual
+ features that can be tracked using real time image processing or computer
+ vision algorithms. ViSP provides also simulation capabilities. 
+ .
+ ViSP can be useful in robotics, computer vision, augmented reality and
+ computer animation.
 
 Package: libvisp-doc
 Architecture: all
@@ -105,11 +1110,16 @@ Section: doc
 Depends: ${misc:Depends}
 Multi-Arch: foreign
 Description: visual servoing library - documentation
- ViSP, standing for Visual Servoing Platform, is unique. This software
- is a complete cross-platform solution that allows prototyping and
- developing applications in visual tracking and visual servoing.
+ ViSP standing for Visual Servoing Platform is a modular cross
+ platform library that allows prototyping and developing applications
+ using visual tracking and visual servoing technics at the heart of the
+ researches done by Inria Lagadic team. ViSP is able to compute control
+ laws that can be applied to robotic systems. It provides a set of visual
+ features that can be tracked using real time image processing or computer
+ vision algorithms. ViSP provides also simulation capabilities. 
  .
  ViSP can be useful in robotics, computer vision, augmented reality and
  computer animation.
  .
- This package contains the Doxygen generated documentation.
+ This package contains the Doxygen generated documentation
+
