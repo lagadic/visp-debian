@@ -18,14 +18,14 @@
   */
 #include <iostream>
 
-#include <visp/vpFeatureBuilder.h>
-#include <visp/vpFeatureDepth.h>
-#include <visp/vpFeaturePoint.h>
-#include <visp/vpHomogeneousMatrix.h>
-#include <visp/vpPlot.h>
-#include <visp/vpServo.h>
-#include <visp/vpSimulatorPioneerPan.h>
-#include <visp/vpVelocityTwistMatrix.h>
+#include <visp3/visual_features/vpFeatureBuilder.h>
+#include <visp3/visual_features/vpFeatureDepth.h>
+#include <visp3/visual_features/vpFeaturePoint.h>
+#include <visp3/core/vpHomogeneousMatrix.h>
+#include <visp3/gui/vpPlot.h>
+#include <visp3/vs/vpServo.h>
+#include <visp3/robot/vpSimulatorPioneerPan.h>
+#include <visp3/core/vpVelocityTwistMatrix.h>
 
 int main()
 {
@@ -54,8 +54,7 @@ int main()
     wMo = wMc * cMo;
 
     // Define the target
-    vpPoint point;
-    point.setWorldCoordinates(0,0,0); // Coordinates in the object frame
+    vpPoint point(0,0,0); // Coordinates in the object frame
     point.track(cMo);
 
     vpServo task;

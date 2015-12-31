@@ -1,10 +1,8 @@
 /****************************************************************************
  *
- * $Id: servoSimu3D_cMcd_CamVelocityWithoutVpServo.cpp 2457 2010-01-07 10:41:18Z nmelchio $
- *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
- * 
+ * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * ("GPL") version 2 as published by the Free Software Foundation.
@@ -12,24 +10,22 @@
  * distribution for additional information about the GNU GPL.
  *
  * For using ViSP with software that can not be combined with the GNU
- * GPL, please contact INRIA about acquiring a ViSP Professional 
+ * GPL, please contact Inria about acquiring a ViSP Professional
  * Edition License.
  *
- * See http://www.irisa.fr/lagadic/visp/visp.html for more information.
- * 
+ * See http://visp.inria.fr for more information.
+ *
  * This software was developed at:
- * INRIA Rennes - Bretagne Atlantique
+ * Inria Rennes - Bretagne Atlantique
  * Campus Universitaire de Beaulieu
  * 35042 Rennes Cedex
  * France
- * http://www.irisa.fr/lagadic
  *
  * If you have questions regarding the use of this file, please contact
- * INRIA at visp@inria.fr
- * 
+ * Inria at visp@inria.fr
+ *
  * This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
  * WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
- *
  *
  * Description:
  * Simulation of a 3D visual servoing.
@@ -85,14 +81,14 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include <visp/vpMath.h>
-#include <visp/vpFeatureThetaU.h>
-#include <visp/vpFeatureTranslation.h>
-#include <visp/vpHomogeneousMatrix.h>
-#include <visp/vpIoTools.h>
-#include <visp/vpParseArgv.h>
-#include <visp/vpServo.h>
-#include <visp/vpSimulatorCamera.h>
+#include <visp3/core/vpMath.h>
+#include <visp3/visual_features/vpFeatureThetaU.h>
+#include <visp3/visual_features/vpFeatureTranslation.h>
+#include <visp3/core/vpHomogeneousMatrix.h>
+#include <visp3/core/vpIoTools.h>
+#include <visp3/io/vpParseArgv.h>
+#include <visp3/vs/vpServo.h>
+#include <visp3/robot/vpSimulatorCamera.h>
 
 // List of allowed command line options
 #define GETOPTARGS	"h"
@@ -269,7 +265,7 @@ main(int argc, const char ** argv)
 
       // Create the identity matrix
       vpMatrix I(3,3);
-      I.setIdentity();
+      I.eye();
 
       // Compute the camera translational velocity
       vpColVector v(3);

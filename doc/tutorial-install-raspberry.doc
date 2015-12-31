@@ -13,7 +13,7 @@ In a first section we give some useful instructions to start with a Raspberry PI
  
 \section install_raspberry Raspberry Pi installation
 
-\subsection raspberry Setting up Raspberry Pi
+\subsection install_raspberry_setup Setting up Raspberry Pi
 
 There are a lot of documentation and tutorial that explain different ways to setup a Raspberry Pi. A good reference is the official page <a href="http://www.raspberrypi.org/">http://www.raspberrypi.org</a>
 
@@ -28,7 +28,7 @@ We suggest to start with NOOBS (New Out Of the Box Software). Bellow we resume t
 - Your Raspberry Pi will boot, and a window will appear with a list of different operating systems that you can install. Select the "recommended Raspbian" checkbox and click on "Install" button.
 - When the install process has completed, the Raspberry Pi configuration menu (raspi-config) will load. Here you are able to set the time and date for your region and enable a Raspberry Pi camera board, or even create users. You can exit this menu by using Tab on your keyboard to move to Finish.
 
-\subsection login Logging in 
+\subsection install_raspberry_login Logging in 
 
 The default login for Raspbian is username \c pi with the password \c raspberry.
 
@@ -40,7 +40,7 @@ sudo apt-get update
 sudo apt-get upgrade
 \endcode
 
-\subsection camera Setting up a Raspberry Pi camera
+\subsection install_raspberry_camera Setting up a Raspberry Pi camera
 
 If you have a Raspberry Pi camera module see <a href="http://www.raspberrypi.org/help/camera-module-setup/">http://www.raspberrypi.org/help/camera-module-setup</a>. To resume, enable the camera using:
 \code
@@ -80,131 +80,109 @@ bcm2835-v4l2
 \endcode
 
 
-\subsection startx Start graphical user interface
+\subsection install_raspberry_startx Start graphical user interface
 
 To load the graphical user interface, type \c startx and press Enter on your keyboard. This will later allow to use ViSP vpDisplayX or vpDisplayOpenCV classes useful to display images in a X11 window.
 
-\section install_visp ViSP installation
-\subsection prerequisities Prerequisities
+\section install_raspberry_visp ViSP installation
+\subsection install_raspberry_visp_prerequisities Install prerequisities
 
-First you need to install the following packagages (g++, CMake, Subversion) that are requested to get and build ViSP:
+First you need to install the following packagages (g++, CMake, Git) that are requested to get and build ViSP:
 \code
-sudo apt-get install build-essential cmake-curses-gui subversion
+sudo apt-get install build-essential cmake-curses-gui git
 \endcode
 
-Then you can install the following packages (X11, lapack, gsl, v4l, xml, png, jpeg, opencv), that correspond to the optional 3rd party libraries that are interfaced with ViSP:
+\subsection install_raspberry_visp_3rd_party Install 3rd parties
+
+ViSP is interfaced with several optional 3rd party libraries. The <a href="http://visp.inria.fr/software-architecture">complete list is provided here</a>.
+
+\subsubsection install_raspberry_visp_3rd_party_recommended Recommended 3rd parties
+
+We recommend to install the following:
+
+- OpenCV
 \code
-sudo apt-get install libx11-dev liblapack-dev libgsl0-dev libv4l-dev libxml2-dev libpng12-dev libjpeg-dev libopencv-dev
+sudo apt-get install libopencv-dev
+\endcode
+- libX11 to be able to open a window to display images
+\code
+sudo apt-get install libx11-dev
+\endcode
+- lapack to benefit from optimized mathematical capabilities
+\code
+sudo apt-get install liblapack-dev
+\endcode
+- libv4l to grab images from usb or analogic cameras
+\code
+sudo apt-get install libv4l-dev
+\endcode
+- libxml2 to be able to configure the model-based trackers from xml files
+\code
+sudo apt-get install libxml2-dev
+\endcode
+- QR code detection
+\code
+sudo apt-get install libzbar-dev
 \endcode
 
-The complete list of 3rd party libraries is detailed following  <a href="http://team.inria.fr/lagadic/visp/libraries.html">http://team.inria.fr/lagadic/visp/libraries.html</a> link. 
+\subsubsection install_raspberry_visp_3rd_party_other Other optional 3rd parties
 
-\subsection get_source Getting ViSP source code
+We give also the way to install other 3rd party libraries to enable specific capabilities.
+
+- libjpeg and libpng to support jpeg and png images respectively (only useful if OpenCV is not installed)
+\code
+sudo apt-get install libjpeg-dev libpng12-dev
+\endcode
+
+\subsection install_raspberry_visp_install Install ViSP from source code
+\subsubsection install_raspberry_visp_get_source Getting ViSP source code
 
 There are different ways to get ViSP source code on Raspberry Pi:
 
-- You can download the <a href="http://team.inria.fr/lagadic/visp/download.html#latest">latest stable release</a> tarball. Once downloaded, uncompress the file using:
+- You can download the <a href="http://visp.inria.fr/download">latest release</a> as a zip or a tarball. Once downloaded, uncompress the file using either
 \code
 mkdir /home/pi/soft; cd /home/pi/soft
-wget http://gforge.inria.fr/frs/download.php/latestfile/475/ViSP-2.10.0.tar.gz
-tar xvzf ViSP-2.10.0.tar.gz 
+tar xvzf visp-x.y.z.tar.gz 
 \endcode
-
-- You can also download the cutting-edge version of the source code from Subversion repository using:
+or
 \code
 mkdir /home/pi/soft; cd /home/pi/soft
-svn checkout svn://scm.gforge.inria.fr/svn/visp/trunk/ViSP ViSP-code
+unzip visp-x.y.z.zip
 \endcode
 
-We suppose now that ViSP source is in a directory denoted  \<source_dir\>, for example \c /home/pi/soft/ViSP-2.10.0 or \c /home/pi/soft/ViSP-trunk
+- You can also download a <a href="http://visp.inria.fr/download#snapshot">daily snapshot</a>. Once downloaded, uncompress the file using
+\code
+tar xvzf visp-snapshot-yyyy-mm-dd.tar.gz
+\endcode
 
-\subsection config Configuring ViSP from source
+- Or you get the cutting-edge ViSP from <a href="https://github.com/lagadic/visp">GitHub repository</a> using the following command
+\code
+$ git clone https://github.com/lagadic/visp.git
+\endcode
+
+We suppose now that ViSP source is in a directory denoted  \<source_dir\>, for example \c /home/pi/soft/visp
+
+\subsubsection install_raspberry_visp_config Configuring ViSP from source
 
 - Create first a directory denoted \<binary_dir\> where you want to build ViSP. This directory will contain generated Makefiles, object files, and output libraries and binaries.
 \code
-cd /home/pi/soft; mkdir ViSP-build-release
+cd /home/pi/soft; mkdir visp-build
 \endcode
 
-- Enter the \<binary_dir\> and configure the build type:
+- Enter \<binary_dir\> and configure the build:
 \code
-cmake [<optional parameters>] <source_dir>
-\endcode
-For example:
-\code
-cd /home/pi/soft/ViSP-build-release
-cmake -DCMAKE_BUILD_TYPE=RELEASE -DBUILD_SHARED_LIBS=ON ../ViSP-2.10.0
+cd /home/pi/soft/visp-build
+cmake ../visp
 \endcode
 A more versatile way to configure the build is to use \c ccmake, the CMake GUI:
 \code
-ccmake ../ViSP-2.10.0
+ccmake ../visp
 \endcode
 The following image shows that this command allows to configure (just by pressing [c] key) the build in a more advanced way where some options could be easily turned On/Off. It allows also to see which are the 3rd parties that will be used. Then to generate the makefiles, just press [g] key in the ccmake gui.
-\image html img-ccmake-raspberry-pi.png Snapshot of the ccmake \c ../ViSP-2.10.0 command used to configure ViSP. 
+\image html img-ccmake-ubuntu-all.png Snapshot of the ccmake \c ../visp command used to configure ViSP. 
 
-- There is an other way to see which are the 3rd parties that are found during the configuration stage and that will be used by ViSP during the build. To this end you can have a look to the text file named ViSP-third-party.txt and located in \<binary_dir\>. We provide hereafter an example of a possible content of this file:
-\code
-                    ViSP third-party libraries
 
-Below you will find the list of third party libraries used to 
-build ViSP on your computer.
-
-Mathematics:
-  Gnu Scientific Library      : yes
-  Lapack/blas                 : yes
-Simulator:
-  Ogre simulator              : no
-  \- Ogre3D                   : no
-  \- OIS                      : no
-  Coin simulator              :
-  \- Coin3D                   : no
-  \- SoWin                    : no
-  \- SoXt                     : no
-  \- SoQt                     : no
-  \- Qt4                      : no
-  \- Qt3                      : no
-Robots
-  Afma6                       : no
-  Afma4                       : no
-  Biclops                     : no
-  Ptu46                       : no
-  Pioneer                     : no
-  Viper S650                  : no
-  Viper S850                  : no
-Video devices (display)
-  X11                         : yes
-  GTK                         : no
-  OpenCV                      : yes
-  GDI                         : no
-  Direct3D                    : no
-Framegrabbers
-  Firewire libdc1394-2.x      : no
-  Video For Linux Two         : yes
-  DirectShow                  : no
-  CMU 1394 Digital Camera SDK : no
-  OpenCV                      : yes
-Specific devices
-  Yarp                        : no
-  Kinect                      : no
-  \-libfreenect               : no
-  \-libusb-1.0                : no
-  \-pthread                   : yes
-Video and image Read/Write:
-  FFMPEG                      : no
-  libjpeg                     : yes
-  libpng                      : yes
-Misc:
-  XML2                        : yes
-  pthread                     : yes
-  OpenMP                      : yes
-  zbar                        : no
-  dmtx                        : no
-Documentation:
-  Doxygen                     : no
-  Graphviz dot                : no
-ViSP built with C++11 features: no
-\endcode
-
-\subsection build Building ViSP from source
+\subsubsection install_raspberry_visp_build Building ViSP from source
 
 - To build ViSP proceed with:
 \code
@@ -222,8 +200,169 @@ sudo apt-get install doxygen graphviz texlive-latex-base
 \endcode
 Then you can proceed with:
 \code
-make visp_doc
+make -j4 visp_doc
 \endcode
+
+\subsection install_raspberry_dataset Install ViSP dataset
+Some ViSP examples and tests require data (images, video, models) that are not part of ViSP source code but available in a separate archive named \c ViSP-images-x.y.z.zip. This archive could be downloaded from http://visp.inria.fr/download page. We provide here after the way to install these data if you want to run ViSP examples.
+
+\code
+cd $HOME
+unzip ViSP-images-x.y.z.zip
+\endcode
+
+We suppose now that the data are located in \c $HOME/ViSP-images.
+\code
+$ ls $HOME/ViSP-images
+Klimt	     README.md    circle  ellipse    iv    mbt   mire-2
+LICENSE.txt  calibration  cube    ellipse-1  line  mire  video
+\endcode
+
+Set \c VISP_INPUT_IMAGE_PATH environment variable to help ViSP examples and tests to find the location of the data set. It's convenient if the environment variables is automatically added to your bash session every time a new shell is launched: 
+
+\code
+echo "export VISP_INPUT_IMAGE_PATH=$HOME" >> ~/.bashrc
+source ~/.bashrc
+\endcode
+
+\note For historical reasons \c VISP_INPUT_IMAGE_PATH should not contain the folder \c ViSP-images, but the parent folder.
+
+From now, you can try to run ViSP examples and tests. For example you can run \c displayX example that should open a windows with Klimt painting image and some overlay drawings:
+
+\code
+$ cd $HOME/visp-build
+$ ./example/device/display/displayX
+
+A click to close the windows...
+
+A click to display a cross...
+Cross position: 201, 441
+
+A click to exit the program...
+Bye
+\endcode
+
+\section install_raspberry_tips Tips and tricks
+
+\subsection install_raspberry_tips_uninstall How to uninstall ViSP
+After ViSP installation, you can remove installed material using:
+\code
+$ sudo make uninstall
+\endcode
+
+\subsection install_raspberry_tips_modules How to build only ViSP libraries
+
+If you want to build only ViSP modules libraries, nor the examples, tutorials and tests:
+\code
+$ make -j4 visp_modules
+\endcode
+
+\subsection install_raspberry_tips_module_once How to build a ViSP specific module
+
+If you want to build a given module and all the dependencies:
+\code
+$ make -j4 visp_<module_name>
+\endcode
+For example to build the model-based tracker module named mbt, run:
+\code
+$ make -j4 visp_mbt
+\endcode
+
+\subsection install_raspberry_tips_target Which are the targets that could be run with make ?
+
+To know which are the target available with \c make:
+\code
+$ make help | grep visp
+... visp_tests
+... visp_demos
+... visp_tutorials
+... visp_examples
+... visp_modules
+... visp_doc
+... visp_core
+... visp_detection
+... visp_gui
+... visp_io
+... visp_klt
+... visp_me
+... visp_robot
+... visp_sensor
+... visp_ar
+... visp_blob
+... visp_visual_features
+... visp_vs
+... visp_vision
+... visp_mbt
+... visp_tt
+... visp_tt_mi
+\endcode
+
+\subsection install_raspberry_tips_3rd_party Which are the 3rd party libraries that are used in ViSP ?
+
+To see which are the optional 3rd parties that are found during the configuration stage and that will be used by ViSP during the build you can have a look to the text file named \c ViSP-third-party.txt and located in \<binary_dir\>. We provide hereafter an example of a possible content of this file:
+\code
+                    ViSP third-party libraries
+
+Below you will find the list of third party libraries used to 
+build ViSP on your computer.
+
+Mathematics:
+  Gnu Scientific Library      : no
+  Lapack/blas                 : yes
+Simulator:
+  Ogre simulator              : no
+  \- Ogre3D                   : no
+  \- OIS                      : no
+  Coin simulator              : no
+  \- Coin3D                   : no
+  \- SoWin                    : no
+  \- SoXt                     : no
+  \- SoQt                     : no
+  \- Qt4                      : no
+  \- Qt3                      : no
+Robots
+  Afma6                       : no
+  Afma4                       : no
+  Biclops                     : no
+  Ptu46                       : no
+  Pioneer                     : no
+  Viper S650                  : no
+  Viper S850                  : no
+Video devices (display)
+  X11                         : yes
+  GTK                         : no
+  OpenCV                      : yes 
+  GDI                         : no
+  Direct3D                    : no
+Framegrabbers
+  Firewire libdc1394-2.x      : no
+  Video For Linux Two         : yes
+  DirectShow                  : no
+  CMU 1394 Digital Camera SDK : no
+  OpenCV                      : yes 
+Specific devices
+  Yarp                        : no
+  Kinect                      : no
+  \-libfreenect               : no
+  \-libusb-1.0                : no
+  \-pthread                   : no
+Video and image Read/Write:
+  FFMPEG                      : no
+  libjpeg                     : yes
+  libpng                      : yes
+Misc:
+  XML2                        : yes
+  pthread                     : yes
+  OpenMP                      : no
+  zbar                        : yes
+  dmtx                        : no
+Documentation:
+  Doxygen                     : no
+  Graphviz dot                : no
+ViSP built with C++11 features: no
+\endcode
+
+\section install_raspberry_next Next tutorial
 
 You are now ready to see the next \ref tutorial-getting-started that will show you how to use ViSP as a 3rd party to build your own project on Raspberry Pi or on any other system. Then if you have a Raspberry Pi camera module, you can also follow the \ref tutorial-tracking-blob especially subsection Tracking form v4l2 live cameras.
 

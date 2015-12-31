@@ -1,10 +1,8 @@
 /****************************************************************************
  *
- * $Id: mbtEdgeTracking.cpp 5156 2015-01-13 07:07:08Z fspindle $
- *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
- * 
+ * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * ("GPL") version 2 as published by the Free Software Foundation.
@@ -12,24 +10,22 @@
  * distribution for additional information about the GNU GPL.
  *
  * For using ViSP with software that can not be combined with the GNU
- * GPL, please contact INRIA about acquiring a ViSP Professional 
+ * GPL, please contact Inria about acquiring a ViSP Professional
  * Edition License.
  *
- * See http://www.irisa.fr/lagadic/visp/visp.html for more information.
- * 
+ * See http://visp.inria.fr for more information.
+ *
  * This software was developed at:
- * INRIA Rennes - Bretagne Atlantique
+ * Inria Rennes - Bretagne Atlantique
  * Campus Universitaire de Beaulieu
  * 35042 Rennes Cedex
  * France
- * http://www.irisa.fr/lagadic
  *
  * If you have questions regarding the use of this file, please contact
- * INRIA at visp@inria.fr
- * 
+ * Inria at visp@inria.fr
+ *
  * This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
  * WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
- *
  *
  * Description:
  * Example of model based tracking.
@@ -47,29 +43,31 @@
   \brief Example of model based tracking on an image sequence containing a cube.
 */
 
-#include <visp/vpConfig.h>
-#include <visp/vpDebug.h>
-#include <visp/vpDisplayD3D.h>
-#include <visp/vpDisplayGTK.h>
-#include <visp/vpDisplayGDI.h>
-#include <visp/vpDisplayOpenCV.h>
-#include <visp/vpDisplayX.h>
-#include <visp/vpHomogeneousMatrix.h>
-#include <visp/vpImageIo.h>
-#include <visp/vpIoTools.h>
-#include <visp/vpMath.h>
-#include <visp/vpMbEdgeTracker.h>
-#include <visp/vpVideoReader.h>
-#include <visp/vpParseArgv.h>
+#include <iostream>
+#include <visp3/core/vpConfig.h>
 
-#if defined (VISP_HAVE_DISPLAY)
+#if defined(VISP_HAVE_MODULE_MBT) && defined(VISP_HAVE_DISPLAY)
 
-#define GETOPTARGS  "x:m:i:n:dchtfCo"
+#include <visp3/core/vpDebug.h>
+#include <visp3/gui/vpDisplayD3D.h>
+#include <visp3/gui/vpDisplayGTK.h>
+#include <visp3/gui/vpDisplayGDI.h>
+#include <visp3/gui/vpDisplayOpenCV.h>
+#include <visp3/gui/vpDisplayX.h>
+#include <visp3/core/vpHomogeneousMatrix.h>
+#include <visp3/io/vpImageIo.h>
+#include <visp3/core/vpIoTools.h>
+#include <visp3/core/vpMath.h>
+#include <visp3/io/vpVideoReader.h>
+#include <visp3/io/vpParseArgv.h>
+#include <visp3/mbt/vpMbEdgeTracker.h>
+
+#define GETOPTARGS  "x:m:i:n:dchtfColw"
 
 void usage(const char *name, const char *badparam);
 bool getOptions(int argc, const char **argv, std::string &ipath, std::string &configFile, std::string &modelFile,
                 std::string &initFile, bool &displayFeatures, bool &click_allowed, bool &display,
-                bool& cao3DModel, bool& trackCylinder, bool &useOgre);
+                bool& cao3DModel, bool& trackCylinder, bool &useOgre, bool &useScanline);
 
 void usage(const char *name, const char *badparam)
 {
@@ -79,7 +77,7 @@ Example of tracking based on the 3D model.\n\
 SYNOPSIS\n\
   %s [-i <test image path>] [-x <config file>]\n\
   [-m <model name>] [-n <initialisation file base name>]\n\
-  [-t] [-c] [-d] [-h] [-f] [-C]",
+  [-t] [-c] [-d] [-h] [-f] [-C] [-o] [-w] [-l]",
   name );
 
   fprintf(stdout, "\n\
@@ -129,7 +127,13 @@ OPTIONS:                                               \n\
      execution of this program without humain intervention.\n\
 \n\
   -o\n\
-     Use Ogre3D for visibility tests\n\
+     Use Ogre3D for visibility tests.\n\
+\n\
+  -w\n\
+     When Ogre3D is enable [-o] show Ogre3D configuration dialog thatallows to set the renderer.\n\
+\n\
+  -l\n\
+     Use the scanline for visibility tests\n\
 \n\
   -h \n\
      Print the help.\n\n");
@@ -141,7 +145,7 @@ OPTIONS:                                               \n\
 
 bool getOptions(int argc, const char **argv, std::string &ipath, std::string &configFile, std::string &modelFile,
                 std::string &initFile, bool &displayFeatures, bool &click_allowed, bool &display,
-                bool& cao3DModel, bool& trackCylinder, bool &useOgre)
+                bool& cao3DModel, bool& trackCylinder, bool &useOgre, bool &showOgreConfigDialog, bool &useScanline)
 {
   const char *optarg_;
   int   c;
@@ -158,6 +162,8 @@ bool getOptions(int argc, const char **argv, std::string &ipath, std::string &co
     case 'd': display = false; break;
     case 'C': trackCylinder = false; break;
     case 'o': useOgre = true; break;
+    case 'l': useScanline = true; break;
+    case 'w': showOgreConfigDialog  = true; break;
     case 'h': usage(argv[0], NULL); return false; break;
 
     default:
@@ -196,6 +202,8 @@ main(int argc, const char ** argv)
     bool cao3DModel = false;
     bool trackCylinder = true;
     bool useOgre = false;
+    bool showOgreConfigDialog = false;
+    bool useScanline = false;
     bool quit = false;
 
     // Get the visp-images-data package path or VISP_INPUT_IMAGE_PATH environment variable value
@@ -207,7 +215,9 @@ main(int argc, const char ** argv)
 
 
     // Read the command line options
-    if (!getOptions(argc, argv, opt_ipath, opt_configFile, opt_modelFile, opt_initFile, displayFeatures, opt_click_allowed, opt_display, cao3DModel, trackCylinder, useOgre)) {
+    if (!getOptions(argc, argv, opt_ipath, opt_configFile, opt_modelFile, opt_initFile, displayFeatures,
+                    opt_click_allowed, opt_display, cao3DModel, trackCylinder, useOgre, showOgreConfigDialog,
+                    useScanline)) {
       return (-1);
     }
 
@@ -256,7 +266,7 @@ main(int argc, const char ** argv)
           modelFile = vpIoTools::createFilePath(opt_ipath, modelFileCao);
         }
         else{
-#ifdef VISP_HAVE_COIN
+#ifdef VISP_HAVE_COIN3D
           modelFile = vpIoTools::createFilePath(opt_ipath, modelFileWrl);
 #else
           std::cerr << "Coin is not detected in ViSP. Use the .cao model instead." << std::endl;
@@ -269,7 +279,7 @@ main(int argc, const char ** argv)
           modelFile = vpIoTools::createFilePath(env_ipath, modelFileCao);
         }
         else{
-#ifdef VISP_HAVE_COIN
+#ifdef VISP_HAVE_COIN3D
           modelFile = vpIoTools::createFilePath(env_ipath, modelFileWrl);
 #else
           std::cerr << "Coin is not detected in ViSP. Use the .cao model instead." << std::endl;
@@ -342,7 +352,6 @@ main(int argc, const char ** argv)
     me.setMu1(0.5);
     me.setMu2(0.5);
     me.setSampleStep(4);
-    me.setNbTotalSample(250);
 
     tracker.setCameraParameters(cam);
     tracker.setMovingEdge(me);
@@ -359,6 +368,11 @@ main(int argc, const char ** argv)
 
     // Tells if the tracker has to use Ogre3D for visibility tests
     tracker.setOgreVisibilityTest(useOgre);
+    if (useOgre)
+      tracker.setOgreShowConfigDialog(showOgreConfigDialog);
+
+    // Tells if the tracker has to use the scanline visibility tests
+    tracker.setScanLineVisibilityTest(useScanline);
 
     // Retrieve the camera parameters from the tracker
     tracker.getCameraParameters(cam);
@@ -431,7 +445,6 @@ main(int argc, const char ** argv)
         me.setMu1(0.5);
         me.setMu2(0.5);
         me.setSampleStep(4);
-        me.setNbTotalSample(250);
 
         tracker.setCameraParameters(cam);
         tracker.setMovingEdge(me);
@@ -445,28 +458,29 @@ main(int argc, const char ** argv)
         tracker.loadModel(modelFile);
         tracker.setCameraParameters(cam);
         tracker.setOgreVisibilityTest(useOgre);
+        tracker.setScanLineVisibilityTest(useScanline);
         tracker.initFromPose(I, cMo);
       }
 
       // Test to set an initial pose
       if (reader.getFrameIndex() == reader.getFirstFrameIndex() + 50) {
-        cMo.buildFrom(0.04371844921,  0.08438820979,  0.5382029442,  2.200417277,  0.873535825, -0.3479076844);
+        cMo.buildFrom(0.0439540832,  0.0845870108,  0.5477322481,  2.179498458,  0.8611798108, -0.3491961946);
         vpTRACE("Test set pose");
         tracker.setPose(I, cMo);
-        if (opt_display) {
-          // display the 3D model
-          tracker.display(I, cMo, cam, vpColor::darkRed);
-          // display the frame
-          vpDisplay::displayFrame (I, cMo, cam, 0.05);
-//          if (opt_click_allowed) {
-//            vpDisplay::flush(I);
-//            vpDisplay::getClick(I);
-//          }
-        }
+//        if (opt_display) {
+//          // display the 3D model
+//          tracker.display(I, cMo, cam, vpColor::darkRed);
+//          // display the frame
+//          vpDisplay::displayFrame (I, cMo, cam, 0.05);
+////          if (opt_click_allowed) {
+////            vpDisplay::flush(I);
+////            vpDisplay::getClick(I);
+////          }
+//        }
       }
 
       // track the object: stop tracking from frame 40 to 50
-      if (reader.getFrameIndex() - reader.getFirstFrameIndex() < 40 || reader.getFrameIndex() > reader.getFirstFrameIndex() + 50) {
+      if (reader.getFrameIndex() - reader.getFirstFrameIndex() < 40 || reader.getFrameIndex() - reader.getFirstFrameIndex() >= 50) {
         tracker.track(I);
         tracker.getPose(cMo);
         if (opt_display) {
@@ -502,7 +516,7 @@ main(int argc, const char ** argv)
     vpXmlParser::cleanup();
 #endif
 
-#if defined(VISP_HAVE_COIN) && (COIN_MAJOR_VERSION == 3)
+#if defined(VISP_HAVE_COIN3D) && (COIN_MAJOR_VERSION == 3)
     // Cleanup memory allocated by Coin library used to load a vrml model in vpMbEdgeTracker::loadModel()
     // We clean only if Coin was used.
     if(! cao3DModel)
@@ -521,7 +535,7 @@ main(int argc, const char ** argv)
 
 int main()
 {
-  std::cout << "Display is required to run this example." << std::endl;
+  std::cout << "visp_mbt module is required to run this example." << std::endl;
   return 0;
 }
 

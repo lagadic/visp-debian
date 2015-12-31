@@ -1,9 +1,7 @@
 /****************************************************************************
  *
- * $Id: servoMomentPolygon.cpp 3323 2011-09-13 15:23:56Z fnovotny $
- *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -12,24 +10,22 @@
  * distribution for additional information about the GNU GPL.
  *
  * For using ViSP with software that can not be combined with the GNU
- * GPL, please contact INRIA about acquiring a ViSP Professional
+ * GPL, please contact Inria about acquiring a ViSP Professional
  * Edition License.
  *
- * See http://www.irisa.fr/lagadic/visp/visp.html for more information.
+ * See http://visp.inria.fr for more information.
  *
  * This software was developed at:
- * INRIA Rennes - Bretagne Atlantique
+ * Inria Rennes - Bretagne Atlantique
  * Campus Universitaire de Beaulieu
  * 35042 Rennes Cedex
  * France
- * http://www.irisa.fr/lagadic
  *
  * If you have questions regarding the use of this file, please contact
- * INRIA at visp@inria.fr
+ * Inria at visp@inria.fr
  *
  * This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
  * WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
- *
  *
  * Description:
  * Example of visual servoing with moments using a polygon as object container
@@ -45,16 +41,16 @@
 */
 
 
-#include <visp/vpPoint.h> //the basic tracker
+#include <visp3/core/vpPoint.h> //the basic tracker
 
 #include <vector> //store the polygon
-#include <visp/vpMomentObject.h> //transmit the polygon to the object
-#include <visp/vpMomentCommon.h> //update the common database with the object
-#include <visp/vpFeatureMomentCommon.h> //init the feature database using the information about moment dependencies
-#include <visp/vpServo.h> //visual servoing task
-#include <visp/vpRobotCamera.h>
-#include <visp/vpPlane.h>
-#include <visp/vpException.h>
+#include <visp3/core/vpMomentObject.h> //transmit the polygon to the object
+#include <visp3/core/vpMomentCommon.h> //update the common database with the object
+#include <visp3/visual_features/vpFeatureMomentCommon.h> //init the feature database using the information about moment dependencies
+#include <visp3/vs/vpServo.h> //visual servoing task
+#include <visp3/robot/vpSimulatorCamera.h>
+#include <visp3/core/vpPlane.h>
+#include <visp3/core/vpException.h>
 #include <limits>
 #include <iostream> //some console output
 //this function converts the plane defined by the cMo to 1/Z=Ax+By+C plane form
@@ -90,14 +86,15 @@ int main()
 
     vpHomogeneousMatrix cMo(0.1,0.0,1.0,vpMath::rad(0),vpMath::rad(0),vpMath::rad(0));
     vpHomogeneousMatrix cdMo(vpHomogeneousMatrix(0.0,0.0,1.0,vpMath::rad(0),vpMath::rad(0),-vpMath::rad(0)));
+    vpHomogeneousMatrix wMo; // Set to identity
+    vpHomogeneousMatrix wMc; // Camera position in the world frame
 
     cMoToABC(cMo,A,B,C);
     cMoToABC(cdMo,Ad,Bd,Cd);
     // Define source and destination polygons
     for (int i = 0 ; i < nbpoints ; i++){
-      vpPoint p;
-      p.setWorldCoordinates(x[i],y[i],0.0);
-      p.track(cMo) ;
+      vpPoint p(x[i],y[i],0.0);
+      p.track(cMo);
       vec_p.push_back(p);
       p.track(cdMo) ;
       vec_p_d.push_back(p);
@@ -142,18 +139,19 @@ int main()
     al->init();
     al->error(*al);
     //param robot
-    vpRobotCamera robot ;
+    vpSimulatorCamera robot ;
     float sampling_time = 0.010f; // Sampling period in seconds
     robot.setSamplingTime(sampling_time);
-    robot.setPosition(cMo);
+    wMc = wMo * cMo.inverse();
+    robot.setPosition(wMc);
 
     do{
-      robot.getPosition(cMo);
+      wMc = robot.getPosition();
+      cMo = wMc.inverse() * wMo;
       vec_p.clear();
 
       for (int i = 0 ; i < nbpoints ; i++){
-        vpPoint p;
-        p.setWorldCoordinates(x[i],y[i],0.0);
+        vpPoint p(x[i],y[i],0.0);
         p.track(cMo) ;
         vec_p.push_back(p);
       }

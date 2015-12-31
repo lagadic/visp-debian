@@ -1,9 +1,12 @@
 //! \example tutorial-face-detector-live.cpp
-#include <visp/vpDisplayGDI.h>
-#include <visp/vpDisplayOpenCV.h>
-#include <visp/vpDisplayX.h>
-#include <visp/vpDetectorFace.h>
-#include <visp/vpV4l2Grabber.h>
+#include <visp3/core/vpConfig.h>
+#include <visp3/gui/vpDisplayGDI.h>
+#include <visp3/gui/vpDisplayOpenCV.h>
+#include <visp3/gui/vpDisplayX.h>
+#include <visp3/detection/vpDetectorFace.h>
+#ifdef VISP_HAVE_MODULE_SENSOR
+#include <visp3/sensor/vpV4l2Grabber.h>
+#endif
 
 int main(int argc, const char* argv[])
 {

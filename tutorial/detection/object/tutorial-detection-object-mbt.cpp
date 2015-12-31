@@ -1,15 +1,16 @@
 //! \example tutorial-detection-object-mbt.cpp
-#include <visp/vpConfig.h>
-#include <visp/vpDisplayX.h>
-#include <visp/vpDisplayGDI.h>
-#include <visp/vpDisplayOpenCV.h>
-#include <visp/vpMbEdgeTracker.h>
-#include <visp/vpVideoReader.h>
-#include <visp/vpKeyPoint.h>
+#include <visp3/core/vpConfig.h>
+#include <visp3/gui/vpDisplayX.h>
+#include <visp3/gui/vpDisplayGDI.h>
+#include <visp3/gui/vpDisplayOpenCV.h>
+#include <visp3/mbt/vpMbEdgeTracker.h>
+#include <visp3/io/vpVideoReader.h>
+#include <visp3/vision/vpKeyPoint.h>
+#include <visp3/core/vpIoTools.h>
 
 
 int main(int argc, char ** argv) {
-#if defined(VISP_HAVE_OPENCV) && ((VISP_HAVE_OPENCV_VERSION >= 0x020100) || defined(VISP_HAVE_FFMPEG))
+#if defined(VISP_HAVE_OPENCV) && ((VISP_HAVE_OPENCV_VERSION >= 0x020400) || defined(VISP_HAVE_FFMPEG))
   //! [MBT code]
   try {
     std::string videoname = "teabox.mpg";
@@ -127,7 +128,6 @@ int main(int argc, char ** argv) {
       keypoint_learning.setMatcher(matcherName);
       //! [Keypoint code config]
     }
-    //! [Keypoint declaration and initialization]
 
     //! [Keypoints reference detection]
     std::vector<cv::KeyPoint> trainKeyPoints;
@@ -224,7 +224,7 @@ int main(int argc, char ** argv) {
 #ifdef VISP_HAVE_XML2
     vpXmlParser::cleanup();
 #endif
-#if defined(VISP_HAVE_COIN) && (COIN_MAJOR_VERSION == 3)
+#if defined(VISP_HAVE_COIN3D) && (COIN_MAJOR_VERSION == 3)
     SoDB::finish();
 #endif
   }

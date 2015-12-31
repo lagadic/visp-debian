@@ -1,13 +1,13 @@
 //! \example tutorial-viewer.cpp
 //! [Include display]
-#include <visp/vpDisplayD3D.h>
-#include <visp/vpDisplayGDI.h>
-#include <visp/vpDisplayGTK.h>
-#include <visp/vpDisplayX.h>
-#include <visp/vpDisplayOpenCV.h>
+#include <visp3/gui/vpDisplayD3D.h>
+#include <visp3/gui/vpDisplayGDI.h>
+#include <visp3/gui/vpDisplayGTK.h>
+#include <visp3/gui/vpDisplayX.h>
+#include <visp3/gui/vpDisplayOpenCV.h>
 //! [Include display]
 //! [Include io]
-#include <visp/vpImageIo.h>
+#include <visp3/io/vpImageIo.h>
 //! [Include io]
 
 int main(int argc, char** argv)
@@ -35,12 +35,12 @@ int main(int argc, char** argv)
     //! [vpDisplay construction]
 #if defined(VISP_HAVE_X11)
     vpDisplayX d(I);
+#elif defined(VISP_HAVE_GDI)
+    vpDisplayGDI d(I);
 #elif defined(VISP_HAVE_OPENCV)
     vpDisplayOpenCV d(I);
 #elif defined(VISP_HAVE_GTK)
     vpDisplayGTK d(I);
-#elif defined(VISP_HAVE_GDI)
-    vpDisplayGDI d(I);
 #elif defined(VISP_HAVE_D3D9)
     vpDisplayD3d d(I);
 #else

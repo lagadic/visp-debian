@@ -1,10 +1,8 @@
 /****************************************************************************
  *
- * $Id: exponentialMap.cpp 4574 2014-01-09 08:48:51Z fspindle $
- *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
- * 
+ * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * ("GPL") version 2 as published by the Free Software Foundation.
@@ -12,24 +10,22 @@
  * distribution for additional information about the GNU GPL.
  *
  * For using ViSP with software that can not be combined with the GNU
- * GPL, please contact INRIA about acquiring a ViSP Professional 
+ * GPL, please contact Inria about acquiring a ViSP Professional
  * Edition License.
  *
- * See http://www.irisa.fr/lagadic/visp/visp.html for more information.
- * 
+ * See http://visp.inria.fr for more information.
+ *
  * This software was developed at:
- * INRIA Rennes - Bretagne Atlantique
+ * Inria Rennes - Bretagne Atlantique
  * Campus Universitaire de Beaulieu
  * 35042 Rennes Cedex
  * France
- * http://www.irisa.fr/lagadic
  *
  * If you have questions regarding the use of this file, please contact
- * INRIA at visp@inria.fr
- * 
+ * Inria at visp@inria.fr
+ *
  * This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
  * WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
- *
  *
  * Description:
  * Test some vpColVector functionalities.
@@ -46,13 +42,13 @@
 */
 
 
-#include <visp/vpTranslationVector.h>
-#include <visp/vpRotationVector.h>
-#include <visp/vpThetaUVector.h>
-#include <visp/vpRxyzVector.h>
-#include <visp/vpColVector.h>
-#include <visp/vpHomogeneousMatrix.h>
-#include <visp/vpExponentialMap.h>
+#include <visp3/core/vpTranslationVector.h>
+#include <visp3/core/vpRotationVector.h>
+#include <visp3/core/vpThetaUVector.h>
+#include <visp3/core/vpRxyzVector.h>
+#include <visp3/core/vpColVector.h>
+#include <visp3/core/vpHomogeneousMatrix.h>
+#include <visp3/core/vpExponentialMap.h>
 
 
 int

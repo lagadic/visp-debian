@@ -1,10 +1,8 @@
 /****************************************************************************
  *
- * $Id: SickLDMRS-Process.cpp 4658 2014-02-09 09:50:14Z fspindle $
- *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
- * 
+ * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * ("GPL") version 2 as published by the Free Software Foundation.
@@ -12,24 +10,22 @@
  * distribution for additional information about the GNU GPL.
  *
  * For using ViSP with software that can not be combined with the GNU
- * GPL, please contact INRIA about acquiring a ViSP Professional 
+ * GPL, please contact Inria about acquiring a ViSP Professional
  * Edition License.
  *
- * See http://www.irisa.fr/lagadic/visp/visp.html for more information.
- * 
+ * See http://visp.inria.fr for more information.
+ *
  * This software was developed at:
- * INRIA Rennes - Bretagne Atlantique
+ * Inria Rennes - Bretagne Atlantique
  * Campus Universitaire de Beaulieu
  * 35042 Rennes Cedex
  * France
- * http://www.irisa.fr/lagadic
  *
  * If you have questions regarding the use of this file, please contact
- * INRIA at visp@inria.fr
- * 
+ * Inria at visp@inria.fr
+ *
  * This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
  * WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
- *
  *
  * Description:
  * Sick LD-MRS laser driver.
@@ -61,18 +57,20 @@
   select the layers to proceed.
 
 */
-#include <visp/vpDebug.h>
-#include <visp/vpImagePoint.h>
-#include <visp/vpSickLDMRS.h>
-#include <visp/vpImage.h>
-#include <visp/vpImageIo.h>
-#include <visp/vpDisplay.h>
-#include <visp/vpDisplayX.h>
-#include <visp/vpDisplayGDI.h>
-#include <visp/vpDisplayGTK.h>
-#include <visp/vpParseArgv.h>
-#include <visp/vp1394TwoGrabber.h>
-#include <visp/vpIoTools.h>
+#include <visp3/core/vpDebug.h>
+#include <visp3/core/vpImagePoint.h>
+#include <visp3/sensor/vpSickLDMRS.h>
+#include <visp3/core/vpImage.h>
+#include <visp3/io/vpImageIo.h>
+#include <visp3/core/vpDisplay.h>
+#ifdef VISP_HAVE_MODULE_GUI
+#  include <visp3/gui/vpDisplayX.h>
+#  include <visp3/gui/vpDisplayGDI.h>
+#  include <visp3/gui/vpDisplayGTK.h>
+#endif
+#include <visp3/io/vpParseArgv.h>
+#include <visp3/sensor/vp1394TwoGrabber.h>
+#include <visp3/core/vpIoTools.h>
  
 #if ( !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) ) && (defined(VISP_HAVE_X11) || defined(VISP_HAVE_GDI) || defined(VISP_HAVE_GTK))
 
@@ -113,7 +111,8 @@ void *laser_display_and_save_loop(void *)
     }
   }
 
-  vpDisplay *display;
+  vpDisplay *display = NULL;
+#ifdef VISP_HAVE_MODULE_GUI
 #if defined VISP_HAVE_X11
   display = new vpDisplayX;
 #elif defined VISP_HAVE_GDI
@@ -122,6 +121,7 @@ void *laser_display_and_save_loop(void *)
   display = new vpDisplayGTK;
 #endif
   display->init (map, 10, 10, "Laser scan");
+#endif
 
   unsigned int iter = 0;
   for ( ; ; ) {
@@ -236,7 +236,7 @@ void *laser_acq_loop(void *)
 
 void *camera_acq_and_display_loop(void *)
 {
-#ifdef VISP_HAVE_DC1394_2
+#ifdef VISP_HAVE_DC1394
   try {
     // Initialize the firewire framegrabber
     vp1394TwoGrabber g;       // Create a grabber based on libdc1394-2.x third party lib
@@ -253,7 +253,8 @@ void *camera_acq_and_display_loop(void *)
     g.acquire(I);                        // Acquire an image
     I.quarterSizeImage(Q);
 
-    vpDisplay *display;
+    vpDisplay *display = NULL;
+#ifdef VISP_HAVE_MODULE_GUI
 #if defined VISP_HAVE_X11
     display = new vpDisplayX;
 #elif defined VISP_HAVE_GDI
@@ -262,7 +263,8 @@ void *camera_acq_and_display_loop(void *)
     display = new vpDisplayGTK;
 #endif
     display->init (Q, 320, 10, "Camera");
-    
+#endif
+
     // Create a file with cameraimage time stamps
     std::ofstream fdimage_ts;
     if (save) {

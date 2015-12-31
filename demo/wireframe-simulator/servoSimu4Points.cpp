@@ -1,10 +1,8 @@
 /****************************************************************************
  *
- * $Id: servoSimu4Points.cpp 4814 2014-07-31 11:38:39Z fspindle $
- *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
- * 
+ * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * ("GPL") version 2 as published by the Free Software Foundation.
@@ -12,24 +10,22 @@
  * distribution for additional information about the GNU GPL.
  *
  * For using ViSP with software that can not be combined with the GNU
- * GPL, please contact INRIA about acquiring a ViSP Professional 
+ * GPL, please contact Inria about acquiring a ViSP Professional
  * Edition License.
  *
- * See http://www.irisa.fr/lagadic/visp/visp.html for more information.
- * 
+ * See http://visp.inria.fr for more information.
+ *
  * This software was developed at:
- * INRIA Rennes - Bretagne Atlantique
+ * Inria Rennes - Bretagne Atlantique
  * Campus Universitaire de Beaulieu
  * 35042 Rennes Cedex
  * France
- * http://www.irisa.fr/lagadic
  *
  * If you have questions regarding the use of this file, please contact
- * INRIA at visp@inria.fr
- * 
+ * Inria at visp@inria.fr
+ *
  * This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
  * WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
- *
  *
  * Description:
  * Demonstration of the wireframe simulator with a simple visual servoing
@@ -47,25 +43,25 @@
 
 #include <stdlib.h>
 
-#include <visp/vpCameraParameters.h>
-#include <visp/vpDisplayOpenCV.h>
-#include <visp/vpDisplayX.h>
-#include <visp/vpDisplayGTK.h>
-#include <visp/vpDisplayGDI.h>
-#include <visp/vpDisplayD3D.h>
-#include <visp/vpFeatureBuilder.h>
-#include <visp/vpFeaturePoint.h>
-#include <visp/vpHomogeneousMatrix.h>
-#include <visp/vpImage.h>
-#include <visp/vpImageIo.h>
-#include <visp/vpIoTools.h>
-#include <visp/vpMath.h>
-#include <visp/vpParseArgv.h>
-#include <visp/vpServo.h>
-#include <visp/vpSimulatorCamera.h>
-#include <visp/vpTime.h>
-#include <visp/vpVelocityTwistMatrix.h>
-#include <visp/vpWireFrameSimulator.h>
+#include <visp3/core/vpCameraParameters.h>
+#include <visp3/gui/vpDisplayOpenCV.h>
+#include <visp3/gui/vpDisplayX.h>
+#include <visp3/gui/vpDisplayGTK.h>
+#include <visp3/gui/vpDisplayGDI.h>
+#include <visp3/gui/vpDisplayD3D.h>
+#include <visp3/visual_features/vpFeatureBuilder.h>
+#include <visp3/visual_features/vpFeaturePoint.h>
+#include <visp3/core/vpHomogeneousMatrix.h>
+#include <visp3/core/vpImage.h>
+#include <visp3/io/vpImageIo.h>
+#include <visp3/core/vpIoTools.h>
+#include <visp3/core/vpMath.h>
+#include <visp3/io/vpParseArgv.h>
+#include <visp3/vs/vpServo.h>
+#include <visp3/robot/vpSimulatorCamera.h>
+#include <visp3/core/vpTime.h>
+#include <visp3/core/vpVelocityTwistMatrix.h>
+#include <visp3/robot/vpWireFrameSimulator.h>
 
 #define GETOPTARGS	"dh"
 
@@ -226,9 +222,8 @@ main(int argc, const char ** argv)
     // Set initial position of the object in the world frame
     vpHomogeneousMatrix wMo(0.0,0.0,0.2,0,0,0);
     // Position of the camera in the world frame
-    vpHomogeneousMatrix wMc, cMw;
+    vpHomogeneousMatrix wMc;
     wMc = wMo * cMo.inverse();
-    cMw = wMc.inverse();
 
     //The four point used as visual features
     vpPoint point[4] ;
@@ -382,7 +377,7 @@ main(int argc, const char ** argv)
       robot.get_eJe(eJe) ;
       task.set_eJe(eJe) ;
 
-      robot.getPosition(wMc) ;
+      wMc = robot.getPosition() ;
       cMo = wMc.inverse() * wMo;
       for (int i = 0 ; i < 4 ; i++)
       {

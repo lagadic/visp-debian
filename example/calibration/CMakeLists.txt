@@ -1,10 +1,8 @@
 #############################################################################
 #
-# $Id: CMakeLists.txt 4961 2014-11-14 13:06:26Z fspindle $
-#
 # This file is part of the ViSP software.
-# Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
-# 
+# Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+#
 # This software is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
 # ("GPL") version 2 as published by the Free Software Foundation.
@@ -12,21 +10,20 @@
 # distribution for additional information about the GNU GPL.
 #
 # For using ViSP with software that can not be combined with the GNU
-# GPL, please contact INRIA about acquiring a ViSP Professional 
+# GPL, please contact Inria about acquiring a ViSP Professional
 # Edition License.
 #
-# See http://www.irisa.fr/lagadic/visp/visp.html for more information.
-# 
+# See http://visp.inria.fr for more information.
+#
 # This software was developed at:
-# INRIA Rennes - Bretagne Atlantique
+# Inria Rennes - Bretagne Atlantique
 # Campus Universitaire de Beaulieu
 # 35042 Rennes Cedex
 # France
-# http://www.irisa.fr/lagadic
 #
 # If you have questions regarding the use of this file, please contact
-# INRIA at visp@inria.fr
-# 
+# Inria at visp@inria.fr
+#
 # This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
 # WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
 #
@@ -38,27 +35,21 @@
 #
 #############################################################################
 
-# SOURCE variable corresponds to the list of all the sources to build binaries.
-# The generate binary comes by removing the .cpp extension to
-# the source name.
-#
-# If you want to add/remove a source, modify here
-set (SOURCE
+project(example-calibration)
+
+cmake_minimum_required(VERSION 2.6)
+
+find_package(VISP REQUIRED visp_core visp_vision visp_gui visp_io)
+
+set(example_cpp
   camera_calibration.cpp
   calibrateTsai.cpp
 )
 
-# rule for binary build
-foreach(source ${SOURCE})
-  # Compute the name of the binary to create
-  get_filename_component(binary ${source} NAME_WE)
-
-  # From source compile the binary and add link rules
-  add_executable(${binary} ${source})
-  target_link_libraries(${binary} ${VISP_INTERN_LIBRARY} ${VISP_EXTERN_LIBRARIES})
-  add_dependencies(visp_examples ${binary})
-  if(ENABLE_SOLUTION_FOLDERS)
-    set_target_properties(${binary} PROPERTIES FOLDER "examples")
+foreach(cpp ${example_cpp})
+  visp_add_target(${cpp})
+  if(COMMAND visp_add_dependency)
+    visp_add_dependency(${cpp} "examples")
   endif()
 endforeach()
 
@@ -82,24 +73,7 @@ list(APPEND data2copy "${CMAKE_CURRENT_SOURCE_DIR}/circles-03.png" )
 list(APPEND data2copy "${CMAKE_CURRENT_SOURCE_DIR}/circles-04.png" )
 list(APPEND data2copy "${CMAKE_CURRENT_SOURCE_DIR}/circles-05.png" )
 
-# Since CMake 3.0.0 policy CMP0026 was introduced to disallow location property on target.
-# If CMake 3.0.0 is used, we use $<TARGET_FILE_DIR:tgt> to get the target location
-if (CMAKE_VERSION VERSION_GREATER 2.8.12)
-  foreach(data ${data2copy})
-    add_custom_command(
-      TARGET camera_calibration
-      POST_BUILD
-      COMMAND ${CMAKE_COMMAND} -E copy "${data}" "$<TARGET_FILE_DIR:camera_calibration"
-    )
-  endforeach()
-else()
-  get_target_property(target_location camera_calibration LOCATION)
-  get_filename_component(target_location "${target_location}" PATH)
-  foreach(data ${data2copy})
-    add_custom_command(
-      TARGET camera_calibration
-      POST_BUILD
-      COMMAND ${CMAKE_COMMAND} -E copy "${data}" "${target_location}"
-    )
-  endforeach()
-endif()
+# Copy the data files to the same location than the target
+foreach(data ${data2copy})
+  visp_copy_data(camera_calibration.cpp ${data})
+endforeach()

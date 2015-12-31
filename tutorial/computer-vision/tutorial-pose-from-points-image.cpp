@@ -1,11 +1,11 @@
 /*! \example tutorial-pose-from-points-image.cpp */
-#include <visp/vpDisplayGDI.h>
-#include <visp/vpDisplayOpenCV.h>
-#include <visp/vpDisplayX.h>
-#include <visp/vpDot2.h>
-#include <visp/vpImageIo.h>
-#include <visp/vpPixelMeterConversion.h>
-#include <visp/vpPose.h>
+#include <visp3/gui/vpDisplayGDI.h>
+#include <visp3/gui/vpDisplayOpenCV.h>
+#include <visp3/gui/vpDisplayX.h>
+#include <visp3/blob/vpDot2.h>
+#include <visp3/io/vpImageIo.h>
+#include <visp3/core/vpPixelMeterConversion.h>
+#include <visp3/vision/vpPose.h>
 
 void computePose(std::vector<vpPoint> &point, const std::vector<vpDot2> &dot,
                  const vpCameraParameters &cam, bool init, vpHomogeneousMatrix &cMo);
@@ -56,11 +56,11 @@ int main()
     dot[1].initTracking(I, vpImagePoint(203, 366));
     dot[2].initTracking(I, vpImagePoint(313, 402));
     dot[3].initTracking(I, vpImagePoint(304, 133));
-    std::vector<vpPoint> point(4);
-    point[0].setWorldCoordinates(-0.06, -0.06, 0);
-    point[1].setWorldCoordinates( 0.06, -0.06, 0);
-    point[2].setWorldCoordinates( 0.06,  0.06, 0);
-    point[3].setWorldCoordinates(-0.06,  0.06, 0);
+    std::vector<vpPoint> point;
+    point.push_back( vpPoint(-0.06, -0.06, 0) );
+    point.push_back( vpPoint( 0.06, -0.06, 0) );
+    point.push_back( vpPoint( 0.06,  0.06, 0) );
+    point.push_back( vpPoint(-0.06,  0.06, 0) );
     vpHomogeneousMatrix cMo;
     bool init = true;
 

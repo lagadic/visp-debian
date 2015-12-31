@@ -1,11 +1,11 @@
 /*! \example tutorial-mb-hybrid-tracker.cpp */
-#include <visp/vpDisplayGDI.h>
-#include <visp/vpDisplayOpenCV.h>
-#include <visp/vpDisplayX.h>
-#include <visp/vpImageIo.h>
-#include <visp/vpIoTools.h>
-#include <visp/vpMbEdgeKltTracker.h>
-#include <visp/vpVideoReader.h>
+#include <visp3/gui/vpDisplayGDI.h>
+#include <visp3/gui/vpDisplayOpenCV.h>
+#include <visp3/gui/vpDisplayX.h>
+#include <visp3/io/vpImageIo.h>
+#include <visp3/core/vpIoTools.h>
+#include <visp3/mbt/vpMbEdgeKltTracker.h>
+#include <visp3/io/vpVideoReader.h>
 
 int main(int argc, char** argv)
 {
@@ -72,9 +72,7 @@ int main(int argc, char** argv)
       me.setMu1(0.5);
       me.setMu2(0.5);
       me.setSampleStep(4);
-      me.setNbTotalSample(250);
       tracker.setMovingEdge(me);
-      tracker.setMaskBorder(5);
       vpKltOpencv klt_settings;
       klt_settings.setMaxFeatures(300);
       klt_settings.setWindowSize(5);
@@ -84,6 +82,7 @@ int main(int argc, char** argv)
       klt_settings.setBlockSize(3);
       klt_settings.setPyramidLevels(3);
       tracker.setKltOpencv(klt_settings);
+      tracker.setMaskBorder(5);
       cam.initPersProjWithoutDistortion(839, 839, 325, 243);
       tracker.setCameraParameters(cam);
       tracker.setAngleAppear( vpMath::rad(70) );
@@ -93,6 +92,7 @@ int main(int argc, char** argv)
       tracker.setClipping(tracker.getClipping() | vpMbtPolygon::FOV_CLIPPING);
     }
     tracker.setOgreVisibilityTest(true);
+    tracker.setOgreShowConfigDialog(false);
     tracker.loadModel(objectname + ".cao");
     tracker.setDisplayFeatures(true);
     tracker.initClick(I, objectname + ".init", true);
@@ -116,13 +116,18 @@ int main(int argc, char** argv)
 #ifdef VISP_HAVE_XML2
     vpXmlParser::cleanup();
 #endif
-#if defined(VISP_HAVE_COIN) && (COIN_MAJOR_VERSION == 3)
+#if defined(VISP_HAVE_COIN3D) && (COIN_MAJOR_VERSION == 3)
     SoDB::finish();
 #endif
   }
   catch(vpException e) {
-    std::cout << "Catch an exception: " << e << std::endl;
+    std::cout << "Catch a ViSP exception: " << e << std::endl;
   }
+#ifdef VISP_HAVE_OGRE
+  catch(Ogre::Exception e) {
+    std::cout << "Catch an Ogre exception: " << e.getDescription() << std::endl;
+  }
+#endif
 #else
   (void)argc;
   (void)argv;

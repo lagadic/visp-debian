@@ -1,13 +1,17 @@
 /*! \example tutorial-ibvs-4pts-ogre-tracking.cpp */
-#include <visp/vpDisplayX.h>
-#include <visp/vpDisplayOpenCV.h>
-#include <visp/vpDisplayGDI.h>
-#include <visp/vpAROgre.h>
-#include <visp/vpFeatureBuilder.h>
-#include <visp/vpPose.h>
-#include <visp/vpServo.h>
-#include <visp/vpServoDisplay.h>
-#include <visp/vpSimulatorCamera.h>
+#include <visp3/core/vpConfig.h>
+#ifdef VISP_HAVE_MODULE_AR
+#include <visp3/ar/vpAROgre.h>
+#endif
+#include <visp3/gui/vpDisplayX.h>
+#include <visp3/gui/vpDisplayOpenCV.h>
+#include <visp3/gui/vpDisplayGDI.h>
+#include <visp3/visual_features/vpFeatureBuilder.h>
+#include <visp3/vision/vpPose.h>
+#include <visp3/vs/vpServo.h>
+#include <visp3/vs/vpServoDisplay.h>
+#include <visp3/robot/vpSimulatorCamera.h>
+#include <visp3/blob/vpDot2.h>
 
 void display_trajectory(const vpImage<unsigned char> &I, const std::vector<vpDot2> &dot, unsigned int thickness);
 #if defined(VISP_HAVE_OGRE)
@@ -58,11 +62,11 @@ int main()
     vpCameraParameters cam(840, 840, background.getWidth()/2, background.getHeight()/2);
 
     // Define the target as 4 points
-    std::vector<vpPoint> point(4) ;
-    point[0].setWorldCoordinates(-0.1,-0.1, 0);
-    point[1].setWorldCoordinates( 0.1,-0.1, 0);
-    point[2].setWorldCoordinates( 0.1, 0.1, 0);
-    point[3].setWorldCoordinates(-0.1, 0.1, 0);
+    std::vector<vpPoint> point;
+    point.push_back( vpPoint(-0.1,-0.1, 0) );
+    point.push_back( vpPoint( 0.1,-0.1, 0) );
+    point.push_back( vpPoint( 0.1, 0.1, 0) );
+    point.push_back( vpPoint(-0.1, 0.1, 0) );
 
     // Our object
     // A simulator with the camera parameters defined above,

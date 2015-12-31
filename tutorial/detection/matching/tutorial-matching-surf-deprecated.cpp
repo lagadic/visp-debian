@@ -1,8 +1,8 @@
 //! \example tutorial-matching-surf-deprecated.cpp
-#include <visp/vpDisplayOpenCV.h>
-#include <visp/vpVideoReader.h>
+#include <visp3/gui/vpDisplayOpenCV.h>
+#include <visp3/io/vpVideoReader.h>
 //! [Include]
-#include <visp/vpKeyPointSurf.h>
+#include <visp3/vision/vpKeyPointSurf.h>
 //! [Include]
 
 int main()

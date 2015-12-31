@@ -1,9 +1,7 @@
 /****************************************************************************
  *
- * $Id: servoPioneerPoint2DDepth.cpp 5128 2015-01-06 11:46:58Z fspindle $
- *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -12,24 +10,22 @@
  * distribution for additional information about the GNU GPL.
  *
  * For using ViSP with software that can not be combined with the GNU
- * GPL, please contact INRIA about acquiring a ViSP Professional
+ * GPL, please contact Inria about acquiring a ViSP Professional
  * Edition License.
  *
- * See http://www.irisa.fr/lagadic/visp/visp.html for more information.
+ * See http://visp.inria.fr for more information.
  *
  * This software was developed at:
- * INRIA Rennes - Bretagne Atlantique
+ * Inria Rennes - Bretagne Atlantique
  * Campus Universitaire de Beaulieu
  * 35042 Rennes Cedex
  * France
- * http://www.irisa.fr/lagadic
  *
  * If you have questions regarding the use of this file, please contact
- * INRIA at visp@inria.fr
+ * Inria at visp@inria.fr
  *
  * This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
  * WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
- *
  *
  * Description:
  * IBVS on Pioneer P3DX mobile platform
@@ -40,27 +36,27 @@
  *****************************************************************************/
 #include <iostream>
 
-#include <visp/vpConfig.h>
+#include <visp3/core/vpConfig.h>
 
-#include <visp/vpRobotPioneer.h>
-#include <visp/vpCameraParameters.h>
-#include <visp/vpDisplayGDI.h>
-#include <visp/vpDisplayX.h>
-#include <visp/vpDot2.h>
-#include <visp/vpFeatureBuilder.h>
-#include <visp/vpFeatureDepth.h>
-#include <visp/vpFeaturePoint.h>
-#include <visp/vpHomogeneousMatrix.h>
-#include <visp/vpImage.h>
-#include <visp/vpImageConvert.h>
-#include <visp/vp1394TwoGrabber.h>
-#include <visp/vp1394CMUGrabber.h>
-#include <visp/vpV4l2Grabber.h>
-#include <visp/vpOpenCVGrabber.h>
-#include <visp/vpServo.h>
-#include <visp/vpVelocityTwistMatrix.h>
+#include <visp3/robot/vpRobotPioneer.h>
+#include <visp3/core/vpCameraParameters.h>
+#include <visp3/gui/vpDisplayGDI.h>
+#include <visp3/gui/vpDisplayX.h>
+#include <visp3/blob/vpDot2.h>
+#include <visp3/visual_features/vpFeatureBuilder.h>
+#include <visp3/visual_features/vpFeatureDepth.h>
+#include <visp3/visual_features/vpFeaturePoint.h>
+#include <visp3/core/vpHomogeneousMatrix.h>
+#include <visp3/core/vpImage.h>
+#include <visp3/core/vpImageConvert.h>
+#include <visp3/sensor/vp1394TwoGrabber.h>
+#include <visp3/sensor/vp1394CMUGrabber.h>
+#include <visp3/sensor/vpV4l2Grabber.h>
+#include <visp3/sensor/vpOpenCVGrabber.h>
+#include <visp3/vs/vpServo.h>
+#include <visp3/core/vpVelocityTwistMatrix.h>
 
-#if defined(VISP_HAVE_DC1394_2) || defined(VISP_HAVE_V4L2) || defined(VISP_HAVE_CMU1394) || (VISP_HAVE_OPENCV_VERSION >= 0x020100)
+#if defined(VISP_HAVE_DC1394) || defined(VISP_HAVE_V4L2) || defined(VISP_HAVE_CMU1394) || (VISP_HAVE_OPENCV_VERSION >= 0x020100)
 #if defined(VISP_HAVE_X11) || defined(VISP_HAVE_GDI)
 #if defined(VISP_HAVE_PIONEER)
 #  define TEST_COULD_BE_ACHIEVED
@@ -157,7 +153,7 @@ int main(int argc, char **argv)
     g.open(I);
     // Logitec sphere parameters
     cam.initPersProjWithoutDistortion(558, 555, 312, 210);
-#elif defined(VISP_HAVE_DC1394_2)
+#elif defined(VISP_HAVE_DC1394)
     // Create a grabber based on libdc1394-2.x third party lib (for firewire cameras under Linux)
     vp1394TwoGrabber g(false);
     g.setVideoMode(vp1394TwoGrabber::vpVIDEO_MODE_640x480_MONO8);

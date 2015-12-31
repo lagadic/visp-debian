@@ -1,17 +1,20 @@
 //! \example tutorial-blob-tracker-live-firewire.cpp
-#include <visp/vp1394CMUGrabber.h>
-#include <visp/vp1394TwoGrabber.h>
-#include <visp/vpDisplayGDI.h>
-#include <visp/vpDisplayOpenCV.h>
-#include <visp/vpDisplayX.h>
-#include <visp/vpDot2.h>
+#include <visp3/core/vpConfig.h>
+#ifdef VISP_HAVE_MODULE_SENSOR
+#include <visp3/sensor/vp1394CMUGrabber.h>
+#include <visp3/sensor/vp1394TwoGrabber.h>
+#endif
+#include <visp3/gui/vpDisplayGDI.h>
+#include <visp3/gui/vpDisplayOpenCV.h>
+#include <visp3/gui/vpDisplayX.h>
+#include <visp3/blob/vpDot2.h>
 
 int main()
 {
-#if (defined(VISP_HAVE_DC1394_2) || defined(VISP_HAVE_CMU1394) || (VISP_HAVE_OPENCV_VERSION >= 0x020100)) && (defined(VISP_HAVE_X11) || defined(VISP_HAVE_GDI) || defined(VISP_HAVE_OPENCV))
+#if (defined(VISP_HAVE_DC1394) || defined(VISP_HAVE_CMU1394) || (VISP_HAVE_OPENCV_VERSION >= 0x020100)) && (defined(VISP_HAVE_X11) || defined(VISP_HAVE_GDI) || defined(VISP_HAVE_OPENCV))
   vpImage<unsigned char> I; // Create a gray level image container
 
-#if defined(VISP_HAVE_DC1394_2)
+#if defined(VISP_HAVE_DC1394)
   vp1394TwoGrabber g(false);
   g.open(I);
 #elif defined(VISP_HAVE_CMU1394)
@@ -49,7 +52,7 @@ int main()
 
   while(1) {
     try {
-#if defined(VISP_HAVE_DC1394_2) || defined(VISP_HAVE_CMU1394)
+#if defined(VISP_HAVE_DC1394) || defined(VISP_HAVE_CMU1394)
       g.acquire(I);
 #elif defined(VISP_HAVE_OPENCV)
       g >> frame;

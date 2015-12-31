@@ -1,10 +1,8 @@
 /****************************************************************************
  *
- * $Id: trackMeCircle.cpp 5108 2015-01-05 07:48:58Z fspindle $
- *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
- * 
+ * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * ("GPL") version 2 as published by the Free Software Foundation.
@@ -12,24 +10,22 @@
  * distribution for additional information about the GNU GPL.
  *
  * For using ViSP with software that can not be combined with the GNU
- * GPL, please contact INRIA about acquiring a ViSP Professional 
+ * GPL, please contact Inria about acquiring a ViSP Professional
  * Edition License.
  *
- * See http://www.irisa.fr/lagadic/visp/visp.html for more information.
- * 
+ * See http://visp.inria.fr for more information.
+ *
  * This software was developed at:
- * INRIA Rennes - Bretagne Atlantique
+ * Inria Rennes - Bretagne Atlantique
  * Campus Universitaire de Beaulieu
  * 35042 Rennes Cedex
  * France
- * http://www.irisa.fr/lagadic
  *
  * If you have questions regarding the use of this file, please contact
- * INRIA at visp@inria.fr
- * 
+ * Inria at visp@inria.fr
+ *
  * This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
  * WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
- *
  *
  * Description:
  * Tracking of an ellipse.
@@ -51,27 +47,26 @@
   Tracking of an ellipse using vpMe.
 */
 
-#include <visp/vpDebug.h>
-#include <visp/vpConfig.h>
+#include <visp3/core/vpConfig.h>
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <sstream>
 #include <iomanip>
 
-#if (defined (VISP_HAVE_X11) || defined(VISP_HAVE_GTK) || defined(VISP_HAVE_GDI) || defined(VISP_HAVE_OPENCV))
+#if defined(VISP_HAVE_MODULE_ME) && (defined (VISP_HAVE_X11) || defined(VISP_HAVE_GTK) || defined(VISP_HAVE_GDI) || defined(VISP_HAVE_OPENCV))
 
-#include <visp/vpImage.h>
-#include <visp/vpImageIo.h>
-#include <visp/vpDisplayX.h>
-#include <visp/vpDisplayGTK.h>
-#include <visp/vpDisplayGDI.h>
-#include <visp/vpDisplayOpenCV.h>
-#include <visp/vpColor.h>
+#include <visp3/core/vpImage.h>
+#include <visp3/io/vpImageIo.h>
+#include <visp3/gui/vpDisplayX.h>
+#include <visp3/gui/vpDisplayGTK.h>
+#include <visp3/gui/vpDisplayGDI.h>
+#include <visp3/gui/vpDisplayOpenCV.h>
+#include <visp3/core/vpColor.h>
 
-#include <visp/vpMeEllipse.h>
-#include <visp/vpParseArgv.h>
-#include <visp/vpIoTools.h>
+#include <visp3/me/vpMeEllipse.h>
+#include <visp3/io/vpParseArgv.h>
+#include <visp3/core/vpIoTools.h>
 
 // List of allowed command line options
 #define GETOPTARGS	"cdi:h"
@@ -286,7 +281,6 @@ main(int argc, const char ** argv)
     me.setPointsToTrack(60) ;
     me.setThreshold(15000) ;
 
-    E1.setCircle(true) ;
     E1.setMe(&me) ;
     E1.setDisplay(vpMeSite::RANGE_RESULT) ;
     // If click is allowed, wait for a mouse click to select the points
@@ -296,15 +290,14 @@ main(int argc, const char ** argv)
     }
     else {
       // Create a list of points to automate the test
-      unsigned int n=5 ;
-      vpImagePoint *ip = new vpImagePoint [n];
-      ip[0].set_i( 39 ); ip[0].set_j( 136 );
-      ip[1].set_i( 42 ); ip[1].set_j( 83 );
-      ip[2].set_i( 86 ); ip[2].set_j( 55 );
-      ip[3].set_i( 132 ); ip[3].set_j( 72 );
-      ip[4].set_i( 145 ); ip[4].set_j( 134 );
-      E1.initTracking(I, n, ip) ;
-      delete [] ip ;
+      std::vector<vpImagePoint> ip;
+      ip.push_back(vpImagePoint(39, 136));
+      ip.push_back(vpImagePoint(42, 83));
+      ip.push_back(vpImagePoint(86, 55));
+      ip.push_back(vpImagePoint(132, 72));
+      ip.push_back(vpImagePoint(145, 134));
+
+      E1.initTracking(I, ip) ;
     }
 
     if (opt_display) {
@@ -332,10 +325,11 @@ main(int argc, const char ** argv)
   }
 }
 #else
-int
-main()
+#include <iostream>
+
+int main()
 {
-  vpERROR_TRACE("You do not have X11, GTK, GDI or OpenCV display functionalities...");
+  std::cout << "visp_me module or X11, GTK, GDI or OpenCV display functionalities are required..." << std::endl;
 }
 
 #endif

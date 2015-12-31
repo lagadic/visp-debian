@@ -1,10 +1,8 @@
 /****************************************************************************
  *
- * $Id: manServo4PointsDisplay.cpp 4574 2014-01-09 08:48:51Z fspindle $
- *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
- * 
+ * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * ("GPL") version 2 as published by the Free Software Foundation.
@@ -12,21 +10,20 @@
  * distribution for additional information about the GNU GPL.
  *
  * For using ViSP with software that can not be combined with the GNU
- * GPL, please contact INRIA about acquiring a ViSP Professional 
+ * GPL, please contact Inria about acquiring a ViSP Professional
  * Edition License.
  *
- * See http://www.irisa.fr/lagadic/visp/visp.html for more information.
- * 
+ * See http://visp.inria.fr for more information.
+ *
  * This software was developed at:
- * INRIA Rennes - Bretagne Atlantique
+ * Inria Rennes - Bretagne Atlantique
  * Campus Universitaire de Beaulieu
  * 35042 Rennes Cedex
  * France
- * http://www.irisa.fr/lagadic
  *
  * If you have questions regarding the use of this file, please contact
- * INRIA at visp@inria.fr
- * 
+ * Inria at visp@inria.fr
+ *
  * This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
  * WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
@@ -49,27 +46,30 @@
   Visual servoing experiment on 4 points with a display.
 */
 
-#include <visp/vpConfig.h>
-#include <visp/vpDebug.h>
+#include <visp3/core/vpConfig.h>
+#include <visp3/core/vpDebug.h>
 
-#ifdef VISP_HAVE_GTK
+#if defined(VISP_HAVE_X11) || defined(VISP_HAVE_GTK) || defined(VISP_HAVE_GDI) || defined(VISP_HAVE_OPENCV)
 
-#include <visp/vpImage.h>
-#include <visp/vpCameraParameters.h>
-#include <visp/vpTime.h>
-#include <visp/vpImage.h>
-#include <visp/vpImageConvert.h>
-#include <visp/vpDisplayGTK.h>
+#include <visp3/core/vpImage.h>
+#include <visp3/core/vpCameraParameters.h>
+#include <visp3/core/vpTime.h>
+#include <visp3/core/vpImage.h>
+#include <visp3/core/vpImageConvert.h>
+#include <visp3/gui/vpDisplayX.h>
+#include <visp3/gui/vpDisplayGTK.h>
+#include <visp3/gui/vpDisplayGDI.h>
+#include <visp3/gui/vpDisplayOpenCV.h>
 
-#include <visp/vpMath.h>
-#include <visp/vpHomogeneousMatrix.h>
-#include <visp/vpPose.h>
-#include <visp/vpFeaturePoint.h>
-#include <visp/vpServo.h>
-#include <visp/vpServoDisplay.h>
-#include <visp/vpRobotCamera.h>
-#include <visp/vpFeatureBuilder.h>
-#include <visp/vpIoTools.h>
+#include <visp3/core/vpMath.h>
+#include <visp3/core/vpHomogeneousMatrix.h>
+#include <visp3/vision/vpPose.h>
+#include <visp3/visual_features/vpFeaturePoint.h>
+#include <visp3/vs/vpServo.h>
+#include <visp3/vs/vpServoDisplay.h>
+#include <visp3/robot/vpSimulatorCamera.h>
+#include <visp3/visual_features/vpFeatureBuilder.h>
+#include <visp3/core/vpIoTools.h>
 
 int main()
 {
@@ -78,12 +78,15 @@ int main()
     // sets the initial camera location
     vpHomogeneousMatrix cMo(0.3,0.2,3,
                             vpMath::rad(0),vpMath::rad(0),vpMath::rad(40))  ;
+    vpHomogeneousMatrix wMo; // Set to identity
+    vpHomogeneousMatrix wMc; // Camera position in the world frame
 
     ///////////////////////////////////
     // initialize the robot
-    vpRobotCamera robot ;
+    vpSimulatorCamera robot ;
     robot.setSamplingTime(0.04); // 40ms
-    robot.setPosition(cMo) ;
+    wMc = wMo * cMo.inverse();
+    robot.setPosition(wMc) ;
 
     //initialize the camera parameters
     vpCameraParameters cam(800,800,240,180);
@@ -94,7 +97,15 @@ int main()
     vpImage<unsigned char> I(height,width);
 
     //Display initialization
+#if defined(VISP_HAVE_X11)
+    vpDisplayX disp;
+#elif defined(VISP_HAVE_GTK)
     vpDisplayGTK disp;
+#elif defined(VISP_HAVE_GDI)
+    vpDisplayGDI disp;
+#elif defined(VISP_HAVE_OPENCV)
+    vpDisplayOpenCV disp;
+#endif
     disp.init(I,100,100,"Simulation display");
 
     ////////////////////////////////////////
@@ -186,8 +197,9 @@ int main()
       vpColVector v = task.computeControlLaw() ;
 
       // Send the computed velocity to the robot and compute the new robot position
-      robot.setVelocity(vpRobot::ARTICULAR_FRAME, v) ;
-      robot.getPosition(cMo) ;
+      robot.setVelocity(vpRobot::ARTICULAR_FRAME, v);
+      wMc = robot.getPosition();
+      cMo = wMc.inverse() * wMo;
 
       // Print the current information about the task
       task.print();
