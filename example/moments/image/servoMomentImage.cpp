@@ -1,9 +1,7 @@
 /****************************************************************************
  *
- * $Id: servoMomentImage.cpp 4670 2014-02-17 08:59:05Z fspindle $
- *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -12,24 +10,22 @@
  * distribution for additional information about the GNU GPL.
  *
  * For using ViSP with software that can not be combined with the GNU
- * GPL, please contact INRIA about acquiring a ViSP Professional
+ * GPL, please contact Inria about acquiring a ViSP Professional
  * Edition License.
  *
- * See http://www.irisa.fr/lagadic/visp/visp.html for more information.
+ * See http://visp.inria.fr for more information.
  *
  * This software was developed at:
- * INRIA Rennes - Bretagne Atlantique
+ * Inria Rennes - Bretagne Atlantique
  * Campus Universitaire de Beaulieu
  * 35042 Rennes Cedex
  * France
- * http://www.irisa.fr/lagadic
  *
  * If you have questions regarding the use of this file, please contact
- * INRIA at visp@inria.fr
+ * Inria at visp@inria.fr
  *
  * This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
  * WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
- *
  *
  * Description:
  * Example of visual servoing with moments using an image as object
@@ -47,31 +43,31 @@
 
 #define PRINT_CONDITION_NUMBER
 
-#include <visp/vpDebug.h>
-#include <visp/vpConfig.h>
+#include <visp3/core/vpDebug.h>
+#include <visp3/core/vpConfig.h>
 #include <iostream>
-#include <visp/vpHomogeneousMatrix.h>
-#include <visp/vpMomentObject.h>
-#include <visp/vpMomentDatabase.h>
-#include <visp/vpMomentCommon.h>
-#include <visp/vpFeatureMomentCommon.h>
-#include <visp/vpDisplayX.h>
-#include <visp/vpDisplayGTK.h>
-#include <visp/vpDisplayGDI.h>
-#include <visp/vpDisplayOpenCV.h>
-#include <visp/vpCameraParameters.h>
-#include <visp/vpIoTools.h>
-#include <visp/vpMath.h>
-#include <visp/vpHomogeneousMatrix.h>
-#include <visp/vpServo.h>
-#include <visp/vpDebug.h>
-#include <visp/vpFeatureBuilder.h>
-#include <visp/vpFeaturePoint.h>
-#include <visp/vpRobotCamera.h>
-#include <visp/vpImageSimulator.h>
-#include <visp/vpPlane.h>
-#include <visp/vpPoseVector.h>
-#include <visp/vpPlot.h>
+#include <visp3/core/vpHomogeneousMatrix.h>
+#include <visp3/core/vpMomentObject.h>
+#include <visp3/core/vpMomentDatabase.h>
+#include <visp3/core/vpMomentCommon.h>
+#include <visp3/visual_features/vpFeatureMomentCommon.h>
+#include <visp3/gui/vpDisplayX.h>
+#include <visp3/gui/vpDisplayGTK.h>
+#include <visp3/gui/vpDisplayGDI.h>
+#include <visp3/gui/vpDisplayOpenCV.h>
+#include <visp3/core/vpCameraParameters.h>
+#include <visp3/core/vpIoTools.h>
+#include <visp3/core/vpMath.h>
+#include <visp3/core/vpHomogeneousMatrix.h>
+#include <visp3/vs/vpServo.h>
+#include <visp3/core/vpDebug.h>
+#include <visp3/visual_features/vpFeatureBuilder.h>
+#include <visp3/visual_features/vpFeaturePoint.h>
+#include <visp3/robot/vpSimulatorCamera.h>
+#include <visp3/robot/vpImageSimulator.h>
+#include <visp3/core/vpPlane.h>
+#include <visp3/core/vpPoseVector.h>
+#include <visp3/gui/vpPlot.h>
 
 #if !defined(_WIN32) && !defined(VISP_HAVE_PTHREAD)
 // Robot simulator used in this example is not available
@@ -146,7 +142,7 @@ vpDisplayGTK displayInt;
 vpHomogeneousMatrix cMo;
 vpHomogeneousMatrix cdMo;
 
-vpRobotCamera robot;//robot used in this simulation
+vpSimulatorCamera robot;//robot used in this simulation
 vpImage<vpRGBa> Iint(480,640, 0);//internal image used for interface display
 vpServo task;    //servoing task
 vpCameraParameters cam;//robot camera parameters
@@ -303,7 +299,11 @@ void execute(unsigned int nbIter){
   vpDisplay::flush(Iint);
   unsigned int iter=0;
   double t=0;
-  robot.setPosition(cMo);
+
+  vpHomogeneousMatrix wMo; // Set to identity
+  vpHomogeneousMatrix wMc; // Camera position in the world frame
+  wMc = wMo * cMo.inverse();
+  robot.setPosition(wMc);
   float sampling_time = 0.010f; // Sampling period in seconds
   robot.setSamplingTime(sampling_time);
 
@@ -317,7 +317,8 @@ void execute(unsigned int nbIter){
     vpColVector v ;
     t = vpTime::measureTimeMs();
     //get the cMo
-    robot.getPosition(cMo);
+    wMc = robot.getPosition();
+    cMo = wMc.inverse() * wMo;
     currentpose.buildFrom(cMo);	// For plot
     //setup the plane in A,B,C style
     vpPlane pl;
@@ -349,19 +350,19 @@ void execute(unsigned int nbIter){
     //robot.setPosition(vpRobot::CAMERA_FRAME,0.01*v);
 
     err_features = task.error;
-	std::cout<<" || s - s* || = "<<task.error.sumSquare()<<std::endl;
+    std::cout<<" || s - s* || = "<<task.error.sumSquare()<<std::endl;
 
     robot.setVelocity(vpRobot::CAMERA_FRAME, v) ;
     vpTime::wait(t, sampling_time * 1000); // Wait 10 ms
 
     ViSP_plot.plot(0,iter, v);
-	ViSP_plot.plot(1,iter,currentpose);			// Plot the velocities
-	ViSP_plot.plot(2, iter,err_features);		//cMo as translations and theta_u
+    ViSP_plot.plot(1,iter,currentpose);			// Plot the velocities
+    ViSP_plot.plot(2, iter,err_features);		//cMo as translations and theta_u
 
-	_error = ( task.getError() ).sumSquare();
+    _error = ( task.getError() ).sumSquare();
 
-	#if defined(PRINT_CONDITION_NUMBER)
-		/*
+#if defined(PRINT_CONDITION_NUMBER)
+    /*
 		 * Condition number of interaction matrix
 		 */
 		vpMatrix Linteraction = task.L;

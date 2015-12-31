@@ -1,10 +1,8 @@
 /****************************************************************************
  *
- * $Id: HelloWorldOgre.cpp 5128 2015-01-06 11:46:58Z fspindle $
- *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
- * 
+ * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * ("GPL") version 2 as published by the Free Software Foundation.
@@ -12,21 +10,20 @@
  * distribution for additional information about the GNU GPL.
  *
  * For using ViSP with software that can not be combined with the GNU
- * GPL, please contact INRIA about acquiring a ViSP Professional 
+ * GPL, please contact Inria about acquiring a ViSP Professional
  * Edition License.
  *
- * See http://www.irisa.fr/lagadic/visp/visp.html for more information.
- * 
+ * See http://visp.inria.fr for more information.
+ *
  * This software was developed at:
- * INRIA Rennes - Bretagne Atlantique
+ * Inria Rennes - Bretagne Atlantique
  * Campus Universitaire de Beaulieu
  * 35042 Rennes Cedex
  * France
- * http://www.irisa.fr/lagadic
  *
  * If you have questions regarding the use of this file, please contact
- * INRIA at visp@inria.fr
- * 
+ * Inria at visp@inria.fr
+ *
  * This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
  * WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
@@ -46,19 +43,19 @@
 
 #include <iostream>
 
-#include <visp/vpOpenCVGrabber.h>
-#include <visp/vpV4l2Grabber.h>
-#include <visp/vp1394TwoGrabber.h>
-#include <visp/vpHomogeneousMatrix.h>
-#include <visp/vpImage.h>
-#include <visp/vpCameraParameters.h>
-#include <visp/vpAROgre.h>
+#include <visp3/sensor/vpOpenCVGrabber.h>
+#include <visp3/sensor/vpV4l2Grabber.h>
+#include <visp3/sensor/vp1394TwoGrabber.h>
+#include <visp3/core/vpHomogeneousMatrix.h>
+#include <visp3/core/vpImage.h>
+#include <visp3/core/vpCameraParameters.h>
+#include <visp3/ar/vpAROgre.h>
 
 int main()
 {
   try {
 #if defined(VISP_HAVE_OGRE) 
-#if defined(VISP_HAVE_V4L2) || defined(VISP_HAVE_DC1394_2) || (VISP_HAVE_OPENCV_VERSION >= 0x020100)
+#if defined(VISP_HAVE_V4L2) || defined(VISP_HAVE_DC1394) || (VISP_HAVE_OPENCV_VERSION >= 0x020100)
 
 	// Image to stock gathered data
     // Here we acquire a color image. The consequence will be that
@@ -71,7 +68,7 @@ int main()
     vpV4l2Grabber grabber;
 	grabber.open(I);
     grabber.acquire(I);
-#elif defined(VISP_HAVE_DC1394_2)
+#elif defined(VISP_HAVE_DC1394)
     // libdc1394-2
     vp1394TwoGrabber grabber;
 	grabber.open(I);
@@ -133,7 +130,7 @@ int main()
     // Rendering loop, ended with on escape
     while(ogre.continueRendering()){
       // Acquire a new image
-#if defined(VISP_HAVE_V4L2) || defined(VISP_HAVE_DC1394_2)
+#if defined(VISP_HAVE_V4L2) || defined(VISP_HAVE_DC1394)
       grabber.acquire(I);
 #elif defined(VISP_HAVE_OPENCV)
 	  grabber >> frame;

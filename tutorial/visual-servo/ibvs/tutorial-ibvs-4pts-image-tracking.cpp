@@ -1,13 +1,13 @@
 /*! \example tutorial-ibvs-4pts-image-tracking.cpp */
-#include <visp/vpDisplayX.h>
-#include <visp/vpDisplayOpenCV.h>
-#include <visp/vpDisplayGDI.h>
-#include <visp/vpFeatureBuilder.h>
-#include <visp/vpImageIo.h>
-#include <visp/vpImageSimulator.h>
-#include <visp/vpServo.h>
-#include <visp/vpServoDisplay.h>
-#include <visp/vpSimulatorCamera.h>
+#include <visp3/gui/vpDisplayX.h>
+#include <visp3/gui/vpDisplayOpenCV.h>
+#include <visp3/gui/vpDisplayGDI.h>
+#include <visp3/visual_features/vpFeatureBuilder.h>
+#include <visp3/io/vpImageIo.h>
+#include <visp3/robot/vpImageSimulator.h>
+#include <visp3/vs/vpServo.h>
+#include <visp3/vs/vpServoDisplay.h>
+#include <visp3/robot/vpSimulatorCamera.h>
 
 void display_trajectory(const vpImage<unsigned char> &I, const std::vector<vpDot2> &dot);
 
@@ -90,11 +90,11 @@ int main()
     vpImage<unsigned char> I(480, 640, 255);
     vpCameraParameters cam(840, 840, I.getWidth()/2, I.getHeight()/2);
 
-    std::vector<vpPoint> point(4) ;
-    point[0].setWorldCoordinates(-0.1,-0.1, 0);
-    point[1].setWorldCoordinates( 0.1,-0.1, 0);
-    point[2].setWorldCoordinates( 0.1, 0.1, 0);
-    point[3].setWorldCoordinates(-0.1, 0.1, 0);
+    std::vector<vpPoint> point;
+    point.push_back( vpPoint(-0.1,-0.1, 0) );
+    point.push_back( vpPoint( 0.1,-0.1, 0) );
+    point.push_back( vpPoint( 0.1, 0.1, 0) );
+    point.push_back( vpPoint(-0.1, 0.1, 0) );
 
     vpServo task ;
     task.setServo(vpServo::EYEINHAND_CAMERA);

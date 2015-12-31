@@ -1,10 +1,8 @@
 /****************************************************************************
  *
- * $Id: servoSimuPoint2DCamVelocity1.cpp 2457 2010-01-07 10:41:18Z nmelchio $
- *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
- * 
+ * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * ("GPL") version 2 as published by the Free Software Foundation.
@@ -12,24 +10,22 @@
  * distribution for additional information about the GNU GPL.
  *
  * For using ViSP with software that can not be combined with the GNU
- * GPL, please contact INRIA about acquiring a ViSP Professional 
+ * GPL, please contact Inria about acquiring a ViSP Professional
  * Edition License.
  *
- * See http://www.irisa.fr/lagadic/visp/visp.html for more information.
- * 
+ * See http://visp.inria.fr for more information.
+ *
  * This software was developed at:
- * INRIA Rennes - Bretagne Atlantique
+ * Inria Rennes - Bretagne Atlantique
  * Campus Universitaire de Beaulieu
  * 35042 Rennes Cedex
  * France
- * http://www.irisa.fr/lagadic
  *
  * If you have questions regarding the use of this file, please contact
- * INRIA at visp@inria.fr
- * 
+ * Inria at visp@inria.fr
+ *
  * This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
  * WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
- *
  *
  * Description:
  * Simulation of a 2D visual servoing on a point.
@@ -51,13 +47,13 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include <visp/vpFeatureBuilder.h>
-#include <visp/vpFeaturePoint.h>
-#include <visp/vpHomogeneousMatrix.h>
-#include <visp/vpMath.h>
-#include <visp/vpParseArgv.h>
-#include <visp/vpServo.h>
-#include <visp/vpSimulatorCamera.h>
+#include <visp3/visual_features/vpFeatureBuilder.h>
+#include <visp3/visual_features/vpFeaturePoint.h>
+#include <visp3/core/vpHomogeneousMatrix.h>
+#include <visp3/core/vpMath.h>
+#include <visp3/io/vpParseArgv.h>
+#include <visp3/vs/vpServo.h>
+#include <visp3/robot/vpSimulatorCamera.h>
 
 // List of allowed command line options
 #define GETOPTARGS	"h"
@@ -143,35 +139,34 @@ main(int argc, const char ** argv)
     vpSimulatorCamera robot ;
 
     // sets the initial camera location
-    vpHomogeneousMatrix cMo ;
-    cMo[0][3] = 0.1 ;
-    cMo[1][3] = 0.2 ;
-    cMo[2][3] = 2 ;
+    vpHomogeneousMatrix cMo;
+    cMo[0][3] = 0.1;
+    cMo[1][3] = 0.2;
+    cMo[2][3] = 2;
 
     // Compute the position of the object in the world frame
     vpHomogeneousMatrix wMc, wMo;
-    robot.getPosition(wMc) ;
+    robot.getPosition(wMc);
     wMo = wMc * cMo;
 
     // sets the point coordinates in the world frame
-    vpPoint point ;
-    point.setWorldCoordinates(0,0,0) ;
+    vpPoint point(0, 0, 0);
 
     // computes the point coordinates in the camera frame and its 2D coordinates
-    point.track(cMo) ;
+    point.track(cMo);
 
     // sets the current position of the visual feature
     vpFeaturePoint p ;
-    vpFeatureBuilder::create(p,point)  ;  //retrieve x,y and Z of the vpPoint structure
+    vpFeatureBuilder::create(p,point);  //retrieve x,y and Z of the vpPoint structure
 
     // sets the desired position of the visual feature
-    vpFeaturePoint pd ;
-    pd.buildFrom(0,0,1) ; // buildFrom(x,y,Z) ;
+    vpFeaturePoint pd;
+    pd.buildFrom(0,0,1); // buildFrom(x,y,Z) ;
 
     // define the task
     // - we want an eye-in-hand control law
     // - robot is controlled in the camera frame
-    task.setServo(vpServo::EYEINHAND_CAMERA) ;
+    task.setServo(vpServo::EYEINHAND_CAMERA);
 
     // we want to see a point on a point
     std::cout << std::endl ;

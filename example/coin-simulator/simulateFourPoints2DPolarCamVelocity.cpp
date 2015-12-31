@@ -1,10 +1,8 @@
 /****************************************************************************
  *
- * $Id: simulateFourPoints2DPolarCamVelocity.cpp 5263 2015-02-04 13:43:25Z fspindle $
- *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
- * 
+ * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * ("GPL") version 2 as published by the Free Software Foundation.
@@ -12,24 +10,22 @@
  * distribution for additional information about the GNU GPL.
  *
  * For using ViSP with software that can not be combined with the GNU
- * GPL, please contact INRIA about acquiring a ViSP Professional 
+ * GPL, please contact Inria about acquiring a ViSP Professional
  * Edition License.
  *
- * See http://www.irisa.fr/lagadic/visp/visp.html for more information.
- * 
+ * See http://visp.inria.fr for more information.
+ *
  * This software was developed at:
- * INRIA Rennes - Bretagne Atlantique
+ * Inria Rennes - Bretagne Atlantique
  * Campus Universitaire de Beaulieu
  * 35042 Rennes Cedex
  * France
- * http://www.irisa.fr/lagadic
  *
  * If you have questions regarding the use of this file, please contact
- * INRIA at visp@inria.fr
- * 
+ * Inria at visp@inria.fr
+ *
  * This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
  * WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
- *
  *
  * Description:
  * Simulation of a visual servoing with visualization.
@@ -50,24 +46,24 @@
   of the four points.
 */
 
-#include <visp/vpConfig.h>
-#include <visp/vpDebug.h>
+#include <visp3/core/vpConfig.h>
+#include <visp3/core/vpDebug.h>
 
 
-#ifdef VISP_HAVE_COIN_AND_GUI
+#ifdef VISP_HAVE_COIN3D_AND_GUI
 
-#include <visp/vpImage.h>
-#include <visp/vpCameraParameters.h>
-#include <visp/vpTime.h>
-#include <visp/vpSimulator.h>
-#include <visp/vpMath.h>
-#include <visp/vpHomogeneousMatrix.h>
-#include <visp/vpFeaturePointPolar.h>
-#include <visp/vpServo.h>
-#include <visp/vpRobotCamera.h>
-#include <visp/vpFeatureBuilder.h>
-#include <visp/vpParseArgv.h>
-#include <visp/vpIoTools.h>
+#include <visp3/core/vpImage.h>
+#include <visp3/core/vpCameraParameters.h>
+#include <visp3/core/vpTime.h>
+#include <visp3/ar/vpSimulator.h>
+#include <visp3/core/vpMath.h>
+#include <visp3/core/vpHomogeneousMatrix.h>
+#include <visp3/visual_features/vpFeaturePointPolar.h>
+#include <visp3/vs/vpServo.h>
+#include <visp3/robot/vpSimulatorCamera.h>
+#include <visp3/visual_features/vpFeatureBuilder.h>
+#include <visp3/io/vpParseArgv.h>
+#include <visp3/core/vpIoTools.h>
 
 #define GETOPTARGS	"di:h"
 #define SAVE 0
@@ -160,7 +156,7 @@ void *mainLoop (void *_simu)
   simu->initMainApplication() ;
 
   vpServo task ;
-  vpRobotCamera robot ;
+  vpSimulatorCamera robot ;
 
   float sampling_time = 0.040f; // Sampling period in second
   robot.setSamplingTime(sampling_time);
@@ -176,12 +172,16 @@ void *mainLoop (void *_simu)
   vcMo[4] = vpMath::rad(0)  ;
   vcMo[5] = vpMath::rad(90) ;
 
-  vpHomogeneousMatrix cMo(vcMo)  ;
-  robot.setPosition(cMo) ;
+  vpHomogeneousMatrix cMo(vcMo);
+  vpHomogeneousMatrix wMo; // Set to identity
+  vpHomogeneousMatrix wMc; // Camera location in world frame
+  wMc = wMo * cMo.inverse();
+  robot.setPosition(wMc) ;
   simu->setCameraPosition(cMo) ;
 
   simu->getCameraPosition(cMo) ;
-  robot.setPosition(cMo) ;
+  wMc = wMo * cMo.inverse();
+  robot.setPosition(wMc) ;
 
   vpCameraParameters cam ;
 
@@ -273,7 +273,8 @@ void *mainLoop (void *_simu)
     robot.get_eJe(eJe) ;
     task.set_eJe(eJe) ;
 
-    robot.getPosition(cMo) ;
+    wMc = robot.getPosition();
+    cMo = wMc.inverse() * wMo;
     for (int i = 0 ; i < 4 ; i++)
     {
       point[i].track(cMo) ;

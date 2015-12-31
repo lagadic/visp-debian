@@ -1,12 +1,15 @@
 /*! \example tutorial-pose-from-points-tracking.cpp */
-#include <visp/vp1394CMUGrabber.h>
-#include <visp/vp1394TwoGrabber.h>
-#include <visp/vpDisplayGDI.h>
-#include <visp/vpDisplayOpenCV.h>
-#include <visp/vpDisplayX.h>
-#include <visp/vpDot2.h>
-#include <visp/vpPixelMeterConversion.h>
-#include <visp/vpPose.h>
+#include <visp3/core/vpConfig.h>
+#ifdef VISP_HAVE_MODULE_SENSOR
+#include <visp3/sensor/vp1394CMUGrabber.h>
+#include <visp3/sensor/vp1394TwoGrabber.h>
+#endif
+#include <visp3/gui/vpDisplayGDI.h>
+#include <visp3/gui/vpDisplayOpenCV.h>
+#include <visp3/gui/vpDisplayX.h>
+#include <visp3/blob/vpDot2.h>
+#include <visp3/core/vpPixelMeterConversion.h>
+#include <visp3/vision/vpPose.h>
 
 void computePose(std::vector<vpPoint> &point, const std::vector<vpDot2> &dot,
                  const vpCameraParameters &cam, bool init, vpHomogeneousMatrix &cMo);
@@ -62,10 +65,10 @@ void track(vpImage<unsigned char> &I, std::vector<vpDot2> &dot, bool init)
 
 int main()
 {
-#if (defined(VISP_HAVE_X11) || defined(VISP_HAVE_GDI) || defined(VISP_HAVE_OPENCV)) && (defined(VISP_HAVE_DC1394_2) || defined(VISP_HAVE_CMU1394) || (VISP_HAVE_OPENCV_VERSION >= 0x020100))
+#if (defined(VISP_HAVE_X11) || defined(VISP_HAVE_GDI) || defined(VISP_HAVE_OPENCV)) && (defined(VISP_HAVE_DC1394) || defined(VISP_HAVE_CMU1394) || (VISP_HAVE_OPENCV_VERSION >= 0x020100))
   try {  vpImage<unsigned char> I;
 
-#if defined(VISP_HAVE_DC1394_2)
+#if defined(VISP_HAVE_DC1394)
     vp1394TwoGrabber g;
     g.open(I);
 #elif defined(VISP_HAVE_CMU1394)
@@ -89,12 +92,12 @@ int main()
     vpHomogeneousMatrix cMo;
 
     std::vector<vpDot2> dot(4);
-    std::vector<vpPoint> point(4);
+    std::vector<vpPoint> point;
     double L = 0.06;
-    point[0].setWorldCoordinates(-L, -L, 0);
-    point[1].setWorldCoordinates( L, -L, 0);
-    point[2].setWorldCoordinates( L,  L, 0);
-    point[3].setWorldCoordinates(-L,  L, 0);
+    point.push_back( vpPoint(-L, -L, 0) );
+    point.push_back( vpPoint( L, -L, 0) );
+    point.push_back( vpPoint( L,  L, 0) );
+    point.push_back( vpPoint(-L,  L, 0) );
 
     bool init = true;
 #if defined(VISP_HAVE_X11)
@@ -107,7 +110,7 @@ int main()
 
     while(1){
       // Image Acquisition
-#if defined(VISP_HAVE_DC1394_2) || defined(VISP_HAVE_CMU1394)
+#if defined(VISP_HAVE_DC1394) || defined(VISP_HAVE_CMU1394)
       g.acquire(I);
 #elif defined(VISP_HAVE_OPENCV)
 	  g >> frame;

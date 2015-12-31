@@ -1,10 +1,8 @@
 /****************************************************************************
  *
- * $Id: BSpline.cpp 4658 2014-02-09 09:50:14Z fspindle $
- *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
- * 
+ * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * ("GPL") version 2 as published by the Free Software Foundation.
@@ -12,24 +10,22 @@
  * distribution for additional information about the GNU GPL.
  *
  * For using ViSP with software that can not be combined with the GNU
- * GPL, please contact INRIA about acquiring a ViSP Professional 
+ * GPL, please contact Inria about acquiring a ViSP Professional
  * Edition License.
  *
- * See http://www.irisa.fr/lagadic/visp/visp.html for more information.
- * 
+ * See http://visp.inria.fr for more information.
+ *
  * This software was developed at:
- * INRIA Rennes - Bretagne Atlantique
+ * Inria Rennes - Bretagne Atlantique
  * Campus Universitaire de Beaulieu
  * 35042 Rennes Cedex
  * France
- * http://www.irisa.fr/lagadic
  *
  * If you have questions regarding the use of this file, please contact
- * INRIA at visp@inria.fr
- * 
+ * Inria at visp@inria.fr
+ *
  * This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
  * WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
- *
  *
  * Description:
  * Exemple of a B-Spline curve.
@@ -52,21 +48,24 @@
 
 
 
-#include <visp/vpDebug.h>
+#include <visp3/core/vpDebug.h>
 
-#include <visp/vpBSpline.h>
+#include <visp3/core/vpBSpline.h>
 
-#include <visp/vpImage.h>
-#include <visp/vpImageIo.h>
-#include <visp/vpImagePoint.h>
-#include <visp/vpDisplayGTK.h>
-#include <visp/vpDisplayGDI.h>
-#include <visp/vpDisplayOpenCV.h>
-#include <visp/vpDisplayD3D.h>
-#include <visp/vpDisplayX.h> // Should be after #include <visp/vpDisplayOpenCV.h>
+#include <visp3/core/vpImage.h>
+#include <visp3/io/vpImageIo.h>
+#include <visp3/core/vpImagePoint.h>
+#include <visp3/core/vpDisplay.h>
+#ifdef VISP_HAVE_MODULE_GUI
+#  include <visp3/gui/vpDisplayGTK.h>
+#  include <visp3/gui/vpDisplayGDI.h>
+#  include <visp3/gui/vpDisplayOpenCV.h>
+#  include <visp3/gui/vpDisplayD3D.h>
+#  include <visp3/gui/vpDisplayX.h> // Should be after #include <visp3/gui/vpDisplayOpenCV.h>
+#endif
 
-#include <visp/vpParseArgv.h>
-#include <visp/vpIoTools.h>
+#include <visp3/io/vpParseArgv.h>
+#include <visp3/core/vpIoTools.h>
 #include <cstdlib>
 #include <stdlib.h>
 
@@ -171,6 +170,8 @@ main(int argc, const char ** argv)
     vpImage<unsigned char> I(540,480);
 
     // We open a window using either X11, GTK or GDI.
+
+#ifdef VISP_HAVE_MODULE_GUI
 #if defined VISP_HAVE_X11
     vpDisplayX display;
 #elif defined VISP_HAVE_GTK
@@ -189,6 +190,7 @@ main(int argc, const char ** argv)
       vpDisplay::display(I) ;
       vpDisplay::flush(I) ;
     }
+#endif
 
     vpBSpline bSpline;
     std::list<double> knots;

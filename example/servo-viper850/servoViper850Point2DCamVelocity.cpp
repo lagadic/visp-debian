@@ -1,10 +1,8 @@
 /****************************************************************************
  *
- * $Id: servoViper850Point2DCamVelocity.cpp 4574 2014-01-09 08:48:51Z fspindle $
- *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
- * 
+ * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * ("GPL") version 2 as published by the Free Software Foundation.
@@ -12,24 +10,22 @@
  * distribution for additional information about the GNU GPL.
  *
  * For using ViSP with software that can not be combined with the GNU
- * GPL, please contact INRIA about acquiring a ViSP Professional 
+ * GPL, please contact Inria about acquiring a ViSP Professional
  * Edition License.
  *
- * See http://www.irisa.fr/lagadic/visp/visp.html for more information.
- * 
+ * See http://visp.inria.fr for more information.
+ *
  * This software was developed at:
- * INRIA Rennes - Bretagne Atlantique
+ * Inria Rennes - Bretagne Atlantique
  * Campus Universitaire de Beaulieu
  * 35042 Rennes Cedex
  * France
- * http://www.irisa.fr/lagadic
  *
  * If you have questions regarding the use of this file, please contact
- * INRIA at visp@inria.fr
- * 
+ * Inria at visp@inria.fr
+ *
  * This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
  * WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
- *
  *
  * Description:
  *   tests the control law
@@ -53,8 +49,8 @@
 
 */
 
-#include <visp/vpConfig.h>
-#include <visp/vpDebug.h> // Debug trace
+#include <visp3/core/vpConfig.h>
+#include <visp3/core/vpDebug.h> // Debug trace
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -62,27 +58,26 @@
 #include <fstream>
 #include <sstream>
 
-#if (defined (VISP_HAVE_VIPER850) && defined (VISP_HAVE_DC1394_2))
+#if (defined (VISP_HAVE_VIPER850) && defined (VISP_HAVE_DC1394))
 
-#include <visp/vp1394TwoGrabber.h>
-#include <visp/vpImage.h>
-#include <visp/vpMath.h>
-#include <visp/vpHomogeneousMatrix.h>
-#include <visp/vpFeaturePoint.h>
-#include <visp/vpPoint.h>
-#include <visp/vpServo.h>
-#include <visp/vpFeatureBuilder.h>
-#include <visp/vpRobotViper850.h>
-#include <visp/vpIoTools.h>
-#include <visp/vpException.h>
-#include <visp/vpMatrixException.h>
-#include <visp/vpServoDisplay.h>
-#include <visp/vpImageIo.h>
-#include <visp/vpDot2.h>
-#include <visp/vpDisplay.h>
-#include <visp/vpDisplayX.h>
-#include <visp/vpDisplayOpenCV.h>
-#include <visp/vpDisplayGTK.h>
+#include <visp3/sensor/vp1394TwoGrabber.h>
+#include <visp3/core/vpImage.h>
+#include <visp3/core/vpMath.h>
+#include <visp3/core/vpHomogeneousMatrix.h>
+#include <visp3/visual_features/vpFeaturePoint.h>
+#include <visp3/core/vpPoint.h>
+#include <visp3/vs/vpServo.h>
+#include <visp3/visual_features/vpFeatureBuilder.h>
+#include <visp3/robot/vpRobotViper850.h>
+#include <visp3/core/vpIoTools.h>
+#include <visp3/core/vpException.h>
+#include <visp3/vs/vpServoDisplay.h>
+#include <visp3/io/vpImageIo.h>
+#include <visp3/blob/vpDot2.h>
+#include <visp3/core/vpDisplay.h>
+#include <visp3/gui/vpDisplayX.h>
+#include <visp3/gui/vpDisplayOpenCV.h>
+#include <visp3/gui/vpDisplayGTK.h>
 
 
 int

@@ -1,10 +1,8 @@
 /****************************************************************************
  *
- * $Id: manSimu4Dots.cpp 4574 2014-01-09 08:48:51Z fspindle $
- *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
- * 
+ * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * ("GPL") version 2 as published by the Free Software Foundation.
@@ -12,21 +10,20 @@
  * distribution for additional information about the GNU GPL.
  *
  * For using ViSP with software that can not be combined with the GNU
- * GPL, please contact INRIA about acquiring a ViSP Professional 
+ * GPL, please contact Inria about acquiring a ViSP Professional
  * Edition License.
  *
- * See http://www.irisa.fr/lagadic/visp/visp.html for more information.
- * 
+ * See http://visp.inria.fr for more information.
+ *
  * This software was developed at:
- * INRIA Rennes - Bretagne Atlantique
+ * Inria Rennes - Bretagne Atlantique
  * Campus Universitaire de Beaulieu
  * 35042 Rennes Cedex
  * France
- * http://www.irisa.fr/lagadic
  *
  * If you have questions regarding the use of this file, please contact
- * INRIA at visp@inria.fr
- * 
+ * Inria at visp@inria.fr
+ *
  * This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
  * WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
@@ -51,39 +48,39 @@
   from the camera and from an external view using vpSimulator.
 */
 
-#include <visp/vpConfig.h>
-#include <visp/vpDebug.h>
+#include <visp3/core/vpConfig.h>
+#include <visp3/core/vpDebug.h>
 
 
-#if (defined(VISP_HAVE_COIN_AND_GUI) && (defined(VISP_HAVE_GTK) || defined(VISP_HAVE_X11) || defined(VISP_HAVE_GDI)))
+#if (defined(VISP_HAVE_COIN3D_AND_GUI) && (defined(VISP_HAVE_GTK) || defined(VISP_HAVE_X11) || defined(VISP_HAVE_GDI)))
 
-#include <visp/vpImage.h>
-#include <visp/vpCameraParameters.h>
-#include <visp/vpTime.h>
-#include <visp/vpImage.h>
-#include <visp/vpImageConvert.h>
-#include <visp/vpSimulator.h>
+#include <visp3/core/vpImage.h>
+#include <visp3/core/vpCameraParameters.h>
+#include <visp3/core/vpTime.h>
+#include <visp3/core/vpImage.h>
+#include <visp3/core/vpImageConvert.h>
+#include <visp3/ar/vpSimulator.h>
 
 #if defined(VISP_HAVE_X11)
-#  include <visp/vpDisplayX.h>
+#  include <visp3/gui/vpDisplayX.h>
 #elif defined(VISP_HAVE_GDI)
-#  include <visp/vpDisplayGDI.h>
+#  include <visp3/gui/vpDisplayGDI.h>
 #elif defined(VISP_HAVE_GTK)
-#  include <visp/vpDisplayGTK.h>
+#  include <visp3/gui/vpDisplayGTK.h>
 #endif
 // You may have strange compiler issues using the simulator based on SoQt 
 // and the vpDisplayGTK. In that case prefer to use another display like
 // vpDisplayX under linux or vpDisplayGDI under Windows
-#include <visp/vpMath.h>
-#include <visp/vpHomogeneousMatrix.h>
-#include <visp/vpPose.h>
-#include <visp/vpFeaturePoint.h>
-#include <visp/vpDot2.h>
-#include <visp/vpServo.h>
-#include <visp/vpServoDisplay.h>
-#include <visp/vpRobotCamera.h>
-#include <visp/vpFeatureBuilder.h>
-#include <visp/vpIoTools.h>
+#include <visp3/core/vpMath.h>
+#include <visp3/core/vpHomogeneousMatrix.h>
+#include <visp3/vision/vpPose.h>
+#include <visp3/visual_features/vpFeaturePoint.h>
+#include <visp3/blob/vpDot2.h>
+#include <visp3/vs/vpServo.h>
+#include <visp3/vs/vpServoDisplay.h>
+#include <visp3/robot/vpSimulatorCamera.h>
+#include <visp3/visual_features/vpFeatureBuilder.h>
+#include <visp3/core/vpIoTools.h>
 
 static
 void *mainLoop (void *_simu)
@@ -98,12 +95,15 @@ void *mainLoop (void *_simu)
   // Set the initial camera location
   vpHomogeneousMatrix cMo(0.3,0.2,3,
                           vpMath::rad(0),vpMath::rad(0),vpMath::rad(40));
+  vpHomogeneousMatrix wMo; // Set to identity
+  vpHomogeneousMatrix wMc; // Camera position in the world frame
 
   ///////////////////////////////////
   // Initialize the robot
-  vpRobotCamera robot ;
+  vpSimulatorCamera robot ;
   robot.setSamplingTime(0.04); // 40ms 
-  robot.setPosition(cMo) ;
+  wMc = wMo * cMo.inverse();
+  robot.setPosition(wMc) ;
   // Send the robot position to the visualizator
   simu->setCameraPosition(cMo) ;
   // Initialize the camera parameters
@@ -131,8 +131,6 @@ void *mainLoop (void *_simu)
   vpFeaturePoint pd[4] ;
   for (int i = 0 ; i < 4 ; i++)
     vpFeatureBuilder::create(pd[i],point[i]) ;
-
-
 
   ///////////////////////////////////////
   // Current visual features initialization
@@ -232,13 +230,13 @@ void *mainLoop (void *_simu)
     vpColVector v = task.computeControlLaw() ;
     
     // Send the computed velocity to the robot and compute the new robot position
-    robot.setVelocity(vpRobot::ARTICULAR_FRAME, v) ;
-    robot.getPosition(cMo) ;
+    robot.setVelocity(vpRobot::ARTICULAR_FRAME, v);
+    wMc = robot.getPosition();
+    cMo = wMc.inverse() * wMo;
     
     // Send the robot position to the visualizator
     simu->setCameraPosition(cMo) ;
 
-    
     // Wait 40 ms
     vpTime::wait(t,40); 
   }  
@@ -269,10 +267,19 @@ main()
 
     vpTime::wait(500) ;
     // Load the scene
-    std::cout << "Load : ./4Points.iv" << std::endl
+
+    // Get the visp-images-data package path or VISP_INPUT_IMAGE_PATH environment variable value
+    std::string ipath = vpIoTools::getViSPImagesDataPath();
+    std::string filename = "./4points.iv";
+
+    // Set the default input path
+    if (! ipath.empty())
+      filename = vpIoTools::createFilePath(ipath, "ViSP-images/iv/4points.iv");
+
+    std::cout << "Load : " << filename << std::endl
               << "This file should be in the working directory" << std::endl;
 
-    simu.load("./4points.iv") ;
+    simu.load(filename.c_str());
 
     // Run the main loop
     simu.initApplication(&mainLoop) ;

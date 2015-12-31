@@ -1,10 +1,10 @@
 /*! \example tutorial-ibvs-4pts-wireframe-robot-afma6.cpp */
-#include <visp/vpDisplayGDI.h>
-#include <visp/vpDisplayOpenCV.h>
-#include <visp/vpDisplayX.h>
-#include <visp/vpFeatureBuilder.h>
-#include <visp/vpServo.h>
-#include <visp/vpSimulatorAfma6.h>
+#include <visp3/gui/vpDisplayGDI.h>
+#include <visp3/gui/vpDisplayOpenCV.h>
+#include <visp3/gui/vpDisplayX.h>
+#include <visp3/visual_features/vpFeatureBuilder.h>
+#include <visp3/vs/vpServo.h>
+#include <visp3/robot/vpSimulatorAfma6.h>
 
 void display_trajectory(const vpImage<unsigned char> &I, std::vector<vpPoint> &point,
                         const vpHomogeneousMatrix &cMo, const vpCameraParameters &cam);
@@ -60,11 +60,11 @@ int main()
     */
     vpHomogeneousMatrix wMo(0, 0, 1., 0, 0, 0);
 
-    std::vector<vpPoint> point(4) ;
-    point[0].setWorldCoordinates(-0.1,-0.1, 0);
-    point[1].setWorldCoordinates( 0.1,-0.1, 0);
-    point[2].setWorldCoordinates( 0.1, 0.1, 0);
-    point[3].setWorldCoordinates(-0.1, 0.1, 0);
+    std::vector<vpPoint> point;
+    point.push_back( vpPoint(-0.1,-0.1, 0) );
+    point.push_back( vpPoint( 0.1,-0.1, 0) );
+    point.push_back( vpPoint( 0.1, 0.1, 0) );
+    point.push_back( vpPoint(-0.1, 0.1, 0) );
 
     vpServo task ;
     task.setServo(vpServo::EYEINHAND_CAMERA);

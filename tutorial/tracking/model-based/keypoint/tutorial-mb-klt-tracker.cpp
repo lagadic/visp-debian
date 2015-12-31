@@ -1,11 +1,11 @@
 /*! \example tutorial-mb-klt-tracker.cpp */
-#include <visp/vpDisplayGDI.h>
-#include <visp/vpDisplayOpenCV.h>
-#include <visp/vpDisplayX.h>
-#include <visp/vpImageIo.h>
-#include <visp/vpIoTools.h>
-#include <visp/vpMbKltTracker.h>
-#include <visp/vpVideoReader.h>
+#include <visp3/gui/vpDisplayGDI.h>
+#include <visp3/gui/vpDisplayOpenCV.h>
+#include <visp3/gui/vpDisplayX.h>
+#include <visp3/io/vpImageIo.h>
+#include <visp3/core/vpIoTools.h>
+#include <visp3/mbt/vpMbKltTracker.h>
+#include <visp3/io/vpVideoReader.h>
 
 int main(int argc, char** argv)
 {
@@ -89,6 +89,7 @@ int main(int argc, char** argv)
       //! [Set parameters]
     }
     tracker.setOgreVisibilityTest(true);
+    tracker.setOgreShowConfigDialog(false);
     tracker.loadModel(objectname + "-triangle.cao");
     tracker.setDisplayFeatures(true);
     tracker.initClick(I, objectname + ".init", true);
@@ -112,13 +113,18 @@ int main(int argc, char** argv)
 #ifdef VISP_HAVE_XML2
     vpXmlParser::cleanup();
 #endif
-#if defined(VISP_HAVE_COIN) && (COIN_MAJOR_VERSION == 3)
+#if defined(VISP_HAVE_COIN3D) && (COIN_MAJOR_VERSION == 3)
     SoDB::finish();
 #endif
   }
   catch(vpException e) {
-    std::cout << "Catch an exception: " << e << std::endl;
+    std::cout << "Catch a ViSP exception: " << e << std::endl;
   }
+#ifdef VISP_HAVE_OGRE
+  catch(Ogre::Exception e) {
+    std::cout << "Catch an Ogre exception: " << e.getDescription() << std::endl;
+  }
+#endif
 #else
   (void)argc;
   (void)argv;

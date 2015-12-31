@@ -1,13 +1,13 @@
 //! \example tutorial-mb-edge-tracker.cpp
-#include <visp/vpDisplayGDI.h>
-#include <visp/vpDisplayOpenCV.h>
-#include <visp/vpDisplayX.h>
-#include <visp/vpImageIo.h>
-#include <visp/vpIoTools.h>
+#include <visp3/gui/vpDisplayGDI.h>
+#include <visp3/gui/vpDisplayOpenCV.h>
+#include <visp3/gui/vpDisplayX.h>
+#include <visp3/io/vpImageIo.h>
+#include <visp3/core/vpIoTools.h>
 //! [Include]
-#include <visp/vpMbEdgeTracker.h>
+#include <visp3/mbt/vpMbEdgeTracker.h>
 //! [Include]
-#include <visp/vpVideoReader.h>
+#include <visp3/io/vpVideoReader.h>
 
 int main(int argc, char** argv)
 {
@@ -85,7 +85,6 @@ int main(int argc, char** argv)
       me.setMu1(0.5);
       me.setMu2(0.5);
       me.setSampleStep(4);
-      me.setNbTotalSample(250);
       tracker.setMovingEdge(me);
       cam.initPersProjWithoutDistortion(839, 839, 325, 243);
       tracker.setCameraParameters(cam);
@@ -104,6 +103,7 @@ int main(int argc, char** argv)
     }
     //! [Set ogre]
     tracker.setOgreVisibilityTest(false);
+    tracker.setOgreShowConfigDialog(false);
     //! [Set ogre]
     //! [Load cao]
     if(vpIoTools::checkFilename(objectname + ".cao"))
@@ -144,14 +144,19 @@ int main(int argc, char** argv)
 #ifdef VISP_HAVE_XML2
     vpXmlParser::cleanup();
 #endif
-#if defined(VISP_HAVE_COIN) && (COIN_MAJOR_VERSION == 3)
+#if defined(VISP_HAVE_COIN3D) && (COIN_MAJOR_VERSION == 3)
     SoDB::finish();
 #endif
     //! [Cleanup]
   }
   catch(vpException e) {
-    std::cout << "Catch an exception: " << e << std::endl;
+    std::cout << "Catch a ViSP exception: " << e << std::endl;
   }
+#ifdef VISP_HAVE_OGRE
+  catch(Ogre::Exception e) {
+    std::cout << "Catch an Ogre exception: " << e.getDescription() << std::endl;
+  }
+#endif
 #else
   (void)argc;
   (void)argv;

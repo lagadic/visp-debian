@@ -1,9 +1,12 @@
 /*! \example tutorial-klt-tracker-live-v4l2.cpp */
-#include <visp/vpImageConvert.h>
-#include <visp/vpKltOpencv.h>
-#include <visp/vpDisplayOpenCV.h>
-#include <visp/vpVideoReader.h>
-#include <visp/vpV4l2Grabber.h>
+#include <visp3/core/vpConfig.h>
+#ifdef VISP_HAVE_MODULE_SENSOR
+#include <visp3/sensor/vpV4l2Grabber.h>
+#endif
+#include <visp3/core/vpImageConvert.h>
+#include <visp3/klt/vpKltOpencv.h>
+#include <visp3/gui/vpDisplayOpenCV.h>
+#include <visp3/io/vpVideoReader.h>
 
 int main(int argc, const char *argv[])
 {

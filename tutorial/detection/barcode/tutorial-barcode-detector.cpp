@@ -1,12 +1,12 @@
 //! \example tutorial-barcode-detector.cpp
 //! [Include]
-#include <visp/vpDetectorDataMatrixCode.h>
-#include <visp/vpDetectorQRCode.h>
+#include <visp3/detection/vpDetectorDataMatrixCode.h>
+#include <visp3/detection/vpDetectorQRCode.h>
 //! [Include]
-#include <visp/vpDisplayGDI.h>
-#include <visp/vpDisplayOpenCV.h>
-#include <visp/vpDisplayX.h>
-#include <visp/vpImageIo.h>
+#include <visp3/gui/vpDisplayGDI.h>
+#include <visp3/gui/vpDisplayOpenCV.h>
+#include <visp3/gui/vpDisplayX.h>
+#include <visp3/io/vpImageIo.h>
 
 int main(int argc, const char** argv)
 {

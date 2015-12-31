@@ -1,10 +1,8 @@
 /****************************************************************************
  *
- * $Id: AROgreBasic.cpp 4814 2014-07-31 11:38:39Z fspindle $
- *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
- * 
+ * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * ("GPL") version 2 as published by the Free Software Foundation.
@@ -12,24 +10,22 @@
  * distribution for additional information about the GNU GPL.
  *
  * For using ViSP with software that can not be combined with the GNU
- * GPL, please contact INRIA about acquiring a ViSP Professional 
+ * GPL, please contact Inria about acquiring a ViSP Professional
  * Edition License.
  *
- * See http://www.irisa.fr/lagadic/visp/visp.html for more information.
- * 
+ * See http://visp.inria.fr for more information.
+ *
  * This software was developed at:
- * INRIA Rennes - Bretagne Atlantique
+ * Inria Rennes - Bretagne Atlantique
  * Campus Universitaire de Beaulieu
  * 35042 Rennes Cedex
  * France
- * http://www.irisa.fr/lagadic
  *
  * If you have questions regarding the use of this file, please contact
- * INRIA at visp@inria.fr
- * 
+ * Inria at visp@inria.fr
+ *
  * This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
  * WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
- *
  *
  * Description:
  * Implementation of a simple augmented reality application using the vpAROgre
@@ -47,7 +43,7 @@
 
 
 
-#include <visp/vpConfig.h>
+#include <visp3/core/vpConfig.h>
 #include <iostream>
 
 //#if defined(VISP_HAVE_OGRE) && (defined(VISP_HAVE_OPENCV) || defined(VISP_HAVE_GDI) || defined(VISP_HAVE_D3D9) || defined(VISP_HAVE_GTK) || (defined(VISP_HAVE_X11) && ! defined(APPLE)))
@@ -59,22 +55,22 @@
 // /usr/X11R6/include/X11/X.h:108: error: ‘Cursor’ has a previous
 // declaration as ‘typedef XID Cursor’. That's why it should not be
 // used on APPLE platforms
-#  include <visp/vpDisplayX.h>
+#  include <visp3/gui/vpDisplayX.h>
 #endif
-#include <visp/vpDisplayGTK.h>
-#include <visp/vpDisplayGDI.h>
-#include <visp/vpDisplayOpenCV.h>
-#include <visp/vpDisplayD3D.h>
-#include <visp/vpPose.h>
-#include <visp/vpPoint.h>
-#include <visp/vpImagePoint.h>
-#include <visp/vpDot2.h>
-#include <visp/vpPixelMeterConversion.h>
-#include <visp/vpVideoReader.h>
-#include <visp/vpParseArgv.h>
-#include <visp/vpIoTools.h>
-#include <visp/vpDebug.h>
-#include <visp/vpAROgre.h>
+#include <visp3/gui/vpDisplayGTK.h>
+#include <visp3/gui/vpDisplayGDI.h>
+#include <visp3/gui/vpDisplayOpenCV.h>
+#include <visp3/gui/vpDisplayD3D.h>
+#include <visp3/vision/vpPose.h>
+#include <visp3/core/vpPoint.h>
+#include <visp3/core/vpImagePoint.h>
+#include <visp3/blob/vpDot2.h>
+#include <visp3/core/vpPixelMeterConversion.h>
+#include <visp3/io/vpVideoReader.h>
+#include <visp3/io/vpParseArgv.h>
+#include <visp3/core/vpIoTools.h>
+#include <visp3/core/vpDebug.h>
+#include <visp3/ar/vpAROgre.h>
 
 // List of allowed command line options
 #define GETOPTARGS	"ci:p:h"
@@ -582,6 +578,10 @@ int main(int argc, const char **argv)
   }
   catch(vpException e) {
     std::cout << "Catch a ViSP exception: " << e << std::endl;
+    return 1;
+  }
+  catch(Ogre::Exception e) {
+    std::cout << "Catch an Ogre exception: " << e.getDescription() << std::endl;
     return 1;
   }
   catch(...) {

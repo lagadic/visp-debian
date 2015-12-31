@@ -1,11 +1,8 @@
-
 /****************************************************************************
  *
- * $Id: servoSimuPoint2DhalfCamVelocity2.cpp 2457 2010-01-07 10:41:18Z nmelchio $
- *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
- * 
+ * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * ("GPL") version 2 as published by the Free Software Foundation.
@@ -13,24 +10,22 @@
  * distribution for additional information about the GNU GPL.
  *
  * For using ViSP with software that can not be combined with the GNU
- * GPL, please contact INRIA about acquiring a ViSP Professional 
+ * GPL, please contact Inria about acquiring a ViSP Professional
  * Edition License.
  *
- * See http://www.irisa.fr/lagadic/visp/visp.html for more information.
- * 
+ * See http://visp.inria.fr for more information.
+ *
  * This software was developed at:
- * INRIA Rennes - Bretagne Atlantique
+ * Inria Rennes - Bretagne Atlantique
  * Campus Universitaire de Beaulieu
  * 35042 Rennes Cedex
  * France
- * http://www.irisa.fr/lagadic
  *
  * If you have questions regarding the use of this file, please contact
- * INRIA at visp@inria.fr
- * 
+ * Inria at visp@inria.fr
+ *
  * This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
  * WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
- *
  *
  * Description:
  * Simulation of a 2 1/2 D visual servoing using theta U visual features.
@@ -55,16 +50,16 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include <visp/vpFeatureBuilder.h>
-#include <visp/vpFeaturePoint.h>
-#include <visp/vpFeatureThetaU.h>
-#include <visp/vpGenericFeature.h>
-#include <visp/vpHomogeneousMatrix.h>
-#include <visp/vpMath.h>
-#include <visp/vpParseArgv.h>
-#include <visp/vpPoint.h>
-#include <visp/vpServo.h>
-#include <visp/vpSimulatorCamera.h>
+#include <visp3/visual_features/vpFeatureBuilder.h>
+#include <visp3/visual_features/vpFeaturePoint.h>
+#include <visp3/visual_features/vpFeatureThetaU.h>
+#include <visp3/visual_features/vpGenericFeature.h>
+#include <visp3/core/vpHomogeneousMatrix.h>
+#include <visp3/core/vpMath.h>
+#include <visp3/io/vpParseArgv.h>
+#include <visp3/core/vpPoint.h>
+#include <visp3/vs/vpServo.h>
+#include <visp3/robot/vpSimulatorCamera.h>
 
 // List of allowed command line options
 #define GETOPTARGS	"h"
@@ -213,19 +208,16 @@ main(int argc, const char ** argv)
 
     //------------------------------------------------------------------
     // sets the point coordinates in the world frame
-    vpPoint point ;
-    // defined point coordinates in the scene frame : oP
-    point.setWorldCoordinates(0,0,0) ;
+    vpPoint point(0, 0, 0);
     // computes  the point coordinates in the camera frame and its
     // 2D coordinates cP and then p
     // computes the point coordinates in the camera frame and its 2D coordinates"  ) ;
-    point.track(cMo) ;
+    point.track(cMo);
 
     // We also defined (again by forward projection) the desired position
     // of this point according to the desired camera position
-    vpPoint pointd ;
-    pointd.setWorldCoordinates(0,0,0) ;
-    pointd.track(cdMo) ;
+    vpPoint pointd(0, 0, 0);
+    pointd.track(cdMo);
 
     // Nevertheless, a vpPoint is not a feature, this is just a "tracker"
     // from which the feature are built

@@ -20,16 +20,16 @@ Here after we explain line by line the program.
 Images that are processed could be acquired from a firewire camera on Unix or Windows, of from an usb camera under Unix. That is allowed by including the grabber headers.
 
 \code
-#include <visp/vp1394CMUGrabber.h>
-#include <visp/vp1394TwoGrabber.h>
-#include <visp/vpV4l2Grabber.h>
+#include <visp3/sensor/vp1394CMUGrabber.h>
+#include <visp3/sensor/vp1394TwoGrabber.h>
+#include <visp3/sensor/vpV4l2Grabber.h>
 \endcode
 
 To display these images we then include the headers of the viewers.
 
 \code
-#include <visp/vpDisplayGDI.h>
-#include <visp/vpDisplayX.h>
+#include <visp3/core/vpDisplayGDI.h>
+#include <visp3/core/vpDisplayX.h>
 \endcode
 
 The Graphical Display Interface (GDI) allows to display images under Windows, while X11 allows this feature under unix-like systems. 
@@ -37,13 +37,13 @@ The Graphical Display Interface (GDI) allows to display images under Windows, wh
 Finally, to track a line with the moving edges, we include the header of the vpMeLine class.
 
 \code
-#include <visp/vpMeLine.h>
+#include <visp3/core/vpMeLine.h>
 \endcode
  
 In the main() function, The source code is build only if one of the grabbers and one of the viewers is available.
 
 \code
-#if (defined(VISP_HAVE_DC1394_2) || defined(VISP_HAVE_CMU1394) || defined(VISP_HAVE_V4L2)) && (defined(VISP_HAVE_X11) || defined(VISP_HAVE_GDI))
+#if (defined(VISP_HAVE_DC1394) || defined(VISP_HAVE_CMU1394) || defined(VISP_HAVE_V4L2)) && (defined(VISP_HAVE_X11) || defined(VISP_HAVE_GDI))
 \endcode
 
 Here we create a gray level image container \c I that will contain the images acquired by our camera.
@@ -55,7 +55,7 @@ vpImage<unsigned char> I;
 Then, we create a grabber instance, first for a firewire camera under Unix if libdc1394 3rd party is installed, secondly for a firewire camera under Windows if CMU1394 3rd party is installed, and lastly for an usb camera under Unix if none of the previous 3rd party are installed, and if libv4l is installed. The \ref tutorial-grabber gives more details concerning the framegrabbing.
 
 \code
-#if defined(VISP_HAVE_DC1394_2)
+#if defined(VISP_HAVE_DC1394)
   vp1394TwoGrabber g(false);
 #elif defined(VISP_HAVE_CMU1394)
   vp1394CMUGrabber g;
@@ -137,6 +137,7 @@ This example is very similar to the one presented in \ref tracking_me_line. It d
 
 Note here that the user has to initialize the tracker on image \c I by clicking on five points located on the ellipse to track. 
 
+\section tracking_me_next Next tutorial
 You are now ready to see the next \ref tutorial-tracking-mb.
 
 */

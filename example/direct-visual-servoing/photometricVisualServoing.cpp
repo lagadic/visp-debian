@@ -1,10 +1,8 @@
 /****************************************************************************
  *
- * $Id: photometricVisualServoing.cpp 5108 2015-01-05 07:48:58Z fspindle $
- *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
- * 
+ * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * ("GPL") version 2 as published by the Free Software Foundation.
@@ -12,25 +10,22 @@
  * distribution for additional information about the GNU GPL.
  *
  * For using ViSP with software that can not be combined with the GNU
- * GPL, please contact INRIA about acquiring a ViSP Professional 
+ * GPL, please contact Inria about acquiring a ViSP Professional
  * Edition License.
  *
- * See http://www.irisa.fr/lagadic/visp/visp.html for more information.
- * 
+ * See http://visp.inria.fr for more information.
+ *
  * This software was developed at:
- * INRIA Rennes - Bretagne Atlantique
+ * Inria Rennes - Bretagne Atlantique
  * Campus Universitaire de Beaulieu
  * 35042 Rennes Cedex
  * France
- * http://www.irisa.fr/lagadic
  *
  * If you have questions regarding the use of this file, please contact
- * INRIA at visp@inria.fr
- * 
+ * Inria at visp@inria.fr
+ *
  * This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
  * WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
- *
- *
  *
  * Authors:
  * Eric Marchand
@@ -45,33 +40,33 @@
 */
 
 
-#include <visp/vpDebug.h>
+#include <visp3/core/vpDebug.h>
 
-#include <visp/vpImage.h>
-#include <visp/vpImageIo.h>
-#include <visp/vpImageTools.h>
+#include <visp3/core/vpImage.h>
+#include <visp3/io/vpImageIo.h>
+#include <visp3/core/vpImageTools.h>
 
-#include <visp/vpCameraParameters.h>
-#include <visp/vpTime.h>
-#include <visp/vpRobotCamera.h>
+#include <visp3/core/vpCameraParameters.h>
+#include <visp3/core/vpTime.h>
+#include <visp3/robot/vpSimulatorCamera.h>
 
-#include <visp/vpMath.h>
-#include <visp/vpHomogeneousMatrix.h>
-#include <visp/vpDisplayGTK.h>
-#include <visp/vpDisplayGDI.h>
-#include <visp/vpDisplayOpenCV.h>
-#include <visp/vpDisplayD3D.h>
-#include <visp/vpDisplayX.h>
+#include <visp3/core/vpMath.h>
+#include <visp3/core/vpHomogeneousMatrix.h>
+#include <visp3/gui/vpDisplayGTK.h>
+#include <visp3/gui/vpDisplayGDI.h>
+#include <visp3/gui/vpDisplayOpenCV.h>
+#include <visp3/gui/vpDisplayD3D.h>
+#include <visp3/gui/vpDisplayX.h>
 
-#include <visp/vpFeatureLuminance.h>
-#include <visp/vpParseArgv.h>
+#include <visp3/visual_features/vpFeatureLuminance.h>
+#include <visp3/io/vpParseArgv.h>
 
-#include <visp/vpImageSimulator.h>
+#include <visp3/robot/vpImageSimulator.h>
 #include <stdlib.h>
 #define  Z             1
 
-#include <visp/vpParseArgv.h>
-#include <visp/vpIoTools.h>
+#include <visp3/io/vpParseArgv.h>
+#include <visp3/core/vpIoTools.h>
 
 // List of allowed command line options
 #define GETOPTARGS	"cdi:n:h"
@@ -302,6 +297,8 @@ main(int argc, const char ** argv)
     //camera desired position
     vpHomogeneousMatrix cMo ;
     cMo.buildFrom(0,0,1.2,vpMath::rad(15),vpMath::rad(-5),vpMath::rad(20));
+    vpHomogeneousMatrix wMo; // Set to identity
+    vpHomogeneousMatrix wMc; // Camera position in the world frame
 
     //set the robot at the desired position
     sim.setCameraPosition(cMo) ;
@@ -340,9 +337,10 @@ main(int argc, const char ** argv)
     }
 #endif
     // create the robot (here a simulated free flying camera)
-    vpRobotCamera robot ;
+    vpSimulatorCamera robot;
     robot.setSamplingTime(0.04);
-    robot.setPosition(cMo) ;
+    wMc = wMo * cMo.inverse();
+    robot.setPosition(wMc);
 
     // ------------------------------------------------------
     // Visual feature, interaction matrix, error
@@ -460,9 +458,9 @@ main(int argc, const char ** argv)
       std::cout << " |Tc| = " << sqrt(v.sumSquare()) << std::endl;
 
       // send the robot velocity
-      robot.setVelocity(vpRobot::CAMERA_FRAME, v) ;
-      robot.getPosition(cMo) ;
-
+      robot.setVelocity(vpRobot::CAMERA_FRAME, v);
+      wMc = robot.getPosition();
+      cMo = wMc.inverse() * wMo;
     }
     while(normeError > 10000 && iter < opt_niter);
 

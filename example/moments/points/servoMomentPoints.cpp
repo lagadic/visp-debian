@@ -1,9 +1,7 @@
 /****************************************************************************
  *
- * $Id: servoMomentPoints.cpp 4673 2014-02-17 09:06:49Z fspindle $
- *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2014 by INRIA. All rights reserved.
+ * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -12,24 +10,22 @@
  * distribution for additional information about the GNU GPL.
  *
  * For using ViSP with software that can not be combined with the GNU
- * GPL, please contact INRIA about acquiring a ViSP Professional
+ * GPL, please contact Inria about acquiring a ViSP Professional
  * Edition License.
  *
- * See http://www.irisa.fr/lagadic/visp/visp.html for more information.
+ * See http://visp.inria.fr for more information.
  *
  * This software was developed at:
- * INRIA Rennes - Bretagne Atlantique
+ * Inria Rennes - Bretagne Atlantique
  * Campus Universitaire de Beaulieu
  * 35042 Rennes Cedex
  * France
- * http://www.irisa.fr/lagadic
  *
  * If you have questions regarding the use of this file, please contact
- * INRIA at visp@inria.fr
+ * Inria at visp@inria.fr
  *
  * This file is provided AS IS with NO WARRANTY OF ANY KIND, INCLUDING THE
  * WARRANTY OF DESIGN, MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
- *
  *
  * Description:
  * Example of visual servoing with moments using discrete points as object
@@ -45,27 +41,27 @@
   Example of moment-based visual servoing with Images
 */
 
-#include <visp/vpDebug.h>
-#include <visp/vpConfig.h>
+#include <visp3/core/vpDebug.h>
+#include <visp3/core/vpConfig.h>
 #include <iostream>
-#include <visp/vpHomogeneousMatrix.h>
-#include <visp/vpMomentObject.h>
-#include <visp/vpMomentDatabase.h>
-#include <visp/vpMomentCommon.h>
-#include <visp/vpFeatureMomentCommon.h>
-#include <visp/vpDisplayX.h>
-#include <visp/vpDisplayGTK.h>
-#include <visp/vpDisplayGDI.h>
-#include <visp/vpCameraParameters.h>
-#include <visp/vpIoTools.h>
-#include <visp/vpMath.h>
-#include <visp/vpHomogeneousMatrix.h>
-#include <visp/vpServo.h>
-#include <visp/vpDebug.h>
-#include <visp/vpFeatureBuilder.h>
-#include <visp/vpFeaturePoint.h>
-#include <visp/vpSimulatorAfma6.h>
-#include <visp/vpPlane.h>
+#include <visp3/core/vpHomogeneousMatrix.h>
+#include <visp3/core/vpMomentObject.h>
+#include <visp3/core/vpMomentDatabase.h>
+#include <visp3/core/vpMomentCommon.h>
+#include <visp3/visual_features/vpFeatureMomentCommon.h>
+#include <visp3/gui/vpDisplayX.h>
+#include <visp3/gui/vpDisplayGTK.h>
+#include <visp3/gui/vpDisplayGDI.h>
+#include <visp3/core/vpCameraParameters.h>
+#include <visp3/core/vpIoTools.h>
+#include <visp3/core/vpMath.h>
+#include <visp3/core/vpHomogeneousMatrix.h>
+#include <visp3/vs/vpServo.h>
+#include <visp3/core/vpDebug.h>
+#include <visp3/visual_features/vpFeatureBuilder.h>
+#include <visp3/visual_features/vpFeaturePoint.h>
+#include <visp3/robot/vpSimulatorAfma6.h>
+#include <visp3/core/vpPlane.h>
 
 
 #if !defined(_WIN32) && !defined(VISP_HAVE_PTHREAD)
@@ -165,8 +161,7 @@ void initScene(){
   int nbpoints = 8;
 
   for (int i = 0 ; i < nbpoints ; i++){
-    vpPoint p;
-    p.setWorldCoordinates(x[i]/20,y[i]/20,0.0);
+    vpPoint p(x[i]/20,y[i]/20,0.0);
     p.track(cMo) ;
     src_pts.push_back(p);
   }
@@ -174,8 +169,7 @@ void initScene(){
   src.setType(vpMomentObject::DISCRETE);
   src.fromVector(src_pts);
   for (int i = 0 ; i < nbpoints ; i++){
-    vpPoint p;
-    p.setWorldCoordinates(x[i]/20,y[i]/20,0.0);
+    vpPoint p(x[i]/20,y[i]/20,0.0);
     p.track(cdMo) ;
     dst_pts.push_back(p);
   }
@@ -239,8 +233,7 @@ void refreshScene(vpMomentObject &obj){
   std::vector<vpPoint> cur_pts;
 
   for (int i = 0 ; i < nbpoints ; i++){
-    vpPoint p;
-    p.setWorldCoordinates(x[i]/20,y[i]/20,0.0);
+    vpPoint p(x[i]/20,y[i]/20,0.0);
     p.track(cMo) ;
     cur_pts.push_back(p);
   }

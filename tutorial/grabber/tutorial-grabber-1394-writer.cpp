@@ -1,12 +1,12 @@
 /*! \example tutorial-grabber-1394-writer.cpp */
-#include <visp/vp1394TwoGrabber.h>
-#include <visp/vpDisplayX.h>
-#include <visp/vpImage.h>
-#include <visp/vpVideoWriter.h>
+#include <visp3/sensor/vp1394TwoGrabber.h>
+#include <visp3/gui/vpDisplayX.h>
+#include <visp3/core/vpImage.h>
+#include <visp3/io/vpVideoWriter.h>
 
 int main(int argc, char **)
 {
-#ifdef VISP_HAVE_DC1394_2
+#ifdef VISP_HAVE_DC1394
   try {
     bool save = false;
     if(argc == 2) {
