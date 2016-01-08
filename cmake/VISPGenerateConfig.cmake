@@ -112,7 +112,7 @@ configure_file(
 # -------------------------------------------------------------------------------------------
 
 if(UNIX)
-  set(VISP_INCLUDE_DIRS_CONFIGCMAKE "\${VISP_INSTALL_PATH}/${CMAKE_INSTALL_INCLUDEDIR}")
+  set(VISP_INCLUDE_DIRS_CONFIGCMAKE "\${VISP_INSTALL_PATH}/${CMAKE_INSTALL_INCLUDEDIR}/${CMAKE_LIBRARY_ARCHITECTURE}")
   foreach(m ${VISP_MODULES_BUILD})
     list(APPEND VISP_INCLUDE_DIRS_CONFIGCMAKE ${VISP_MODULE_${m}_INC_DEPS})
   endforeach()
