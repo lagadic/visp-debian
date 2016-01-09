@@ -1,7 +1,7 @@
-From 0613cc40d48410928fd85015b254865fe92b965d Mon Sep 17 00:00:00 2001
+From 86a471bf1616f696a768c524bd9d0dc94670feb7 Mon Sep 17 00:00:00 2001
 From: Fabien Spindler <Fabien.Spindler@inria.fr>
-Date: Sat, 12 Dec 2015 15:54:50 +0100
-Subject: [PATCH 2/2] Turn rpath off for install
+Date: Fri, 8 Jan 2016 15:22:30 +0100
+Subject: [PATCH 2/6] Turn rpath off for install
 
 ---
  CMakeLists.txt | 10 ++--------
@@ -32,5 +32,5 @@ index c53d54a..0fa3760 100644
  # ----------------------------------------------------------------------------
  #  Path for additional contrib modules
 -- 
-2.6.2
+2.6.4
 

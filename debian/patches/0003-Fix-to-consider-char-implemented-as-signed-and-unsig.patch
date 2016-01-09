@@ -1,0 +1,112 @@
+From 2979655ae0043f37af5fd45002fdd3e1ce7c266f Mon Sep 17 00:00:00 2001
+From: Fabien Spindler <Fabien.Spindler@inria.fr>
+Date: Fri, 8 Jan 2016 15:29:38 +0100
+Subject: [PATCH 3/6] Fix to consider char implemented as signed and unsigned
+
+---
+ modules/core/include/visp3/core/vpMath.h | 27 ++++++++++++++++++---------
+ modules/core/test/math/testMath.cpp      | 10 +++++-----
+ 2 files changed, 23 insertions(+), 14 deletions(-)
+
+diff --git a/modules/core/include/visp3/core/vpMath.h b/modules/core/include/visp3/core/vpMath.h
+index 1de5277..3a7c894 100644
+--- a/modules/core/include/visp3/core/vpMath.h
++++ b/modules/core/include/visp3/core/vpMath.h
+@@ -334,7 +334,15 @@ double vpMath::sigmoid(double x, double x0,double x1, double n)
+ 
+ //unsigned char
+ template<> inline unsigned char vpMath::saturate<unsigned char>(char v) {
+-  return (unsigned char) (std::max)((int) v, 0);
++  // On big endian arch like powerpc, char implementation is unsigned
++  // with CHAR_MIN=0, CHAR_MAX=255 and SCHAR_MIN=-128, SCHAR_MAX=127
++  // leading to (int)(char -127) = 129.
++  // On little endian arch, CHAR_MIN=-127 and CHAR_MAX=128 leading to
++  // (int)(char -127) = -127.
++  if (std::numeric_limits<char>::is_signed)
++    return (unsigned char) ((std::max)((int) v, 0));
++  else
++    return (unsigned char) ((unsigned int) v > SCHAR_MAX ? 0 : v);
+ }
+ 
+ template<> inline unsigned char vpMath::saturate<unsigned char>(unsigned short v) {
+@@ -397,7 +405,15 @@ template<> inline char vpMath::saturate<char>(double v) {
+ 
+ //unsigned short
+ template<> inline unsigned short vpMath::saturate<unsigned short>(char v) {
+-  return (unsigned short) (std::max)((int) v, 0);
++  // On big endian arch like powerpc, char implementation is unsigned
++  // with CHAR_MIN=0, CHAR_MAX=255 and SCHAR_MIN=-128, SCHAR_MAX=127
++  // leading to (int)(char -127) = 129.
++  // On little endian arch, CHAR_MIN=-127 and CHAR_MAX=128 leading to
++  // (int)(char -127) = -127.
++  if (std::numeric_limits<char>::is_signed)
++    return (unsigned char) ((std::max)((int) v, 0));
++  else
++    return (unsigned char) ((unsigned int) v > SCHAR_MAX ? 0 : v);
+ }
+ 
+ template<> inline unsigned short vpMath::saturate<unsigned short>(short v) {
+@@ -462,11 +478,4 @@ template<> inline unsigned int vpMath::saturate<unsigned int>(double v) {
+   return (unsigned int) vpMath::round(v);
+ }
+ 
+-
+ #endif
+-
+-/*
+- * Local variables:
+- * c-basic-offset: 2
+- * End:
+- */
+diff --git a/modules/core/test/math/testMath.cpp b/modules/core/test/math/testMath.cpp
+index fc3ecb7..6e7dae5 100644
+--- a/modules/core/test/math/testMath.cpp
++++ b/modules/core/test/math/testMath.cpp
+@@ -298,7 +298,7 @@ int main() {
+ 
+   int_value = -70000;
+   char_value = vpMath::saturate<char>(int_value);
+-  if(char_value != SCHAR_MIN) {
++  if(char_value != (char)SCHAR_MIN) {
+     std::cerr << "Fail: vpMath::saturate<char>(-70000)=" << char_value << " / should be " << SCHAR_MIN << std::endl;
+     return -1;
+   }
+@@ -312,7 +312,7 @@ int main() {
+ 
+   short_value = -30000;
+   char_value = vpMath::saturate<char>(short_value);
+-  if(char_value != SCHAR_MIN) {
++  if(char_value != (char)SCHAR_MIN) {
+     std::cerr << "Fail: vpMath::saturate<char>(-30000)=" << char_value << " / should be " << SCHAR_MIN << std::endl;
+     return -1;
+   }
+@@ -333,7 +333,7 @@ int main() {
+ 
+   float_value = -10000.1f;
+   char_value = vpMath::saturate<char>(float_value);
+-  if(char_value != SCHAR_MIN) {
++  if(char_value != (char)SCHAR_MIN) {
+     std::cerr << "Fail: vpMath::saturate<char>(-10000.1f)=" << char_value << " / should be " << SCHAR_MIN << std::endl;
+     return -1;
+   }
+@@ -347,7 +347,7 @@ int main() {
+ 
+   double_value = -10000.1;
+   char_value = vpMath::saturate<char>(double_value);
+-  if(char_value != SCHAR_MIN) {
++  if(char_value != (char)SCHAR_MIN) {
+     std::cerr << "Fail: vpMath::saturate<char>(-10000.1)=" << char_value << " / should be " << SCHAR_MIN << std::endl;
+     return -1;
+   }
+@@ -358,7 +358,7 @@ int main() {
+   char_value = -127;
+   ushort_value = vpMath::saturate<unsigned short>(char_value);
+   if(ushort_value != 0) {
+-    std::cerr << "Fail: vpMath::saturate<unsigned short>(127)=" << ushort_value << " / should be 0" << std::endl;
++    std::cerr << "Fail: vpMath::saturate<unsigned short>(-127)=" << ushort_value << " / should be 0" << std::endl;
+     return -1;
+   }
+ 
+-- 
+2.6.4
+
