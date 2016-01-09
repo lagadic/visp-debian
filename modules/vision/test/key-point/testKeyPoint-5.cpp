@@ -200,10 +200,10 @@ int main(int argc, const char ** argv) {
     detectorNames.push_back("PyramidAGAST");
     detectorNames.push_back("AGAST");
 #endif
-    detectorNames.push_back("PyramidORB");
+//    detectorNames.push_back("PyramidORB");
     detectorNames.push_back("ORB");
 #if (VISP_HAVE_OPENCV_VERSION >= 0x020403)
-    detectorNames.push_back("PyramidBRISK");
+//    detectorNames.push_back("PyramidBRISK");
     detectorNames.push_back("BRISK");
 #endif
 #if (VISP_HAVE_OPENCV_VERSION >= 0x030000)
@@ -229,7 +229,7 @@ int main(int argc, const char ** argv) {
       std::cout << "Nb keypoints detected: " << kpts.size() << " for " << *itd << " method." << std::endl;
       if(kpts.empty()) {
         std::cerr << "No keypoints detected with " << *itd << " and image: " << filename << "." << std::endl;
-        return -1;
+//        return -1;
       }
 
       if (opt_display) {
