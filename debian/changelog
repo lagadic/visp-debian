@@ -1,3 +1,11 @@
+visp (3.0.0-3) unstable; urgency=medium
+
+  * Remove Ogre and Ois dependencies to prevent ViSP from autoremoval
+    from testing on 2016-02-19 due to a transitively dependency on blender
+    affected by RC bug(s) 804678 and 810065.
+
+ -- Fabien Spindler <Fabien.Spindler@inria.fr>  Mon, 01 Feb 2016 18:00:21 +0100
+
 visp (3.0.0-2) unstable; urgency=medium
 
   * Fix missing Breaks/Replaces relation to fix upgrade from
