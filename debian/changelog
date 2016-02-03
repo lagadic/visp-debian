@@ -1,3 +1,14 @@
+visp (3.0.0-4) unstable; urgency=medium
+
+  * Remove libusb-1.0-0-dev explicit dependency that will come from
+    libfreenect-dev implicit dep.
+  * Remove libfreenect also for kfreebsd-amd64 and kfreebsd-i386
+    (BD-Uninstallable)
+  * Since Ogre removal, remove dh_override_install (Closes: #813564)
+  * Remove doxygen-latex useless dependency
+
+ -- Fabien Spindler <Fabien.Spindler@inria.fr>  Wed, 03 Feb 2016 11:56:55 +0100
+
 visp (3.0.0-3) unstable; urgency=medium
 
   * Remove Ogre and Ois dependencies to prevent ViSP from autoremoval
