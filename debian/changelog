@@ -1,3 +1,19 @@
+visp (3.0.1-1) unstable; urgency=medium
+
+  * Update watch file
+  * Remove 3.0.0 patches
+  * New upstream version 3.0.1
+  * Update debian material for visp 3.0.1
+    - fix lintian warnings ancient-standards-version,
+      spelling-error-in-description (duplicate word) vision
+    - install module meta header include
+    - old visp headers are installed with libvisp-dev to ensure usage when
+      all modules are installed
+    - install includes in arch triplet
+  * Add patches for visp 3.0.1
+
+ -- Fabien Spindler <Fabien.Spindler@inria.fr>  Wed, 08 Feb 2017 09:46:36 +0100
+
 visp (3.0.0-4) unstable; urgency=medium
 
   * Remove libusb-1.0-0-dev explicit dependency that will come from
