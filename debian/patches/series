@@ -1,6 +1,0 @@
-0001-Install-headers-in-include-architecture-triplet.patch
-0002-Turn-rpath-off-for-install.patch
-0003-Fix-to-consider-char-implemented-as-signed-and-unsig.patch
-0004-Remove-PyramidBRISK-and-PyramidORB-from-test-kind-of.patch
-0005-Fix-issue-in-vpKeypoint-database-I-O-on-big-endian-a.patch
-0006-Remove-videoReader-test.patch
