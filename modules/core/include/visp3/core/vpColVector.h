@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -75,13 +75,13 @@ class VISP_EXPORT vpColVector : public vpArray2D<double>
 public:
 
    //! Basic constructor that creates an empty 0-size column vector.
-  vpColVector() : vpArray2D<double>() {};
+  vpColVector() : vpArray2D<double>() {}
   //! Construct a column vector of size n. All the elements are initialized to zero.
-  vpColVector(unsigned int n) : vpArray2D<double>(n,1){};
+  vpColVector(unsigned int n) : vpArray2D<double>(n,1){}
   //! Construct a column vector of size n. Each element is set to \e val.
-  vpColVector(unsigned int n, double val) : vpArray2D<double>(n, 1, val){};
+  vpColVector(unsigned int n, double val) : vpArray2D<double>(n, 1, val){}
   //! Copy constructor that allows to construct a column vector from an other one.
-  vpColVector(const vpColVector &v) : vpArray2D<double>(v) {};
+  vpColVector(const vpColVector &v) : vpArray2D<double>(v) {}
   vpColVector(const vpColVector &v, unsigned int r, unsigned int nrows) ;
   //! Constructor that initialize a column vector from a 3-dim (Euler or \f$\theta {\bf u}\f$)
   //! or 4-dim (quaternion) rotation vector.
@@ -97,7 +97,7 @@ public:
   /*!
     Destructor.
   */
-  virtual ~vpColVector() {};
+  virtual ~vpColVector() {}
 
   /*!
     Removes all elements from the vector (which are destroyed),
@@ -116,6 +116,9 @@ public:
     }
     rowNum = colNum = dsize = 0;
   }
+
+  std::ostream & cppPrint(std::ostream & os, const std::string &matrixName="A", bool octet = false) const;
+  std::ostream & csvPrint(std::ostream & os) const;
 
   /*!
     Convert a column vector containing angles in degrees into radians.
@@ -157,6 +160,10 @@ public:
   double infinityNorm() const;
   void init(const vpColVector &v, unsigned int r, unsigned int nrows);
   void insert(unsigned int i, const vpColVector &v);
+  void insert(const vpColVector &v, unsigned int i);
+
+  std::ostream & maplePrint(std::ostream & os) const;
+  std::ostream & matlabPrint(std::ostream & os) const;
 
   vpColVector &normalize() ;
   vpColVector &normalize(vpColVector &x) const ;
@@ -184,6 +191,7 @@ public:
   vpColVector &operator/=(double x);
 
   vpColVector operator+(const vpColVector &v) const;
+  vpTranslationVector operator+(const vpTranslationVector &t) const;
   vpColVector &operator+=(vpColVector v);
 
   vpColVector operator-(const vpColVector &v) const;
@@ -235,11 +243,12 @@ public:
                         "Cannot resize a column vector to a (%dx%d) dimension vector that has more than one column",
                         nrows, ncols));
     vpArray2D<double>::resize(nrows, ncols, flagNullify);
-  };
+  }
 
   void stack(const double &d);
   void stack(const vpColVector &v);
 
+  double sum() const;
   double sumSquare() const;
   vpRowVector t() const;
   vpRowVector transpose() const;
@@ -283,7 +292,7 @@ public:
      \deprecated Provided only for compat with previous releases.
      This function does nothing.
    */
-  vp_deprecated void init() {};
+  vp_deprecated void init() {}
   /*!
      \deprecated You should rather use extract().
    */
@@ -298,16 +307,17 @@ public:
   /*!
      \deprecated You should rather use stack(const vpColVector &)
    */
-  vp_deprecated void stackMatrices(const vpColVector &r) { stack(r); };
+  vp_deprecated void stackMatrices(const vpColVector &r) { stack(r); }
   /*!
      \deprecated You should rather use stack(const vpColVector &A, const vpColVector &B)
    */
-  vp_deprecated static vpColVector stackMatrices(const vpColVector &A, const vpColVector &B) { return stack(A, B); };
+  vp_deprecated static vpColVector stackMatrices(const vpColVector &A, const vpColVector &B) { return stack(A, B); }
   /*!
      \deprecated You should rather use stack(const vpColVector &A, const vpColVector &B, vpColVector &C)
    */
-  vp_deprecated static void stackMatrices(const vpColVector &A, const vpColVector &B, vpColVector &C) { stack(A, B, C); };
+  vp_deprecated static void stackMatrices(const vpColVector &A, const vpColVector &B, vpColVector &C) { stack(A, B, C); }
 
+  vp_deprecated void insert(const vpColVector &v, const unsigned int r, const unsigned int c=0);
   //@}
 #endif
 };

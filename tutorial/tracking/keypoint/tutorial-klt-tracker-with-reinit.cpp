@@ -83,7 +83,8 @@ int main()
         // Save of previous features
         int prev_nfeatures = tracker.getNbFeatures();
         float x,y;
-        int id, j=0;
+        long id;
+        int j=0;
 
         CvPoint2D32f *prev_features = (CvPoint2D32f*)cvAlloc(prev_nfeatures*sizeof(CvPoint2D32f));
 
@@ -100,12 +101,11 @@ int main()
 
         // Add previous features if they are not to close to detected one
         double distance, minDistance_ = tracker.getMinDistance();
-        bool is_redundant;
         for(int i = tracker.getNbFeatures() ;
             j<prev_nfeatures && i<tracker.getMaxFeatures() ;
             j++){
           // Test if a previous feature is not redundant with new the one that are newly detected
-          is_redundant = false;
+          bool is_redundant = false;
           for(int k=0; k<tracker.getNbFeatures(); k++){
             tracker.getFeature(k,id,x,y);
             //printf("curr feature %d: id %d coord: %g %g\n", k, id, x, y);
@@ -143,7 +143,7 @@ int main()
 
     return 0;
   }
-  catch(vpException e) {
+  catch(vpException &e) {
     std::cout << "Catch an exception: " << e << std::endl;
   }
 #endif

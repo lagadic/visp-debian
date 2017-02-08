@@ -1,7 +1,7 @@
 #############################################################################
 #
 # This file is part of the ViSP software.
-# Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+# Copyright (C) 2005 - 2017 by Inria. All rights reserved.
 #
 # This software is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -78,6 +78,10 @@ elseif(MSVC11)
   set(BUILDNAME "${BUILDNAME}-msvc11")
 elseif(MSVC12)
   set(BUILDNAME "${BUILDNAME}-msvc12")
+elseif(MSVC14)
+  set(BUILDNAME "${BUILDNAME}-msvc14")
+elseif(MSVC15)
+  set(BUILDNAME "${BUILDNAME}-msvc15")
 elseif(MSVC)
   set(BUILDNAME "${BUILDNAME}-msvc")
 elseif(BORLAND)
@@ -142,7 +146,12 @@ if(VISP_HAVE_PIONEER)
   set(BUILDNAME "${BUILDNAME}-aria")
 endif()
 
-#---- Framegrabers ----
+# Add specific Haption Virtuose haptic device
+if(VISP_HAVE_VIRTUOSE)
+  set(BUILDNAME "${BUILDNAME}-virtuose")
+endif()
+
+#---- Framegrabers/Sensors ----
 # Firewire dc1394-2.x 
 if(VISP_HAVE_DC1394)
   set(BUILDNAME "${BUILDNAME}-dc1394")
@@ -161,8 +170,23 @@ endif(VISP_HAVE_CMU1394)
 if(VISP_HAVE_LIBFREENECT)
   set(BUILDNAME "${BUILDNAME}-freenect")
 endif()
+if(VISP_HAVE_REALSENSE)
+  set(BUILDNAME "${BUILDNAME}-rs")
+endif()
+if(VISP_HAVE_PCL)
+  set(BUILDNAME "${BUILDNAME}-pcl")
+endif()
 if(VISP_HAVE_LIBUSB_1)
   set(BUILDNAME "${BUILDNAME}-usb")
+endif()
+if(VISP_HAVE_FLYCAPTURE)
+  set(BUILDNAME "${BUILDNAME}-flycap")
+endif()
+if(VISP_HAVE_COMEDI)
+  set(BUILDNAME "${BUILDNAME}-comedi")
+endif()
+if(VISP_HAVE_ATI)
+  set(BUILDNAME "${BUILDNAME}-ati")
 endif()
 
 #---- Video-devices ----
@@ -279,7 +303,7 @@ endif()
 if(USE_CPP11)
   set(BUILDNAME "${BUILDNAME}-c11")
 endif()
-if(MOMENTS_COMBINE_MATRICES)
+if(ENABLE_MOMENTS_COMBINE_MATRICES)
   set(BUILDNAME "${BUILDNAME}-Moment")
 endif()
 

@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -644,7 +644,7 @@ main(int argc, const char ** argv)
     // Main loop for single or multi-camera acquisition and display
     std::cout << "Capture in process..." << std::endl;
 
-    double tbegin=0, tend=0, tloop=0, ttotal=0;
+    double tbegin=0, ttotal=0;
 
     ttotal = 0;
     tbegin = vpTime::measureTimeMs();
@@ -687,8 +687,8 @@ main(int argc, const char ** argv)
           }
         }
       }
-      tend = vpTime::measureTimeMs();
-      tloop = tend - tbegin;
+      double tend = vpTime::measureTimeMs();
+      double tloop = tend - tbegin;
       tbegin = tend;
       std::cout << "loop time: " << tloop << " ms" << std::endl;
       ttotal += tloop;
@@ -712,7 +712,7 @@ main(int argc, const char ** argv)
 #endif
     return 0;
   }
-  catch(vpException e) {
+  catch(vpException &e) {
     std::cout << "Catch an exception: " << e << std::endl;
     return 1;
   }

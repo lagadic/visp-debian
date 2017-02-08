@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -59,6 +59,9 @@
 //#  pragma comment(lib, "ws2_32.lib") // Done by CMake in main CMakeLists.txt
 #endif
 
+#if defined(__APPLE__) && defined(__MACH__) // Apple OSX and iOS (Darwin)
+#  include <TargetConditionals.h> // To detect OSX or IOS using TARGET_OS_IPHONE or TARGET_OS_IOS macro
+#endif
 
 /*! 
   \class vpNetwork
@@ -79,7 +82,7 @@
 class VISP_EXPORT vpNetwork
 {
 protected:
-
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
   struct vpReceptor{
 #if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
     int                   socketFileDescriptorReceptor;
@@ -109,7 +112,8 @@ protected:
       socketFileDescriptorEmitter = 0;
     }
   };
-  
+#endif
+
   //######## PARAMETERS ########
   //#                          #
   //############################
@@ -282,7 +286,11 @@ int vpNetwork::receive(T* object, const unsigned int &sizeOfObject)
   }
   
   tv.tv_sec = tv_sec;
+#if TARGET_OS_IPHONE
+  tv.tv_usec = (int)tv_usec;
+#else
   tv.tv_usec = tv_usec;
+#endif
   
   FD_ZERO(&readFileDescriptor);        
   
@@ -362,8 +370,12 @@ int vpNetwork::receiveFrom(T* object, const unsigned int &receptorEmitting, cons
   }
   
   tv.tv_sec = tv_sec;
+#if TARGET_OS_IPHONE
+  tv.tv_usec = (int)tv_usec;
+#else
   tv.tv_usec = tv_usec;
-  
+#endif
+
   FD_ZERO(&readFileDescriptor);
   
   socketMax = receptor_list[receptorEmitting].socketFileDescriptorReceptor;

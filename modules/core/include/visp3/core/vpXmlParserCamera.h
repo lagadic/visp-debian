@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -63,6 +63,9 @@
   \ingroup group_core_camera
 
   \brief XML parser to load and save intrinsic camera parameters.
+
+  \warning This class is only available if libxml2 is installed and detected by ViSP.
+  Installation instructions are provided here https://visp.inria.fr/3rd_xml2.
 
   To have a complete description of the camera parameters and the
   corresponding projection model implemented in ViSP, see
@@ -207,7 +210,8 @@ public:
       CODE_XML_PX,
       CODE_XML_PY,
       CODE_XML_KUD,
-      CODE_XML_KDU
+      CODE_XML_KDU,
+      CODE_XML_ADDITIONAL_INFO
     } vpXmlCodeType;
 
   typedef enum 
@@ -234,29 +238,32 @@ public:
 
   vpXmlParserCamera();
   vpXmlParserCamera(vpXmlParserCamera& twinParser);
-  vpXmlParserCamera& operator =(const vpXmlParserCamera& twinparser);
-  ~vpXmlParserCamera(){}
-
-  int parse(vpCameraParameters &cam, const std::string &filename,
-	    const std::string &camera_name,
-      const vpCameraParameters::vpCameraParametersProjType &projModel,  
-	    const unsigned int image_width = 0, const unsigned int image_height = 0);
-  int save(const vpCameraParameters &cam, const std::string &filename,
-	   const std::string &camera_name,
-	   const unsigned int image_width = 0, const unsigned int image_height = 0);
+  //! Default destructor.
+  virtual ~vpXmlParserCamera(){}
 
   // get/set functions
   std::string getCameraName(){return this->camera_name;}
-  unsigned int getWidth(){ return this->image_width; }
+  vpCameraParameters getCameraParameters(){return this->camera;}
   unsigned int getHeight(){ return this->image_height; }
   unsigned int getSubsampling_width(){return this->subsampling_width;}
   unsigned int getSubsampling_height(){return this->subsampling_height;}
-  vpCameraParameters getCameraParameters(){return this->camera;}
+  unsigned int getWidth(){ return this->image_width; }
+
+  vpXmlParserCamera& operator =(const vpXmlParserCamera& twinparser);
+
+  int parse(vpCameraParameters &cam, const std::string &filename,
+      const std::string &camera_name,
+      const vpCameraParameters::vpCameraParametersProjType &projModel,
+      const unsigned int image_width = 0, const unsigned int image_height = 0);
+
+  int save(const vpCameraParameters &cam, const std::string &filename,
+     const std::string &camera_name,
+     const unsigned int image_width = 0, const unsigned int image_height = 0,
+     const std::string &additionalInfo="");
 
   void setCameraName(const std::string& name){
     this->camera_name = name;
   }
-  void setWidth(const unsigned int width){ this->image_width = width ; }
   void setHeight(const unsigned int height){ this->image_height = height ; }
   void setSubsampling_width(const unsigned int subsampling){
     this->subsampling_width = subsampling ;
@@ -264,6 +271,7 @@ public:
   void setSubsampling_height(const unsigned int subsampling){
     this->subsampling_height = subsampling ;
   }
+  void setWidth(const unsigned int width){ this->image_width = width ; }
 
 private:
   int read (xmlDocPtr doc, xmlNodePtr node,
@@ -296,6 +304,8 @@ private:
                    const unsigned int image_height = 0,
                    const unsigned int subsampling_width = 0,
                    const unsigned int subsampling_height = 0);
+
+  xmlNodePtr find_additional_info (xmlNodePtr node);
  
   vpXmlCodeSequenceType read_camera_model (xmlDocPtr doc, xmlNodePtr node,
 					                                 vpCameraParameters &camera);
@@ -347,9 +357,3 @@ private:
 };
 #endif //VISP_HAVE_XML2
 #endif
-/*
- * Local variables:
- * c-basic-offset: 2
- * End:
- */
-

@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -52,27 +52,22 @@
 class VISP_EXPORT vpWin32Renderer
 {
 
- protected:
+protected:
   //the size of the display
-  unsigned int nbCols;
-  unsigned int nbRows;
+  unsigned int m_rwidth;
+  unsigned int m_rheight;
+  unsigned int m_rscale;
 
- public:
+public:
+  vpWin32Renderer() : m_rwidth(0), m_rheight(0), m_rscale(1) {};
   //! Destructor.
   virtual ~vpWin32Renderer() {};
-
-  //! Returns the image dimensions.
-  unsigned int getImageWidth(){ return nbCols; }
-  unsigned int getImageHeight(){ return nbRows; }
-
-
 
   //! Inits the display .
   virtual bool init(HWND hWnd, unsigned int w, unsigned int h) =0;
 
   //! Renders the image.
   virtual bool render() =0;
-
 
   /*!
     Sets the image to display.
@@ -85,91 +80,88 @@ class VISP_EXPORT vpWin32Renderer
 
   /*!
     Sets the pixel at (x,y).
-    \param y The y coordinate of the pixel.
-    \param x The x coordinate of the pixel.
+    \param iP The coordinates of the pixel.
     \param color The color of the pixel.
   */
   virtual void setPixel(const vpImagePoint &iP, const vpColor &color) =0;
 
+  void setScale(unsigned int scale) { m_rscale = scale; }
+  void setHeight(unsigned int height) { m_rheight = height; }
+  void setWidth(unsigned int width) { m_rwidth = width; }
+
   /*!
     Draws a line.
-    \param i1 its starting point's first coordinate
-    \param j1 its starting point's second coordinate
-    \param i2 its ending point's first coordinate
-    \param j2 its ending point's second coordinate
-    \param e line thickness
-    \param col the line's color
+    \param ip1 it's starting point coordinates
+    \param ip2 it's ending point coordinates
+    \param color the line's color
+    \param thickness line thickness
     \param style style of the line
   */
-  virtual void drawLine(const vpImagePoint &ip1, 
-		const vpImagePoint &ip2,
-		const vpColor &color, unsigned int thickness, int style=PS_SOLID) =0;
+  virtual void drawLine(const vpImagePoint &ip1,
+                        const vpImagePoint &ip2,
+                        const vpColor &color, unsigned int thickness, int style=PS_SOLID) =0;
 
   /*!
     Draws a rectangle.
-    \param i its top left point's first coordinate
-    \param j its top left point's second coordinate
+    \param topLeft it's top left point coordinates
     \param width width of the rectangle
     \param height height of the rectangle
-    \param col The rectangle's color
+    \param color The rectangle's color
     \param fill True if it is a filled rectangle
-    \param e line thickness
+    \param thickness line thickness
   */
   virtual void drawRect(const vpImagePoint &topLeft,
-		unsigned int width, unsigned int height,
-		const vpColor &color, bool fill=false,
-		unsigned int thickness=1) =0;
+                        unsigned int width, unsigned int height,
+                        const vpColor &color, bool fill=false,
+                        unsigned int thickness=1) =0;
 
   /*!
     Clears the image to color c.
-    \param c The color used to fill the image.
+    \param color The color used to fill the image.
   */
   virtual void clear(const vpColor &color) =0;
 
   /*!
     Draws a circle.
-    \param i its center point's first coordinate
-    \param j its center point's second coordinate
-    \param r The circle's radius
-    \param col The circle's color
+    \param center its center point coordinates
+    \param radius The circle's radius
+    \param color The circle's color
+    \param fill When true fill the circle with the given color
+    \param thickness Drawing thickness
   */
   virtual void drawCircle(const vpImagePoint &center, unsigned int radius,
-		  const vpColor &color, bool fill, unsigned int thickness=1) =0;
+                          const vpColor &color, bool fill, unsigned int thickness=1) =0;
 
   /*!
     Draws some text.
-    \param i its top left point's first coordinate
-    \param j its top left point's second coordinate
-    \param s The string to display
-    \param col The text's color
+    \param ip it's top left point coordinates
+    \param text The string to display
+    \param color The text's color
   */
   virtual void drawText(const vpImagePoint &ip, const char * text,
-		const vpColor &color) =0;
+                        const vpColor &color) =0;
 
   /*!
     Draws a cross.
-    \param i its center point's first coordinate
-    \param j its center point's second coordinate
+    \param ip it's center point coordinates
     \param size Size of the cross
-    \param col The cross' color
-    \param e width of the cross
+    \param color The cross' color
+    \param thickness Thickness of the drawing
   */
   virtual void drawCross(const vpImagePoint &ip, unsigned int size,
-		 const vpColor &color, unsigned int thickness=1) =0;
+                         const vpColor &color, unsigned int thickness=1) =0;
 
   /*!
     Draws an arrow.
-    \param i1 its starting point's first coordinate
-    \param j1 its starting point's second coordinate
-    \param i2 its ending point's first coordinate
-    \param j2 its ending point's second coordinate
+    \param ip1 it's starting point coordinates
+    \param ip2 it's ending point coordinates
     \param color The line's color
-    \param L ...
-    \param l ...
+    \param w,h Width and height of the arrow
+    \param thickness Thickness of the drawing
   */
-  virtual void drawArrow(const vpImagePoint &ip1, 
-		 const vpImagePoint &ip2,
-		 const vpColor &color, unsigned int w,unsigned int h, unsigned int thickness) =0;
+  virtual void drawArrow(const vpImagePoint &ip1,
+                         const vpImagePoint &ip2,
+                         const vpColor &color, unsigned int w, unsigned int h, unsigned int thickness) =0;
 
   /*!
     Gets the currently displayed image.

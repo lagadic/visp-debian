@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -107,27 +107,32 @@ Xg=0.0166667, Yg=-0.00833333
 */
 
 class VISP_EXPORT vpMomentGravityCenter : public vpMoment {
- public:
+public:
 
-        vpMomentGravityCenter();        
-	void compute();
-        const std::vector<double>& get() const;
-        /*!
-          Shortcut function to retrieve \f$x_g\f$.
-          \return The first gravity center coordinate.
-          */
-        double getXg() const { return values[0]; }
-        /*!
-          Shortcut function to retrieve \f$y_g\f$.
-          \return The second gravity center coordinate.
-          */
-        double getYg() const { return values[1]; }
-        /*!
-          The class's string name.
-          */
+  vpMomentGravityCenter();
+  virtual ~vpMomentGravityCenter() {};
+
+  /** @name Inherited functionalities from vpMomentGravityCenter */
+  //@{
+  void compute();
+  const std::vector<double>& get() const;
+  /*!
+    Shortcut function to retrieve \f$x_g\f$.
+    \return The first gravity center coordinate.
+   */
+  double getXg() const { return values[0]; }
+  /*!
+    Shortcut function to retrieve \f$y_g\f$.
+    \return The second gravity center coordinate.
+   */
+  double getYg() const { return values[1]; }
+  /*!
+    The class's string name.
+   */
   const char* name() const {return "vpMomentGravityCenter";}
-  friend VISP_EXPORT std::ostream & operator<<(std::ostream & os, const vpMomentGravityCenter& v);
   void  printDependencies(std::ostream& os) const;
+  //@}
+  friend VISP_EXPORT std::ostream & operator<<(std::ostream & os, const vpMomentGravityCenter& v);
 };
 
 #endif

@@ -1,7 +1,7 @@
 #############################################################################
 #
 # This file is part of the ViSP software.
-# Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+# Copyright (C) 2005 - 2017 by Inria. All rights reserved.
 #
 # This software is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -85,6 +85,10 @@ if(MSVC)
     set(VISP_RUNTIME vc11)
   elseif(MSVC_VERSION EQUAL 1800)
     set(VISP_RUNTIME vc12)
+  elseif(MSVC_VERSION EQUAL 1900)
+    set(VISP_RUNTIME vc14)
+  elseif(MSVC_VERSION EQUAL 1910)
+    set(VISP_RUNTIME vc15)
   endif()
 elseif(MINGW)
   set(VISP_RUNTIME mingw)

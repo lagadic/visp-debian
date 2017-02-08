@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -57,17 +57,6 @@
 #include <math.h>
 const double vpRotationMatrix::threshold = 1e-6;
 
-
-/*!
-  Initializes the rotation matrix as identity.
-  
-  \sa eye()
-*/
-void
-vpRotationMatrix::setIdentity()
-{
-  eye();
-}
 /*!
   Initialize the rotation matrix as identity.
   
@@ -754,3 +743,19 @@ vpRotationMatrix::getCol(const unsigned int j) const
   return c;
 }
 
+#if defined(VISP_BUILD_DEPRECATED_FUNCTIONS)
+
+/*!
+  \deprecated You should rather use eye().
+
+  Initializes the rotation matrix as identity.
+
+  \sa eye()
+*/
+void
+vpRotationMatrix::setIdentity()
+{
+  eye();
+}
+
+#endif //#if defined(VISP_BUILD_DEPRECATED_FUNCTIONS)

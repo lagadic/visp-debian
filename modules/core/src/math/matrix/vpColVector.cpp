@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -58,6 +58,11 @@
 #include <visp3/core/vpDebug.h>
 #include <visp3/core/vpRotationVector.h>
 
+#if defined __SSE2__ || defined _M_X64 || (defined _M_IX86_FP && _M_IX86_FP >= 2)
+#  include <emmintrin.h>
+#  define VISP_HAVE_SSE2 1
+#endif
+
 
 //! Operator that allows to add two column vectors.
 vpColVector
@@ -73,6 +78,37 @@ vpColVector::operator+(const vpColVector &v) const
   for (unsigned int i=0;i<rowNum;i++)
     r[i] = (*this)[i] + v[i];
   return r;
+}
+/*!
+  Operator that allows to add a column vector to a translation vector.
+
+  \param t : 3-dimension translation vector to add.
+
+  \return The sum of the current columnn vector (*this) and the translation vector to add.
+  \code
+  vpTranslationVector t1(1,2,3);
+  vpColVector v(3);
+  v[0] = 4; v[1] = 5; v[2] = 6;
+  vpTranslationVector t2;
+
+  t2 = v + t1;
+  // t1 and v leave unchanged
+  // t2 is now equal to : 5, 7, 9
+  \endcode
+
+*/
+vpTranslationVector
+vpColVector::operator+(const vpTranslationVector &t) const
+{
+  if (getRows() != 3) {
+    throw(vpException(vpException::dimensionError,
+                      "Cannot add %d-dimension column vector to a translation vector", getRows()));
+  }
+  vpTranslationVector s;
+
+  for (unsigned int i=0;i<3;i++) s[i] = (*this)[i]+t[i] ;
+
+  return s;
 }
 
 //! Operator that allows to add two column vectors.
@@ -283,7 +319,7 @@ vpColVector::vpColVector (const vpMatrix &M)
    Constructor that creates a column vector from a std vector of double.
  */
 vpColVector::vpColVector (const std::vector<double> &v)
-  : vpArray2D<double>(1, (unsigned int)v.size())
+  : vpArray2D<double>((unsigned int)v.size(), 1)
 {
   for(unsigned int i=0; i< v.size(); i++)
     (*this)[i] = v[i];
@@ -292,7 +328,7 @@ vpColVector::vpColVector (const std::vector<double> &v)
    Constructor that creates a column vector from a std vector of float.
  */
 vpColVector::vpColVector (const std::vector<float> &v)
-  : vpArray2D<double>(1, (unsigned int)v.size())
+  : vpArray2D<double>((unsigned int)v.size(), 1)
 {
   for(unsigned int i=0; i< v.size(); i++)
     (*this)[i] = (double)(v[i]);
@@ -931,10 +967,14 @@ double vpColVector::mean(const vpColVector &v)
     throw(vpException(vpException::fatalError,
                       "Cannot compute column vector mean: vector empty")) ;
   }
-  double mean = 0 ;
-  double *vd = v.data ;
-  for (unsigned int i=0 ; i < v.getRows() ; i++)
-    mean += *(vd++) ;
+
+  //Use directly sum() function
+  double mean = v.sum();
+
+  //Old code used
+//  double *vd = v.data ;
+//  for (unsigned int i=0 ; i < v.getRows() ; i++)
+//    mean += *(vd++) ;
 
   return mean/v.getRows();
 }
@@ -971,7 +1011,44 @@ vpColVector::stdev(const vpColVector &v, const bool useBesselCorrection)
 
   double mean_value = mean(v);
   double sum_squared_diff = 0.0;
-  for(unsigned int i = 0; i < v.size(); i++) {
+  unsigned int i = 0;
+
+#if VISP_HAVE_SSE2
+  __m128d v_sub, v_mul, v_sum = _mm_setzero_pd();
+  //Compilation error with:
+  //clang version 3.5.0 (tags/RELEASE_350/final)
+  //Target: x86_64-unknown-linux-gnu
+  //Apple LLVM version 6.0 (clang-600.0.54) (based on LLVM 3.5svn)
+  //Target: x86_64-apple-darwin13.4.0
+  //error: use of undeclared identifier '_mm_set_pd1'; did you mean '_mm_set_ps1'?
+//  __m128d v_mean = _mm_set_pd1(mean_value);
+  __m128d v_mean = _mm_set_pd(mean_value, mean_value);
+
+  if(v.getRows() >= 4) {
+    for(; i <= v.getRows()- 4; i+=4) {
+      v_sub = _mm_sub_pd(_mm_loadu_pd(v.data + i), v_mean);
+      v_mul = _mm_mul_pd(v_sub, v_sub);
+      v_sum = _mm_add_pd(v_mul, v_sum);
+
+      v_sub = _mm_sub_pd(_mm_loadu_pd(v.data + i + 2), v_mean);
+      v_mul = _mm_mul_pd(v_sub, v_sub);
+      v_sum = _mm_add_pd(v_mul, v_sum);
+    }
+  }
+
+  double res[2];
+  _mm_storeu_pd(res, v_sum);
+
+  sum_squared_diff = res[0]+res[1];
+
+  //Old code used before SSE
+//#else
+//  for(unsigned int i = 0; i < v.size(); i++) {
+//    sum_squared_diff += (v[i]-mean_value) * (v[i]-mean_value);
+//  }
+#endif
+
+  for(; i < v.getRows(); i++) {
     sum_squared_diff += (v[i]-mean_value) * (v[i]-mean_value);
   }
 
@@ -1041,8 +1118,11 @@ vpColVector vpColVector::crossProd(const vpColVector &a, const vpColVector &b)
   \param nrows : number of rows of the matrix
   \param ncols : number of columns of the matrix
   \return The reshaped matrix.
+
+  \sa reshape(vpMatrix &, const unsigned int &, const unsigned int &)
 */
-vpMatrix vpColVector::reshape(const unsigned int &nrows,const unsigned int &ncols){
+vpMatrix vpColVector::reshape(const unsigned int &nrows, const unsigned int &ncols)
+{
   vpMatrix M(nrows, ncols);
   reshape(M, nrows, ncols);
   return M;
@@ -1053,8 +1133,57 @@ vpMatrix vpColVector::reshape(const unsigned int &nrows,const unsigned int &ncol
   \param M : the reshaped matrix.
   \param nrows : number of rows of the matrix.
   \param ncols : number of columns of the matrix.
+
+  \exception vpException::dimensionError If the matrix and the column vector have not the same size.
+
+  The following example shows how to use this method.
+  \code
+#include <visp/vpColVector.h>
+
+int main()
+{
+  int var=0;
+  vpMatrix mat(3, 4);
+  for (int i = 0; i < 3; i++)
+      for (int j = 0; j < 4; j++)
+          mat[i][j] = ++var;
+  std::cout << "mat: \n" << mat << std::endl;
+
+  vpColVector col = mat.stackColumns();
+  std::cout << "column vector: \n" << col << std::endl;
+
+  vpMatrix remat = col.reshape(3, 4);
+  std::cout << "remat: \n" << remat << std::endl;
+}
+  \endcode
+
+  If you run the previous example, you get:
+  \code
+mat:
+1  2  3  4
+5  6  7  8
+9  10  11  12
+column vector:
+1
+5
+9
+2
+6
+10
+3
+7
+11
+4
+8
+12
+remat:
+1  2  3  4
+5  6  7  8
+9  10  11  12
+  \endcode
 */
-void vpColVector::reshape(vpMatrix & M,const unsigned int &nrows,const unsigned int &ncols){
+void vpColVector::reshape(vpMatrix &M, const unsigned int &nrows, const unsigned int &ncols)
+{
   if(dsize!=nrows*ncols) {
     throw(vpException(vpException::dimensionError,
                       "Cannot reshape (%dx1) column vector in (%dx%d) matrix",
@@ -1069,7 +1198,7 @@ void vpColVector::reshape(vpMatrix & M,const unsigned int &nrows,const unsigned 
 
   for(unsigned int j =0; j< ncols; j++)
     for(unsigned int i =0; i< nrows; i++)
-      M[i][j]=data[j*ncols+i];
+      M[i][j]=data[j*nrows+i];
 }
 
 /*!
@@ -1216,18 +1345,85 @@ vpColVector::print(std::ostream& s, unsigned int length, char const* intro) cons
 }
 
 /*!
+  Return the sum of all the elements \f$v_{i}\f$ of the column vector v(m).
+
+  \return The value \f[\sum{i=0}^{m} v_i\f].
+  */
+double vpColVector::sum() const
+{
+  double sum = 0.0;
+  unsigned int i = 0;
+
+#if VISP_HAVE_SSE2
+  __m128d v_sum1 = _mm_setzero_pd(), v_sum2 = _mm_setzero_pd(), v_sum;
+
+  if(rowNum >= 4) {
+    for(; i <= rowNum- 4; i+=4) {
+      v_sum1 = _mm_add_pd(_mm_loadu_pd(data + i), v_sum1);
+      v_sum2 = _mm_add_pd(_mm_loadu_pd(data + i + 2), v_sum2);
+    }
+  }
+
+  v_sum = _mm_add_pd(v_sum1, v_sum2);
+
+  double res[2];
+  _mm_storeu_pd(res, v_sum);
+
+  sum = res[0]+res[1];
+
+  //Old code used before SSE
+//#else
+//  for (unsigned int i=0;i<rowNum;i++) {
+//    sum += rowPtrs[i][0];
+//  }
+#endif
+
+  for(; i < rowNum; i++) {
+    sum += (*this)[i];
+  }
+
+  return sum;
+}
+
+/*!
   Return the sum square of all the elements \f$v_{i}\f$ of the column vector v(m).
 
   \return The value \f[\sum{i=0}^{m} v_i^{2}\f].
   */
 double vpColVector::sumSquare() const
 {
-  double sum_square=0.0;
-  double x ;
+  double sum_square = 0.0;
+  unsigned int i = 0;
 
-  for (unsigned int i=0;i<rowNum;i++) {
-    x=rowPtrs[i][0];
-    sum_square += x*x;
+#if VISP_HAVE_SSE2
+  __m128d v_mul1, v_mul2;
+  __m128d v_sum = _mm_setzero_pd();
+
+  if(rowNum >= 4) {
+    for(; i <= rowNum- 4; i+=4) {
+      v_mul1 = _mm_mul_pd(_mm_loadu_pd(data + i), _mm_loadu_pd(data + i));
+      v_mul2 = _mm_mul_pd(_mm_loadu_pd(data + i + 2), _mm_loadu_pd(data + i + 2));
+
+      v_sum = _mm_add_pd(v_mul1, v_sum);
+      v_sum = _mm_add_pd(v_mul2, v_sum);
+    }
+  }
+
+  double res[2];
+  _mm_storeu_pd(res, v_sum);
+
+  sum_square = res[0]+res[1];
+
+  //Old code used before SSE
+//#else
+//  for (unsigned int i=0;i<rowNum;i++) {
+//    double x=rowPtrs[i][0];
+//    sum_square += x*x;
+//  }
+#endif
+
+  for(; i < rowNum; i++) {
+    sum_square += (*this)[i] * (*this)[i];
   }
 
   return sum_square;
@@ -1241,11 +1437,13 @@ double vpColVector::sumSquare() const
 */
 double vpColVector::euclideanNorm() const
 {
-  double norm=0.0;
-  double x ;
-  for (unsigned int i=0;i<dsize;i++) {
-    x = *(data +i); norm += x*x;
-  }
+  //Use directly sumSquare() function
+  double norm = sumSquare();
+
+  //Old code used
+//  for (unsigned int i=0;i<dsize;i++) {
+//    double x = *(data +i); norm += x*x;
+//  }
 
   return sqrt(norm);
 }
@@ -1263,12 +1461,205 @@ double vpColVector::euclideanNorm() const
 double vpColVector::infinityNorm() const
 {
   double norm=0.0;
-  double x ;
   for (unsigned int i=0;i<rowNum;i++){
-    x =  fabs ( (*this)[i] ) ;
+    double x =  fabs ( (*this)[i] ) ;
     if (x > norm) {
       norm = x;
     }
   }
   return norm;
 }
+
+/*!
+  Print to be used as part of a C++ code later.
+
+  \param os : the stream to be printed in.
+  \param matrixName : name of the column vector, "A" by default.
+  \param octet : if false, print using double, if true, print byte per byte
+  each bytes of the double array.
+
+  The following code shows how to use this function:
+\code
+#include <visp3/core/vpColVector.h>
+
+int main()
+{
+  vpColVector v(3);
+  for (unsigned int i=0; i<v.size(); i++)
+    v[i] = i;
+  v.cppPrint(std::cout, "v");
+}
+\endcode
+  It produces the following output that could be copy/paste in a C++ code:
+  \code
+vpColVector v (3);
+v[0] = 0;
+v[1] = 1;
+v[2] = 2;
+
+  \endcode
+*/
+std::ostream & vpColVector::cppPrint(std::ostream & os, const std::string &matrixName, bool octet) const
+{
+  os << "vpColVector " << matrixName
+     << " (" << this ->getRows () << "); " <<std::endl;
+
+  for (unsigned int i=0; i < this->getRows(); ++ i) {
+    
+    if (! octet) {
+      os << matrixName << "[" << i << "] = " << (*this)[i] << "; " << std::endl;
+    }
+    else  {
+      for (unsigned int k = 0; k < sizeof(double); ++ k) {
+        os << "((unsigned char*)&(" << matrixName
+           << "[" << i << "]) )[" << k
+           <<"] = 0x" <<std::hex<<
+             (unsigned int)((unsigned char*)& ((*this)[i])) [k]
+             << "; " << std::endl;
+      }
+    }
+  }
+  std::cout << std::endl;
+  return os;
+};
+
+/*!
+  Print/save a column vector in csv format.
+
+  The following code
+  \code
+#include <visp3/core/vpColVector.h>
+
+int main()
+{
+  std::ofstream ofs("log.csv", std::ofstream::out);
+  vpColVector v(3);
+  for (unsigned int i=0; i<v.size(); i++)
+    v[i] = i;
+
+  v.csvPrint(ofs);
+
+  ofs.close();
+}
+  \endcode
+  produces log.csv file that contains:
+  \code
+0
+1
+2
+  \endcode
+*/
+std::ostream & vpColVector::csvPrint(std::ostream & os) const
+{
+  for (unsigned int i=0; i < this->getRows(); ++ i) {
+    os <<  (*this)[i];
+    
+    os << std::endl;
+  }
+  return os;
+};
+
+/*!
+  Print using Maple syntax, to copy/paste in Maple later.
+
+  The following code
+  \code
+#include <visp3/core/vpColVector.h>
+
+int main()
+{
+  vpColVector v(3);
+  for (unsigned int i=0; i<v.size(); i++)
+    v[i] = i;
+  std::cout << "v = "; v.maplePrint(std::cout);
+}
+  \endcode
+  produces this output:
+  \code
+v = ([
+[0, ],
+[1, ],
+[2, ],
+])
+  \endcode
+  that could be copy/paste in Maple.
+*/
+std::ostream & vpColVector::maplePrint(std::ostream & os) const
+{
+  os << "([ " << std::endl;
+  for (unsigned int i=0; i < this->getRows(); ++ i) {
+    os << "[";
+    os <<  (*this)[i] << ", ";
+    os << "]," << std::endl;
+  }
+  os << "])" << std::endl;
+  return os;
+};
+
+/*!
+  Print using Matlab syntax, to copy/paste in Matlab later.
+
+  The following code
+  \code
+#include <visp3/core/vpColVector.h>
+
+int main()
+{
+  vpColVector v(3);
+  for (unsigned int i=0; i<v.size(); i++)
+    v[i] = i;
+  std::cout << "v = "; v.matlabPrint(std::cout);
+}
+  \endcode
+  produces this output:
+  \code
+v = [ 0, ;
+1, ;
+2, ]
+  \endcode
+  that could be copy/paste in Matlab:
+  \code
+>> v = [ 0, ;
+1, ;
+2, ]
+
+v =
+
+    0
+    1
+    2
+
+>>
+  \endcode
+*/
+std::ostream & vpColVector::matlabPrint(std::ostream & os) const
+{
+  os << "[ ";
+  for (unsigned int i=0; i < this->getRows(); ++ i) {
+    os <<  (*this)[i] << ", ";
+    if (this ->getRows() != i+1) { os << ";" << std::endl; }
+    else { os << "]" << std::endl; }
+  }
+  return os;
+};
+
+#if defined(VISP_BUILD_DEPRECATED_FUNCTIONS)
+/*!
+  \deprecated You should rather use insert(unsigned int, const vpColVector &).
+
+  Insert column vector \e v at the given position \e r in the current column vector.
+
+  \warning Throw vpMatrixException::incorrectMatrixSizeError if the
+  dimensions of the matrices do not allow the operation.
+
+  \param v : The column vector to insert.
+  \param r : The index of the row to begin to insert data.
+  \param c : Not used.
+
+ */
+void vpColVector::insert(const vpColVector &v, const unsigned int r, const unsigned int c)
+{
+  (void) c;
+  insert(r, v);
+}
+#endif // defined(VISP_BUILD_DEPRECATED_FUNCTIONS)

@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -65,7 +65,7 @@
 
 /*!
   \class vpImageTools
-  
+
   \ingroup group_core_image
 
   \brief Various image tools; sub-image extraction, modification of
@@ -74,134 +74,335 @@
 */
 class VISP_EXPORT vpImageTools
 {
-
 public:
-  template<class Type>
-  static void createSubImage(const vpImage<Type> &I,
-			     unsigned int i_sub, unsigned int j_sub,
-			     unsigned int nrow_sub, unsigned int ncol_sub,
-			     vpImage<Type> &S);
-
-  template<class Type>
-  static void createSubImage(const vpImage<Type> &I,
-			     const vpRect &rect,
-			     vpImage<Type> &S);
+  enum vpImageInterpolationType {
+    INTERPOLATION_NEAREST, /*!< Nearest neighbor interpolation (fastest). */
+    INTERPOLATION_LINEAR,  /*!< Bi-linear interpolation. */
+    INTERPOLATION_CUBIC    /*!< Bi-cubic interpolation. */
+  };
 
   template<class Type>
   static inline void binarise(vpImage<Type> &I,
-		       Type threshold1, Type threshold2,
-		       Type value1, Type value2, Type value3, const bool useLUT=false);
-
+                              Type threshold1, Type threshold2,
+                              Type value1, Type value2, Type value3, const bool useLUT=true);
   static void changeLUT(vpImage<unsigned char>& I,
-			unsigned char A,
-			unsigned char newA,
-			unsigned char B,
-			unsigned char newB);
+                        unsigned char A,
+                        unsigned char newA,
+                        unsigned char B,
+                        unsigned char newB);
 
   template<class Type>
-  static void undistort(const vpImage<Type> &I,
-                        const vpCameraParameters &cam,
-                        vpImage<Type> &newI);
+  static void crop(const vpImage<Type> &I,
+                   double roi_top,  double roi_left,
+                   unsigned int roi_height, unsigned int roi_width,
+                   vpImage<Type> &crop, unsigned int v_scale=1, unsigned int h_scale=1);
 
   template<class Type>
-  static void flip(const vpImage<Type> &I,
-                        vpImage<Type> &newI);
+  static void crop(const vpImage<Type> &I,
+                   const vpImagePoint &topLeft,
+                   unsigned int roi_height, unsigned int roi_width,
+                   vpImage<Type> &crop, unsigned int v_scale=1, unsigned int h_scale=1);
+  template<class Type>
+  static void crop(const vpImage<Type> &I, const vpRect &roi, vpImage<Type> &crop, unsigned int v_scale=1, unsigned int h_scale=1);
+  template<class Type>
+  static void crop(const unsigned char *bitmap, unsigned int width, unsigned int height, const vpRect &roi, vpImage<Type> &crop,
+                   unsigned int v_scale=1, unsigned int h_scale=1);
+
+  template<class Type>
+  static void flip(const vpImage<Type> &I, vpImage<Type> &newI);
 
   template<class Type>
   static void flip(vpImage<Type> &I);
 
 
   static void imageDifference(const vpImage<unsigned char> &I1,
-			      const vpImage<unsigned char> &I2,
-			      vpImage<unsigned char> &Idiff) ;
+                              const vpImage<unsigned char> &I2,
+                              vpImage<unsigned char> &Idiff);
+  static void imageDifference(const vpImage<vpRGBa> &I1,
+                              const vpImage<vpRGBa> &I2,
+                              vpImage<vpRGBa> &Idiff);
 
   static void imageDifferenceAbsolute(const vpImage<unsigned char> &I1,
-  				   const vpImage<unsigned char> &I2,
-  				   vpImage<unsigned char> &Idiff);
+                                      const vpImage<unsigned char> &I2,
+                                      vpImage<unsigned char> &Idiff);
+  static void imageDifferenceAbsolute(const vpImage<vpRGBa> &I1,
+                                      const vpImage<vpRGBa> &I2,
+                                      vpImage<vpRGBa> &Idiff);
+
+  static void imageAdd(const vpImage<unsigned char> &I1,
+                       const vpImage<unsigned char> &I2,
+                       vpImage<unsigned char> &Ires,
+                       const bool saturate=false);
+
+  static void imageSubtract(const vpImage<unsigned char> &I1,
+                            const vpImage<unsigned char> &I2,
+                            vpImage<unsigned char> &Ires,
+                            const bool saturate=false);
+
+  template<class Type>
+  static void resize(const vpImage<Type> &I,
+                     vpImage<Type> &Ires,
+                     const unsigned int width, const unsigned int height,
+                     const vpImageInterpolationType &method=INTERPOLATION_NEAREST);
+
+  template<class Type>
+  static void resize(const vpImage<Type> &I,
+                     vpImage<Type> &Ires,
+                     const vpImageInterpolationType &method=INTERPOLATION_NEAREST);
+
+  template<class Type>
+  static void undistort(const vpImage<Type> &I,
+                        const vpCameraParameters &cam,
+                        vpImage<Type> &newI);
+
+#if defined(VISP_BUILD_DEPRECATED_FUNCTIONS)
+  /*!
+    @name Deprecated functions
+  */
+  //@{
+  template<class Type>
+  vp_deprecated static void createSubImage(const vpImage<Type> &I,
+                             unsigned int i_sub, unsigned int j_sub,
+                             unsigned int nrow_sub, unsigned int ncol_sub,
+                             vpImage<Type> &S);
+
+  template<class Type>
+  vp_deprecated static void createSubImage(const vpImage<Type> &I, const vpRect &rect, vpImage<Type> &S);
+  //@}
+#endif
+
+private:
+  //Cubic interpolation
+  static float cubicHermite (const float A, const float B, const float C, const float D, const float t);
+
+  template<class Type>
+  static Type getPixelClamped(const vpImage<Type> &I, const float u, const float v);
+
+  //Linear interpolation
+  static float lerp(const float A, const float B, const float t);
+
+  template<class Type>
+  static void resizeBicubic(const vpImage<Type> &I, vpImage<Type> &Ires, const unsigned int i, const unsigned int j,
+                            const float u, const float v, const float xFrac, const float yFrac);
+
+  template<class Type>
+  static void resizeBilinear(const vpImage<Type> &I, vpImage<Type> &Ires, const unsigned int i, const unsigned int j,
+                             const float u, const float v, const float xFrac, const float yFrac);
+
+  template<class Type>
+  static void resizeNearest(const vpImage<Type> &I, vpImage<Type> &Ires, const unsigned int i, const unsigned int j,
+                            const float u, const float v);
 } ;
 
+#if defined(VISP_BUILD_DEPRECATED_FUNCTIONS)
 /*!
-  Extract a sub part of an image
+  Crop a region of interest (ROI) in an image.
+
+  \deprecated This fonction is deprecated. You should rather use
+  crop(const vpImage<Type> &, unsigned int, unsigned int, unsigned int, unsigned int, vpImage<Type> &).
 
   \param I : Input image from which a sub image will be extracted.
-  \param i_sub, j_sub : coordinates of the upper left point of the sub image
-  \param nrow_sub, ncol_sub : number of row, column of the sub image
-  \param S : Sub-image.
+  \param roi_top : ROI vertical position of the upper/left corner in the input image.
+  \param roi_left : ROI  horizontal position of the upper/left corner in the input image.
+  \param roi_height : Cropped image height corresponding to the ROI height.
+  \param roi_width : Cropped image width corresponding to the ROI height.
+  \param crop : Cropped image.
+
+  \sa crop(const vpImage<Type> &, unsigned int, unsigned int, unsigned int, unsigned int, vpImage<Type> &)
 */
+
 template<class Type>
 void vpImageTools::createSubImage(const vpImage<Type> &I,
-				  unsigned int i_sub, unsigned int j_sub,
-				  unsigned int nrow_sub, unsigned int ncol_sub,
-				  vpImage<Type> &S)
+                                  unsigned int roi_top, unsigned int roi_left,
+                                  unsigned int roi_height, unsigned int roi_width,
+                                  vpImage<Type> &crop)
 {
-  unsigned int i,j ;
-  unsigned int imax = i_sub + nrow_sub ;
-  unsigned int jmax = j_sub + ncol_sub ;
-
-  if (imax > I.getHeight())
-  {
-    imax = I.getHeight() -1 ;
-    nrow_sub = imax-i_sub ;
-  }
-  if (jmax > I.getWidth())
-  {
-    jmax = I.getWidth() -1 ;
-    ncol_sub = jmax -j_sub ;
-  }
-
-  S.resize(nrow_sub, ncol_sub) ;
-  for (i=i_sub ; i < imax ; i++)
-    for (j=j_sub ; j < jmax ; j++)
-    {
-      S[i-i_sub][j-j_sub] = I[i][j] ;
-    }
+  vpImageTools::crop(I, roi_top, roi_left, roi_height, roi_width, crop);
 }
 
 /*!
-  Extract a sub part of an image
+  Crop an image region of interest.
+
+  \deprecated This fonction is deprecated. You should rather use
+  crop(const vpImage<Type> &, const vpRect &, vpImage<Type> &).
 
   \param I : Input image from which a sub image will be extracted.
 
-  \param rect : Rectangle area in the image \e I corresponding to the
-  sub part of the image to extract.
+  \param roi : Region of interest in image \e I corresponding to the
+  cropped part of the image.
 
-  \param S : Sub-image.
+  \param crop : Cropped image.
+
+  \sa crop(const vpImage<Type> &, const vpRect &, vpImage<Type> &)
 */
 template<class Type>
 void vpImageTools::createSubImage(const vpImage<Type> &I,
-				  const vpRect &rect,
-				  vpImage<Type> &S)
+                                  const vpRect &roi,
+                                  vpImage<Type> &crop)
 {
-  double dleft   = rect.getLeft();
-  double dtop    = rect.getTop();
-  double dright  = ceil( rect.getRight() );
-  double dbottom = ceil( rect.getBottom() );
+  vpImageTools::crop(I, roi, crop);
+}
 
-  if (dleft < 0.0)                   dleft = 0.0;
-  else if (dleft >= I.getWidth())    dleft = I.getWidth() - 1;
+#endif // #if defined(VISP_BUILD_DEPRECATED_FUNCTIONS)
 
-  if (dright < 0.0)                  dright = 0.0;
-  else if (dright >= I.getWidth())   dright = I.getWidth() - 1;
+/*!
+  Crop a region of interest (ROI) in an image. The ROI coordinates and dimension are defined in the original image.
 
-  if (dtop < 0.0)                    dtop = 0.0;
-  else if (dtop >= I.getHeight())    dtop = I.getHeight() - 1;
+  Setting \e v_scale and \e h_scale to values different from 1 allows also to subsample the cropped image.
 
-  if (dbottom < 0.0)                 dbottom = 0.0;
-  else if (dbottom >= I.getHeight()) dbottom = I.getHeight() - 1;
+  \param I : Input image from which a sub image will be extracted.
+  \param roi_top : ROI vertical position of the upper/left corner in the input image.
+  \param roi_left : ROI  horizontal position of the upper/left corner in the input image.
+  \param roi_height : Cropped image height corresponding to the ROI height.
+  \param roi_width : Cropped image width corresponding to the ROI height.
+  \param crop : Cropped image.
+  \param v_scale [in] : Vertical subsampling factor applied to the ROI.
+  \param h_scale [in] : Horizontal subsampling factor applied to the ROI.
 
-  // Convert the double-precision rectangle coordinates into integer positions
-  unsigned int left   = (unsigned int) dleft;
-  unsigned int top    = (unsigned int) dtop;
-  unsigned int bottom = (unsigned int) dbottom;
-  unsigned int right  = (unsigned int) dright;
+  \sa crop(const vpImage<Type> &, const vpRect &, vpImage<Type> &)
 
-  unsigned int width  = right - left + 1;;
-  unsigned int height = bottom - top + 1;
+*/
+template<class Type>
+void vpImageTools::crop(const vpImage<Type> &I,
+                        double roi_top,  double roi_left,
+                        unsigned int roi_height, unsigned int roi_width,
+                        vpImage<Type> &crop, unsigned int v_scale, unsigned int h_scale)
+{
+  int i_min = std::max((int)(ceil(roi_top/v_scale)), 0);
+  int j_min = std::max((int)(ceil(roi_left/h_scale)), 0);
+  int i_max = std::min((int)(ceil((roi_top + roi_height))/v_scale), (int)(I.getHeight()/v_scale));
+  int j_max = std::min((int)(ceil((roi_left + roi_width)/h_scale)), (int)(I.getWidth()/h_scale));
 
-  S.resize(height, width) ;
-  for (unsigned int i=top ; i <= bottom ; i++) {
-    for (unsigned int j=left ; j <= right ; j++) {
-      S[i-top][j-left] = I[i][j] ;
+  unsigned int i_min_u = (unsigned int)i_min;
+  unsigned int j_min_u = (unsigned int)j_min;
+
+  unsigned int r_width  = (unsigned int)(j_max-j_min);
+  unsigned int r_height = (unsigned int)(i_max-i_min);
+
+  crop.resize(r_height, r_width) ;
+
+  if (v_scale == 1 && h_scale == 1) {
+    for (unsigned int i=0 ; i < r_height ; i++) {
+      void *src = (void *)(I[i+i_min_u] + j_min_u);
+      void *dst = (void *)crop[i];
+      memcpy(dst, src, r_width*sizeof(Type));
+    }
+  }
+  else if (h_scale == 1) {
+    for (unsigned int i=0 ; i < r_height ; i++) {
+      void *src = (void *)(I[(i + i_min_u)*v_scale]+j_min_u);
+      void *dst = (void *)crop[i];
+      memcpy(dst, src, r_width*sizeof(Type));
+    }
+  }
+  else {
+    for (unsigned int i=0 ; i < r_height ; i++) {
+      for (unsigned int j=0 ; j < r_width ; j++) {
+        crop[i][j] = I[(i + i_min_u)*v_scale][(j + j_min_u)*h_scale];
+      }
+    }
+  }
+}
+
+/*!
+  Crop a region of interest (ROI) in an image. The ROI coordinates and dimension are defined in the original image.
+
+  Setting \e v_scale and \e h_scale to values different from 1 allows also to subsample the cropped image.
+
+  \param I : Input image from which a sub image will be extracted.
+  \param topLeft : ROI position of the upper/left corner in the input image.
+  \param roi_height : Cropped image height corresponding to the ROI height.
+  \param roi_width : Cropped image width corresponding to the ROI height.
+  \param crop : Cropped image.
+  \param v_scale [in] : Vertical subsampling factor applied to the ROI.
+  \param h_scale [in] : Horizontal subsampling factor applied to the ROI.
+
+  \sa crop(const vpImage<Type> &, const vpRect &, vpImage<Type> &)
+
+*/
+template<class Type>
+void vpImageTools::crop(const vpImage<Type> &I,
+                        const vpImagePoint &topLeft,
+                        unsigned int roi_height, unsigned int roi_width,
+                        vpImage<Type> &crop, unsigned int v_scale, unsigned int h_scale)
+{
+  vpImageTools::crop(I, topLeft.get_i(), topLeft.get_j(), roi_height, roi_width, crop, v_scale, h_scale);
+}
+
+/*!
+  Crop a region of interest (ROI) in an image. The ROI coordinates and dimension are defined in the original image.
+
+  Setting \e v_scale and \e h_scale to values different from 1 allows also to subsample the cropped image.
+
+  \param I : Input image from which a sub image will be extracted.
+
+  \param roi : Region of interest in image \e I corresponding to the
+  cropped part of the image.
+
+  \param crop : Cropped image.
+  \param v_scale [in] : Vertical subsampling factor applied to the ROI.
+  \param h_scale [in] : Horizontal subsampling factor applied to the ROI.
+
+*/
+template<class Type>
+void vpImageTools::crop(const vpImage<Type> &I, const vpRect &roi, vpImage<Type> &crop, unsigned int v_scale, unsigned int h_scale)
+{
+  vpImageTools::crop(I, roi.getTop(), roi.getLeft(), (unsigned int)roi.getHeight(), (unsigned int)roi.getWidth(), crop, v_scale, h_scale);
+}
+
+/*!
+  Crop a region of interest (ROI) in an image. The ROI coordinates and dimension are defined in the original image.
+
+  Setting \e v_scale and \e h_scale to values different from 1 allows also to subsample the cropped image.
+
+  \param bitmap : Pointer to the input image from which a sub image will be extracted.
+  \param width, height : Size of the input image.
+
+  \param roi : Region of interest corresponding to the cropped part of the image.
+
+  \param crop : Cropped image.
+  \param v_scale [in] : Vertical subsampling factor applied to the ROI.
+  \param h_scale [in] : Horizontal subsampling factor applied to the ROI.
+*/
+template<class Type>
+void vpImageTools::crop(const unsigned char *bitmap, unsigned int width, unsigned int height, const vpRect &roi, vpImage<Type> &crop,
+                        unsigned int v_scale, unsigned int h_scale)
+{
+  int i_min = std::max((int)(ceil(roi.getTop()/v_scale)), 0);
+  int j_min = std::max((int)(ceil(roi.getLeft()/h_scale)), 0);
+  int i_max = std::min((int)(ceil((roi.getTop() + roi.getHeight()))/v_scale), (int)(height/v_scale));
+  int j_max = std::min((int)(ceil((roi.getLeft() + roi.getWidth())/h_scale)), (int)(width/h_scale));
+
+  unsigned int i_min_u = (unsigned int)i_min;
+  unsigned int j_min_u = (unsigned int)j_min;
+
+  unsigned int r_width  = (unsigned int)(j_max-j_min);
+  unsigned int r_height = (unsigned int)(i_max-i_min);
+
+  crop.resize(r_height, r_width) ;
+
+  if (v_scale == 1 && h_scale == 1) {
+    for (unsigned int i=0 ; i < r_height ; i++) {
+      void *src = (void *)(bitmap + ( (i+i_min_u)*width + j_min_u ) * sizeof(Type));
+      void *dst = (void *)crop[i];
+      memcpy(dst, src, r_width*sizeof(Type));
+    }
+  }
+  else if (h_scale == 1) {
+    for (unsigned int i=0 ; i < r_height ; i++) {
+      void *src = (void *)(bitmap + ( (i+i_min_u)*width*v_scale + j_min_u ) * sizeof(Type) );
+      void *dst = (void *)crop[i];
+      memcpy(dst, src, r_width*sizeof(Type));
+    }
+  }
+  else {
+    for (unsigned int i=0 ; i < r_height ; i++) {
+      unsigned int i_src = (i+i_min_u)*width*v_scale + j_min_u*h_scale;
+      for (unsigned int j=0 ; j < r_width ; j++) {
+        void *src = (void *)(bitmap + (i_src + j*h_scale)*sizeof(Type));
+        void *dst = (void *)&crop[i][j];
+        memcpy(dst, src, sizeof(Type));
+      }
     }
   }
 }
@@ -220,8 +421,8 @@ void vpImageTools::createSubImage(const vpImage<Type> &I,
 */
 template<class Type>
 inline void vpImageTools::binarise(vpImage<Type> &I,
-			    Type threshold1, Type threshold2,
-			    Type value1, Type value2, Type value3, const bool useLUT)
+                                   Type threshold1, Type threshold2,
+                                   Type value1, Type value2, Type value3, const bool useLUT)
 {
   if(useLUT) {
     std::cerr << "LUT not available for this type ! Will use the iteration method." << std::endl;
@@ -252,8 +453,8 @@ inline void vpImageTools::binarise(vpImage<Type> &I,
 */
 template<>
 inline void vpImageTools::binarise(vpImage<unsigned char> &I,
-    unsigned char threshold1, unsigned char threshold2,
-    unsigned char value1, unsigned char value2, unsigned char value3, const bool useLUT)
+                                   unsigned char threshold1, unsigned char threshold2,
+                                   unsigned char value1, unsigned char value2, unsigned char value3, const bool useLUT)
 {
   if(useLUT) {
     //Construct the LUT
@@ -306,6 +507,8 @@ public:
     cam = u.cam;
     nthreads = u.nthreads;
     threadid = u.threadid;
+
+    return *this;
   }
 
   static void *vpUndistort_threaded(void *arg);
@@ -362,16 +565,16 @@ void *vpUndistortInternalType<Type>::vpUndistort_threaded(void *arg)
       Type v01;
       Type v23;
       if ( (0 <= u_round) && (0 <= v_round) &&
-	   (u_round < ((width) - 1)) && (v_round < ((height) - 1)) ) {
-	//process interpolation
-	const Type* _mp = &src[v_round*width+u_round];
-	v01 = (Type)(_mp[0] + ((_mp[1] - _mp[0]) * du_double));
-	_mp += width;
-	v23 = (Type)(_mp[0] + ((_mp[1] - _mp[0]) * du_double));
-	*dst = (Type)(v01 + ((v23 - v01) * dv_double));
+           (u_round < ((width) - 1)) && (v_round < ((height) - 1)) ) {
+        //process interpolation
+        const Type* _mp = &src[v_round*width+u_round];
+        v01 = (Type)(_mp[0] + ((_mp[1] - _mp[0]) * du_double));
+        _mp += width;
+        v23 = (Type)(_mp[0] + ((_mp[1] - _mp[0]) * du_double));
+        *dst = (Type)(v01 + ((v23 - v01) * dv_double));
       }
       else {
-	*dst = 0;
+        *dst = 0;
       }
       dst++;
     }
@@ -445,8 +648,8 @@ void vpImageTools::undistort(const vpImage<Type> &I,
     undistortSharedData[i].nthreads = nthreads;
     undistortSharedData[i].threadid = i;
     pthread_create( &callThd[i], &attr,
-		    &vpUndistortInternalType<Type>::vpUndistort_threaded,
-		    &undistortSharedData[i]);
+                    &vpUndistortInternalType<Type>::vpUndistort_threaded,
+                    &undistortSharedData[i]);
   }
   pthread_attr_destroy(&attr);
   /* Wait on the other threads */
@@ -557,7 +760,7 @@ void vpImageTools::undistort(const vpImage<Type> &I,
   for(int v = 0 ; v < height; v++){
     for(int u = 0; u < height; u++){
       double r2 = vpMath::sqr(((double)u - u0)/px) +
-	vpMath::sqr(((double)v-v0)/py);
+                  vpMath::sqr(((double)v-v0)/py);
       double u_double = ((double)u - u0)*(1.0+kd*r2) + u0;
       double v_double = ((double)v - v0)*(1.0+kd*r2) + v0;
       undistI[v][u] = I.getPixelBI((float)u_double,(float)v_double);
@@ -586,7 +789,7 @@ void vpImageTools::flip(const vpImage<Type> &I,
     for (unsigned int i = 0; i < height; i++)
     {
       memcpy(newI.bitmap+i*width, I.bitmap+(height-1-i)*width,
-	     width*sizeof(Type));
+             width*sizeof(Type));
     }
 }
 
@@ -635,13 +838,204 @@ void vpImageTools::flip(vpImage<Type> &I)
     for ( i = 0; i < height/2; i++)
     {
       memcpy(Ibuf.bitmap, I.bitmap+i*width,
-  	            width*sizeof(Type));
+             width*sizeof(Type));
 
       memcpy(I.bitmap+i*width, I.bitmap+(height-1-i)*width,
-  	            width*sizeof(Type));
+             width*sizeof(Type));
       memcpy(I.bitmap+(height-1-i)*width, Ibuf.bitmap,
-  	            width*sizeof(Type));
+             width*sizeof(Type));
     }
+}
+
+template<class Type>
+Type vpImageTools::getPixelClamped(const vpImage<Type> &I, const float u, const float v) {
+  unsigned int j = std::min(std::max(0u, (unsigned int) u), I.getWidth()-1);
+  unsigned int i = std::min(std::max(0u, (unsigned int) v), I.getHeight()-1);
+
+  return I[i][j];
+}
+
+// Reference: http://blog.demofox.org/2015/08/15/resizing-images-with-bicubic-interpolation/
+template<class Type> void
+vpImageTools::resizeBicubic(const vpImage<Type> &I, vpImage<Type> &Ires, const unsigned int i, const unsigned int j,
+                            const float u, const float v, const float xFrac, const float yFrac) {
+  // 1st row
+  Type p00 = getPixelClamped(I, u-1, v-1);
+  Type p01 = getPixelClamped(I, u+0, v-1);
+  Type p02 = getPixelClamped(I, u+1, v-1);
+  Type p03 = getPixelClamped(I, u+2, v-1);
+
+  // 2nd row
+  Type p10 = getPixelClamped(I, u-1, v+0);
+  Type p11 = getPixelClamped(I, u+0, v+0);
+  Type p12 = getPixelClamped(I, u+1, v+0);
+  Type p13 = getPixelClamped(I, u+2, v+0);
+
+  // 3rd row
+  Type p20 = getPixelClamped(I, u-1, v+1);
+  Type p21 = getPixelClamped(I, u+0, v+1);
+  Type p22 = getPixelClamped(I, u+1, v+1);
+  Type p23 = getPixelClamped(I, u+2, v+1);
+
+  // 4th row
+  Type p30 = getPixelClamped(I, u-1, v+2);
+  Type p31 = getPixelClamped(I, u+0, v+2);
+  Type p32 = getPixelClamped(I, u+1, v+2);
+  Type p33 = getPixelClamped(I, u+2, v+2);
+
+  float col0 = cubicHermite(p00, p01, p02, p03, xFrac);
+  float col1 = cubicHermite(p10, p11, p12, p13, xFrac);
+  float col2 = cubicHermite(p20, p21, p22, p23, xFrac);
+  float col3 = cubicHermite(p30, p31, p32, p33, xFrac);
+  float value = cubicHermite(col0, col1, col2, col3, yFrac);
+  Ires[i][j] = vpMath::saturate<Type>(value);
+}
+
+template<> inline void
+vpImageTools::resizeBicubic(const vpImage<vpRGBa> &I, vpImage<vpRGBa> &Ires, const unsigned int i, const unsigned int j,
+                            const float u, const float v, const float xFrac, const float yFrac) {
+  // 1st row
+  vpRGBa p00 = getPixelClamped(I, u-1, v-1);
+  vpRGBa p01 = getPixelClamped(I, u+0, v-1);
+  vpRGBa p02 = getPixelClamped(I, u+1, v-1);
+  vpRGBa p03 = getPixelClamped(I, u+2, v-1);
+
+  // 2nd row
+  vpRGBa p10 = getPixelClamped(I, u-1, v+0);
+  vpRGBa p11 = getPixelClamped(I, u+0, v+0);
+  vpRGBa p12 = getPixelClamped(I, u+1, v+0);
+  vpRGBa p13 = getPixelClamped(I, u+2, v+0);
+
+  // 3rd row
+  vpRGBa p20 = getPixelClamped(I, u-1, v+1);
+  vpRGBa p21 = getPixelClamped(I, u+0, v+1);
+  vpRGBa p22 = getPixelClamped(I, u+1, v+1);
+  vpRGBa p23 = getPixelClamped(I, u+2, v+1);
+
+  // 4th row
+  vpRGBa p30 = getPixelClamped(I, u-1, v+2);
+  vpRGBa p31 = getPixelClamped(I, u+0, v+2);
+  vpRGBa p32 = getPixelClamped(I, u+1, v+2);
+  vpRGBa p33 = getPixelClamped(I, u+2, v+2);
+
+  for (int c = 0; c < 3; c++) {
+    float col0 = cubicHermite( ((unsigned char *) &p00)[c], ((unsigned char *) &p01)[c], ((unsigned char *) &p02)[c], ((unsigned char *) &p03)[c], xFrac );
+    float col1 = cubicHermite( ((unsigned char *) &p10)[c], ((unsigned char *) &p11)[c], ((unsigned char *) &p12)[c], ((unsigned char *) &p13)[c], xFrac );
+    float col2 = cubicHermite( ((unsigned char *) &p20)[c], ((unsigned char *) &p21)[c], ((unsigned char *) &p22)[c], ((unsigned char *) &p23)[c], xFrac );
+    float col3 = cubicHermite( ((unsigned char *) &p30)[c], ((unsigned char *) &p31)[c], ((unsigned char *) &p32)[c], ((unsigned char *) &p33)[c], xFrac );
+    float value = cubicHermite(col0, col1, col2, col3, yFrac);
+
+    ((unsigned char *) &Ires[i][j])[c] = vpMath::saturate<unsigned char>(value);
+  }
+}
+
+template<class Type> void
+vpImageTools::resizeBilinear(const vpImage<Type> &I, vpImage<Type> &Ires, const unsigned int i, const unsigned int j,
+                             const float u, const float v, const float xFrac, const float yFrac) {
+  unsigned int u0 = (unsigned int) u;
+  unsigned int v0 = (unsigned int) v;
+
+  unsigned int u1 = std::min(I.getWidth()-1, (unsigned int) u+1);
+  unsigned int v1 = v0;
+
+  unsigned int u2 = u0;
+  unsigned int v2 = std::min(I.getHeight()-1, (unsigned int) v+1);
+
+  unsigned int u3 = std::min(I.getWidth()-1, (unsigned int) u+1);
+  unsigned int v3 = std::min(I.getHeight()-1, (unsigned int) v+1);
+
+  float col0 = lerp(I[v0][u0], I[v1][u1], xFrac);
+  float col1 = lerp(I[v2][u2], I[v3][u3], xFrac);
+  float value = lerp(col0, col1, yFrac);
+
+  Ires[i][j] = vpMath::saturate<Type>(value);
+}
+
+template<> inline void
+vpImageTools::resizeBilinear(const vpImage<vpRGBa> &I, vpImage<vpRGBa> &Ires, const unsigned int i, const unsigned int j,
+                             const float u, const float v, const float xFrac, const float yFrac) {
+  unsigned int u0 = (unsigned int) u;
+  unsigned int v0 = (unsigned int) v;
+
+  unsigned int u1 = std::min(I.getWidth()-1, (unsigned int) u+1);
+  unsigned int v1 = v0;
+
+  unsigned int u2 = u0;
+  unsigned int v2 = std::min(I.getHeight()-1, (unsigned int) v+1);
+
+  unsigned int u3 = std::min(I.getWidth()-1, (unsigned int) u+1);
+  unsigned int v3 = std::min(I.getHeight()-1, (unsigned int) v+1);
+
+  for (int c = 0; c < 3; c++) {
+    float col0 = lerp( ((unsigned char *) &I[v0][u0])[c], ((unsigned char *) &I[v1][u1])[c], xFrac );
+    float col1 = lerp( ((unsigned char *) &I[v2][u2])[c], ((unsigned char *) &I[v3][u3])[c], xFrac );
+    float value = lerp(col0, col1, yFrac);
+
+    ((unsigned char *) &Ires[i][j])[c] = vpMath::saturate<unsigned char>(value);
+  }
+}
+
+template<class Type> void
+vpImageTools::resizeNearest(const vpImage<Type> &I, vpImage<Type> &Ires, const unsigned int i, const unsigned int j,
+                            const float u, const float v) {
+  Ires[i][j] = getPixelClamped(I, u, v);
+}
+
+/*!
+  Resize the image using one interpolation method (by default it uses the nearest neighbor interpolation).
+
+  \param I : Input image.
+  \param Ires : Output image resized.
+  \param width : Resize width.
+  \param height : Resize height.
+  \param method : Interpolation method.
+*/
+template<class Type> void
+vpImageTools::resize(const vpImage<Type> &I, vpImage<Type> &Ires, const unsigned int width, const unsigned int height, const vpImageInterpolationType &method) {
+  Ires.resize(height, width);
+
+  vpImageTools::resize(I, Ires, method);
+}
+
+/*!
+  Resize the image using one interpolation method (by default it uses the nearest neighbor interpolation).
+
+  \param I : Input image.
+  \param Ires : Output image resized (you have to init the image \e Ires at the desired size).
+  \param method : Interpolation method.
+*/
+template<class Type> void
+vpImageTools::resize(const vpImage<Type> &I, vpImage<Type> &Ires, const vpImageInterpolationType &method) {
+  if (I.getWidth() < 2 || I.getHeight() < 2 || Ires.getWidth() < 2 || Ires.getHeight() < 2) {
+    std::cerr << "Input or output image is too small!" << std::endl;
+    return;
+  }
+
+  float scaleY = (I.getHeight() - 1) / (float) (Ires.getHeight() - 1);
+  float scaleX = (I.getWidth() - 1) / (float) (Ires.getWidth() - 1);
+
+  if (method == INTERPOLATION_NEAREST) {
+    scaleY = I.getHeight() / (float) (Ires.getHeight() - 1);
+    scaleX = I.getWidth() / (float) (Ires.getWidth() - 1);
+  }
+
+  for (unsigned int i = 0; i < Ires.getHeight(); i++) {
+    float v = i * scaleY;
+    float yFrac = v - (int) v;
+
+    for (unsigned int j = 0; j < Ires.getWidth(); j++) {
+      float u = j * scaleX;
+      float xFrac = u - (int) u;
+
+      if (method == INTERPOLATION_NEAREST) {
+        resizeNearest(I, Ires, i, j, u, v);
+      } else if (method == INTERPOLATION_LINEAR) {
+        resizeBilinear(I, Ires, i, j, u, v, xFrac, yFrac);
+      } else if (method == INTERPOLATION_CUBIC) {
+        resizeBicubic(I, Ires, i, j, u, v, xFrac, yFrac);
+      }
+    }
+  }
 }
 
 #endif

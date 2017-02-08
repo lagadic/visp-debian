@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -261,9 +261,9 @@ class VISP_EXPORT vpImageSimulator
     }
 
     /*!
-     This function is to set the background to a texture instead of default black
-     The corresponding flag is set
-     \param Iback: Image/Texture for the background
+     This function allows to set the background to a texture instead of the default black background.
+
+     \param Iback : Image/Texture for the background
      */
     inline void
     setBackGroundTexture(const vpImage<unsigned char>& Iback) {

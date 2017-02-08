@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -44,9 +44,10 @@
 #include <stdint.h>
 #include <numeric>
 #include <functional>
+#include <cmath>
+
 #include <visp3/core/vpMath.h>
 #include <visp3/core/vpException.h>
-
 
 #if defined(VISP_HAVE_FUNC__ISNAN)
 #  include <float.h>
@@ -64,7 +65,7 @@ typedef uint64_t uint64;
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 typedef union Cv64suf
 {
-  int64 i;
+//  int64 i; //Unused variable, should be harmless to comment it
   uint64 u;
   double f;
 }
@@ -199,10 +200,9 @@ double vpMath::getMean(const std::vector<double> &v)
     throw vpException(vpException::notInitialized, "Empty vector !");
   }
 
-  double sum = 0.0;
   size_t size = v.size();
 
-  sum = std::accumulate(v.begin(), v.end(), 0.0);
+  double sum = std::accumulate(v.begin(), v.end(), 0.0);
 
   return sum / (double) size;
 }
@@ -259,4 +259,18 @@ double vpMath::getStdev(const std::vector<double> &v, const bool useBesselCorrec
   }
 
   return std::sqrt(sq_sum / divisor);
+}
+
+/*!
+  Compute the modified modulo:
+    - modulo(11, 10) == 1 == 11 % 10
+    - modulo(-1, 10) == 9
+
+  \param a : The dividend.
+  \param n : The divisor.
+
+  \return The modified modulo of a mod n.
+*/
+int vpMath::modulo(const int a, const int n) {
+  return ((a % n) + n) % n;
 }

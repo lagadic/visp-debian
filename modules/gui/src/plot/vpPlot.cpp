@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -81,7 +81,7 @@ vpPlot::vpPlot() : I(), display(NULL), graphNbr(1), graphList(NULL), margei(30),
 */
 vpPlot::vpPlot(const unsigned int graph_nbr,
 	       const unsigned int height, const unsigned int width, 
-	       const int x, const int y, const char *title)
+         const int x, const int y, const std::string &title)
   : I(), display(NULL), graphNbr(1), graphList(NULL), margei(30), margej(40),
     factori(1.f), factorj(1.)
 {  
@@ -102,7 +102,7 @@ vpPlot::vpPlot(const unsigned int graph_nbr,
 */
 void vpPlot::init(const unsigned int graph_nbr,
 		  const unsigned int height, const unsigned int width, 
-		  const int x, const int y, const char *title)
+      const int x, const int y, const std::string &title)
 {
   I.init(height,width,255);
     
@@ -118,7 +118,7 @@ void vpPlot::init(const unsigned int graph_nbr,
   display = new vpDisplayD3D;
 #endif
 
-  display->init(I, x, y, title);
+  display->init(I, x, y, title.c_str());
   
   vpDisplay::display(I);
     
@@ -186,10 +186,10 @@ vpPlot::initNbGraph (unsigned int nbGraph)
   
   for (unsigned int i = 0; i < graphNbr; i++)
   {
-    strcpy(graphList[i].title, "");
-    strcpy(graphList[i].unitx, "");
-    strcpy(graphList[i].unity, "");
-    strcpy(graphList[i].unitz, "");
+    graphList[i].title.clear();
+    graphList[i].unitx.clear();
+    graphList[i].unity.clear();
+    graphList[i].unitz.clear();
   }
 }
 
@@ -494,7 +494,7 @@ vpPlot::getPixelValue(const bool block)
   \param title : The graphic title.
 */
 void
-vpPlot::setTitle (const unsigned int graphNum, const char *title)
+vpPlot::setTitle (const unsigned int graphNum, const std::string &title)
 {
   (graphList+graphNum)->setTitle(title);
 }
@@ -506,7 +506,7 @@ vpPlot::setTitle (const unsigned int graphNum, const char *title)
   \param unitx : The name of the unit of the x axis.
 */
 void
-vpPlot::setUnitX (const unsigned int graphNum, const char *unitx)
+vpPlot::setUnitX (const unsigned int graphNum, const std::string &unitx)
 {
   (graphList+graphNum)->setUnitX(unitx);
 }
@@ -518,7 +518,7 @@ vpPlot::setUnitX (const unsigned int graphNum, const char *unitx)
   \param unity : The name of the unit of the y axis.
 */
 void
-vpPlot::setUnitY (const unsigned int graphNum, const char *unity)
+vpPlot::setUnitY (const unsigned int graphNum, const std::string &unity)
 {
   (graphList+graphNum)->setUnitY(unity);
 }
@@ -530,7 +530,7 @@ vpPlot::setUnitY (const unsigned int graphNum, const char *unity)
   \param unitz : The name of the unit of the z axis.
 */
 void
-vpPlot::setUnitZ (const unsigned int graphNum, const char *unitz)
+vpPlot::setUnitZ (const unsigned int graphNum, const std::string &unitz)
 {
   (graphList+graphNum)->setUnitZ(unitz);
 }
@@ -543,7 +543,7 @@ vpPlot::setUnitZ (const unsigned int graphNum, const char *unitz)
   \param legend : The legend of the curve.
 */
 void
-vpPlot::setLegend (const unsigned int graphNum, const unsigned int curveNum, const char *legend)
+vpPlot::setLegend (const unsigned int graphNum, const unsigned int curveNum, const std::string &legend)
 {
   (graphList+graphNum)->setLegend(curveNum, legend);
 }
@@ -613,23 +613,28 @@ vpPlot::resetPointList (const unsigned int graphNum, const unsigned int curveNum
 /*!
   This function enables to save in a text file all the plotted points of a graphic.
 
-  The first line of the text file is the graphic title. Then the points coordinates are given. If the graphic has to curves: 
-  - the first column corresponds to the x axis of the first curve
-  - the second column corresponds to the y axis of the first curve
-  - the third column corresponds to the z axis of the first curve
-  - the fourth column corresponds to the x axis of the second curve
-  - the fifth column corresponds to the y axis of the second curve
-  - the sixth column corresponds to the z axis of the second curve
+  The content of the file is the following:
+  - The first line of the text file is the graphic title prefixed by \e title_prefix.
+  - Then the successive points coordinates (x, y, z) are given for each curve. If the graphic has two curves:
+    - the first column corresponds to the x axis of the first curve
+    - the second column corresponds to the y axis of the first curve
+    - the third column corresponds to the z axis of the first curve
+    - the fourth column corresponds to the x axis of the second curve
+    - the fifth column corresponds to the y axis of the second curve
+    - the sixth column corresponds to the z axis of the second curve
 
-  The column are delimited thanks to tabultaions.
+  The columns are delimited thanks to tabulations.
 
+  \param title_prefix : Prefix introducted in the first line of the saved file. To exploit a posteriori the resulting curves:
+  - with gnuplot, set title_prefix to "# ".
+  - with Matlab, set title_prefix to "% ".
   \param graphNum : The index of the graph in the window. As the number of graphic in a window is less or equal to 4, this parameter is between 0 and 3.
   \param dataFile : Name of the text file.
 */
-void vpPlot::saveData(const unsigned int graphNum, const char* dataFile)
+void vpPlot::saveData(const unsigned int graphNum, const std::string &dataFile, const std::string &title_prefix)
 {
   std::ofstream fichier;
-  fichier.open(dataFile);
+  fichier.open(dataFile.c_str());
 
   unsigned int ind;
   double *p = new double[3];
@@ -639,7 +644,7 @@ void vpPlot::saveData(const unsigned int graphNum, const char* dataFile)
   std::vector< std::list<double>::const_iterator > vec_iter_pointListy((graphList+graphNum)->curveNbr);
   std::vector< std::list<double>::const_iterator > vec_iter_pointListz((graphList+graphNum)->curveNbr);
 
-  fichier << (graphList+graphNum)->title << std::endl;
+  fichier << title_prefix << (graphList+graphNum)->title << std::endl;
 
   for(ind=0;ind<(graphList+graphNum)->curveNbr;ind++)
   {

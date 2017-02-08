@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -53,7 +53,8 @@
   \class vpDetectorDataMatrixCode
   \ingroup group_detection_barcode
   Base class for bar code detector. This class is a wrapper over libdmtx
-  available from http://www.libdmtx.org/
+  available from http://www.libdmtx.org. Installation instructions are provided
+  here https://visp.inria.fr/3rd_dmtx.
 
   The detect() function allows to detect multiple QR codes in an image. Once detected,
   for each QR code it is possible to retrieve the location of the corners using getPolygon(),

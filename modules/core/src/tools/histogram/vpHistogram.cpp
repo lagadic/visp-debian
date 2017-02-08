@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -49,6 +49,88 @@
 #include <visp3/core/vpImageConvert.h>
 #include <visp3/core/vpDisplay.h>
 
+
+#if defined(VISP_HAVE_PTHREAD) || (defined(_WIN32) && !defined(WINRT_8_0))
+#include <visp3/core/vpThread.h>
+
+namespace {
+  struct Histogram_Param_t {
+    unsigned int m_start_index;
+    unsigned int m_end_index;
+
+    unsigned int m_lut[256];
+    unsigned int *m_histogram;
+    const vpImage<unsigned char> *m_I;
+
+    Histogram_Param_t() : m_start_index(0), m_end_index(0), m_lut(), m_histogram(NULL), m_I(NULL) {
+    }
+
+    Histogram_Param_t(const unsigned int start_index, const unsigned int end_index,
+        const vpImage<unsigned char> * const I) :
+      m_start_index(start_index), m_end_index(end_index), m_lut(), m_histogram(NULL), m_I(I) {
+    }
+
+    ~Histogram_Param_t() {
+      if(m_histogram != NULL) {
+        delete []m_histogram;
+      }
+    }
+  };
+
+  vpThread::Return computeHistogramThread(vpThread::Args args) {
+    Histogram_Param_t *histogram_param = static_cast<Histogram_Param_t *>(args);
+    unsigned int start_index = histogram_param->m_start_index;
+    unsigned int end_index = histogram_param->m_end_index;
+
+    const vpImage<unsigned char> *I = histogram_param->m_I;
+
+    unsigned char *ptrStart = (unsigned char*) (I->bitmap) + start_index;
+    unsigned char *ptrEnd = (unsigned char*) (I->bitmap) + end_index;
+    unsigned char *ptrCurrent = ptrStart;
+
+
+//    while(ptrCurrent != ptrEnd) {
+//      histogram_param->m_histogram[ histogram_param->m_lut[ *ptrCurrent ] ] ++;
+//      ++ptrCurrent;
+//    }
+
+    if(end_index - start_index >= 8) {
+      //Unroll loop version
+      for(; ptrCurrent <= ptrEnd - 8;) {
+        histogram_param->m_histogram[ histogram_param->m_lut[ *ptrCurrent ] ] ++;
+        ++ptrCurrent;
+
+        histogram_param->m_histogram[ histogram_param->m_lut[ *ptrCurrent ] ] ++;
+        ++ptrCurrent;
+
+        histogram_param->m_histogram[ histogram_param->m_lut[ *ptrCurrent ] ] ++;
+        ++ptrCurrent;
+
+        histogram_param->m_histogram[ histogram_param->m_lut[ *ptrCurrent ] ] ++;
+        ++ptrCurrent;
+
+        histogram_param->m_histogram[ histogram_param->m_lut[ *ptrCurrent ] ] ++;
+        ++ptrCurrent;
+
+        histogram_param->m_histogram[ histogram_param->m_lut[ *ptrCurrent ] ] ++;
+        ++ptrCurrent;
+
+        histogram_param->m_histogram[ histogram_param->m_lut[ *ptrCurrent ] ] ++;
+        ++ptrCurrent;
+
+        histogram_param->m_histogram[ histogram_param->m_lut[ *ptrCurrent ] ] ++;
+        ++ptrCurrent;
+      }
+    }
+
+    for(; ptrCurrent != ptrEnd; ++ptrCurrent) {
+      histogram_param->m_histogram[ histogram_param->m_lut[ *ptrCurrent ] ] ++;
+    }
+
+    return 0;
+  }
+}
+#endif
 
 bool compare_vpHistogramPeak (vpHistogramPeak first, vpHistogramPeak second);
 
@@ -156,8 +238,9 @@ vpHistogram::init(unsigned size_)
 
   \param I : Gray level image.
   \param nbins : Number of bins to compute the histogram.
+  \param nbThreads : Number of threads to use for the computation.
 */
-void vpHistogram::calculate(const vpImage<unsigned char> &I, const unsigned int nbins)
+void vpHistogram::calculate(const vpImage<unsigned char> &I, const unsigned int nbins, const unsigned int nbThreads)
 {
   if(size != nbins) {
     if (histogram != NULL) {
@@ -172,21 +255,93 @@ void vpHistogram::calculate(const vpImage<unsigned char> &I, const unsigned int 
     histogram = new unsigned int[size];
   }
 
-  memset(histogram, 0, size * sizeof(unsigned));
+  memset(histogram, 0, size * sizeof(unsigned int));
+
+
+  bool use_single_thread;
+#if !defined(VISP_HAVE_PTHREAD) && !defined(_WIN32)
+  use_single_thread = true;
+#else
+  use_single_thread = (nbThreads == 0 || nbThreads == 1);
+#endif
+
+  if(!use_single_thread && I.getSize() <= nbThreads) {
+    use_single_thread = true;
+  }
+
 
   unsigned int lut[256];
   for(unsigned int i = 0; i < 256; i++) {
     lut[i] = (unsigned int) (i * size / 256.0);
   }
 
-  unsigned int size_ = I.getWidth()*I.getHeight();
-  unsigned char *ptrStart = (unsigned char*) I.bitmap;
-  unsigned char *ptrEnd = ptrStart + size_;
-  unsigned char *ptrCurrent = ptrStart;
+  if(use_single_thread) {
+    //Single thread
 
-  while(ptrCurrent != ptrEnd) {
-    histogram[ lut[ *ptrCurrent ] ] ++;
-    ++ptrCurrent;
+    unsigned int size_ = I.getWidth()*I.getHeight();
+    unsigned char *ptrStart = (unsigned char*) I.bitmap;
+    unsigned char *ptrEnd = ptrStart + size_;
+    unsigned char *ptrCurrent = ptrStart;
+
+    while(ptrCurrent != ptrEnd) {
+      histogram[ lut[ *ptrCurrent ] ] ++;
+      ++ptrCurrent;
+    }
+  } else {
+#if defined(VISP_HAVE_PTHREAD) || (defined(_WIN32) && !defined(WINRT_8_0))
+    //Multi-threads
+
+    std::vector<vpThread *> threadpool;
+    std::vector<Histogram_Param_t *> histogramParams;
+
+    unsigned int image_size = I.getSize();
+    unsigned int step = image_size / nbThreads;
+    unsigned int last_step = image_size - step * (nbThreads-1);
+
+    for(unsigned int index = 0; index < nbThreads; index++) {
+      unsigned int start_index = index*step;
+      unsigned int end_index = (index+1)*step;
+
+      if(index == nbThreads-1) {
+        end_index = start_index+last_step;
+      }
+
+      Histogram_Param_t *histogram_param = new Histogram_Param_t(start_index, end_index, &I);
+      histogram_param->m_histogram = new unsigned int[size];
+      memset(histogram_param->m_histogram, 0, size * sizeof(unsigned int));
+      memcpy(histogram_param->m_lut, lut, 256*sizeof(unsigned int));
+
+      histogramParams.push_back(histogram_param);
+
+      // Start the threads
+      vpThread *histogram_thread = new vpThread((vpThread::Fn) computeHistogramThread, (vpThread::Args) histogram_param);
+      threadpool.push_back(histogram_thread);
+    }
+
+    for(size_t cpt = 0; cpt < threadpool.size(); cpt++) {
+      // Wait until thread ends up
+      threadpool[cpt]->join();
+    }
+
+    for(unsigned int cpt1 = 0; cpt1 < size; cpt1++) {
+      unsigned int sum = 0;
+
+      for(size_t cpt2 = 0; cpt2 < histogramParams.size(); cpt2++) {
+        sum += histogramParams[cpt2]->m_histogram[cpt1];
+      }
+
+      histogram[cpt1] = sum;
+    }
+
+    //Delete
+    for(size_t cpt = 0; cpt < threadpool.size(); cpt++) {
+      delete threadpool[cpt];
+    }
+
+    for(size_t cpt = 0; cpt < histogramParams.size(); cpt++) {
+      delete histogramParams[cpt];
+    }
+#endif
   }
 }
 
@@ -269,12 +424,10 @@ vpHistogram::smooth(const unsigned int fsize)
   h = *this;
 
   int hsize = (int)fsize / 2; // half filter size
-  unsigned int sum;
-  unsigned int nb;
 
   for (unsigned i=0; i < size; i ++) {
-    sum = 0;
-    nb = 0;
+    unsigned int sum = 0;
+    unsigned int nb = 0;
     for (int j=-hsize; j <= hsize; j ++) {
       // exploitation of the overflow to detect negative value...
       if ( /*(i + j) >= 0 &&*/ (i + (unsigned int)j) < size ) {
@@ -310,7 +463,6 @@ unsigned vpHistogram::getPeaks(std::list<vpHistogramPeak> & peaks)
   }
 
   int prev_slope;              // Previous histogram inclination
-  int next_slope;              // Next histogram inclination
   vpHistogramPeak p;           // An histogram peak
   unsigned nbpeaks; // Number of peaks in the histogram (ie local maxima)
 
@@ -323,7 +475,7 @@ unsigned vpHistogram::getPeaks(std::list<vpHistogramPeak> & peaks)
   prev_slope = 1;
 
   for (unsigned i = 0; i < size-1; i++) {
-    next_slope = (int)histogram[i+1] - (int)histogram[i];
+    int next_slope = (int)histogram[i+1] - (int)histogram[i]; // Next histogram inclination
 
 //     if ((prev_slope < 0) && (next_slope > 0) ) {
 //       sum_level += i;
@@ -447,7 +599,6 @@ vpHistogram::getPeaks(unsigned char dist,
 {
   unsigned char *peak;              // Local maxima values
   int prev_slope;              // Previous histogram inclination
-  int next_slope;              // Next histogram inclination
   unsigned index_highest_peak; // Index in peak[] array of the highest peak
   unsigned index_second_peak;  // Index in peak[] array of the second peak
 
@@ -468,7 +619,7 @@ vpHistogram::getPeaks(unsigned char dist,
   nbpeaks = 0;
   prev_slope = 1;
   for (unsigned i = 0; i < size-1; i++) {
-    next_slope = (int)histogram[i+1] - (int)histogram[i];
+    int next_slope = (int)histogram[i+1] - (int)histogram[i]; // Next histogram inclination
     if (next_slope == 0)
       continue;
     // Peak detection
@@ -609,7 +760,6 @@ unsigned vpHistogram::getValey(std::list<vpHistogramValey> & valey)
   }
 
   int prev_slope;              // Previous histogram inclination
-  int next_slope;              // Next histogram inclination
   vpHistogramValey p;           // An histogram valey
   unsigned nbvaley; // Number of valey in the histogram (ie local minima)
 
@@ -622,7 +772,7 @@ unsigned vpHistogram::getValey(std::list<vpHistogramValey> & valey)
   prev_slope = -1;
 
   for (unsigned i = 0; i < size-1; i++) {
-    next_slope = (int)histogram[i+1] - (int)histogram[i];
+    int next_slope = (int)histogram[i+1] - (int)histogram[i]; // Next histogram inclination
 
     if ((prev_slope < 0) && (next_slope == 0) ) {
       sum_level += i + 1;
@@ -957,20 +1107,12 @@ vpHistogram::write(const std::string &filename)
 bool
 vpHistogram::write(const char *filename)
 {
-  std::string opath;
-
   FILE *fd = fopen(filename, "w");
   if (fd == NULL)
     return false;
   for (unsigned i=0; i < size; i ++)
-    fprintf(fd, "%d %d\n", i, histogram[i]);
+    fprintf(fd, "%u %d\n", i, histogram[i]);
   fclose(fd);
 
   return true;
 }
-
-/*
- * Local variables:
- * c-basic-offset: 2
- * End:
- */

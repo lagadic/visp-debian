@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -37,9 +37,13 @@
 
 #include <visp3/core/vpConfig.h>
 
-#if defined(VISP_HAVE_MODULE_GUI) && (defined(_WIN32) || defined(VISP_HAVE_PTHREAD))
+#if defined(VISP_HAVE_MODULE_GUI) && ((defined(_WIN32) && !defined(WINRT_8_0)) || defined(VISP_HAVE_PTHREAD))
 #include <visp3/robot/vpRobotWireFrameSimulator.h>
 #include <visp3/robot/vpSimulatorViper850.h>
+
+#include "../wireframe-simulator/vpBound.h"
+#include "../wireframe-simulator/vpVwstack.h"
+#include "../wireframe-simulator/vpScene.h"
 
 /*!
   Basic constructor

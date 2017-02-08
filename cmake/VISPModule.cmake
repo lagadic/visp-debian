@@ -1,7 +1,7 @@
 #############################################################################
 #
 # This file is part of the ViSP software.
-# Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+# Copyright (C) 2005 - 2017 by Inria. All rights reserved.
 #
 # This software is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -50,8 +50,8 @@
 # VISP_MODULE_${the_module}_DEPS_EXT - non-module dependencies
 # VISP_MODULE_${the_module}_REQ_DEPS
 # VISP_MODULE_${the_module}_OPT_DEPS
-# VISP_MODULE_${the_module}_PRIVATE_REQ_DEPS
-# VISP_MODULE_${the_module}_PRIVATE_OPT_DEPS
+# VISP_MODULE_${the_module}_PRIVATE_REQ_DEPS - private module deps that are not exposed in interface
+# VISP_MODULE_${the_module}_PRIVATE_OPT_DEPS - private module deps that are not exposed in interface
 # VISP_MODULE_${the_module}_CHILDREN - list of submodules for compound modules (cmake >= 2.8.8)
 # HAVE_${the_module} - for fast check of module availability
 
@@ -79,6 +79,8 @@ foreach(mod ${VISP_MODULES_BUILD} ${VISP_MODULES_DISABLED_USER} ${VISP_MODULES_D
   if(HAVE_${mod})
     unset(HAVE_${mod} CACHE)
   endif()
+  unset(VISP_MODULE_${mod}_DEPS CACHE)
+  unset(VISP_MODULE_${mod}_DEPS_EXT CACHE)
   unset(VISP_MODULE_${mod}_REQ_DEPS CACHE)
   unset(VISP_MODULE_${mod}_OPT_DEPS CACHE)
   unset(VISP_MODULE_${mod}_PRIVATE_REQ_DEPS CACHE)
@@ -134,7 +136,9 @@ endmacro()
 
 # declare new ViSP module in current folder
 # Usage:
-#   vp_add_module(<name> [INTERNAL|BINDINGS] [REQUIRED] [<list of dependencies>] [OPTIONAL <list of optional dependencies>])
+#   vp_add_module(<name> [INTERNAL|BINDINGS] [REQUIRED] [<list of dependencies>]
+#                        [OPTIONAL <list of optional dependencies>]
+#                        [PRIVATE_OPTIONAL|PRIVATE_REQUIRED] [<list of private dependencies>])
 # Example:
 #   vp_add_module(mymodule INTERNAL visp_core OPTIONAL visp_ar)
 macro(vp_add_module _name)
@@ -226,50 +230,120 @@ macro(vp_glob_modules)
   foreach(__path ${ARGN})
     if("${__path}" STREQUAL "EXTRA")
       set(VISP_PROCESSING_EXTRA_MODULES 1)
-    endif()
-    get_filename_component(__path "${__path}" ABSOLUTE)
+    else()
+      get_filename_component(__path "${__path}" ABSOLUTE)
 
-    list(FIND __directories_observed "${__path}" __pathIdx)
-    if(__pathIdx GREATER -1)
-      message(FATAL_ERROR "The directory ${__path} is observed for ViSP modules second time.")
-    endif()
-    list(APPEND __directories_observed "${__path}")
+      list(FIND __directories_observed "${__path}" __pathIdx)
+      if(__pathIdx GREATER -1)
+        message(FATAL_ERROR "The directory ${__path} is observed for ViSP modules second time.")
+      endif()
+      list(APPEND __directories_observed "${__path}")
 
-    file(GLOB __vpmodules RELATIVE "${__path}" "${__path}/*")
+      file(GLOB __vpmodules RELATIVE "${__path}" "${__path}/*")
 
-    if(__vpmodules)
-      list(SORT __vpmodules)
-      foreach(mod ${__vpmodules})
-        get_filename_component(__modpath "${__path}/${mod}" ABSOLUTE)
-        if(EXISTS "${__modpath}/CMakeLists.txt")
+      vp_list_remove_item(__vpmodules ".git")
 
-          list(FIND __directories_observed "${__modpath}" __pathIdx)
-          if(__pathIdx GREATER -1)
-            message(FATAL_ERROR "The module from ${__modpath} is already loaded.")
-          endif()
-          list(APPEND __directories_observed "${__modpath}")
+      if(VISP_PROCESSING_EXTRA_MODULES)
+        # Remove tutorial, example, demo from potential contrib module list
+        # They will be processed in visp/CMakeLists.txt
+        vp_list_remove_item(__vpmodules "tutorial")
+        vp_list_remove_item(__vpmodules "example")
+        vp_list_remove_item(__vpmodules "demo")
+        vp_list_remove_item(__vpmodules "doc")
+      endif()
+      # TODO: Improve the following if to put a macro instead of manually copying the code
+      #       Here we have 3 internal loops. The depth of the loop (3) could be a var
+      set(__count 0)
+      if(__vpmodules)
+        list(SORT __vpmodules)
+        foreach(mod ${__vpmodules})
+          get_filename_component(__modpath "${__path}/${mod}" ABSOLUTE)
 
-          add_subdirectory("${__modpath}" "${CMAKE_CURRENT_BINARY_DIR}/${mod}/.${mod}")
-        else()
-          # modules in tracker
-          get_filename_component(__subpath "${__path}/${mod}" ABSOLUTE)
-          file(GLOB __vpsubmodules RELATIVE "${__subpath}" "${__subpath}/*")
-          if(__vpsubmodules)
-            list(SORT __vpsubmodules)
-            foreach(submod ${__vpsubmodules})
-              get_filename_component(__submodpath "${__subpath}/${submod}" ABSOLUTE)
-              if(EXISTS "${__submodpath}/CMakeLists.txt")
-                list(FIND __directories_observed "${__submodpath}" __pathIdx)
-                if(__pathIdx GREATER -1)
-                  message(FATAL_ERROR "The module from ${__submodpath} is already loaded.")
+          if(EXISTS "${__modpath}/CMakeLists.txt")
+            list(FIND __directories_observed "${__modpath}" __pathIdx)
+            if(__pathIdx GREATER -1)
+              message(FATAL_ERROR "The module from ${__modpath} is already loaded.")
+            endif()
+            list(APPEND __directories_observed "${__modpath}")
+            add_subdirectory("${__modpath}" "${CMAKE_CURRENT_BINARY_DIR}/${mod}/.${mod}")
+            if (DEFINED VISP_MODULE_visp_${mod}_LOCATION)
+              math(EXPR __count "${__count} + 1")
+            endif()
+          else()
+            # modules in visp/tracker
+            get_filename_component(__subpath "${__path}/${mod}" ABSOLUTE)
+            file(GLOB __vpsubmodules RELATIVE "${__subpath}" "${__subpath}/*")
+
+            if(__vpsubmodules)
+              list(SORT __vpsubmodules)
+              foreach(submod ${__vpsubmodules})
+                get_filename_component(__submodpath "${__subpath}/${submod}" ABSOLUTE)
+                if(EXISTS "${__submodpath}/CMakeLists.txt")
+                  list(FIND __directories_observed "${__submodpath}" __pathIdx)
+                  if(__pathIdx GREATER -1)
+                    message(FATAL_ERROR "The module from ${__submodpath} is already loaded.")
+                  endif()
+                  list(APPEND __directories_observed "${__submodpath}")
+                  add_subdirectory("${__submodpath}" "${CMAKE_CURRENT_BINARY_DIR}/${submod}/.${submod}")
+                  if (DEFINED VISP_MODULE_visp_${submod}_LOCATION)
+                    math(EXPR __count "${__count} + 1")
+                  endif()
+
+                else()
+                  # modules in ustk/image_processing
+                  get_filename_component(__subsubpath "${__subpath}/${submod}" ABSOLUTE)
+                  file(GLOB __vpsubsubmodules RELATIVE "${__subsubpath}" "${__subsubpath}/*")
+
+                  if(__vpsubsubmodules)
+                    list(SORT __vpsubsubmodules)
+                    foreach(subsubmod ${__vpsubsubmodules})
+                      get_filename_component(__subsubmodpath "${__subsubpath}/${subsubmod}" ABSOLUTE)
+                      if(EXISTS "${__subsubmodpath}/CMakeLists.txt")
+                        list(FIND __directories_observed "${__subsubmodpath}" __pathIdx)
+                        if(__pathIdx GREATER -1)
+                          message(FATAL_ERROR "The module from ${__subsubmodpath} is already loaded.")
+                        endif()
+                        list(APPEND __directories_observed "${__subsubmodpath}")
+                        add_subdirectory("${__subsubmodpath}" "${CMAKE_CURRENT_BINARY_DIR}/${subsubmod}/.${subsubmod}")
+                        if (DEFINED VISP_MODULE_visp_${subsubmod}_LOCATION)
+                          math(EXPR __count "${__count} + 1")
+                        endif()
+
+                      else()
+                        # modules in ustk/image_processing/tracking
+                        get_filename_component(__subsubsubpath "${__subsubpath}/${subsubmod}" ABSOLUTE)
+                        file(GLOB __vpsubsubsubmodules RELATIVE "${__subsubsubpath}" "${__subsubsubpath}/*")
+
+                        if(__vpsubsubsubmodules)
+                          list(SORT __vpsubsubsubmodules)
+                          foreach(subsubsubmod ${__vpsubsubsubmodules})
+                            get_filename_component(__subsubsubmodpath "${__subsubsubpath}/${subsubsubmod}" ABSOLUTE)
+                            if(EXISTS "${__subsubsubmodpath}/CMakeLists.txt")
+                              list(FIND __directories_observed "${__subsubsubmodpath}" __pathIdx)
+                              if(__pathIdx GREATER -1)
+                                message(FATAL_ERROR "The module from ${__subsubsubmodpath} is already loaded.")
+                              endif()
+                              list(APPEND __directories_observed "${__subsubsubmodpath}")
+                              add_subdirectory("${__subsubsubmodpath}" "${CMAKE_CURRENT_BINARY_DIR}/${subsubsubmod}/.${subsubsubmod}")
+                              if (DEFINED VISP_MODULE_visp_$subsubsubmod_LOCATION)
+                                math(EXPR __count "${__count} + 1")
+                              endif()
+                            endif()
+                          endforeach()
+                        endif()
+                      endif()
+                    endforeach()
+                  endif()
                 endif()
-                list(APPEND __directories_observed "${__submodpath}")
-                add_subdirectory("${__submodpath}" "${CMAKE_CURRENT_BINARY_DIR}/${submod}/.${submod}")
-              endif()
-            endforeach()
+              endforeach()
+            endif()
           endif()
-        endif()
-      endforeach()
+        endforeach()
+      endif()
+    endif()
+
+    if (VISP_PROCESSING_EXTRA_MODULES AND ${__count} LESS 1)
+      message(SEND_ERROR "No contrib modules found in folder: ${__path}\nPlease provide path to 'visp_contrib/modules' folder.")
     endif()
   endforeach()
   vp_clear_vars(__vpmodules __directories_observed __path __modpath __pathIdx __vpsubmodules __subpath __submodpath)
@@ -281,15 +355,15 @@ macro(vp_glob_modules)
   set(VISP_INITIAL_PASS OFF PARENT_SCOPE)
   set(VISP_INITIAL_PASS OFF)
 
-    foreach(m ${VISP_MODULES_BUILD})
-      if(m MATCHES "^visp_")
-        string(REGEX REPLACE "^visp_" "" __shortname "${m}")
-        add_subdirectory("${VISP_MODULE_${m}_LOCATION}" "${CMAKE_CURRENT_BINARY_DIR}/${__shortname}")
-      else()
-        message(WARNING "Check module name: ${m}")
-        add_subdirectory("${VISP_MODULE_${m}_LOCATION}" "${CMAKE_CURRENT_BINARY_DIR}/${m}")
-      endif()
-    endforeach()
+  foreach(m ${VISP_MODULES_BUILD})
+    if(m MATCHES "^visp_")
+      string(REGEX REPLACE "^visp_" "" __shortname "${m}")
+      add_subdirectory("${VISP_MODULE_${m}_LOCATION}" "${CMAKE_CURRENT_BINARY_DIR}/${__shortname}")
+    else()
+      message(WARNING "Check module name: ${m}")
+      add_subdirectory("${VISP_MODULE_${m}_LOCATION}" "${CMAKE_CURRENT_BINARY_DIR}/${m}")
+    endif()
+  endforeach()
 
   unset(__shortname)
 endmacro()
@@ -414,20 +488,20 @@ function(__vp_resolve_dependencies)
   endwhile()
 
   # process private deps
-  foreach(m ${VISP_MODULES_BUILD})
-    foreach(d ${VISP_MODULE_${m}_PRIVATE_REQ_DEPS})
-      if(NOT (";${deps_${m}};" MATCHES ";${d};"))
-        list(APPEND deps_${m} ${d})
-      endif()
-    endforeach()
-    foreach(d ${VISP_MODULE_${m}_PRIVATE_OPT_DEPS})
-      if(NOT (";${deps_${m}};" MATCHES ";${d};"))
-        if(HAVE_${d} OR TARGET ${d})
-          list(APPEND deps_${m} ${d})
-        endif()
-      endif()
-    endforeach()
-  endforeach()
+  #foreach(m ${VISP_MODULES_BUILD})
+  #  foreach(d ${VISP_MODULE_${m}_PRIVATE_REQ_DEPS})
+  #    if(NOT (";${deps_${m}};" MATCHES ";${d};"))
+  #      list(APPEND deps_${m} ${d})
+  #    endif()
+  #  endforeach()
+  #  foreach(d ${VISP_MODULE_${m}_PRIVATE_OPT_DEPS})
+  #    if(NOT (";${deps_${m}};" MATCHES ";${d};"))
+  #      if(HAVE_${d} OR TARGET ${d})
+  #        list(APPEND deps_${m} ${d})
+  #      endif()
+  #    endif()
+  #  endforeach()
+  #endforeach()
 
   vp_list_sort(VISP_MODULES_BUILD)
 
@@ -492,6 +566,7 @@ macro(vp_module_include_directories)
   vp_target_include_directories(${the_module}
       "${VISP_MODULE_${the_module}_LOCATION}/include"
       "${VISP_MODULE_${the_module}_LOCATION}/src"
+      "${CMAKE_CURRENT_BINARY_DIR}" # for precompiled headers
       )
   vp_target_include_modules(${the_module} ${VISP_MODULE_${the_module}_DEPS} ${ARGN})
 endmacro()
@@ -499,7 +574,7 @@ endmacro()
 # sets header and source files for the current module
 # NB: all files specified as headers will be installed
 # Usage:
-# ocv_set_module_sources([HEADERS] <list of files> [SOURCES] <list of files>)
+# vp_set_module_sources([HEADERS] <list of files> [SOURCES] <list of files>)
 macro(vp_set_module_sources)
   vp_debug_message("vp_set_module_sources(" ${ARGN} ")")
 
@@ -521,7 +596,6 @@ macro(vp_set_module_sources)
     list(APPEND VISP_MODULE_${the_module}_HEADERS "${VISP_INCLUDE_DIR}/visp3/core/vpConfig.h")
     list(APPEND VISP_MODULE_${the_module}_HEADERS "${VISP_INCLUDE_DIR}/visp3/visp_modules.h")
   endif()
-
 
   set(VISP_MODULE_${the_module}_HEADERS ${VISP_MODULE_${the_module}_HEADERS} CACHE INTERNAL "List of header files for ${the_module}")
   set(VISP_MODULE_${the_module}_SOURCES ${VISP_MODULE_${the_module}_SOURCES} CACHE INTERNAL "List of source files for ${the_module}")
@@ -613,7 +687,7 @@ macro(vp_create_global_module_header module)
 
   set(__name ${module})
   vp_short_module_name(__name)
-  set(__module_header_dst "${VISP_INCLUDE_DIR}/visp3/${__name}/${module}.h")
+  set(__module_header_dst "${VISP_INCLUDE_DIR}/visp3/${module}.h")
   set(VISP_HEADER_CONTENT_CONFIGMAKE "#ifndef __${module}_h_\n#define __${module}_h_\n")
 
   # when core, include also vpConfig.h
@@ -625,18 +699,22 @@ macro(vp_create_global_module_header module)
   if(VISP_MODULE_${module}_REQ_DEPS)
     foreach(dep ${VISP_MODULE_${module}_REQ_DEPS})
       vp_short_module_name(dep)
-    set(VISP_HEADER_CONTENT_CONFIGMAKE "${VISP_HEADER_CONTENT_CONFIGMAKE}\n#include <visp3/${dep}/vp${dep}.h>")
+    set(VISP_HEADER_CONTENT_CONFIGMAKE "${VISP_HEADER_CONTENT_CONFIGMAKE}\n#include <visp3/visp_${dep}.h>")
     endforeach()
   endif()
 
   foreach(h ${VISP_MODULE_${module}_HEADERS})
-    get_filename_component(__h_name_we ${h} NAME_WE)
-    get_filename_component(__h_name ${h} NAME)
-    set(VISP_HEADER_CONTENT_CONFIGMAKE "${VISP_HEADER_CONTENT_CONFIGMAKE}\n#include <visp3/${__name}/${__h_name}>")
+    string(REGEX REPLACE "^.*/include/visp3" "visp3" h "${h}")
+    set(VISP_HEADER_CONTENT_CONFIGMAKE "${VISP_HEADER_CONTENT_CONFIGMAKE}\n#include <${h}>")
   endforeach()
 
   set(VISP_HEADER_CONTENT_CONFIGMAKE "${VISP_HEADER_CONTENT_CONFIGMAKE}\n\n#endif\n")
   configure_file("${VISP_SOURCE_DIR}/cmake/templates/vpHeader.h.in" ${__module_header_dst})
+
+  install(FILES ${__module_header_dst}
+    DESTINATION ${VISP_INC_INSTALL_PATH}/visp3
+    COMPONENT dev
+  )
 
   unset(__h_name_we)
   unset(__h_name)
@@ -646,12 +724,12 @@ endmacro()
 # creates ViSP module in current folder
 # creates new target, configures standard dependencies, compilers flags, install rules
 # Usage:
-#   vp_create_module(<extra link dependencies>)
+#   vp_create_module(<extra link dependencies> LINK_PRIVATE <private link dependencies>)
 #   vp_create_module()
 macro(vp_create_module)
   vp_debug_message("vp_create_module(" ${ARGN} ")")
   set(VISP_MODULE_${the_module}_LINK_DEPS "${VISP_MODULE_${the_module}_LINK_DEPS};${ARGN}" CACHE INTERNAL "")
-  _vp_create_module(${ARGN})
+  _vp_create_module()
   set(the_module_target ${the_module})
 endmacro()
 
@@ -661,10 +739,15 @@ macro(_vp_create_module)
 
   vp_add_library(${the_module} ${VISP_MODULE_TYPE} ${VISP_MODULE_${the_module}_HEADERS} ${VISP_MODULE_${the_module}_SOURCES})
 
-  vp_target_link_libraries(${the_module} ${VISP_MODULE_${the_module}_DEPS_TO_LINK})
-  #vp_target_link_libraries(${the_module} LINK_INTERFACE_LIBRARIES ${VISP_MODULE_${the_module}_DEPS_TO_LINK})
-  vp_target_link_libraries(${the_module} ${VISP_MODULE_${the_module}_DEPS_EXT} ${VISP_LINKER_LIBS} ${ARGN})
-
+  vp_target_link_libraries(${the_module}
+    LINK_PUBLIC
+      ${VISP_MODULE_${the_module}_DEPS_TO_LINK}
+      ${VISP_MODULE_${the_module}_DEPS_EXT}
+      ${VISP_MODULE_${the_module}_LINK_DEPS}
+      ${VISP_LINKER_LIBS}
+    LINK_PRIVATE
+      ${VISP_MODULE_${the_module}_PRIVATE_REQ_DEPS}
+      ${VISP_MODULE_${the_module}_PRIVATE_OPT_DEPS})
   add_dependencies(visp_modules ${the_module})
 
   if(ENABLE_SOLUTION_FOLDERS)
@@ -718,7 +801,7 @@ macro(_vp_create_module)
       foreach(hdr ${VISP_MODULE_${m}_HEADERS})
         string(REGEX REPLACE "^.*visp3/" "visp3/" hdr2 "${hdr}")
         if(NOT hdr2 MATCHES "visp3/${m}/private.*" AND hdr2 MATCHES "^(visp3/?.*)/[^/]+.h(..)?$" )
-          install(FILES ${hdr} OPTIONAL DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/${CMAKE_MATCH_1}" COMPONENT dev)
+          install(FILES ${hdr} OPTIONAL DESTINATION "${VISP_INC_INSTALL_PATH}/${CMAKE_MATCH_1}" COMPONENT dev)
         endif()
       endforeach()
     endif()
@@ -759,6 +842,7 @@ macro(__vp_parse_test_sources tests_type)
   set(VISP_${tests_type}_${the_module}_SOURCES_EXCLUDE "")
   set(VISP_${tests_type}_${the_module}_DEPS "")
   set(VISP_${tests_type}_${the_module}_CTEST_EXCLUDE_FOLDER "")
+  set(VISP_${tests_type}_${the_module}_CTEST_EXCLUDE_FILE "")
   set(__file_group_name "")
   set(__file_group_sources "")
   foreach(arg "DEPENDS_ON" ${ARGN} "FILES")
@@ -776,6 +860,8 @@ macro(__vp_parse_test_sources tests_type)
       set(__file_group_name "${arg}")
     elseif(arg STREQUAL "CTEST_EXCLUDE_PATH")
       set(__currentvar "VISP_${tests_type}_${the_module}_CTEST_EXCLUDE_FOLDER")
+    elseif(arg STREQUAL "CTEST_EXCLUDE_FILE")
+      set(__currentvar "VISP_${tests_type}_${the_module}_CTEST_EXCLUDE_FILE")
     elseif(arg STREQUAL "SOURCES_EXCLUDE")
       set(__currentvar "VISP_${tests_type}_${the_module}_SOURCES_EXCLUDE")
     else()
@@ -791,7 +877,8 @@ endmacro()
 # vp_add_tests([FILES <source group name> <list of sources>]
 #              [FILES_EXCLUDE <list of sources>]
 #              [DEPENDS_ON] <list of extra dependencies>
-#              [CTEST_EXCLUDE_FOLDER] <list of folder to exclude from ctest>)
+#              [CTEST_EXCLUDE_PATH] <list of folders to exclude from ctest>)
+#              [CTEST_EXCLUDE_FILE] <list of files to exclude from ctest>)
 macro(vp_add_tests)
   vp_debug_message("vp_add_tests(" ${ARGN} ")")
 
@@ -803,6 +890,11 @@ macro(vp_add_tests)
     foreach(__folder ${VISP_TEST_${the_module}_CTEST_EXCLUDE_FOLDER} )
       file(GLOB_RECURSE __files "${CMAKE_CURRENT_LIST_DIR}/test/${__folder}/*.cpp")
       list(APPEND __exclude_ctest ${__files})
+    endforeach()
+    foreach(__file ${VISP_TEST_${the_module}_CTEST_EXCLUDE_FILE} )
+      if(EXISTS "${CMAKE_CURRENT_LIST_DIR}/test/${__file}")
+        list(APPEND __exclude_ctest "${CMAKE_CURRENT_LIST_DIR}/test/${__file}")
+      endif()
     endforeach()
     set(__exclude_sources "")
     foreach(__source ${VISP_TEST_${the_module}_SOURCES_EXCLUDE} )
@@ -939,7 +1031,7 @@ macro(vp_add_config_file)
     vp_create_compat_headers("${VISP_INCLUDE_DIR}/visp3/${MODULE_NAME}/${FILENAME_CONFIG_SHORT}")
 
     install(FILES "${VISP_INCLUDE_DIR}/visp3/${MODULE_NAME}/${FILENAME_CONFIG_SHORT}"
-      DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/visp3/${MODULE_NAME}
+      DESTINATION ${VISP_INC_INSTALL_PATH}/visp3/${MODULE_NAME}
       COMPONENT dev
     )
 

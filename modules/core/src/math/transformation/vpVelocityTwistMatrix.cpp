@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -177,18 +177,6 @@ vpVelocityTwistMatrix::vpVelocityTwistMatrix(const double tx,
   vpThetaUVector tu(tux,tuy,tuz) ;
   buildFrom(T,tu) ;  
 }
-
-/*!
-
-  Set the velocity twist transformation matrix to identity.
-
-*/
-void
-vpVelocityTwistMatrix::setIdentity()
-{
-  eye() ;
-}
-
 
 /*!
 
@@ -528,3 +516,19 @@ vpVelocityTwistMatrix::print(std::ostream& s, unsigned int length, char const* i
 
   return (int)(maxBefore+maxAfter);
 }
+
+#if defined(VISP_BUILD_DEPRECATED_FUNCTIONS)
+
+/*!
+  \deprecated You should rather use eye().
+
+  Set the velocity twist transformation matrix to identity.
+
+*/
+void
+vpVelocityTwistMatrix::setIdentity()
+{
+  eye() ;
+}
+
+#endif // #if defined(VISP_BUILD_DEPRECATED_FUNCTIONS)

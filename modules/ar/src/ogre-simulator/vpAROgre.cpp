@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -349,8 +349,10 @@ void vpAROgre::init(bool
 
     if(leftconf == "Video Mode"){
       if(canInit) {
-        int ret = sscanf(rightconf.c_str(), "%d %*s %d", &mWindowWidth, &mWindowHeight);
-        if (ret == 0)
+        std::stringstream ss(rightconf.c_str());
+        std::string dummy;
+        ss >> mWindowWidth >> dummy >> mWindowHeight;
+        if (ss.fail())
           std::cout << "Cannot read Ogre video mode" << std::endl;
       }
       else{
@@ -368,7 +370,7 @@ void vpAROgre::init(bool
     else
       misc[leftconf] = rightconf;
 
-    it++;
+    ++it;
   }
 
   // With Ogre version >= 1.8.1 we hide the window
@@ -465,8 +467,14 @@ vpAROgre::~vpAROgre(void)
     Ogre::WindowEventUtilities::removeWindowEventListener(mWindow, this);
     windowClosed(mWindow);
   }
+
   // Delete root
-  if (mRoot) delete mRoot;
+  if(Ogre::Root::getSingletonPtr() && !Ogre::Root::getSingletonPtr()->getSceneManagerIterator().hasMoreElements()) {
+    if(mRoot) {
+      delete mRoot;
+    }
+  }
+  mRoot = 0;
 }
 
 /*!

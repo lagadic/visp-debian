@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -122,9 +122,9 @@ vpMbtMeLine::initTracking(const vpImage<unsigned char> &I, const vpImagePoint &i
 
     vpMeTracker::track(I);
   }
-  catch(vpException &e)
+  catch(...)
   {
-    throw e;
+    throw; // throw the original exception
   }
   vpCDEBUG(1) <<" end vpMeLine::initTracking()"<<std::endl ;
 }
@@ -645,9 +645,9 @@ vpMbtMeLine::track(const vpImage<unsigned char> &I)
   {
     vpMeTracker::track(I);
   }
-  catch(vpException &e)
+  catch(...)
   {
-    throw e;
+    throw; // throw the original exception
   }
 
   // supression des points rejetes par les ME

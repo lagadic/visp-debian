@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -210,6 +210,7 @@ class /* VISP_EXPORT */ vpScanPoint // Note that here VISP_EXPORT should not be 
 };
 
 /*!
+  \relates vpScanPoint
 
   Print the values of the scan point on the output stream. Data are
   separated by a white space. Data that are print are first the

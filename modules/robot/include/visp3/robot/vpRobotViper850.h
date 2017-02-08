@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -56,6 +56,12 @@ extern "C" {
 #  include "trycatch.h"
 }
 
+// If USE_ATI_DAQ defined, use DAQ board instead of serial connexion to acquire data using comedi
+#define USE_ATI_DAQ
+
+#ifdef USE_ATI_DAQ
+#  include <visp3/sensor/vpForceTorqueAtiSensor.h>
+#endif
 
 /*!
   \class vpRobotViper850
@@ -70,13 +76,53 @@ extern "C" {
   eye-in-hand visual servoing. The control of this camera is achieved
   by the vp1394TwoGrabber class.
 
-  This class allows to control the Viper850 arm robot in position
+  The model of the robot is the following:
+  \image html model-viper.png Model of the Viper 850 robot.
+
+  The non modified Denavit-Hartenberg representation of the robot is
+  given in the table below, where \f$q_1^*, \ldots, q_6^*\f$
+  are the variable joint positions.
+
+  \f[
+  \begin{tabular}{|c|c|c|c|c|}
+  \hline
+  Joint & $a_i$ & $d_i$ & $\alpha_i$ & $\theta_i$ \\
+  \hline
+  1 & $a_1$ & $d_1$ & $-\pi/2$ & $q_1^*$ \\
+  2 & $a_2$ & 0     & 0        & $q_2^*$ \\
+  3 & $a_3$ & 0     & $-\pi/2$ & $q_3^* - \pi$ \\
+  4 & 0     & $d_4$ & $\pi/2$  & $q_4^*$ \\
+  5 & 0     & 0     & $-\pi/2$ & $q_5^*$ \\
+  6 & 0     & 0     & 0        & $q_6^*-\pi$ \\
+  7 & 0     & $d_6$ & 0        & 0 \\
+  \hline
+  \end{tabular}
+  \f]
+
+  In this modelisation, different frames have to be considered.
+
+  - \f$ {\cal F}_f \f$: the reference frame, also called world frame
+
+  - \f$ {\cal F}_w \f$: the wrist frame located at the intersection of
+    the last three rotations, with \f$ ^f{\bf M}_w = ^0{\bf M}_6 \f$
+
+  - \f$ {\cal F}_e \f$: the end-effector frame located at the interface of the
+    two tool changers, with \f$^f{\bf M}_e = 0{\bf M}_7 \f$
+
+  - \f$ {\cal F}_c \f$: the camera or tool frame, with \f$^f{\bf M}_c = ^f{\bf
+    M}_e \; ^e{\bf M}_c \f$ where \f$ ^e{\bf M}_c \f$ is the result of
+    a calibration stage. We can also consider a custom tool vpViper850::TOOL_CUSTOM and set this
+    during robot initialisation or using set_eMc().
+
+  - \f$ {\cal F}_s \f$: the force/torque sensor frame, with \f$d7=0.0666\f$.
+
+  This class allows to control the Viper650 arm robot in position
   and velocity:
-  - in the joint space (vpRobot::ARTICULAR_FRAME), 
-  - in the fixed reference frame (vpRobot::REFERENCE_FRAME), 
-  - in the camera frame (vpRobot::CAMERA_FRAME),
-  - or in a mixed frame (vpRobot::MIXT_FRAME) where translations are expressed 
-  in the reference frame and rotations in the camera frame.
+  - in the joint space (vpRobot::ARTICULAR_FRAME),
+  - in the fixed reference frame \f$ {\cal F}_f \f$ (vpRobot::REFERENCE_FRAME),
+  - in the camera or tool frame \f$ {\cal F}_c \f$ (vpRobot::CAMERA_FRAME),
+  - or in a mixed frame (vpRobot::MIXT_FRAME) where translations are expressed
+  in the reference frame \f$ {\cal F}_f \f$ and rotations in the camera or tool frame \f$ {\cal F}_c \f$ .
 
   All the translations are expressed in meters for positions and m/s
   for the velocities. Rotations are expressed in radians for the
@@ -261,6 +307,30 @@ int main()
 }
   \endcode
 
+  It is also possible to specify the position of a custom tool cartesian frame. To this end
+  this frame is to specify with respect of the end effector frame in \f$^e {\bf M}_c\f$ transformation.
+  This could be done by initializing the robot thanks to
+  init(vpViper850::vpToolType, const vpHomogeneousMatrix &) or
+  init(vpViper850::vpToolType, const std::string &) or using set_eMc(). The following example illustrates
+  this usecase:
+  \code
+#include <visp3/core/vpHomogeneousMatrix.h>
+#include <visp3/robot/vpRobotViper850.h>
+
+int main()
+{
+#ifdef VISP_HAVE_VIPER850
+  vpRobotViper850 robot;
+
+  // Set the transformation between the end-effector frame
+  // and the tool frame.
+  vpHomogeneousMatrix eMc(0.001, 0.0, 0.1, 0.0, 0.0, M_PI/2);
+
+  robot.init(vpViper850::TOOL_CUSTOM, eMc);
+#endif
+}
+  \endcode
+
   It is also possible to measure the robot current position with
   getPosition() method and the robot current velocities with the getVelocity()
   method.
@@ -325,6 +395,9 @@ private: /* Attributs prives. */
   bool first_time_getdis;
   vpControlModeType controlMode;
 
+#if defined(USE_ATI_DAQ) && defined(VISP_HAVE_COMEDI)
+  vpForceTorqueAtiSensor ati;
+#endif
 
 public:  /* Methode publiques */
 
@@ -332,7 +405,7 @@ public:  /* Methode publiques */
   virtual ~vpRobotViper850 (void);
 
   // Force/Torque control
-  void biasForceTorqueSensor() const;
+  void biasForceTorqueSensor();
 
   void closeGripper() const;
 
@@ -350,6 +423,7 @@ public:  /* Methode publiques */
   }
 
   void getForceTorque(vpColVector &H) const;
+  vpColVector getForceTorque() const;
 
   double getMaxRotationVelocityJoint6() const;
   void getPosition (const vpRobot::vpControlFrameType frame,
@@ -379,20 +453,25 @@ public:  /* Methode publiques */
   void get_eJe(vpMatrix &eJe);
   void get_fJe(vpMatrix &fJe);
 
-  void init (void);
-  void init (vpViper850::vpToolType tool,
-             vpCameraParameters::vpCameraParametersProjType
-             projModel = vpCameraParameters::perspectiveProjWithoutDistortion);
+  void init(void);
+  void init(vpViper850::vpToolType tool,
+            vpCameraParameters::vpCameraParametersProjType
+            projModel = vpCameraParameters::perspectiveProjWithoutDistortion);
+  void init(vpViper850::vpToolType tool, const std::string &filename);
+  void init(vpViper850::vpToolType tool, const vpHomogeneousMatrix &eMc_);
 
-  void move(const char *filename) ;
+  void move(const std::string &filename) ;
 
   void openGripper();
 
   void powerOn() ;
   void powerOff() ;
 
-  static bool readPosFile(const char *filename, vpColVector &q)  ;
-  static bool savePosFile(const char *filename, const vpColVector &q)  ;
+  static bool readPosFile(const std::string &filename, vpColVector &q)  ;
+  static bool savePosFile(const std::string &filename, const vpColVector &q)  ;
+
+  void set_eMc(const vpHomogeneousMatrix &eMc_);
+  void set_eMc(const vpTranslationVector &etc_, const vpRxyzVector &erc_);
 
   void setMaxRotationVelocity(double w_max);
   void setMaxRotationVelocityJoint6(double w6_max);
@@ -403,7 +482,7 @@ public:  /* Methode publiques */
   void setPosition (const vpRobot::vpControlFrameType frame,
                     const double pos1, const double pos2, const double pos3,
                     const double pos4, const double pos5, const double pos6) ;
-  void setPosition(const char *filename) ;
+  void setPosition(const std::string &filename) ;
   void setPositioningVelocity (const double velocity);
 
   // State
@@ -413,7 +492,8 @@ public:  /* Methode publiques */
   void setVelocity (const vpRobot::vpControlFrameType frame,
                     const vpColVector & velocity);
 
-  void stopMotion() ;
+  void stopMotion();
+  void unbiasForceTorqueSensor();
 
 private:
   void getArticularDisplacement(vpColVector &displacement);
@@ -421,16 +501,6 @@ private:
 
   double maxRotationVelocity_joint6;
 };
-
-
-
-
-
-/*
- * Local variables:
- * c-basic-offset: 2
- * End:
- */
 
 #endif
 #endif /* #ifndef vpRobotViper850_h */

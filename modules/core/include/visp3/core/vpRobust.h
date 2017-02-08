@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -45,6 +45,7 @@
 #ifndef CROBUST_HH
 #define CROBUST_HH
 
+#include <visp3/core/vpConfig.h>
 #include <visp3/core/vpColVector.h>
 #include <visp3/core/vpMath.h>
 
@@ -93,12 +94,11 @@ public:
 
   //!Default Constructor
   vpRobust(unsigned int n_data);
-  
+  vpRobust();
+  vpRobust(const vpRobust &other);
+
   //!Destructor
   virtual ~vpRobust(){};
-
-  //!Resize containers for sort methods
-  void resize(unsigned int n_data);
   
   //! Compute the weights according a residue vector and a PsiFunction
   void MEstimator(const vpRobustEstimatorType method,
@@ -111,8 +111,13 @@ public:
 		 const vpColVector& all_residues,
 		 vpColVector &weights);
 
-  //! Simult Mestimator 
-  vpColVector simultMEstimator(vpColVector &residues);
+  vpRobust & operator=(const vpRobust &other);
+#ifdef VISP_HAVE_CPP11_COMPATIBILITY
+  vpRobust & operator=(const vpRobust &&other);
+#endif
+
+  //!Resize containers for sort methods
+  void resize(unsigned int n_data);
 
   //! Set iteration 
   void setIteration(const unsigned int iter){it=iter;}
@@ -124,6 +129,9 @@ public:
   inline void setThreshold(const double noise_threshold) {
     NoiseThreshold=noise_threshold;
   }
+
+  //! Simult Mestimator
+  vpColVector simultMEstimator(vpColVector &residues);
 
 //public :
 //double residualMedian ;
@@ -180,6 +188,7 @@ public:
   double constrainedChiHuber(double x);
   //@}
   
+#if !defined(VISP_HAVE_FUNC_ERFC) && !defined(VISP_HAVE_FUNC_STD_ERFC)
   //---------------------------------
   // Mathematic functions used to calculate the Expectation
   //---------------------------------
@@ -191,6 +200,7 @@ public:
   void gcf(double *gammcf, double a, double x, double *gln);
   double gammln(double xx);
   //@}
+#endif
   
   /** @name Sort function  */
   //@{

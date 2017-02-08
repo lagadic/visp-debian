@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -120,13 +120,13 @@ OPTIONS:                                               Default\n\
      Not taken into account for the moment. Will be a\n\
      future feature...\n\
 \n\
-  -f <first frame>                                          %u\n\
+  -f <first frame>                                          %d\n\
      First frame number of the sequence\n\
 \n\
   -n <number of images>                                     %u\n\
      Number of images to load from the sequence.\n\
 \n\
-  -s <step>                                                 %u\n\
+  -s <step>                                                 %d\n\
      Step between two images.\n\
 \n\
   -z <number of zero>                                       %u\n\
@@ -338,7 +338,7 @@ int main(int argc, const char ** argv)
     }
     return 0;
   }
-  catch(vpException e) {
+  catch(vpException &e) {
     std::cout << "Catch an exception: " << e << std::endl;
     return 1;
   }

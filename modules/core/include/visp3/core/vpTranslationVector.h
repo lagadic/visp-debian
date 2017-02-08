@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -103,10 +103,12 @@ public:
   vpTranslationVector(const vpTranslationVector &tv);
   vpTranslationVector(const vpHomogeneousMatrix &M);
   vpTranslationVector(const vpPoseVector &p);
+  vpTranslationVector(const vpColVector &v);
 
   vpTranslationVector buildFrom(const double tx, const double ty, const double tz) ;
   vpTranslationVector buildFrom(const vpHomogeneousMatrix& M) ;
   vpTranslationVector buildFrom(const vpPoseVector& p) ;
+  vpTranslationVector buildFrom(const vpColVector& v) ;
 
   double euclideanNorm() const;
 
@@ -114,6 +116,7 @@ public:
 
   // translation vectors additions  c = a + b (a, b  unchanged)
   vpTranslationVector operator+(const vpTranslationVector &tv) const ;
+  vpTranslationVector operator+(const vpColVector &v) const;
   // translation vectors substraction  c = a - b (a, b  unchanged)
   vpTranslationVector operator-(const vpTranslationVector &tv) const ;
   // negate t = -a  (t is unchanged)
@@ -125,6 +128,7 @@ public:
   vpTranslationVector operator/(const double x) const;
   vpTranslationVector & operator/=(double x);
   // Copy operator.   Allow operation such as A = v
+  vpTranslationVector &operator=(const vpColVector &tv);
   vpTranslationVector &operator=(const vpTranslationVector &tv);
 
   vpTranslationVector &operator=(double x) ;

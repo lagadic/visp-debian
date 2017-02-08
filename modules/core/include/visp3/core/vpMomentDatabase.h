@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -135,6 +135,8 @@ class VISP_EXPORT vpMomentDatabase{
         vpMomentDatabase() : moments() {}
         virtual ~vpMomentDatabase() {}
 
+        /** @name Inherited functionalities from vpMomentDatabase */
+        //@{
         const vpMoment& get(const char* type, bool& found) const;
         /*!
           Get the first element in the database.
@@ -144,8 +146,10 @@ class VISP_EXPORT vpMomentDatabase{
         vpMoment& get_first(){return *(moments.begin()->second);}
 
         virtual void updateAll(vpMomentObject& object);
-        friend VISP_EXPORT std::ostream & operator<<(std::ostream & os, const vpMomentDatabase& v);
+        //@}
+
         friend class vpMoment;
+        friend VISP_EXPORT std::ostream & operator<<(std::ostream & os, const vpMomentDatabase& v);
 };
 
 #endif

@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -173,30 +173,18 @@ vpSimulatorPioneerPan::setVelocity(const vpRobot::vpControlFrameType frame,
 
       break ;
       }
-  case vpRobot::CAMERA_FRAME: {
-      vpERROR_TRACE ("Cannot set a velocity in the camera frame: "
-                     "functionality not implemented");
-      throw vpRobotException (vpRobotException::wrongStateError,
-                              "Cannot set a velocity in the camera frame:"
-                              "functionality not implemented");
-      break ;
-    }
+  case vpRobot::CAMERA_FRAME:
+    throw vpRobotException (vpRobotException::wrongStateError,
+                            "Cannot set a velocity in the camera frame:"
+                            "functionality not implemented");
   case vpRobot::REFERENCE_FRAME:
-    vpERROR_TRACE ("Cannot set a velocity in the reference frame: "
-                   "functionality not implemented");
     throw vpRobotException (vpRobotException::wrongStateError,
                             "Cannot set a velocity in the reference frame:"
                             "functionality not implemented");
-    break ;
-
   case vpRobot::MIXT_FRAME:
-    vpERROR_TRACE ("Cannot set a velocity in the mixt frame: "
-		 "functionality not implemented");
     throw vpRobotException (vpRobotException::wrongStateError,
-			    "Cannot set a velocity in the mixt frame:"
-			    "functionality not implemented");
-
-    break ;
+                            "Cannot set a velocity in the mixt frame:"
+                            "functionality not implemented");
   }
 }
 

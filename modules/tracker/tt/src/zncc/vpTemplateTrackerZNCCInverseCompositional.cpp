@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -51,16 +51,13 @@ vpTemplateTrackerZNCCInverseCompositional::vpTemplateTrackerZNCCInverseCompositi
 void vpTemplateTrackerZNCCInverseCompositional::initCompInverse(const vpImage<unsigned char> &I)
 {
   //std::cout<<"Initialise precomputed value of Compositionnal Inverse"<<std::endl;
-  int i,j;
-
   vpImageFilter::getGradXGauss2D(I, dIx, fgG,fgdG,taillef);
   vpImageFilter::getGradYGauss2D(I, dIy, fgG,fgdG,taillef);
 
-
   for(unsigned int point=0;point<templateSize;point++)
   {
-    i=ptTemplate[point].y;
-    j=ptTemplate[point].x;
+    int i=ptTemplate[point].y;
+    int j=ptTemplate[point].x;
 
     X1[0]=j;X1[1]=i;
     Warp->computeDenom(X1,p);
@@ -248,8 +245,7 @@ void vpTemplateTrackerZNCCInverseCompositional::trackNoPyr(const vpImage<unsigne
   if(blur)
     vpImageFilter::filter(I, BI,fgG,taillef);
 
-  double erreur=0;
-  unsigned int Nbpoint=0;
+  //double erreur=0;
   vpColVector dpinv(nbParam);
   double Ic;
   double Iref;
@@ -259,13 +255,12 @@ void vpTemplateTrackerZNCCInverseCompositional::trackNoPyr(const vpImage<unsigne
   initPosEvalRMS(p);
   do
   {
-    Nbpoint=0;
-    erreur=0;
+    unsigned int Nbpoint=0;
+    //erreur=0;
     G=0;
     Warp->computeCoeff(p);
     double moyIref=0;
     double moyIc=0;
-    double denom=0;
     for(unsigned int point=0;point<templateSize;point++)
     {
       i=ptTemplate[point].y;
@@ -328,8 +323,8 @@ void vpTemplateTrackerZNCCInverseCompositional::trackNoPyr(const vpImage<unsigne
           for(unsigned int it=0;it<nbParam;it++)
             sIrefdIref[it]+=(Iref-moyIref)*(ptTemplate[point].dW[it]-moydIrefdp[it]);
 
-          double er=(Iref-Ic);
-          erreur+=(er*er);
+          //double er=(Iref-Ic);
+          //erreur+=(er*er);
           //denom+=(Iref-moyIref)*(Iref-moyIref)*(Ic-moyIc)*(Ic-moyIc);
           covarIref+=(Iref-moyIref)*(Iref-moyIref);
           covarIc+=(Ic-moyIc)*(Ic-moyIc);
@@ -340,7 +335,7 @@ void vpTemplateTrackerZNCCInverseCompositional::trackNoPyr(const vpImage<unsigne
       }
       covarIref=sqrt(covarIref);
       covarIc=sqrt(covarIc);
-      denom=covarIref*covarIc;
+      double denom=covarIref*covarIc;
 
       //if(denom==0.0)
       if (std::fabs(denom) <= std::numeric_limits<double>::epsilon())

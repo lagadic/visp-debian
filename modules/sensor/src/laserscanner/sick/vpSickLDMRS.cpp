@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -94,7 +94,7 @@ vpSickLDMRS::~vpSickLDMRS()
 }
 
 /*! 
-  Initialize the connexion with the Sick LD-MRS laser scanner.
+  Initialize the connection with the Sick LD-MRS laser scanner.
 
   \param ip_address : Ethernet address of the laser.
   \param com_port : Ethernet port of the laser.
@@ -110,7 +110,7 @@ bool vpSickLDMRS::setup(std::string ip_address, int com_port)
 }
 
 /*! 
-  Initialize the connexion with the Sick LD-MRS laser scanner.
+  Initialize the connection with the Sick LD-MRS laser scanner.
 
   \return true if the device was initialized, false otherwise.
 */

@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -160,7 +160,7 @@ main()
     // For the first graphic, set the curves legend
     char legend[10];
     for (unsigned int i=0; i < 6; i++) {
-      sprintf(legend, "q%d", i+1);
+      sprintf(legend, "q%u", i+1);
       plot.setLegend(0, i, legend);
     }
     plot.setLegend(0, 6, "tQmin");

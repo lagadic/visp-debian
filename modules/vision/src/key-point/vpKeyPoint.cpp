@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -48,159 +48,318 @@
 #  include <opencv2/calib3d/calib3d.hpp>
 #endif
 
+//Detect endianness of the host machine
+//Reference: http://www.boost.org/doc/libs/1_36_0/boost/detail/endian.hpp
+#if defined (__GLIBC__)
+# include <endian.h>
+# if (__BYTE_ORDER == __LITTLE_ENDIAN)
+#  define VISP_LITTLE_ENDIAN
+# elif (__BYTE_ORDER == __BIG_ENDIAN)
+#  define VISP_BIG_ENDIAN
+# elif (__BYTE_ORDER == __PDP_ENDIAN)
+   //Currently not supported when reading / writing binary file
+#  define VISP_PDP_ENDIAN
+# else
+#  error Unknown machine endianness detected.
+# endif
+#elif defined(_BIG_ENDIAN) && !defined(_LITTLE_ENDIAN) || defined(__BIG_ENDIAN__) && !defined(__LITTLE_ENDIAN__)
+# define VISP_BIG_ENDIAN
+#elif defined(_LITTLE_ENDIAN) && !defined(_BIG_ENDIAN) || defined(__LITTLE_ENDIAN__) && !defined(__BIG_ENDIAN__)
+# define VISP_LITTLE_ENDIAN
+#elif defined(__sparc) || defined(__sparc__) \
+   || defined(_POWER) || defined(__powerpc__) \
+   || defined(__ppc__) || defined(__hpux) \
+   || defined(_MIPSEB) || defined(_POWER) \
+   || defined(__s390__)
 
-//TODO: test saveLearningData with little / big endian platform
-//Specific Type transformation functions
-///*!
-//   Convert a list of cv::DMatch to a cv::DMatch (extract the first cv::DMatch, the nearest neighbor).
-//
-//   \param knnMatches : List of cv::DMatch.
-//   \return The nearest neighbor.
-// */
-inline cv::DMatch knnToDMatch(const std::vector<cv::DMatch> &knnMatches) {
-  if(knnMatches.size() > 0) {
-    return knnMatches[0];
-  }
+# define VISP_BIG_ENDIAN
+#elif defined(__i386__) || defined(__alpha__) \
+   || defined(__ia64) || defined(__ia64__) \
+   || defined(_M_IX86) || defined(_M_IA64) \
+   || defined(_M_ALPHA) || defined(__amd64) \
+   || defined(__amd64__) || defined(_M_AMD64) \
+   || defined(__x86_64) || defined(__x86_64__) \
+   || defined(_M_X64)
 
-  return cv::DMatch();
-}
+# define VISP_LITTLE_ENDIAN
+#else
+# error Cannot detect host machine endianness.
+#endif
 
-///*!
-//   Convert a cv::DMatch to an index (extract the train index).
-//
-//   \param match : Point to convert in ViSP type.
-//   \return The train index.
-// */
-inline vpImagePoint matchRansacToVpImage(const std::pair<cv::KeyPoint, cv::Point3f> &pair) {
-  return vpImagePoint(pair.first.pt.y, pair.first.pt.x);
-}
 
-bool isBigEndian() {
-  union {
-    uint32_t i;
-    char c[4];
-  } bint = { 0x01020304 };
-
-  return bint.c[0] == 1;
-}
-
-uint16_t reverse16bits(const uint16_t n) {
-  unsigned char *np = (unsigned char *) &n;
-
-  return ((uint16_t) np[0] << 8) | (uint16_t) np[1];
-}
-
-uint32_t reverse32bits(const uint32_t n) {
-  unsigned char *np = (unsigned char *) &n;
-
-  return ((uint32_t) np[0] << 24) | ((uint32_t) np[1] << 16)
-       | ((uint32_t) np[2] << 8)  | (uint32_t) np[3];
-}
-
-float reverseFloat(const float f) {
-  union {
-    float f;
-    unsigned char b[4];
-  } dat1, dat2;
-
-  dat1.f = f;
-  dat2.b[0] = dat1.b[3];
-  dat2.b[1] = dat1.b[2];
-  dat2.b[2] = dat1.b[1];
-  dat2.b[3] = dat1.b[0];
-  return dat2.f;
-}
-
-double reverseDouble(const double d) {
-  union {
-    double d;
-    unsigned char b[8];
-  } dat1, dat2;
-
-  dat1.d = d;
-  dat2.b[0] = dat1.b[7];
-  dat2.b[1] = dat1.b[6];
-  dat2.b[2] = dat1.b[5];
-  dat2.b[3] = dat1.b[4];
-  dat2.b[4] = dat1.b[3];
-  dat2.b[5] = dat1.b[2];
-  dat2.b[6] = dat1.b[1];
-  dat2.b[7] = dat1.b[0];
-  return dat2.d;
-}
-
-void writeBinaryUShortLE(std::ofstream &file, const unsigned short ushort_value) {
-  if(isBigEndian()) {
-    //Reverse bytes order to little endian
-    uint16_t reverse_ushort = reverse16bits(ushort_value);
-    file.write((char *)(&reverse_ushort), sizeof(reverse_ushort));
-  } else {
-    file.write((char *)(&ushort_value), sizeof(ushort_value));
-  }
-}
-
-void writeBinaryShortLE(std::ofstream &file, const short short_value) {
-  if(isBigEndian()) {
-    //Reverse bytes order to little endian
-    uint16_t reverse_short = reverse16bits((uint16_t) short_value);
-    file.write((char *)(&reverse_short), sizeof(reverse_short));
-  } else {
-    file.write((char *)(&short_value), sizeof(short_value));
-  }
-}
-
-void writeBinaryUIntLE(std::ofstream &file, const unsigned int uint_value) {
-  if(isBigEndian()) {
-    //Reverse bytes order to little endian
-    if(sizeof(uint_value) == 4) {
-      uint32_t reverse_uint = reverse32bits(uint_value);
-      file.write((char *)(&reverse_uint), sizeof(reverse_uint));
-    } else {
-      uint16_t reverse_uint = reverse16bits(uint_value);
-      file.write((char *)(&reverse_uint), sizeof(reverse_uint));
+namespace {
+  //Specific Type transformation functions
+  ///*!
+  //   Convert a list of cv::DMatch to a cv::DMatch (extract the first cv::DMatch, the nearest neighbor).
+  //
+  //   \param knnMatches : List of cv::DMatch.
+  //   \return The nearest neighbor.
+  // */
+  inline cv::DMatch knnToDMatch(const std::vector<cv::DMatch> &knnMatches) {
+    if(knnMatches.size() > 0) {
+      return knnMatches[0];
     }
-  } else {
-    file.write((char *)(&uint_value), sizeof(uint_value));
-  }
-}
 
-void writeBinaryIntLE(std::ofstream &file, const int int_value) {
-  if(isBigEndian()) {
-    //Reverse bytes order to little endian
+    return cv::DMatch();
+  }
+
+  ///*!
+  //   Convert a cv::DMatch to an index (extract the train index).
+  //
+  //   \param match : Point to convert in ViSP type.
+  //   \return The train index.
+  // */
+  inline vpImagePoint matchRansacToVpImage(const std::pair<cv::KeyPoint, cv::Point3f> &pair) {
+    return vpImagePoint(pair.first.pt.y, pair.first.pt.x);
+  }
+
+  //Keep this function to know how to detect big endian with code
+  //bool isBigEndian() {
+  //  union {
+  //    uint32_t i;
+  //    char c[4];
+  //  } bint = { 0x01020304 };
+  //
+  //  return bint.c[0] == 1;
+  //}
+
+#ifdef VISP_BIG_ENDIAN
+  //Swap 16 bits by shifting to the right the first byte and by shifting to the left the second byte
+  uint16_t swap16bits(const uint16_t val) {
+    return ( ((val >> 8) & 0x00FF) | ((val << 8) & 0xFF00) );
+  }
+
+  //Swap 32 bits by shifting to the right the first 2 bytes and by shifting to the left the last 2 bytes
+  uint32_t swap32bits(const uint32_t val) {
+    return ( ((val >> 24) & 0x000000FF) | ((val >>  8) & 0x0000FF00) |
+             ((val <<  8) & 0x00FF0000) | ((val << 24) & 0xFF000000) );
+  }
+
+  //Swap a float, the union is necessary because of the representation of a float in memory in IEEE 754.
+  float swapFloat(const float f) {
+    union {
+      float f;
+      unsigned char b[4];
+    } dat1, dat2;
+
+    dat1.f = f;
+    dat2.b[0] = dat1.b[3];
+    dat2.b[1] = dat1.b[2];
+    dat2.b[2] = dat1.b[1];
+    dat2.b[3] = dat1.b[0];
+    return dat2.f;
+  }
+
+  //Swap a double, the union is necessary because of the representation of a double in memory in IEEE 754.
+  double swapDouble(const double d) {
+    union {
+      double d;
+      unsigned char b[8];
+    } dat1, dat2;
+
+    dat1.d = d;
+    dat2.b[0] = dat1.b[7];
+    dat2.b[1] = dat1.b[6];
+    dat2.b[2] = dat1.b[5];
+    dat2.b[3] = dat1.b[4];
+    dat2.b[4] = dat1.b[3];
+    dat2.b[5] = dat1.b[2];
+    dat2.b[6] = dat1.b[1];
+    dat2.b[7] = dat1.b[0];
+    return dat2.d;
+  }
+#endif
+
+  //Read an unsigned short int stored in little endian
+  void readBinaryUShortLE(std::ifstream &file, unsigned short &ushort_value) {
+    //Read
+    file.read((char *)(&ushort_value), sizeof(ushort_value));
+
+  #ifdef VISP_BIG_ENDIAN
+    //Swap bytes order from little endian to big endian
+    ushort_value = swap16bits(ushort_value);
+  #endif
+  }
+
+  //Read a short int stored in little endian
+  void readBinaryShortLE(std::ifstream &file, short &short_value) {
+    //Read
+    file.read((char *)(&short_value), sizeof(short_value));
+
+  #ifdef VISP_BIG_ENDIAN
+    //Swap bytes order from little endian to big endian
+    short_value = (short) swap16bits((uint16_t) short_value);
+  #endif
+  }
+
+//  //Read an unsigned int stored in little endian
+//  void readBinaryUIntLE(std::ifstream &file, unsigned int &uint_value) {
+//    //Read
+//    file.read((char *)(&uint_value), sizeof(uint_value));
+
+//  #ifdef VISP_BIG_ENDIAN
+//    //Swap bytes order from little endian to big endian
+//    if(sizeof(uint_value) == 4) {
+//      uint_value = swap32bits(uint_value);
+//    } else {
+//      uint_value = swap16bits(uint_value);
+//    }
+//  #endif
+//  }
+
+  //Read an int stored in little endian
+  void readBinaryIntLE(std::ifstream &file, int &int_value) {
+    //Read
+    file.read((char *)(&int_value), sizeof(int_value));
+
+  #ifdef VISP_BIG_ENDIAN
+    //Swap bytes order from little endian to big endian
     if(sizeof(int_value) == 4) {
-      uint32_t reverse_int = reverse32bits((uint32_t) int_value);
-      file.write((char *)(&reverse_int), sizeof(reverse_int));
+      int_value = (int) swap32bits((uint32_t) int_value);
     } else {
-      uint16_t reverse_int = reverse16bits((uint16_t) int_value);
-      file.write((char *)(&reverse_int), sizeof(reverse_int));
+      int_value = swap16bits((uint16_t) int_value);
     }
-  } else {
+  #endif
+  }
+
+  //Read a float stored in little endian
+  void readBinaryFloatLE(std::ifstream &file, float &float_value) {
+    //Read
+    file.read((char *)(&float_value), sizeof(float_value));
+
+  #ifdef VISP_BIG_ENDIAN
+    //Swap bytes order from little endian to big endian
+    float_value = swapFloat(float_value);
+  #endif
+  }
+
+  //Read a double stored in little endian
+  void readBinaryDoubleLE(std::ifstream &file, double &double_value) {
+    //Read
+    file.read((char *)(&double_value), sizeof(double_value));
+
+  #ifdef VISP_BIG_ENDIAN
+    //Swap bytes order from little endian to big endian
+    double_value = swapDouble(double_value);
+  #endif
+  }
+
+  //Write an unsigned short in little endian
+  void writeBinaryUShortLE(std::ofstream &file, const unsigned short ushort_value) {
+  #ifdef VISP_BIG_ENDIAN
+    //Swap bytes order to little endian
+    uint16_t swap_ushort = swap16bits(ushort_value);
+    file.write((char *)(&swap_ushort), sizeof(swap_ushort));
+  #else
+    file.write((char *)(&ushort_value), sizeof(ushort_value));
+  #endif
+  }
+
+  //Write a short in little endian
+  void writeBinaryShortLE(std::ofstream &file, const short short_value) {
+  #ifdef VISP_BIG_ENDIAN
+    //Swap bytes order to little endian
+    uint16_t swap_short = swap16bits((uint16_t) short_value);
+    file.write((char *)(&swap_short), sizeof(swap_short));
+  #else
+    file.write((char *)(&short_value), sizeof(short_value));
+  #endif
+  }
+
+  //Write an unsigned int in little endian
+//  void writeBinaryUIntLE(std::ofstream &file, const unsigned int uint_value) {
+//  #ifdef VISP_BIG_ENDIAN
+//    //Swap bytes order to little endian
+//    //More info on data type: http://en.cppreference.com/w/cpp/language/types
+//    if(sizeof(uint_value) == 4) {
+//      uint32_t swap_uint = swap32bits(uint_value);
+//      file.write((char *)(&swap_uint), sizeof(swap_uint));
+//    } else {
+//      uint16_t swap_uint = swap16bits(uint_value);
+//      file.write((char *)(&swap_uint), sizeof(swap_uint));
+//    }
+//  #else
+//    file.write((char *)(&uint_value), sizeof(uint_value));
+//  #endif
+//  }
+
+  //Write an int in little endian
+  void writeBinaryIntLE(std::ofstream &file, const int int_value) {
+  #ifdef VISP_BIG_ENDIAN
+    //Swap bytes order to little endian
+    //More info on data type: http://en.cppreference.com/w/cpp/language/types
+    if(sizeof(int_value) == 4) {
+      uint32_t swap_int = swap32bits((uint32_t) int_value);
+      file.write((char *)(&swap_int), sizeof(swap_int));
+    } else {
+      uint16_t swap_int = swap16bits((uint16_t) int_value);
+      file.write((char *)(&swap_int), sizeof(swap_int));
+    }
+  #else
     file.write((char *)(&int_value), sizeof(int_value));
+  #endif
   }
-}
 
-void writeBinaryFloatLE(std::ofstream &file, const float float_value) {
-  if(isBigEndian()) {
-    //Reverse bytes order to little endian
-    float reverse_float = reverseFloat(float_value);
-    file.write((char *)(&reverse_float), sizeof(reverse_float));
-  } else {
+  //Write a float in little endian
+  void writeBinaryFloatLE(std::ofstream &file, const float float_value) {
+  #ifdef VISP_BIG_ENDIAN
+    //Swap bytes order to little endian
+    float swap_float = swapFloat(float_value);
+    file.write((char *)(&swap_float), sizeof(swap_float));
+  #else
     file.write((char *)(&float_value), sizeof(float_value));
+  #endif
   }
-}
 
-void writeBinaryDoubleLE(std::ofstream &file, const double double_value) {
-  if(isBigEndian()) {
-    //Reverse bytes order to little endian
-    double reverse_double = reverseDouble(double_value);
-    file.write((char *)(&reverse_double), sizeof(reverse_double));
-  } else {
+  //Write a double in little endian
+  void writeBinaryDoubleLE(std::ofstream &file, const double double_value) {
+  #ifdef VISP_BIG_ENDIAN
+    //Swap bytes order to little endian
+    double swap_double = swapDouble(double_value);
+    file.write((char *)(&swap_double), sizeof(swap_double));
+  #else
     file.write((char *)(&double_value), sizeof(double_value));
+  #endif
   }
 }
 
 /*!
-  Constructor to initialize specified detector, extractor, matcher and filtering method.
+  Constructor to initialize the specified detector, descriptor, matcher and filtering method.
+
+  \param detectorType : Type of feature detector.
+  \param descriptorType : Type of the descriptor extractor.
+  \param matcherName : Name of the matcher.
+  \param filterType : Filtering matching method chosen.
+ */
+vpKeyPoint::vpKeyPoint(const vpFeatureDetectorType &detectorType, const vpFeatureDescriptorType &descriptorType,
+                       const std::string &matcherName, const vpFilterMatchingType &filterType)
+  : m_computeCovariance(false), m_covarianceMatrix(), m_currentImageId(0), m_detectionMethod(detectionScore),
+    m_detectionScore(0.15), m_detectionThreshold(100.0), m_detectionTime(0.), m_detectorNames(),
+    m_detectors(), m_extractionTime(0.), m_extractorNames(), m_extractors(), m_filteredMatches(), m_filterType(filterType),
+    m_imageFormat(jpgImageFormat), m_knnMatches(), m_mapOfImageId(), m_mapOfImages(),
+    m_matcher(), m_matcherName(matcherName),
+    m_matches(), m_matchingFactorThreshold(2.0), m_matchingRatioThreshold(0.85), m_matchingTime(0.),
+    m_matchRansacKeyPointsToPoints(), m_nbRansacIterations(200), m_nbRansacMinInlierCount(100), m_objectFilteredPoints(),
+    m_poseTime(0.), m_queryDescriptors(), m_queryFilteredKeyPoints(), m_queryKeyPoints(),
+    m_ransacConsensusPercentage(20.0), m_ransacInliers(), m_ransacOutliers(), m_ransacReprojectionError(6.0),
+    m_ransacThreshold(0.01), m_trainDescriptors(), m_trainKeyPoints(), m_trainPoints(),
+    m_trainVpPoints(), m_useAffineDetection(false),
+#if (VISP_HAVE_OPENCV_VERSION >= 0x020400 && VISP_HAVE_OPENCV_VERSION < 0x030000)
+    m_useBruteForceCrossCheck(true),
+#endif
+    m_useConsensusPercentage(false),
+    m_useKnn(false), m_useMatchTrainToQuery(false), m_useRansacVVS(true), m_useSingleMatchFilter(true)
+{
+  initFeatureNames();
+
+  m_detectorNames.push_back(m_mapOfDetectorNames[detectorType]);
+  m_extractorNames.push_back(m_mapOfDescriptorNames[descriptorType]);
+
+  init();
+}
+
+/*!
+  Constructor to initialize the specified detector, descriptor, matcher and filtering method.
 
   \param detectorName : Name of the detector.
   \param extractorName : Name of the extractor.
@@ -220,17 +379,13 @@ vpKeyPoint::vpKeyPoint(const std::string &detectorName, const std::string &extra
     m_ransacConsensusPercentage(20.0), m_ransacInliers(), m_ransacOutliers(), m_ransacReprojectionError(6.0),
     m_ransacThreshold(0.01), m_trainDescriptors(), m_trainKeyPoints(), m_trainPoints(),
     m_trainVpPoints(), m_useAffineDetection(false),
-    #if (VISP_HAVE_OPENCV_VERSION >= 0x020400 && VISP_HAVE_OPENCV_VERSION < 0x030000)
+#if (VISP_HAVE_OPENCV_VERSION >= 0x020400 && VISP_HAVE_OPENCV_VERSION < 0x030000)
     m_useBruteForceCrossCheck(true),
-    #endif
+#endif
     m_useConsensusPercentage(false),
     m_useKnn(false), m_useMatchTrainToQuery(false), m_useRansacVVS(true), m_useSingleMatchFilter(true)
 {
-  //Use k-nearest neighbors (knn) to retrieve the two best matches for a keypoint
-  //So this is useful only for ratioDistanceThreshold method
-  if(filterType == ratioDistanceThreshold || filterType == stdAndRatioDistanceThreshold) {
-    m_useKnn = true;
-  }
+  initFeatureNames();
 
   m_detectorNames.push_back(detectorName);
   m_extractorNames.push_back(extractorName);
@@ -259,18 +414,13 @@ vpKeyPoint::vpKeyPoint(const std::vector<std::string> &detectorNames, const std:
     m_ransacConsensusPercentage(20.0), m_ransacInliers(), m_ransacOutliers(), m_ransacReprojectionError(6.0),
     m_ransacThreshold(0.01), m_trainDescriptors(), m_trainKeyPoints(), m_trainPoints(),
     m_trainVpPoints(), m_useAffineDetection(false),
-    #if (VISP_HAVE_OPENCV_VERSION >= 0x020400 && VISP_HAVE_OPENCV_VERSION < 0x030000)
+#if (VISP_HAVE_OPENCV_VERSION >= 0x020400 && VISP_HAVE_OPENCV_VERSION < 0x030000)
     m_useBruteForceCrossCheck(true),
-    #endif
+#endif
     m_useConsensusPercentage(false),
     m_useKnn(false), m_useMatchTrainToQuery(false), m_useRansacVVS(true), m_useSingleMatchFilter(true)
 {
-  //Use k-nearest neighbors (knn) to retrieve the two best matches for a keypoint
-  //So this is useful only for ratioDistanceThreshold method
-  if(filterType == ratioDistanceThreshold || filterType == stdAndRatioDistanceThreshold) {
-    m_useKnn = true;
-  }
-
+  initFeatureNames();
   init();
 }
 
@@ -524,16 +674,16 @@ void vpKeyPoint::buildReference(const vpImage<unsigned char> &I, const std::vect
 }
 
 /*!
-   Compute the 3D coordinate given the 2D image coordinate and under the assumption that the point is located on a plane
+   Compute the 3D coordinate in the world/object frame given the 2D image coordinate and under the assumption that the point is located on a plane
    whose the plane equation is known in the camera frame.
-   The Z-coordinate is retrieved according to the proportional relation between the plane equation expressed in the
+   The Z-coordinate is retrieved according to the proportional relationship between the plane equation expressed in the
    normalized camera frame (derived from the image coordinate) and the same plane equation expressed in the camera frame.
 
    \param candidate : Keypoint we want to compute the 3D coordinate.
-   \param roi : List of 3D points representing a planar face.
+   \param roi : List of 3D points in the camera frame representing a planar face.
    \param cam : Camera parameters.
    \param cMo : Homogeneous matrix between the world and the camera frames.
-   \param point : 3D coordinate computed.
+   \param point : 3D coordinate in the world/object frame computed.
  */
 void vpKeyPoint::compute3D(const cv::KeyPoint &candidate, const std::vector<vpPoint> &roi,
     const vpCameraParameters &cam, const vpHomogeneousMatrix &cMo, cv::Point3f &point) {
@@ -562,16 +712,16 @@ void vpKeyPoint::compute3D(const cv::KeyPoint &candidate, const std::vector<vpPo
 }
 
 /*!
-   Compute the 3D coordinate given the 2D image coordinate and under the assumption that the point is located on a plane
+   Compute the 3D coordinate in the world/object frame given the 2D image coordinate and under the assumption that the point is located on a plane
    whose the plane equation is known in the camera frame.
-   The Z-coordinate is retrieved according to the proportional relation between the plane equation expressed in the
+   The Z-coordinate is retrieved according to the proportional relationship between the plane equation expressed in the
    normalized camera frame (derived from the image coordinate) and the same plane equation expressed in the camera frame.
 
    \param candidate : vpImagePoint we want to compute the 3D coordinate.
-   \param roi : List of 3D points representing a planar face.
+   \param roi : List of 3D points in the camera frame representing a planar face.
    \param cam : Camera parameters.
    \param cMo : Homogeneous matrix between the world and the camera frames.
-   \param point : 3D coordinate computed.
+   \param point : 3D coordinate in the world/object frame computed.
  */
 void vpKeyPoint::compute3D(const vpImagePoint &candidate, const std::vector<vpPoint> &roi,
     const vpCameraParameters &cam, const vpHomogeneousMatrix &cMo, vpPoint &point) {
@@ -600,7 +750,7 @@ void vpKeyPoint::compute3D(const vpImagePoint &candidate, const std::vector<vpPo
 }
 
 /*!
-   Keep only keypoints located on faces and compute for those keypoints the 3D coordinate given the 2D image coordinate
+   Keep only keypoints located on faces and compute for those keypoints the 3D coordinate in the world/object frame given the 2D image coordinate
    and under the assumption that the point is located on a plane.
 
    \param cMo : Homogeneous matrix between the world and the camera frames.
@@ -608,9 +758,9 @@ void vpKeyPoint::compute3D(const vpImagePoint &candidate, const std::vector<vpPo
    \param candidates : In input, list of keypoints detected in the whole image, in output, list of keypoints only located
    on planes.
    \param polygons : List of 2D polygons representing the projection of the faces in the image plane.
-   \param  roisPt : List of faces.
-   \param points : Output list of computed 3D coordinates of keypoints located only on faces.
-   \param descriptors : Optional parameter, pointer to the descriptors to filter
+   \param  roisPt : List of faces, with the 3D coordinates known in the camera frame.
+   \param points : Output list of computed 3D coordinates (in the world/object frame) of keypoints located only on faces.
+   \param descriptors : Optional parameter, pointer to the descriptors to filter.
  */
 void vpKeyPoint::compute3DForPointsInPolygons(const vpHomogeneousMatrix &cMo, const vpCameraParameters &cam,
     std::vector<cv::KeyPoint> &candidates, const std::vector<vpPolygon> &polygons,
@@ -658,7 +808,7 @@ void vpKeyPoint::compute3DForPointsInPolygons(const vpHomogeneousMatrix &cMo, co
 }
 
 /*!
-   Keep only keypoints located on faces and compute for those keypoints the 3D coordinate given the 2D image coordinate
+   Keep only keypoints located on faces and compute for those keypoints the 3D coordinate in the world/object frame given the 2D image coordinate
    and under the assumption that the point is located on a plane.
 
    \param cMo : Homogeneous matrix between the world and the camera frames.
@@ -666,8 +816,8 @@ void vpKeyPoint::compute3DForPointsInPolygons(const vpHomogeneousMatrix &cMo, co
    \param candidates : In input, list of vpImagePoint located in the whole image, in output, list of vpImagePoint only located
    on planes.
    \param polygons : List of 2D polygons representing the projection of the faces in the image plane.
-   \param  roisPt : List of faces.
-   \param points : Output list of computed 3D coordinates of vpImagePoint located only on faces.
+   \param  roisPt : List of faces, with the 3D coordinates known in the camera frame.
+   \param points : Output list of computed 3D coordinates (in the world/object frame) of vpImagePoint located only on faces.
    \param descriptors : Optional parameter, pointer to the descriptors to filter
  */
 void vpKeyPoint::compute3DForPointsInPolygons(const vpHomogeneousMatrix &cMo, const vpCameraParameters &cam,
@@ -706,6 +856,142 @@ void vpKeyPoint::compute3DForPointsInPolygons(const vpHomogeneousMatrix &cMo, co
         ++it2;
       }
     }
+  }
+}
+
+/*!
+   Keep only keypoints located on cylinders and compute the 3D coordinates in the world/object frame given the 2D image coordinates.
+
+   \param cMo : Homogeneous matrix between the world and the camera frames.
+   \param cam : Camera parameters.
+   \param candidates : In input, list of keypoints detected in the whole image, in output, list of keypoints only located
+   on cylinders.
+   \param cylinders : List of vpCylinder corresponding of the cylinder objects in the scene, projected in the camera frame.
+   \param vectorOfCylinderRois : For each cylinder, the corresponding list of bounding box.
+   \param points : Output list of computed 3D coordinates in the world/object frame for each keypoint located on a cylinder.
+   \param descriptors : Optional parameter, pointer to the descriptors to filter.
+ */
+void vpKeyPoint::compute3DForPointsOnCylinders(const vpHomogeneousMatrix &cMo, const vpCameraParameters &cam,
+    std::vector<cv::KeyPoint> &candidates, const std::vector<vpCylinder> &cylinders,
+    const std::vector<std::vector<std::vector<vpImagePoint> > > &vectorOfCylinderRois,
+    std::vector<cv::Point3f> &points, cv::Mat *descriptors) {
+  std::vector<cv::KeyPoint> candidatesToCheck = candidates;
+  candidates.clear();
+  points.clear();
+  cv::Mat desc;
+
+  //Keep only keypoints on cylinders
+  size_t cpt_keypoint = 0;
+  for(std::vector<cv::KeyPoint>::const_iterator it1 = candidatesToCheck.begin();
+      it1 != candidatesToCheck.end(); ++it1, cpt_keypoint++) {
+    size_t cpt_cylinder = 0;
+
+    //Iterate through the list of vpCylinders
+    for(std::vector<std::vector<std::vector<vpImagePoint> > >::const_iterator it2 = vectorOfCylinderRois.begin();
+        it2 != vectorOfCylinderRois.end(); ++it2, cpt_cylinder++) {
+      //Iterate through the list of the bounding boxes of the current vpCylinder
+      for(std::vector<std::vector<vpImagePoint> >::const_iterator it3 = it2->begin(); it3 != it2->end(); ++it3) {
+        if (vpPolygon::isInside(*it3, it1->pt.y, it1->pt.x)) {
+          candidates.push_back(*it1);
+
+          //Calculate the 3D coordinates for each keypoint located on cylinders
+          double xm = 0.0, ym = 0.0;
+          vpPixelMeterConversion::convertPoint(cam, it1->pt.x, it1->pt.y, xm, ym);
+          double Z = cylinders[cpt_cylinder].computeZ(xm, ym);
+
+          if(!vpMath::isNaN(Z) && Z > std::numeric_limits<double>::epsilon()) {
+            vpColVector point_cam(4);
+            point_cam[0] = xm * Z;
+            point_cam[1] = ym * Z;
+            point_cam[2] = Z;
+            point_cam[3] = 1;
+            vpColVector point_obj(4);
+            point_obj = cMo.inverse() * point_cam;
+            vpPoint pt;
+            pt.setWorldCoordinates(point_obj);
+            points.push_back(cv::Point3f((float) pt.get_oX(), (float) pt.get_oY(), (float) pt.get_oZ()));
+
+            if(descriptors != NULL) {
+              desc.push_back(descriptors->row((int) cpt_keypoint));
+            }
+
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  if(descriptors != NULL) {
+    desc.copyTo(*descriptors);
+  }
+}
+
+/*!
+   Keep only vpImagePoint located on cylinders and compute the 3D coordinates in the world/object frame given the 2D image coordinates.
+
+   \param cMo : Homogeneous matrix between the world and the camera frames.
+   \param cam : Camera parameters.
+   \param candidates : In input, list of vpImagePoint located in the image, in output, list of vpImagePoint only located
+   on cylinders.
+   \param cylinders : List of vpCylinder corresponding of the cylinder objects in the scene, projected in the camera frame.
+   \param vectorOfCylinderRois : For each cylinder, the corresponding list of bounding box.
+   \param points : Output list of computed 3D coordinates in the world/object frame for each vpImagePoint located on a cylinder.
+   \param descriptors : Optional parameter, pointer to the descriptors to filter.
+ */
+void vpKeyPoint::compute3DForPointsOnCylinders(const vpHomogeneousMatrix &cMo, const vpCameraParameters &cam,
+    std::vector<vpImagePoint> &candidates, const std::vector<vpCylinder> &cylinders,
+    const std::vector<std::vector<std::vector<vpImagePoint> > > &vectorOfCylinderRois,
+    std::vector<vpPoint> &points, cv::Mat *descriptors) {
+  std::vector<vpImagePoint> candidatesToCheck = candidates;
+  candidates.clear();
+  points.clear();
+  cv::Mat desc;
+
+  //Keep only keypoints on cylinders
+  size_t cpt_keypoint = 0;
+  for(std::vector<vpImagePoint>::const_iterator it1 = candidatesToCheck.begin();
+      it1 != candidatesToCheck.end(); ++it1, cpt_keypoint++) {
+    size_t cpt_cylinder = 0;
+
+    //Iterate through the list of vpCylinders
+    for(std::vector<std::vector<std::vector<vpImagePoint> > >::const_iterator it2 = vectorOfCylinderRois.begin();
+        it2 != vectorOfCylinderRois.end(); ++it2, cpt_cylinder++) {
+      //Iterate through the list of the bounding boxes of the current vpCylinder
+      for(std::vector<std::vector<vpImagePoint> >::const_iterator it3 = it2->begin(); it3 != it2->end(); ++it3) {
+        if (vpPolygon::isInside(*it3, it1->get_i(), it1->get_j())) {
+          candidates.push_back(*it1);
+
+          //Calculate the 3D coordinates for each keypoint located on cylinders
+          double xm = 0.0, ym = 0.0;
+          vpPixelMeterConversion::convertPoint(cam, it1->get_u(), it1->get_v(), xm, ym);
+          double Z = cylinders[cpt_cylinder].computeZ(xm, ym);
+
+          if(!vpMath::isNaN(Z) && Z > std::numeric_limits<double>::epsilon()) {
+            vpColVector point_cam(4);
+            point_cam[0] = xm * Z;
+            point_cam[1] = ym * Z;
+            point_cam[2] = Z;
+            point_cam[3] = 1;
+            vpColVector point_obj(4);
+            point_obj = cMo.inverse() * point_cam;
+            vpPoint pt;
+            pt.setWorldCoordinates(point_obj);
+            points.push_back(pt);
+
+            if(descriptors != NULL) {
+              desc.push_back(descriptors->row((int) cpt_keypoint));
+            }
+
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  if(descriptors != NULL) {
+    desc.copyTo(*descriptors);
   }
 }
 
@@ -995,6 +1281,30 @@ void vpKeyPoint::createImageMatching(vpImage<unsigned char> &ICurrent, vpImage<u
 
    \param I : Input image.
    \param keyPoints : Output list of the detected keypoints.
+   \param rectangle : Optional rectangle of the region of interest.
+ */
+void vpKeyPoint::detect(const vpImage<unsigned char> &I, std::vector<cv::KeyPoint> &keyPoints, const vpRect &rectangle) {
+  double elapsedTime;
+  detect(I, keyPoints, elapsedTime, rectangle);
+}
+
+/*!
+   Detect keypoints in the image.
+
+   \param matImg : Input image.
+   \param keyPoints : Output list of the detected keypoints.
+   \param mask : Optional 8-bit integer mask to detect only where mask[i][j] != 0.
+ */
+void vpKeyPoint::detect(const cv::Mat &matImg, std::vector<cv::KeyPoint> &keyPoints, const cv::Mat &mask) {
+  double elapsedTime;
+  detect(matImg, keyPoints, elapsedTime, mask);
+}
+
+/*!
+   Detect keypoints in the image.
+
+   \param I : Input image.
+   \param keyPoints : Output list of the detected keypoints.
    \param elapsedTime : Elapsed time.
    \param rectangle : Optional rectangle of the region of interest.
  */
@@ -1021,7 +1331,7 @@ void vpKeyPoint::detect(const vpImage<unsigned char> &I, std::vector<cv::KeyPoin
    \param matImg : Input image.
    \param keyPoints : Output list of the detected keypoints.
    \param elapsedTime : Elapsed time.
-   \param mask : Optional mask to detect only where mask[i][j] == 1.
+   \param mask : Optional 8-bit integer mask to detect only where mask[i][j] != 0.
  */
 void vpKeyPoint::detect(const cv::Mat &matImg, std::vector<cv::KeyPoint> &keyPoints, double &elapsedTime,
                         const cv::Mat &mask) {
@@ -1220,6 +1530,36 @@ void vpKeyPoint::displayMatching(const vpImage<unsigned char> &ICurrent, vpImage
       vpDisplay::displayLine(IMatching, start, end, vpColor::green, lineThickness);
     }
   }
+}
+
+/*!
+   Extract the descriptors for each keypoints of the list.
+
+   \param I : Input image.
+   \param keyPoints : List of keypoints we want to extract their descriptors.
+   \param descriptors : Descriptors matrix with at each row the descriptors values for each keypoint.
+   \param trainPoints : Pointer to the list of 3D train points, when a keypoint cannot be extracted, we need to remove
+   the corresponding 3D point.
+ */
+void vpKeyPoint::extract(const vpImage<unsigned char> &I, std::vector<cv::KeyPoint> &keyPoints, cv::Mat &descriptors,
+                         std::vector<cv::Point3f> *trainPoints) {
+  double elapsedTime;
+  extract(I, keyPoints, descriptors, elapsedTime, trainPoints);
+}
+
+/*!
+   Extract the descriptors for each keypoints of the list.
+
+   \param matImg : Input image.
+   \param keyPoints : List of keypoints we want to extract their descriptors.
+   \param descriptors : Descriptors matrix with at each row the descriptors values for each keypoint.
+   \param trainPoints : Pointer to the list of 3D train points, when a keypoint cannot be extracted, we need to remove
+   the corresponding 3D point.
+ */
+void vpKeyPoint::extract(const cv::Mat &matImg, std::vector<cv::KeyPoint> &keyPoints, cv::Mat &descriptors,
+                         std::vector<cv::Point3f> *trainPoints) {
+  double elapsedTime;
+  extract(matImg, keyPoints, descriptors, elapsedTime, trainPoints);
 }
 
 /*!
@@ -1554,9 +1894,15 @@ void vpKeyPoint::init() {
   //The following line must be called in order to use SIFT or SURF
   if (!cv::initModule_nonfree()) {
     std::cerr << "Cannot init module non free, SIFT or SURF cannot be used."
-        << std::endl;
+              << std::endl;
   }
 #endif
+
+  //Use k-nearest neighbors (knn) to retrieve the two best matches for a keypoint
+  //So this is useful only for ratioDistanceThreshold method
+  if(m_filterType == ratioDistanceThreshold || m_filterType == stdAndRatioDistanceThreshold) {
+    m_useKnn = true;
+  }
 
   initDetectors(m_detectorNames);
   initExtractors(m_extractorNames);
@@ -1575,7 +1921,7 @@ void vpKeyPoint::initDetector(const std::string &detectorName) {
   if(m_detectors[detectorName] == NULL) {
     std::stringstream ss_msg;
     ss_msg << "Fail to initialize the detector: " << detectorName << " or it is not available in OpenCV version: "
-        << std::hex << VISP_HAVE_OPENCV_VERSION << ".";
+           << std::hex << VISP_HAVE_OPENCV_VERSION << ".";
     throw vpException(vpException::fatalError, ss_msg.str());
   }
 #else
@@ -1583,7 +1929,7 @@ void vpKeyPoint::initDetector(const std::string &detectorName) {
   std::string pyramid = "Pyramid";
   std::size_t pos = detectorName.find(pyramid);
   bool usePyramid = false;
-  if(pos != std::string::npos) {
+  if (pos != std::string::npos) {
     detectorNameTmp = detectorName.substr(pos + pyramid.size());
     usePyramid = true;
   }
@@ -1591,120 +1937,137 @@ void vpKeyPoint::initDetector(const std::string &detectorName) {
   if(detectorNameTmp == "SIFT") {
 #ifdef VISP_HAVE_OPENCV_XFEATURES2D
     cv::Ptr<cv::FeatureDetector> siftDetector = cv::xfeatures2d::SIFT::create();
-    if(!usePyramid) {
+    if (!usePyramid) {
       m_detectors[detectorNameTmp] = siftDetector;
     } else {
-      std::cerr << "Kind of non sense to use SIFT with Pyramid !" << std::endl;
+      std::cerr << "You should not use SIFT with Pyramid feature detection!" << std::endl;
       m_detectors[detectorName] = cv::makePtr<PyramidAdaptedFeatureDetector>(siftDetector);
     }
 #else
     std::stringstream ss_msg;
     ss_msg << "Fail to initialize the detector: SIFT. OpenCV version  "
-        << std::hex << VISP_HAVE_OPENCV_VERSION << " was not build with xFeatures2d module.";
+           << std::hex << VISP_HAVE_OPENCV_VERSION << " was not build with xFeatures2d module.";
     throw vpException(vpException::fatalError, ss_msg.str());
 #endif
-  } else if(detectorNameTmp == "SURF") {
+  } else if (detectorNameTmp == "SURF") {
 #ifdef VISP_HAVE_OPENCV_XFEATURES2D
     cv::Ptr<cv::FeatureDetector> surfDetector = cv::xfeatures2d::SURF::create();
-    if(!usePyramid) {
+    if (!usePyramid) {
       m_detectors[detectorNameTmp] = surfDetector;
     } else {
-      std::cerr << "Kind of non sense to use SURF with Pyramid !" << std::endl;
+      std::cerr << "You should not use SURF with Pyramid feature detection!" << std::endl;
       m_detectors[detectorName] = cv::makePtr<PyramidAdaptedFeatureDetector>(surfDetector);
     }
 #else
     std::stringstream ss_msg;
     ss_msg << "Fail to initialize the detector: SURF. OpenCV version  "
-        << std::hex << VISP_HAVE_OPENCV_VERSION << " was not build with xFeatures2d module.";
+           << std::hex << VISP_HAVE_OPENCV_VERSION << " was not build with xFeatures2d module.";
     throw vpException(vpException::fatalError, ss_msg.str());
 #endif
-  } else if(detectorNameTmp == "FAST") {
+  } else if (detectorNameTmp == "FAST") {
     cv::Ptr<cv::FeatureDetector> fastDetector = cv::FastFeatureDetector::create();
-    if(!usePyramid) {
+    if (!usePyramid) {
       m_detectors[detectorNameTmp] = fastDetector;
     } else {
-//      m_detectors[detectorName] = new PyramidAdaptedFeatureDetector(cv::FastFeatureDetector::create());
       m_detectors[detectorName] = cv::makePtr<PyramidAdaptedFeatureDetector>(fastDetector);
     }
-  } else if(detectorNameTmp == "MSER") {
+  } else if (detectorNameTmp == "MSER") {
     cv::Ptr<cv::FeatureDetector> fastDetector = cv::MSER::create();
-    if(!usePyramid) {
+    if (!usePyramid) {
       m_detectors[detectorNameTmp] = fastDetector;
     } else {
-//      m_detectors[detectorName] = new PyramidAdaptedFeatureDetector(cv::MSER::create());
       m_detectors[detectorName] = cv::makePtr<PyramidAdaptedFeatureDetector>(fastDetector);
     }
-  } else if(detectorNameTmp == "ORB") {
+  } else if (detectorNameTmp == "ORB") {
     cv::Ptr<cv::FeatureDetector> orbDetector = cv::ORB::create();
-    if(!usePyramid) {
+    if (!usePyramid) {
       m_detectors[detectorNameTmp] = orbDetector;
     } else {
-      std::cerr << "Kind of non sense to use ORB with Pyramid !" << std::endl;
+      std::cerr << "You should not use ORB with Pyramid feature detection!" << std::endl;
       m_detectors[detectorName] = cv::makePtr<PyramidAdaptedFeatureDetector>(orbDetector);
     }
-  } else if(detectorNameTmp == "BRISK") {
+  } else if (detectorNameTmp == "BRISK") {
     cv::Ptr<cv::FeatureDetector> briskDetector = cv::BRISK::create();
-    if(!usePyramid) {
+    if (!usePyramid) {
       m_detectors[detectorNameTmp] = briskDetector;
     } else {
-      std::cerr << "Kind of non sense to use BRISK with Pyramid !" << std::endl;
+      std::cerr << "You should not use BRISK with Pyramid feature detection!" << std::endl;
       m_detectors[detectorName] = cv::makePtr<PyramidAdaptedFeatureDetector>(briskDetector);
     }
-  } else if(detectorNameTmp == "KAZE") {
+  } else if (detectorNameTmp == "KAZE") {
     cv::Ptr<cv::FeatureDetector> kazeDetector = cv::KAZE::create();
-    if(!usePyramid) {
+    if (!usePyramid) {
       m_detectors[detectorNameTmp] = kazeDetector;
     } else {
-      std::cerr << "Kind of non sense to use KAZE with Pyramid !" << std::endl;
+      std::cerr << "You should not use KAZE with Pyramid feature detection!" << std::endl;
       m_detectors[detectorName] = cv::makePtr<PyramidAdaptedFeatureDetector>(kazeDetector);
     }
-  } else if(detectorNameTmp == "AKAZE") {
+  } else if (detectorNameTmp == "AKAZE") {
     cv::Ptr<cv::FeatureDetector> akazeDetector = cv::AKAZE::create();
-    if(!usePyramid) {
+    if (!usePyramid) {
       m_detectors[detectorNameTmp] = akazeDetector;
     } else {
-      std::cerr << "Kind of non sense to use AKAZE with Pyramid !" << std::endl;
+      std::cerr << "You should not use AKAZE with Pyramid feature detection!" << std::endl;
       m_detectors[detectorName] = cv::makePtr<PyramidAdaptedFeatureDetector>(akazeDetector);
     }
-  } else if(detectorNameTmp == "GFTT") {
+  } else if (detectorNameTmp == "GFTT") {
     cv::Ptr<cv::FeatureDetector> gfttDetector = cv::GFTTDetector::create();
-    if(!usePyramid) {
+    if (!usePyramid) {
       m_detectors[detectorNameTmp] = gfttDetector;
     } else {
-//      m_detectors[detectorName] = new PyramidAdaptedFeatureDetector(cv::GFTTDetector::create());
       m_detectors[detectorName] = cv::makePtr<PyramidAdaptedFeatureDetector>(gfttDetector);
     }
-  } else if(detectorNameTmp == "SimpleBlob") {
+  } else if (detectorNameTmp == "SimpleBlob") {
     cv::Ptr<cv::FeatureDetector> simpleBlobDetector = cv::SimpleBlobDetector::create();
-    if(!usePyramid) {
+    if (!usePyramid) {
       m_detectors[detectorNameTmp] = simpleBlobDetector;
     } else {
-//      m_detectors[detectorName] = new PyramidAdaptedFeatureDetector(cv::SimpleBlobDetector::create());
       m_detectors[detectorName] = cv::makePtr<PyramidAdaptedFeatureDetector>(simpleBlobDetector);
     }
-  } else if(detectorNameTmp == "STAR") {
+  } else if (detectorNameTmp == "STAR") {
 #ifdef VISP_HAVE_OPENCV_XFEATURES2D
     cv::Ptr<cv::FeatureDetector> starDetector = cv::xfeatures2d::StarDetector::create();
-    if(!usePyramid) {
+    if (!usePyramid) {
       m_detectors[detectorNameTmp] = starDetector;
     } else {
-//      m_detectors[detectorName] = new PyramidAdaptedFeatureDetector(cv::xfeatures2d::StarDetector::create());
       m_detectors[detectorName] = cv::makePtr<PyramidAdaptedFeatureDetector>(starDetector);
     }
 #else
     std::stringstream ss_msg;
     ss_msg << "Fail to initialize the detector: STAR. OpenCV version  "
-        << std::hex << VISP_HAVE_OPENCV_VERSION << " was not build with xFeatures2d module.";
+           << std::hex << VISP_HAVE_OPENCV_VERSION << " was not build with xFeatures2d module.";
     throw vpException(vpException::fatalError, ss_msg.str());
 #endif
-  } else if(detectorNameTmp == "AGAST") {
+  } else if (detectorNameTmp == "AGAST") {
     cv::Ptr<cv::FeatureDetector> agastDetector = cv::AgastFeatureDetector::create();
     if(!usePyramid) {
       m_detectors[detectorNameTmp] = agastDetector;
     } else {
       m_detectors[detectorName] = cv::makePtr<PyramidAdaptedFeatureDetector>(agastDetector);
     }
-  } else {
+  } else if (detectorNameTmp == "MSD") {
+#if (VISP_HAVE_OPENCV_VERSION >= 0x030100)
+  #if defined (VISP_HAVE_OPENCV_XFEATURES2D)
+    cv::Ptr<cv::FeatureDetector> msdDetector = cv::xfeatures2d::MSDDetector::create();
+    if(!usePyramid) {
+      m_detectors[detectorNameTmp] = msdDetector;
+    } else {
+      std::cerr << "You should not use MSD with Pyramid feature detection!" << std::endl;
+      m_detectors[detectorName] = cv::makePtr<PyramidAdaptedFeatureDetector>(msdDetector);
+    }
+  #else
+        std::stringstream ss_msg;
+        ss_msg << "Fail to initialize the detector: MSD. OpenCV version "
+               << std::hex << VISP_HAVE_OPENCV_VERSION << " was not build with xFeatures2d module.";
+        throw vpException(vpException::fatalError, ss_msg.str());
+  #endif
+#else
+    std::stringstream ss_msg;
+    ss_msg << "Feature " << detectorName << " is not available in OpenCV version: "
+           << std::hex << VISP_HAVE_OPENCV_VERSION << " (require >= OpenCV 3.1).";
+#endif
+  }
+  else {
     std::cerr << "The detector:" << detectorNameTmp << " is not available." << std::endl;
   }
 
@@ -1718,7 +2081,7 @@ void vpKeyPoint::initDetector(const std::string &detectorName) {
   if(!detectorInitialized) {
     std::stringstream ss_msg;
     ss_msg << "Fail to initialize the detector: " << detectorNameTmp << " or it is not available in OpenCV version: "
-        << std::hex << VISP_HAVE_OPENCV_VERSION << ".";
+           << std::hex << VISP_HAVE_OPENCV_VERSION << ".";
     throw vpException(vpException::fatalError, ss_msg.str());
   }
 
@@ -1751,7 +2114,7 @@ void vpKeyPoint::initExtractor(const std::string &extractorName) {
 #else
     std::stringstream ss_msg;
     ss_msg << "Fail to initialize the extractor: SIFT. OpenCV version  "
-        << std::hex << VISP_HAVE_OPENCV_VERSION << " was not build with xFeatures2d module.";
+           << std::hex << VISP_HAVE_OPENCV_VERSION << " was not build with xFeatures2d module.";
     throw vpException(vpException::fatalError, ss_msg.str());
 #endif
   } else if(extractorName == "SURF") {
@@ -1761,7 +2124,7 @@ void vpKeyPoint::initExtractor(const std::string &extractorName) {
 #else
     std::stringstream ss_msg;
     ss_msg << "Fail to initialize the extractor: SURF. OpenCV version  "
-        << std::hex << VISP_HAVE_OPENCV_VERSION << " was not build with xFeatures2d module.";
+           << std::hex << VISP_HAVE_OPENCV_VERSION << " was not build with xFeatures2d module.";
     throw vpException(vpException::fatalError, ss_msg.str());
 #endif
   } else if(extractorName == "ORB") {
@@ -1773,8 +2136,8 @@ void vpKeyPoint::initExtractor(const std::string &extractorName) {
     m_extractors[extractorName] = cv::xfeatures2d::FREAK::create();
 #else
     std::stringstream ss_msg;
-    ss_msg << "Fail to initialize the extractor: FREAK. OpenCV version  "
-        << std::hex << VISP_HAVE_OPENCV_VERSION << " was not build with xFeatures2d module.";
+    ss_msg << "Fail to initialize the extractor: " << extractorName << ". OpenCV version "
+           << std::hex << VISP_HAVE_OPENCV_VERSION << " was not build with xFeatures2d module.";
     throw vpException(vpException::fatalError, ss_msg.str());
 #endif
   } else if(extractorName == "BRIEF") {
@@ -1782,7 +2145,7 @@ void vpKeyPoint::initExtractor(const std::string &extractorName) {
     m_extractors[extractorName] = cv::xfeatures2d::BriefDescriptorExtractor::create();
 #else
     std::stringstream ss_msg;
-    ss_msg << "Fail to initialize the extractor: BRIEF. OpenCV version  "
+    ss_msg << "Fail to initialize the extractor: " << extractorName << ". OpenCV version "
         << std::hex << VISP_HAVE_OPENCV_VERSION << " was not build with xFeatures2d module.";
     throw vpException(vpException::fatalError, ss_msg.str());
 #endif
@@ -1795,8 +2158,8 @@ void vpKeyPoint::initExtractor(const std::string &extractorName) {
     m_extractors[extractorName] = cv::xfeatures2d::DAISY::create();
 #else
     std::stringstream ss_msg;
-    ss_msg << "Fail to initialize the extractor: DAISY. OpenCV version  "
-        << std::hex << VISP_HAVE_OPENCV_VERSION << " was not build with xFeatures2d module.";
+    ss_msg << "Fail to initialize the extractor: " << extractorName << ". OpenCV version "
+           << std::hex << VISP_HAVE_OPENCV_VERSION << " was not build with xFeatures2d module.";
     throw vpException(vpException::fatalError, ss_msg.str());
 #endif
   } else if(extractorName == "LATCH") {
@@ -1804,20 +2167,55 @@ void vpKeyPoint::initExtractor(const std::string &extractorName) {
     m_extractors[extractorName] = cv::xfeatures2d::LATCH::create();
 #else
     std::stringstream ss_msg;
-    ss_msg << "Fail to initialize the extractor: LATCH. OpenCV version  "
-        << std::hex << VISP_HAVE_OPENCV_VERSION << " was not build with xFeatures2d module.";
+    ss_msg << "Fail to initialize the extractor: " << extractorName << ". OpenCV version "
+           << std::hex << VISP_HAVE_OPENCV_VERSION << " was not build with xFeatures2d module.";
     throw vpException(vpException::fatalError, ss_msg.str());
 #endif
   } else if(extractorName == "LUCID") {
 #ifdef VISP_HAVE_OPENCV_XFEATURES2D
-    m_extractors[extractorName] = cv::xfeatures2d::LUCID::create(1, 2);
+//    m_extractors[extractorName] = cv::xfeatures2d::LUCID::create(1, 2);
+    //Not possible currently, need a color image
+    throw vpException(vpException::badValue, "Not possible currently as it needs a color image.");
 #else
     std::stringstream ss_msg;
-    ss_msg << "Fail to initialize the extractor: LUCID. OpenCV version  "
-        << std::hex << VISP_HAVE_OPENCV_VERSION << " was not build with xFeatures2d module.";
+    ss_msg << "Fail to initialize the extractor: " << extractorName << ". OpenCV version "
+           << std::hex << VISP_HAVE_OPENCV_VERSION << " was not build with xFeatures2d module.";
     throw vpException(vpException::fatalError, ss_msg.str());
 #endif
-  } else {
+  } else if (extractorName == "VGG") {
+#if (VISP_HAVE_OPENCV_VERSION >= 0x030200)
+  #if defined (VISP_HAVE_OPENCV_XFEATURES2D)
+      m_extractors[extractorName] = cv::xfeatures2d::VGG::create();
+  #else
+      std::stringstream ss_msg;
+      ss_msg << "Fail to initialize the extractor: " << extractorName << ". OpenCV version "
+             << std::hex << VISP_HAVE_OPENCV_VERSION << " was not build with xFeatures2d module.";
+      throw vpException(vpException::fatalError, ss_msg.str());
+  #endif
+#else
+    std::stringstream ss_msg;
+    ss_msg << "Fail to initialize the extractor: " << extractorName << ". OpenCV version "
+           << std::hex << VISP_HAVE_OPENCV_VERSION << " but requires at least OpenCV 3.2.";
+    throw vpException(vpException::fatalError, ss_msg.str());
+#endif
+  } else if (extractorName == "BoostDesc") {
+#if (VISP_HAVE_OPENCV_VERSION >= 0x030200)
+  #if defined (VISP_HAVE_OPENCV_XFEATURES2D)
+    m_extractors[extractorName] = cv::xfeatures2d::BoostDesc::create();
+  #else
+    std::stringstream ss_msg;
+    ss_msg << "Fail to initialize the extractor: " << extractorName << ". OpenCV version "
+           << std::hex << VISP_HAVE_OPENCV_VERSION << " was not build with xFeatures2d module.";
+    throw vpException(vpException::fatalError, ss_msg.str());
+  #endif
+#else
+    std::stringstream ss_msg;
+    ss_msg << "Fail to initialize the extractor: " << extractorName << ". OpenCV version "
+           << std::hex << VISP_HAVE_OPENCV_VERSION << " but requires at least OpenCV 3.2.";
+    throw vpException(vpException::fatalError, ss_msg.str());
+#endif
+  }
+  else {
     std::cerr << "The extractor:" << extractorName << " is not available." << std::endl;
   }
 #endif
@@ -1825,7 +2223,7 @@ void vpKeyPoint::initExtractor(const std::string &extractorName) {
   if(m_extractors[extractorName] == NULL) {
     std::stringstream ss_msg;
     ss_msg << "Fail to initialize the extractor: " << extractorName << " or it is not available in OpenCV version: "
-        << std::hex << VISP_HAVE_OPENCV_VERSION << ".";
+           << std::hex << VISP_HAVE_OPENCV_VERSION << ".";
     throw vpException(vpException::fatalError, ss_msg.str());
   }
 
@@ -1860,6 +2258,58 @@ void vpKeyPoint::initExtractors(const std::vector<std::string> &extractorNames) 
       }
     }
   }
+}
+
+void vpKeyPoint::initFeatureNames() {
+  //Create map enum to string
+#if (VISP_HAVE_OPENCV_VERSION >= 0x020403)
+    m_mapOfDetectorNames[DETECTOR_FAST] = "FAST";
+    m_mapOfDetectorNames[DETECTOR_MSER] = "MSER";
+    m_mapOfDetectorNames[DETECTOR_ORB] = "ORB";
+    m_mapOfDetectorNames[DETECTOR_BRISK] = "BRISK";
+    m_mapOfDetectorNames[DETECTOR_GFTT] = "GFTT";
+    m_mapOfDetectorNames[DETECTOR_SimpleBlob] = "SimpleBlob";
+  #if (VISP_HAVE_OPENCV_VERSION < 0x030000) || (defined (VISP_HAVE_OPENCV_XFEATURES2D))
+    m_mapOfDetectorNames[DETECTOR_STAR] = "STAR";
+  #endif
+  #if defined(VISP_HAVE_OPENCV_NONFREE) || defined (VISP_HAVE_OPENCV_XFEATURES2D)
+    m_mapOfDetectorNames[DETECTOR_SIFT] = "SIFT";
+    m_mapOfDetectorNames[DETECTOR_SURF] = "SURF";
+  #endif
+  #if (VISP_HAVE_OPENCV_VERSION >= 0x030000)
+    m_mapOfDetectorNames[DETECTOR_KAZE] = "KAZE";
+    m_mapOfDetectorNames[DETECTOR_AKAZE] = "AKAZE";
+    m_mapOfDetectorNames[DETECTOR_AGAST] = "AGAST";
+  #endif
+  #if (VISP_HAVE_OPENCV_VERSION >= 0x030100) && defined (VISP_HAVE_OPENCV_XFEATURES2D)
+    m_mapOfDetectorNames[DETECTOR_MSD] = "MSD";
+  #endif
+#endif
+
+#if (VISP_HAVE_OPENCV_VERSION >= 0x020403)
+    m_mapOfDescriptorNames[DESCRIPTOR_ORB] = "ORB";
+    m_mapOfDescriptorNames[DESCRIPTOR_BRISK] = "BRISK";
+  #if (VISP_HAVE_OPENCV_VERSION < 0x030000) || (defined (VISP_HAVE_OPENCV_XFEATURES2D))
+    m_mapOfDescriptorNames[DESCRIPTOR_FREAK] = "FREAK";
+    m_mapOfDescriptorNames[DESCRIPTOR_BRIEF] = "BRIEF";
+#endif
+  #if defined(VISP_HAVE_OPENCV_NONFREE) || defined (VISP_HAVE_OPENCV_XFEATURES2D)
+    m_mapOfDescriptorNames[DESCRIPTOR_SIFT] = "SIFT";
+    m_mapOfDescriptorNames[DESCRIPTOR_SURF] = "SURF";
+  #endif
+  #if (VISP_HAVE_OPENCV_VERSION >= 0x030000)
+    m_mapOfDescriptorNames[DESCRIPTOR_KAZE] = "KAZE";
+    m_mapOfDescriptorNames[DESCRIPTOR_AKAZE] = "AKAZE";
+    #if defined (VISP_HAVE_OPENCV_XFEATURES2D)
+    m_mapOfDescriptorNames[DESCRIPTOR_DAISY] = "DAISY";
+    m_mapOfDescriptorNames[DESCRIPTOR_LATCH] = "LATCH";
+    #endif
+  #endif
+  #if (VISP_HAVE_OPENCV_VERSION >= 0x030200) && defined (VISP_HAVE_OPENCV_XFEATURES2D)
+    m_mapOfDescriptorNames[DESCRIPTOR_VGG] = "VGG";
+    m_mapOfDescriptorNames[DESCRIPTOR_BoostDesc] = "BoostDesc";
+  #endif
+#endif
 }
 
 /*!
@@ -2117,7 +2567,8 @@ void vpKeyPoint::loadLearningData(const std::string &filename, const bool binary
 
     //Read info about training images
     int nbImgs = 0;
-    file.read((char *)(&nbImgs), sizeof(nbImgs));
+//    file.read((char *)(&nbImgs), sizeof(nbImgs));
+    readBinaryIntLE(file, nbImgs);
 
 #if !defined(VISP_HAVE_MODULE_IO)
     if(nbImgs > 0) {
@@ -2129,10 +2580,12 @@ void vpKeyPoint::loadLearningData(const std::string &filename, const bool binary
     for(int i = 0; i < nbImgs; i++) {
       //Read image_id
       int id = 0;
-      file.read((char *)(&id), sizeof(id));
+//      file.read((char *)(&id), sizeof(id));
+      readBinaryIntLE(file, id);
 
       int length = 0;
-      file.read((char *)(&length), sizeof(length));
+//      file.read((char *)(&length), sizeof(length));
+      readBinaryIntLE(file, length);
       //Will contain the path to the training images
       char* path = new char[length + 1];//char path[length + 1];
 
@@ -2161,34 +2614,46 @@ void vpKeyPoint::loadLearningData(const std::string &filename, const bool binary
 
     //Read if 3D point information are saved or not
     int have3DInfoInt = 0;
-    file.read((char *)(&have3DInfoInt), sizeof(have3DInfoInt));
+//    file.read((char *)(&have3DInfoInt), sizeof(have3DInfoInt));
+    readBinaryIntLE(file, have3DInfoInt);
     bool have3DInfo = have3DInfoInt != 0;
 
     //Read the number of descriptors
     int nRows = 0;
-    file.read((char *)(&nRows), sizeof(nRows));
+//    file.read((char *)(&nRows), sizeof(nRows));
+    readBinaryIntLE(file, nRows);
 
     //Read the size of the descriptor
     int nCols = 0;
-    file.read((char *)(&nCols), sizeof(nCols));
+//    file.read((char *)(&nCols), sizeof(nCols));
+    readBinaryIntLE(file, nCols);
 
     //Read the type of the descriptor
     int descriptorType = 5; //CV_32F
-    file.read((char *)(&descriptorType), sizeof(descriptorType));
+//    file.read((char *)(&descriptorType), sizeof(descriptorType));
+    readBinaryIntLE(file, descriptorType);
 
     cv::Mat trainDescriptorsTmp = cv::Mat(nRows, nCols, descriptorType);
     for(int i = 0; i < nRows; i++) {
       //Read information about keyPoint
       float u, v, size, angle, response;
       int octave, class_id, image_id;
-      file.read((char *)(&u), sizeof(u));
-      file.read((char *)(&v), sizeof(v));
-      file.read((char *)(&size), sizeof(size));
-      file.read((char *)(&angle), sizeof(angle));
-      file.read((char *)(&response), sizeof(response));
-      file.read((char *)(&octave), sizeof(octave));
-      file.read((char *)(&class_id), sizeof(class_id));
-      file.read((char *)(&image_id), sizeof(image_id));
+//      file.read((char *)(&u), sizeof(u));
+      readBinaryFloatLE(file, u);
+//      file.read((char *)(&v), sizeof(v));
+      readBinaryFloatLE(file, v);
+//      file.read((char *)(&size), sizeof(size));
+      readBinaryFloatLE(file, size);
+//      file.read((char *)(&angle), sizeof(angle));
+      readBinaryFloatLE(file, angle);
+//      file.read((char *)(&response), sizeof(response));
+      readBinaryFloatLE(file, response);
+//      file.read((char *)(&octave), sizeof(octave));
+      readBinaryIntLE(file, octave);
+//      file.read((char *)(&class_id), sizeof(class_id));
+      readBinaryIntLE(file, class_id);
+//      file.read((char *)(&image_id), sizeof(image_id));
+      readBinaryIntLE(file, image_id);
       cv::KeyPoint keyPoint(cv::Point2f(u, v), size, angle, response, octave, (class_id + startClassId));
       m_trainKeyPoints.push_back(keyPoint);
 
@@ -2202,9 +2667,12 @@ void vpKeyPoint::loadLearningData(const std::string &filename, const bool binary
       if(have3DInfo) {
         //Read oX, oY, oZ
         float oX, oY, oZ;
-        file.read((char *)(&oX), sizeof(oX));
-        file.read((char *)(&oY), sizeof(oY));
-        file.read((char *)(&oZ), sizeof(oZ));
+//        file.read((char *)(&oX), sizeof(oX));
+        readBinaryFloatLE(file, oX);
+//        file.read((char *)(&oY), sizeof(oY));
+        readBinaryFloatLE(file, oY);
+//        file.read((char *)(&oZ), sizeof(oZ));
+        readBinaryFloatLE(file, oZ);
         m_trainPoints.push_back(cv::Point3f(oX, oY, oZ));
       }
 
@@ -2230,7 +2698,8 @@ void vpKeyPoint::loadLearningData(const std::string &filename, const bool binary
           case CV_16U:
           {
             unsigned short int value;
-            file.read((char *)(&value), sizeof(value));
+//            file.read((char *)(&value), sizeof(value));
+            readBinaryUShortLE(file, value);
             trainDescriptorsTmp.at<unsigned short int>(i, j) = value;
           }
           break;
@@ -2238,7 +2707,8 @@ void vpKeyPoint::loadLearningData(const std::string &filename, const bool binary
           case CV_16S:
           {
             short int value;
-            file.read((char *)(&value), sizeof(value));
+//            file.read((char *)(&value), sizeof(value));
+            readBinaryShortLE(file, value);
             trainDescriptorsTmp.at<short int>(i, j) = value;
           }
           break;
@@ -2246,7 +2716,8 @@ void vpKeyPoint::loadLearningData(const std::string &filename, const bool binary
           case CV_32S:
           {
             int value;
-            file.read((char *)(&value), sizeof(value));
+//            file.read((char *)(&value), sizeof(value));
+            readBinaryIntLE(file, value);
             trainDescriptorsTmp.at<int>(i, j) = value;
           }
           break;
@@ -2254,7 +2725,8 @@ void vpKeyPoint::loadLearningData(const std::string &filename, const bool binary
           case CV_32F:
           {
             float value;
-            file.read((char *)(&value), sizeof(value));
+//            file.read((char *)(&value), sizeof(value));
+            readBinaryFloatLE(file, value);
             trainDescriptorsTmp.at<float>(i, j) = value;
           }
           break;
@@ -2262,7 +2734,8 @@ void vpKeyPoint::loadLearningData(const std::string &filename, const bool binary
           case CV_64F:
           {
             double value;
-            file.read((char *)(&value), sizeof(value));
+//            file.read((char *)(&value), sizeof(value));
+            readBinaryDoubleLE(file, value);
             trainDescriptorsTmp.at<double>(i, j) = value;
           }
           break;
@@ -2270,7 +2743,8 @@ void vpKeyPoint::loadLearningData(const std::string &filename, const bool binary
           default:
           {
             float value;
-            file.read((char *)(&value), sizeof(value));
+//            file.read((char *)(&value), sizeof(value));
+            readBinaryFloatLE(file, value);
             trainDescriptorsTmp.at<float>(i, j) = value;
           }
           break;
@@ -2685,6 +3159,23 @@ unsigned int vpKeyPoint::matchPoint(const vpImage<unsigned char> &I,
   vpConvert::convertFromOpenCV(m_filteredMatches, matchedReferencePoints);
 
   return static_cast<unsigned int>(m_filteredMatches.size());
+}
+
+/*!
+   Match keypoints detected in the image with those built in the reference list and compute the pose.
+
+   \param I : Input image
+   \param cam : Camera parameters
+   \param cMo : Homogeneous matrix between the object frame and the camera frame
+   \param func : Function pointer to filter the pose in Ransac pose estimation, if we want to eliminate
+   the poses which do not respect some criterion
+   \param rectangle : Rectangle corresponding to the ROI (Region of Interest) to consider
+   \return True if the matching and the pose estimation are OK, false otherwise
+ */
+bool vpKeyPoint::matchPoint(const vpImage<unsigned char> &I, const vpCameraParameters &cam, vpHomogeneousMatrix &cMo,
+                            bool (*func)(vpHomogeneousMatrix *), const vpRect& rectangle) {
+  double error, elapsedTime;
+  return matchPoint(I, cam, cMo, error, elapsedTime, func, rectangle);
 }
 
 /*!

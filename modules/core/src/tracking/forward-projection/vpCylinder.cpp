@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -383,6 +383,19 @@ vpCylinder::changeFrame(const vpHomogeneousMatrix &cMo, vpColVector &cP_)
   //radius
   cP_[6] = oP[6] ;
 
+}
+
+/*!
+  Compute the Z coordinate for the given normalized coordinate in the camera frame.
+*/
+double vpCylinder::computeZ(const double x, const double y) const {
+  double A = x * x + y * y + 1 - ((getA() * x + getB() * y + getC())
+               * (getA() * x + getB() * y + getC()));
+  double B = (x * getX() + y * getY() + getZ());
+  double C = getX() * getX() + getY() * getY() + getZ() * getZ()
+      - getR() * getR();
+
+  return (B - std::sqrt(B * B - A * C)) / A;
 }
 
 //! for memory issue (used by the vpServo class only)

@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -53,7 +53,7 @@
   \class vpRobot
   \ingroup group_robot_real_gantry group_robot_real_cylindrical group_robot_real_arm
   \ingroup group_robot_real_ptu group_robot_real_unicycle group_robot_real_template
-  \brief class that defines a generic virtual robot
+  \brief Class that defines a generic virtual robot.
 */
 class VISP_EXPORT vpRobot
 {
@@ -117,6 +117,9 @@ public:
   vpRobot (const vpRobot &robot);
   virtual ~vpRobot();
 
+  /** @name Inherited functionalities from vpRobot */
+  //@{
+
   //---------- Jacobian -----------------------------
   //! Get the robot Jacobian expressed in the end-effector frame
   virtual void get_eJe(vpMatrix &_eJe) = 0 ;
@@ -141,8 +144,6 @@ public:
 
   vpRobot & operator=(const vpRobot &robot);
 
-  static vpColVector saturateVelocities(const vpColVector &v_in, const vpColVector &v_max, bool verbose=false);
-
   void setMaxRotationVelocity (const double maxVr);
   void setMaxTranslationVelocity (const double maxVt);
   //! Set a displacement (frame has to be specified) in position control.
@@ -155,9 +156,19 @@ public:
                            const vpColVector &vel) = 0 ;
   inline void setVerbose(bool verbose) { verbose_ = verbose; };
 
+  //@}
+
+  /** @name Static Public Member Functions inherited from vpRobot */
+  //@{
+  static vpColVector saturateVelocities(const vpColVector &v_in, const vpColVector &v_max, bool verbose=false);
+  //@}
+
 protected:
+  /** @name Protected Member Functions Inherited from vpRobot */
+  //@{
   vpControlFrameType setRobotFrame (vpRobot::vpControlFrameType newFrame);
   vpControlFrameType getRobotFrame (void) const { return frameRobot ; }
+  //@}
 } ;
 
 #endif

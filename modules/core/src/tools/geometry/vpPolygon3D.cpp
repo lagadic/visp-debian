@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -177,74 +177,78 @@ vpPolygon3D::computePolygonClipped(const vpCameraParameters &cam)
       polyClippedTemp.push_back(std::make_pair(p[i%nbpt],vpPolygon3D::NO_CLIPPING));
   }
 
-  if(clippingFlag != vpPolygon3D::NO_CLIPPING)
-  for(unsigned int i = 1 ; i < 64 ; i=i*2)
-  {
+  if(clippingFlag != vpPolygon3D::NO_CLIPPING) {
+    for(unsigned int i = 1 ; i < 64 ; i=i*2)
+    {
       if(((clippingFlag & i) == i) || ((clippingFlag > vpPolygon3D::FAR_CLIPPING) && (i==1)))
       {
-      for(unsigned int j = 0 ; j < polyClippedTemp.size() ; j++)
-      {
-          vpPoint p1Clipped = polyClippedTemp[j].first;
-          vpPoint p2Clipped = polyClippedTemp[(j+1)%polyClippedTemp.size()].first;
+        if(i > vpPolygon3D::FAR_CLIPPING && !cam.isFovComputed()) // To make sure we do not compute FOV clipping if camera normals are not computed
+          continue;
 
-          unsigned int p2ClippedInfoBefore = polyClippedTemp[(j+1)%polyClippedTemp.size()].second;
-          unsigned int p1ClippedInfo = polyClippedTemp[j].second;
-          unsigned int p2ClippedInfo = polyClippedTemp[(j+1)%polyClippedTemp.size()].second;
+        for(unsigned int j = 0 ; j < polyClippedTemp.size() ; j++)
+        {
+            vpPoint p1Clipped = polyClippedTemp[j].first;
+            vpPoint p2Clipped = polyClippedTemp[(j+1)%polyClippedTemp.size()].first;
 
-          bool problem = true;
+            unsigned int p2ClippedInfoBefore = polyClippedTemp[(j+1)%polyClippedTemp.size()].second;
+            unsigned int p1ClippedInfo = polyClippedTemp[j].second;
+            unsigned int p2ClippedInfo = polyClippedTemp[(j+1)%polyClippedTemp.size()].second;
 
-          switch(i){
-          case 1:
-            problem = !(vpPolygon3D::getClippedPointsDistance(p1Clipped, p2Clipped, p1Clipped, p2Clipped, p1ClippedInfo, p2ClippedInfo,
-                                                               i, distNearClip));
-            break;
-          case 2:
-            problem = !(vpPolygon3D::getClippedPointsDistance(p1Clipped, p2Clipped, p1Clipped, p2Clipped, p1ClippedInfo, p2ClippedInfo,
-                                                               i, distFarClip));
-            break;
-          case 4:
-            problem = !(vpPolygon3D::getClippedPointsFovGeneric(p1Clipped, p2Clipped, p1Clipped, p2Clipped, p1ClippedInfo, p2ClippedInfo,
-                                                        fovNormals[0], vpPolygon3D::LEFT_CLIPPING));
-            break;
-          case 8:
-            problem = !(vpPolygon3D::getClippedPointsFovGeneric(p1Clipped, p2Clipped, p1Clipped, p2Clipped, p1ClippedInfo, p2ClippedInfo,
-                                                        fovNormals[1], vpPolygon3D::RIGHT_CLIPPING));
-            break;
-          case 16:
-            problem = !(vpPolygon3D::getClippedPointsFovGeneric(p1Clipped, p2Clipped, p1Clipped, p2Clipped, p1ClippedInfo, p2ClippedInfo,
-                                                        fovNormals[2], vpPolygon3D::UP_CLIPPING));
-            break;
-          case 32:
-            problem = !(vpPolygon3D::getClippedPointsFovGeneric(p1Clipped, p2Clipped, p1Clipped, p2Clipped, p1ClippedInfo, p2ClippedInfo,
-                                                        fovNormals[3], vpPolygon3D::DOWN_CLIPPING));
-            break;
-          }
+            bool problem = true;
 
-          if(!problem)
-          {
-            p1Clipped.projection();
-            polyClippedTemp2.push_back(std::make_pair(p1Clipped, p1ClippedInfo));
-
-            if(p2ClippedInfo != p2ClippedInfoBefore)
-            {
-              p2Clipped.projection();
-              polyClippedTemp2.push_back(std::make_pair(p2Clipped, p2ClippedInfo));
+            switch(i){
+            case 1:
+              problem = !(vpPolygon3D::getClippedPointsDistance(p1Clipped, p2Clipped, p1Clipped, p2Clipped, p1ClippedInfo, p2ClippedInfo,
+                                                                 i, distNearClip));
+              break;
+            case 2:
+              problem = !(vpPolygon3D::getClippedPointsDistance(p1Clipped, p2Clipped, p1Clipped, p2Clipped, p1ClippedInfo, p2ClippedInfo,
+                                                                 i, distFarClip));
+              break;
+            case 4:
+              problem = !(vpPolygon3D::getClippedPointsFovGeneric(p1Clipped, p2Clipped, p1Clipped, p2Clipped, p1ClippedInfo, p2ClippedInfo,
+                                                          fovNormals[0], vpPolygon3D::LEFT_CLIPPING));
+              break;
+            case 8:
+              problem = !(vpPolygon3D::getClippedPointsFovGeneric(p1Clipped, p2Clipped, p1Clipped, p2Clipped, p1ClippedInfo, p2ClippedInfo,
+                                                          fovNormals[1], vpPolygon3D::RIGHT_CLIPPING));
+              break;
+            case 16:
+              problem = !(vpPolygon3D::getClippedPointsFovGeneric(p1Clipped, p2Clipped, p1Clipped, p2Clipped, p1ClippedInfo, p2ClippedInfo,
+                                                          fovNormals[2], vpPolygon3D::UP_CLIPPING));
+              break;
+            case 32:
+              problem = !(vpPolygon3D::getClippedPointsFovGeneric(p1Clipped, p2Clipped, p1Clipped, p2Clipped, p1ClippedInfo, p2ClippedInfo,
+                                                          fovNormals[3], vpPolygon3D::DOWN_CLIPPING));
+              break;
             }
 
-            if(nbpt == 2){
-              if(p2ClippedInfo == p2ClippedInfoBefore)
+            if(!problem)
+            {
+              p1Clipped.projection();
+              polyClippedTemp2.push_back(std::make_pair(p1Clipped, p1ClippedInfo));
+
+              if(p2ClippedInfo != p2ClippedInfoBefore)
               {
                 p2Clipped.projection();
                 polyClippedTemp2.push_back(std::make_pair(p2Clipped, p2ClippedInfo));
               }
-              break;
-            }
-          }
-      }
 
-      polyClippedTemp = polyClippedTemp2;
-      polyClippedTemp2.clear();
+              if(nbpt == 2){
+                if(p2ClippedInfo == p2ClippedInfoBefore)
+                {
+                  p2Clipped.projection();
+                  polyClippedTemp2.push_back(std::make_pair(p2Clipped, p2ClippedInfo));
+                }
+                break;
+              }
+            }
+        }
+
+        polyClippedTemp = polyClippedTemp2;
+        polyClippedTemp2.clear();
       }
+    }
   }
 
   polyClipped = polyClippedTemp;
@@ -276,11 +280,11 @@ vpPolygon3D::getClippedPointsFovGeneric(const vpPoint &p1, const vpPoint &p2,
 {    
   vpRowVector p1Vec(3);
   p1Vec[0] = p1.get_X(); p1Vec[1] = p1.get_Y(); p1Vec[2] = p1.get_Z();
-  p1Vec = p1Vec.normalize();
+  p1Vec.normalize();
   
   vpRowVector p2Vec(3);
   p2Vec[0] = p2.get_X(); p2Vec[1] = p2.get_Y(); p2Vec[2] = p2.get_Z();
-  p2Vec = p2Vec.normalize();
+  p2Vec.normalize();
   
   if((clippingFlag & flag) == flag){
     double beta1 = acos( p1Vec * normal );

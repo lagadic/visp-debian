@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -74,9 +74,9 @@ class vpListElement
 
 public:
   vpListElement() : prev(NULL), next(NULL), val() {};
-  vpListElement<type> *prev; //<! pointer to the previous element in the list
-  vpListElement<type> *next; //<! pointer to the next element in the list
-  type val;             //<! value of the element
+  vpListElement<type> *prev; ///! pointer to the previous element in the list
+  vpListElement<type> *next; ///! pointer to the next element in the list
+  type val;                  ///! value of the element
 } ;
 
 #endif /* DOXYGEN_SHOULD_SKIP_THIS */
@@ -121,7 +121,7 @@ class vpList
   void init() ;
  public:
 
-  unsigned int nb;                    //<! number of items in the List
+  unsigned int nb;                    ///! number of items in the List
   /*!
     \brief the first virtual item in the list
     \verbatim

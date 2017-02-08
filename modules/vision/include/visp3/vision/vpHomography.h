@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -65,7 +65,7 @@ tools for homography computation.
 
   \brief Implementation of an homography and operations on homographies.
 
-  This class aims to compute the homography wrt. two images.
+  This class aims to compute the homography wrt. two images \cite Marchand16a.
 
   The vpHomography class is derived from vpArray2D<double>.
 
@@ -391,7 +391,7 @@ class VISP_EXPORT vpHomography : public vpArray2D<double>
 
 #if defined(VISP_BUILD_DEPRECATED_FUNCTIONS)
   /*!
-    @name Deprecated functions
+    \deprecated You should rather use eye().
   */
   //@{
     void setIdentity();

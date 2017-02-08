@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -77,6 +77,11 @@ class vpForceTwistMatrix;
 
   \brief Implementation of a matrix and operations on matrices.
 
+  This class may benefit from Lapack or GSL optional 3rd parties that are used especially
+  for pseudo-inverse. Concerning Lapack optional 3rd party, installation instructions are provide
+  here https://visp.inria.fr/3rd_lapack. For optional GSL, installation instructions are provide
+  here https://visp.inria.fr/3rd_gsl.
+
   vpMatrix class provides a data structure for the matrices as well
   as a set of operations on these matrices.
 
@@ -104,14 +109,14 @@ class VISP_EXPORT vpMatrix : public vpArray2D<double>
   /*!
     Basic constructor of a matrix of double. Number of columns and rows are zero.
   */
-  vpMatrix() : vpArray2D<double>(0, 0) {};
+  vpMatrix() : vpArray2D<double>(0, 0) {}
   /*!
     Constructor that initialize a matrix of double with 0.
 
     \param r : Matrix number of rows.
     \param c : Matrix number of columns.
   */
-  vpMatrix(unsigned int r, unsigned int c) : vpArray2D<double>(r, c) {};
+  vpMatrix(unsigned int r, unsigned int c) : vpArray2D<double>(r, c) {}
   /*!
     Constructor that initialize a matrix of double with \e val.
 
@@ -119,7 +124,7 @@ class VISP_EXPORT vpMatrix : public vpArray2D<double>
     \param c : Matrix number of columns.
     \param val : Each element of the matrix is set to \e val.
   */
-  vpMatrix(unsigned int r, unsigned int c, double val) : vpArray2D<double>(r, c, val) {};
+  vpMatrix(unsigned int r, unsigned int c, double val) : vpArray2D<double>(r, c, val) {}
   vpMatrix(const vpMatrix &M, unsigned int r, unsigned int c,
            unsigned int nrows, unsigned int ncols) ;
   /*!
@@ -133,10 +138,10 @@ class VISP_EXPORT vpMatrix : public vpArray2D<double>
      vpMatrix M(R);
      \endcode
    */
-  vpMatrix(const vpArray2D<double>& A) : vpArray2D<double>(A) {};
+  vpMatrix(const vpArray2D<double>& A) : vpArray2D<double>(A) {}
 
   //! Destructor (Memory de-allocation)
-  virtual ~vpMatrix() {};
+  virtual ~vpMatrix() {}
 
   /*!
     Removes all elements from the matrix (which are destroyed),
@@ -259,7 +264,7 @@ class VISP_EXPORT vpMatrix : public vpArray2D<double>
   /*!
     Return the sum of all the \f$a_{ij}\f$ elements of the matrix.
 
-    \return \f$\sum a_{ij}\f$
+    \return Value of \f$\sum a_{ij}\f$
     */
   double sum() const;
   double sumSquare() const;
@@ -409,11 +414,11 @@ class VISP_EXPORT vpMatrix : public vpArray2D<double>
   //---------------------------------
   /** @name Printing  */
   //@{
-  int print(std::ostream& s, unsigned int length, char const* intro=0) const;
-  std::ostream & matlabPrint(std::ostream & os) const;
-  std::ostream & maplePrint(std::ostream & os) const;
+  std::ostream & cppPrint(std::ostream & os, const std::string &matrixName = "A", bool octet = false) const;
   std::ostream & csvPrint(std::ostream & os) const;
-  std::ostream & cppPrint(std::ostream & os, const char * matrixName = NULL, bool octet = false) const;
+  std::ostream & maplePrint(std::ostream & os) const;
+  std::ostream & matlabPrint(std::ostream & os) const;
+  int print(std::ostream& s, unsigned int length, char const* intro=0) const;
   void printSize() const { std::cout << getRows() <<" x " << getCols() <<"  " ; }
   //@}
 
@@ -579,19 +584,19 @@ class VISP_EXPORT vpMatrix : public vpArray2D<double>
   /*!
      \deprecated Only provided for compatibilty with ViSP previous releases. This function does nothing.
    */
-  vp_deprecated void init() { };
+  vp_deprecated void init() { }
   /*!
      \deprecated You should rather use stack(const vpMatrix &A)
    */
-  vp_deprecated void stackMatrices(const vpMatrix &A) { stack(A); };
+  vp_deprecated void stackMatrices(const vpMatrix &A) { stack(A); }
   /*!
      \deprecated You should rather use stack(const vpMatrix &A, const vpMatrix &B)
    */
-  vp_deprecated static vpMatrix stackMatrices(const vpMatrix &A, const vpMatrix &B) { return vpMatrix::stack(A, B); };
+  vp_deprecated static vpMatrix stackMatrices(const vpMatrix &A, const vpMatrix &B) { return vpMatrix::stack(A, B); }
   /*!
      \deprecated You should rather use stack(const vpMatrix &A, const vpMatrix &B, vpMatrix &C)
    */
-  vp_deprecated static void stackMatrices(const vpMatrix &A, const vpMatrix &B, vpMatrix &C) { vpMatrix::stack(A, B, C); };
+  vp_deprecated static void stackMatrices(const vpMatrix &A, const vpMatrix &B, vpMatrix &C) { vpMatrix::stack(A, B, C); }
   /*!
      \deprecated You should rather use stack(const vpMatrix &A, const vpMatrix &B)
    */
@@ -613,6 +618,10 @@ class VISP_EXPORT vpMatrix : public vpArray2D<double>
      \deprecated You should rather use diag(const double &)
    */
   vp_deprecated void setIdentity(const double & val=1.0) ;
+
+  vp_deprecated vpRowVector row(const unsigned int i);
+  vp_deprecated vpColVector column(const unsigned int j);
+
   //@}
 #endif
 

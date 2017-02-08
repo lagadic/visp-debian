@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -169,6 +169,7 @@ public:
   vpThetaUVector(const vpQuaternionVector& q) ;
 
   vpThetaUVector(const double tux, const double tuy, const double tuz);
+  vpThetaUVector(const vpColVector &tu);
   //! Destructor.
   virtual ~vpThetaUVector() {};
 
@@ -188,10 +189,13 @@ public:
 
   void buildFrom(const double tux, const double tuy, const double tuz);
 
-  vpThetaUVector &operator=(double x) ;
-
   // extract the angle and the axis from the ThetaU representation
   void extract( double &theta, vpColVector &u) const;
+  double getTheta() const;
+  vpColVector getU() const;
+
+  vpThetaUVector &operator=(const vpColVector &tu);
+  vpThetaUVector &operator=(double x) ;
 } ;
 
 #endif

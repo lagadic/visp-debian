@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -420,7 +420,7 @@ int main()
 vpHomogeneousMatrix
 vpHomogeneousMatrix::operator*(const vpHomogeneousMatrix &M) const
 {
-  vpHomogeneousMatrix p,p1 ;
+  vpHomogeneousMatrix p;
 
   vpRotationMatrix R1, R2, R ;
   vpTranslationVector T1, T2 , T;
@@ -439,6 +439,30 @@ vpHomogeneousMatrix::operator*(const vpHomogeneousMatrix &M) const
   p.insert(R) ;
 
   return p;
+}
+
+/*!
+  Operator that allow to multiply an homogeneous matrix by an other one.
+
+  \code
+#include <visp3/core/vpHomogeneousMatrix.h>
+
+int main()
+{
+  vpHomogeneousMatrix M1, M2;
+  // Initialize M1 and M2...
+
+  // Compute M1 = M1 * M2
+  M1 *= M2;
+}
+  \endcode
+
+*/
+vpHomogeneousMatrix &
+vpHomogeneousMatrix::operator*=(const vpHomogeneousMatrix &M)
+{
+  (*this) = (*this) * M;
+  return (*this);
 }
 
 /*!
@@ -506,6 +530,24 @@ vpPoint vpHomogeneousMatrix::operator*(const vpPoint& bP) const
   aP.set_oW(v1[3]) ;
 
   return aP ;
+}
+
+/*!
+  Since a translation vector could be seen as the origin point of a frame, this function computes
+  the new coordinates of a translation vector after applying an homogeneous transformation.
+
+  \param t : Translation vector seen as the 3D coordinates of a point.
+
+  \return A translation vector that contains the new 3D coordinates after applying the homogeneous transformation.
+*/
+vpTranslationVector vpHomogeneousMatrix::operator*(const vpTranslationVector &t) const
+{
+  vpTranslationVector t_out;
+  t_out[0] = (*this)[0][0]*t[0] + (*this)[0][1]*t[1]+ (*this)[0][2]*t[2]+ (*this)[0][3];
+  t_out[1] = (*this)[1][0]*t[0] + (*this)[1][1]*t[1]+ (*this)[1][2]*t[2]+ (*this)[1][3];
+  t_out[2] = (*this)[2][0]*t[0] + (*this)[2][1]*t[1]+ (*this)[2][2]*t[2]+ (*this)[2][3];
+
+  return t_out ;
 }
 
 /*********************************************************************/
@@ -757,15 +799,6 @@ vpHomogeneousMatrix::print() const
   vpPoseVector r(*this) ;
   std::cout << r.t() ;
 }
-/*!
-   Set homogeneous matrix to identity.
-   \sa eye()
- */
-void
-vpHomogeneousMatrix::setIdentity()
-{
-  eye() ;
-}
 
 /*!
   Converts an homogeneous matrix to a vector of 12 floats.
@@ -792,7 +825,7 @@ void vpHomogeneousMatrix::convert(std::vector<double> &M)
 /*!
   Return the translation vector from the homogeneous transformation matrix.
  */
-vpTranslationVector vpHomogeneousMatrix::getTranslationVector()
+vpTranslationVector vpHomogeneousMatrix::getTranslationVector() const
 {
   vpTranslationVector tr;
   this->extract(tr);
@@ -802,7 +835,7 @@ vpTranslationVector vpHomogeneousMatrix::getTranslationVector()
 /*!
   Return the rotation matrix from the homogeneous transformation matrix.
  */
-vpRotationMatrix vpHomogeneousMatrix::getRotationMatrix()
+vpRotationMatrix vpHomogeneousMatrix::getRotationMatrix() const
 {
   vpRotationMatrix R;
   this->extract(R);
@@ -813,7 +846,7 @@ vpRotationMatrix vpHomogeneousMatrix::getRotationMatrix()
   Return the \f$\theta {\bf u}\f$ vector that corresponds to the rotation part of the
   homogeneous transformation.
  */
-vpThetaUVector vpHomogeneousMatrix::getThetaUVector()
+vpThetaUVector vpHomogeneousMatrix::getThetaUVector() const
 {
   vpThetaUVector tu;
   this->extract(tu);
@@ -860,3 +893,19 @@ vpHomogeneousMatrix::getCol(const unsigned int j) const
     c[i] = (*this)[i][j];
   return c;
 }
+
+#if defined(VISP_BUILD_DEPRECATED_FUNCTIONS)
+
+/*!
+  \deprecated You should rather use eye().
+
+   Set homogeneous matrix to identity.
+   \sa eye()
+ */
+void
+vpHomogeneousMatrix::setIdentity()
+{
+  eye() ;
+}
+
+#endif //#if defined(VISP_BUILD_DEPRECATED_FUNCTIONS)

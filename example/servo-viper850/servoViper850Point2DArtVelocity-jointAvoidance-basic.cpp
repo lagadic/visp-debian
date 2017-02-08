@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -170,9 +170,9 @@ main()
     // For the first graphic, set the curves legend
     char legend[10];
     for (unsigned int i=0; i < 6; i++) {
-      sprintf(legend, "q%d", i+1);
+      sprintf(legend, "q%u", i+1);
       plot.setLegend(0, i, legend); 
-      sprintf(legend, "q%d", i+1);
+      sprintf(legend, "q%u", i+1);
       plot.setLegend(1, i, legend);
     }
     plot.setLegend(0, 6, "tQmin");
@@ -250,24 +250,23 @@ main()
     robot.setRobotState(vpRobot::STATE_VELOCITY_CONTROL) ;
 
     int iter = 0;
-    double t_0, t_1 = vpTime::measureTimeMs(), Tv;
-    dc1394video_frame_t *frame = NULL;
+    double t_1 = vpTime::measureTimeMs();
 
     std::cout << "\nHit CTRL-C to stop the loop...\n" << std::flush;
     for ( ; ; ) {
       iter ++;
       
-      t_0 = vpTime::measureTimeMs(); // t_0: current time
+      double t_0 = vpTime::measureTimeMs(); // t_0: current time
 
       // Update loop time in second
-      Tv = (double)(t_0 - t_1) / 1000.0; 
+      double Tv = (double)(t_0 - t_1) / 1000.0;
       std::cout << "Tv: " << Tv << std::endl;
       
       // Update time for next iteration
       t_1 = t_0;
       
       // Acquire a new image from the camera
-      frame = g.dequeue(I);
+      dc1394video_frame_t *frame = g.dequeue(I);
 
       // Display this image
       vpDisplay::display(I) ;

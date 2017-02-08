@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -45,7 +45,7 @@
 
 #include <visp3/core/vpConfig.h>
 
-#if defined(VISP_HAVE_MODULE_GUI) && (defined(_WIN32) || defined(VISP_HAVE_PTHREAD))
+#if defined(VISP_HAVE_MODULE_GUI) && ((defined(_WIN32) && !defined(WINRT_8_0)) || defined(VISP_HAVE_PTHREAD))
 
 #include <cmath>    // std::fabs
 #include <limits>   // numeric_limits
@@ -201,6 +201,8 @@ class VISP_EXPORT vpRobotWireFrameSimulator : protected vpWireFrameSimulator, pu
     vpRobotWireFrameSimulator(bool display);
     virtual ~vpRobotWireFrameSimulator();
     
+    /** @name Inherited functionalities from vpRobotWireFrameSimulator */
+    //@{
     /*!
       Get the parameters of the virtual external camera.
 
@@ -345,25 +347,28 @@ class VISP_EXPORT vpRobotWireFrameSimulator : protected vpWireFrameSimulator, pu
       \param fMo_ : The pose between the object and the fixed world frame.
     */
     void set_fMo(const vpHomogeneousMatrix &fMo_) {this->fMo = fMo_;}
+    //@}
 
   protected:
+    /** @name Protected Member Functions Inherited from vpRobotWireFrameSimulator */
+    //@{
     /*!
       Function used to launch the thread which moves the robot.
     */
-    #if defined(_WIN32)
-	static DWORD WINAPI launcher( LPVOID lpParam ) 
-	{
-    ((vpRobotWireFrameSimulator *)lpParam)->updateArticularPosition();
-		return 0;
-	}
-    #elif defined(VISP_HAVE_PTHREAD)
+#if defined(_WIN32)
+    static DWORD WINAPI launcher( LPVOID lpParam )
+    {
+      ((vpRobotWireFrameSimulator *)lpParam)->updateArticularPosition();
+      return 0;
+    }
+#elif defined(VISP_HAVE_PTHREAD)
     static void* launcher(void *arg)
     {
       (reinterpret_cast<vpRobotWireFrameSimulator *>(arg))->updateArticularPosition();
       // pthread_exit((void*) 0);
       return NULL;
-    }    
-    #endif
+    }
+#endif
     
     /* Robot functions */
     void init() {;}
@@ -380,42 +385,74 @@ class VISP_EXPORT vpRobotWireFrameSimulator : protected vpWireFrameSimulator, pu
 
 	#if defined(_WIN32)
     vpColVector get_artCoord() const {
+#  if defined(WINRT_8_1)
+      WaitForSingleObjectEx(mutex_artCoord, INFINITE, FALSE);
+#  else // pure win32
       WaitForSingleObject(mutex_artCoord,INFINITE);
+#  endif
       vpColVector artCoordTmp (6);
       artCoordTmp = artCoord;
       ReleaseMutex(mutex_artCoord);
       return artCoordTmp;}
     void set_artCoord(const vpColVector &coord) {
-      WaitForSingleObject(mutex_artCoord,INFINITE);
+#  if defined(WINRT_8_1)
+      WaitForSingleObjectEx(mutex_artCoord, INFINITE, FALSE);
+#  else // pure win32
+      WaitForSingleObject(mutex_artCoord, INFINITE);
+#  endif
       artCoord = coord;
       ReleaseMutex(mutex_artCoord);}
     
     vpColVector get_artVel() const {
-      WaitForSingleObject(mutex_artVel,INFINITE);
+#  if defined(WINRT_8_1)
+      WaitForSingleObjectEx(mutex_artVel, INFINITE, FALSE);
+#  else // pure win32
+      WaitForSingleObject(mutex_artVel, INFINITE);
+#  endif
       vpColVector artVelTmp (artVel);
       ReleaseMutex(mutex_artVel);
       return artVelTmp;}
     void set_artVel(const vpColVector &vel) {
-      WaitForSingleObject(mutex_artVel,INFINITE);
+#  if defined(WINRT_8_1)
+      WaitForSingleObjectEx(mutex_artVel, INFINITE, FALSE);
+#  else // pure win32
+      WaitForSingleObject(mutex_artVel, INFINITE);
+#  endif
       artVel = vel;
       ReleaseMutex(mutex_artVel);}
     
     vpColVector get_velocity() {
-      WaitForSingleObject(mutex_velocity,INFINITE);
+#  if defined(WINRT_8_1)
+      WaitForSingleObjectEx(mutex_velocity, INFINITE, FALSE);
+#  else // pure win32
+      WaitForSingleObject(mutex_velocity, INFINITE);
+#  endif
       vpColVector velocityTmp = velocity;
       ReleaseMutex(mutex_velocity);
       return velocityTmp;}
     void set_velocity(const vpColVector &vel) {
-      WaitForSingleObject(mutex_velocity,INFINITE);
+#  if defined(WINRT_8_1)
+      WaitForSingleObjectEx(mutex_velocity, INFINITE, FALSE);
+#  else // pure win32
+      WaitForSingleObject(mutex_velocity, INFINITE);
+#  endif
       velocity = vel;
       ReleaseMutex(mutex_velocity);}
       
     void set_displayBusy (const bool &status) {
-      WaitForSingleObject(mutex_display,INFINITE);
+#  if defined(WINRT_8_1)
+      WaitForSingleObjectEx(mutex_display, INFINITE, FALSE);
+#  else // pure win32
+      WaitForSingleObject(mutex_display, INFINITE);
+#  endif
       displayBusy = status;
       ReleaseMutex(mutex_display);}
     bool get_displayBusy () {
-      WaitForSingleObject(mutex_display,INFINITE);
+#  if defined(WINRT_8_1)
+      WaitForSingleObjectEx(mutex_display, INFINITE, FALSE);
+#  else // pure win32
+      WaitForSingleObject(mutex_display, INFINITE);
+#  endif
       bool status = displayBusy;
       if (!displayBusy) displayBusy = true;
       ReleaseMutex(mutex_display);
@@ -467,6 +504,7 @@ class VISP_EXPORT vpRobotWireFrameSimulator : protected vpWireFrameSimulator, pu
 
     /*! Get a table of poses between the reference frame and the frames you used to compute the Denavit-Hartenberg representation */
     virtual void get_fMi(vpHomogeneousMatrix *fMit) = 0;
+    //@}
 };
 
 #endif

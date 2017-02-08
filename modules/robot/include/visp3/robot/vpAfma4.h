@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -112,6 +112,8 @@ class VISP_EXPORT vpAfma4
   /*! Destructor that does nothing. */
   virtual ~vpAfma4() {};
 
+  /** @name Inherited functionalities from vpAfma4 */
+  //@{
   void init (void);
 
   vpHomogeneousMatrix getForwardKinematics(const vpColVector & q) const;
@@ -132,6 +134,7 @@ class VISP_EXPORT vpAfma4
 
   vpColVector getJointMin() const;
   vpColVector getJointMax() const;
+  //@}
 
  public:
 

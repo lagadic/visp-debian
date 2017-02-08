@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -51,36 +51,6 @@
 #include <list>
 #include <string>
 
-#include <visp3/robot/vpMy.h>
-#include <visp3/robot/vpArit.h>
-#include <visp3/robot/vpBound.h>
-#include <visp3/robot/vpView.h>
-#include <visp3/robot/vpToken.h>
-#include <visp3/robot/vpTmstack.h>
-#include <visp3/robot/vpVwstack.h>
-#include <visp3/robot/vpRfstack.h>
-#include <visp3/robot/vpArit.h>
-
-void open_display();
-void close_display();
-void open_clipping();
-void close_clipping();
-void open_keyword (Keyword *kwp);
-void open_lex (void);
-void open_source (FILE *fd, const char *str);
-void malloc_Bound_scene (Bound_scene *bsp, const char *name,Index bn);
-void free_Bound_scene (Bound_scene *bsp);
-void parser (Bound_scene *bsp);
-void close_source (void);
-void close_lex (void);
-void close_keyword (void);
-void display_scene(Matrix mat, Bound_scene sc);
-void View_to_Matrix (View_parameters *vp, Matrix m);
-Bound *clipping_Bound (Bound *bp, Matrix m);
-void set_Bound_face_display (Bound *bp, Byte b);
-void point_3D_2D (Point3f *p3, Index size, int xsize, int ysize, Point2i *p2);
-void wireframe_Face (Face *fp, Point2i *pp);
-
 #include <visp3/core/vpConfig.h>
 #include <visp3/core/vpImage.h>
 #include <visp3/core/vpHomogeneousMatrix.h>
@@ -90,10 +60,7 @@ void wireframe_Face (Face *fp, Point2i *pp);
 #endif
 #include <visp3/core/vpImagePoint.h>
 #include <visp3/robot/vpImageSimulator.h>
-
-void set_scene (const char*, Bound_scene *, float);
-void vp2jlc_matrix (const vpHomogeneousMatrix, Matrix&);
-
+#include <visp3/robot/vpWireFrameSimulatorTypes.h>
 
 /*!
   \class vpWireFrameSimulator
@@ -286,6 +253,8 @@ public:
   vpWireFrameSimulator();
   virtual ~vpWireFrameSimulator();
 
+  /** @name Inherited functionalities from vpWireFrameSimulator */
+  //@{
   /*!
       Delete the history of the main camera position which are displayed in the external views.
     */
@@ -555,8 +524,11 @@ public:
       \param fMo_ : The pose between the object and the fixed world frame.
     */
   void set_fMo(const vpHomogeneousMatrix &fMo_) {this->fMo = fMo_;/*this->cMo = fMc.inverse()*fMo;*/}
+  //@}
 
 protected:
+  /** @name Protected Member Functions Inherited from vpWireFrameSimulator */
+  //@{
   void display_scene(Matrix mat, Bound_scene &sc, const vpImage<vpRGBa> &I, const vpColor &color);
   void display_scene(Matrix mat, Bound_scene &sc, const vpImage<unsigned char> &I, const vpColor &color);
   vpHomogeneousMatrix navigation(const vpImage<vpRGBa> &I, bool &changed);
@@ -565,6 +537,7 @@ protected:
   vpImagePoint projectCameraTrajectory (const vpImage<unsigned char> &I, const vpHomogeneousMatrix &cMo, const vpHomogeneousMatrix &fMo);
   vpImagePoint projectCameraTrajectory (const vpImage<vpRGBa> &I, const vpHomogeneousMatrix &cMo, const vpHomogeneousMatrix &fMo, const vpHomogeneousMatrix &cMf);
   vpImagePoint projectCameraTrajectory (const vpImage<unsigned char> &I, const vpHomogeneousMatrix &cMo, const vpHomogeneousMatrix &fMo, const vpHomogeneousMatrix &cMf);
+  //@}
 };
 
 #endif

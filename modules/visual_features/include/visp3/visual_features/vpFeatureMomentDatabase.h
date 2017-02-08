@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -138,7 +138,7 @@ int main()
   fci.update(0.,0.,1.);
 
   std::cout << fci.interaction(vpFeatureMomentCInvariant::selectC1()) << std::endl;
-  }catch(vpException e){
+  }catch(vpException &e){
       std::cout << e.getMessage() << std::endl;
   }
 
@@ -169,7 +169,7 @@ class VISP_EXPORT vpFeatureMomentDatabase{
 
   vpFeatureMoment& get(const char* type, bool& found);
 
-  friend VISP_EXPORT std::ostream & operator<<(std::ostream& os, const vpFeatureMomentDatabase& m);
+  //friend VISP_EXPORT std::ostream & operator<<(std::ostream& os, const vpFeatureMomentDatabase& m);
   friend class vpFeatureMoment;
 };
 

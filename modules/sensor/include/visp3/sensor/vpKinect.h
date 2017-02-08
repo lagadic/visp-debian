@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -60,7 +60,10 @@
 
   \ingroup group_sensor_rgbd
 
-  \brief Driver for the Kinect device.
+  \brief Driver for the Kinect-1 device.
+
+  To be enabled this class requires libfreenect 3rd party. Installation instructions are provided here
+  https://visp.inria.fr/3rd_freenect.
 
   The following example shows how to use this class to acquire data
   (depth map and color image) from a Kinect.

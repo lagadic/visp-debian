@@ -1,7 +1,7 @@
 #############################################################################
 #
 # This file is part of the ViSP software.
-# Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+# Copyright (C) 2005 - 2017 by Inria. All rights reserved.
 #
 # This software is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -45,7 +45,7 @@ IF(NOT UNIX)
 ELSE(NOT UNIX)
   
   FIND_PATH(IRISA_INCLUDE_DIR irisa_Afma6.h
-    $ENV{IRISA_HOME}/include
+    $ENV{IRISA_HOME}/src
     /local/soft/Cerebellum/Irisa/current/src
     /home/soft/Cerebellum/Irisa/current/src
     )
@@ -54,7 +54,7 @@ ELSE(NOT UNIX)
   FIND_LIBRARY(IRISA_LIBRARY
     NAMES irisa
     PATHS 
-    $ENV{IRISA_HOME}/lib
+    $ENV{IRISA_HOME}/src
     /local/soft/Cerebellum/Irisa/current/src
     /home/soft/Cerebellum/Irisa/current/src
     )

@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -130,7 +130,8 @@ class VISP_EXPORT vpMomentAreaNormalized : public vpMoment {
 	double desiredSurface;
 	double desiredDepth;
  public:
-        vpMomentAreaNormalized(double desiredSurface, double desiredDepth);
+  vpMomentAreaNormalized(double desiredSurface, double desiredDepth);
+  virtual ~vpMomentAreaNormalized() {};
         void compute();
         /*!
         Retrieves the desired depth \e Z* as specified in the constructor.

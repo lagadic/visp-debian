@@ -1,7 +1,7 @@
 #############################################################################
 #
 # This file is part of the ViSP software.
-# Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+# Copyright (C) 2005 - 2017 by Inria. All rights reserved.
 #
 # This software is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -35,6 +35,10 @@
 #
 #############################################################################
 
+if(WIN32)
+  mark_as_advanced(OGRE_FRAMEWORK_PATH)
+endif()
+
 #########################################################
 # Find Ogre plugins
 #
@@ -42,7 +46,6 @@
 # except that it should be used only in a desperate way when the original
 # one doesn't detect anything
 #########################################################
-
 
 macro(vp_ogre_find_plugin_lib_visp PLUGIN)
   # On Unix, the plugins might have no prefix
@@ -226,7 +229,7 @@ function(vp_set_ogre_media)
       if(OGRE_PLUGIN_DIR_REL)
         install(FILES
           ${VISP_HAVE_OGRE_PLUGINS_PATH}/plugins.cfg
-          DESTINATION ${CMAKE_INSTALL_LIBDIR}/visp/data/ogre-simulator
+          DESTINATION ${VISP_LIB_INSTALL_PATH}/visp/data/ogre-simulator
           PERMISSIONS OWNER_READ GROUP_READ WORLD_READ OWNER_WRITE
           COMPONENT dev
         )
@@ -234,7 +237,7 @@ function(vp_set_ogre_media)
       if(OGRE_PLUGIN_DIR_DBG)
         install(FILES
           ${VISP_HAVE_OGRE_PLUGINS_PATH}/plugins_d.cfg
-          DESTINATION ${CMAKE_INSTALL_LIBDIR}/visp/data/ogre-simulator
+          DESTINATION ${VISP_LIB_INSTALL_PATH}/visp/data/ogre-simulator
           PERMISSIONS OWNER_READ GROUP_READ WORLD_READ OWNER_WRITE
           COMPONENT dev
         )
@@ -369,3 +372,13 @@ function(vp_set_ogre_media)
     endif()
   endif()
 endfunction()
+
+macro(vp_set_ogre_advanced_var)
+  set(ogre_components_ Paging Terrain Plugin_BSPSceneManager Plugin_CgProgramManager Plugin_OctreeSceneManager Plugin_OctreeZone Plugin_PCZSceneManager Plugin_ParticleFX RenderSystem_Direct3D11 RenderSystem_Direct3D9 RenderSystem_GLES2 RenderSystem_GLES RenderSystem_GL)
+  foreach(component_ ${ogre_components_})
+    mark_as_advanced(OGRE_${component_}_INCLUDE_DIR)
+    mark_as_advanced(OGRE_${component_}_LIBRARY_DBG)
+    mark_as_advanced(OGRE_${component_}_LIBRARY_REL)
+    mark_as_advanced(OGRE_${component_}_LIBRARY_FWK)
+  endforeach()
+endmacro()

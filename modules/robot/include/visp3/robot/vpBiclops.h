@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -139,6 +139,9 @@ public:
   /*! Destructor that does nothing. */
   virtual ~vpBiclops() {};
 
+  /** @name Inherited functionalities from vpBiclops */
+  //@{
+
   void init (void);
 
   void computeMGD (const vpColVector &q, vpHomogeneousMatrix & fMc) const;
@@ -190,6 +193,7 @@ public:
     dh_model_ = m;
   }
 
+  //@}
   friend VISP_EXPORT std::ostream & operator << (std::ostream & os, const vpBiclops & constant);
 };
 

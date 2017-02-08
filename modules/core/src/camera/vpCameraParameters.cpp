@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -530,7 +530,7 @@ vpCameraParameters::get_K_inverse() const
 /*!
   Print the camera parameters on the standard output
 
-  \sa operator <<
+  \sa operator<<(std::ostream &, const vpCameraParameters &)
 */
 void
 vpCameraParameters::printParameters()
@@ -564,7 +564,7 @@ vpCameraParameters::printParameters()
   \param os : Output stream.
   \param cam : Camera parameters.
 */
-VISP_EXPORT std::ostream & operator << (std::ostream & os, const vpCameraParameters &cam)
+VISP_EXPORT std::ostream &operator<<(std::ostream &os, const vpCameraParameters &cam)
 {
   switch(cam.get_projModel()){
   case vpCameraParameters::perspectiveProjWithoutDistortion :

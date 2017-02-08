@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -49,6 +49,7 @@
 #include <visp3/core/vpDebug.h>
 #include <visp3/core/vpVelocityTwistMatrix.h>
 #include <visp3/core/vpThetaUVector.h>
+#include <visp3/core/vpIoTools.h>
 #include <visp3/robot/vpRobotAfma4.h>
 
 /* ---------------------------------------------------------------------- */
@@ -210,18 +211,18 @@ vpRobotAfma4::init (void)
   Try( stt = InitializeConnection(verbose_) );
 
   if (stt != SUCCESS) {
-    vpERROR_TRACE ("Cannot open connexion with the motionblox.");
+    vpERROR_TRACE ("Cannot open connection with the motionblox.");
     throw vpRobotException (vpRobotException::constructionError,
-  			  "Cannot open connexion with the motionblox");
+          "Cannot open connection with the motionblox");
   }
 
   // Connect to the servoboard using the servo board GUID
   Try( stt = InitializeNode_Afma4() );
 
   if (stt != SUCCESS) {
-    vpERROR_TRACE ("Cannot open connexion with the motionblox.");
+    vpERROR_TRACE ("Cannot open connection with the motionblox.");
     throw vpRobotException (vpRobotException::constructionError,
-  			  "Cannot open connexion with the motionblox");
+          "Cannot open connection with the motionblox");
   }
   Try( PrimitiveRESET_Afma4() );
 
@@ -276,9 +277,9 @@ vpRobotAfma4::init (void)
     // Free allocated resources
     ShutDownConnection();
 
-    std::cout << "Cannot open connexion with the motionblox..." << std::endl;
+    std::cout << "Cannot open connection with the motionblox..." << std::endl;
     throw vpRobotException (vpRobotException::constructionError,
-  			  "Cannot open connexion with the motionblox");
+          "Cannot open connection with the motionblox");
   }
   return ;
 }
@@ -433,7 +434,7 @@ vpRobotAfma4::powerOn(void)
             << "Check the emergency stop button and push the yellow button before continuing." << std::endl;
         firsttime = false;
       }
-      fprintf(stdout, "Remaining time %ds  \r", nitermax-i);
+      fprintf(stdout, "Remaining time %us  \r", nitermax-i);
       fflush(stdout);
       CAL_Wait(1);
     }
@@ -785,7 +786,7 @@ vpRobotAfma4::getPositioningVelocity (void)
   try {
     robot.setPosition(vpRobot::CAMERA_FRAME, q);
   }
-  catch (vpRobotException e) {
+  catch (vpRobotException &e) {
     if (e.getCode() == vpRobotException::positionOutOfRangeError) {
     std::cout << "The position is out of range" << std::endl;
   }
@@ -930,9 +931,6 @@ void vpRobotAfma4::setPosition (const vpRobot::vpControlFrameType frame,
     throw ;
   }
 }
-
-
-
 
 /*!
 
@@ -1099,8 +1097,7 @@ vpRobotAfma4::getPosition (const vpRobot::vpControlFrameType frame,
     vpERROR_TRACE ("Cannot get position in mixt frame: not implemented");
     throw vpRobotException (vpRobotException::lowLevelError,
 			    "Cannot get position in mixt frame: "
-			    "not implemented");
-    break ;
+          "not implemented");
   }
   }
 
@@ -1220,7 +1217,6 @@ vpRobotAfma4::setVelocity (const vpRobot::vpControlFrameType frame,
                                 "Cannot send a velocity to the robot "
                                 "in the reference frame:"
                                 "functionality not implemented");
-        break ;
       }
     case vpRobot::MIXT_FRAME : {
         vpERROR_TRACE ("Cannot send a velocity to the robot "
@@ -1230,7 +1226,6 @@ vpRobotAfma4::setVelocity (const vpRobot::vpControlFrameType frame,
                                 "Cannot send a velocity to the robot "
                                 "in the mixt frame:"
                                 "functionality not implemented");
-        break ;
       }
     default: {
         vpERROR_TRACE ("Error in spec of vpRobot. "
@@ -1392,6 +1387,7 @@ vpRobotAfma4::getVelocity (const vpRobot::vpControlFrameType frame,
   switch (frame) {
   case vpRobot::ARTICULAR_FRAME: 
     velocity.resize (this->njoint);
+    break;
   default:
     velocity.resize (6);
   }
@@ -1616,52 +1612,64 @@ robot.setPosition(vpRobot::ARTICULAR_FRAME, q); // Move to the joint position
 */
 
 bool
-vpRobotAfma4::readPosFile(const char *filename, vpColVector &q)
+vpRobotAfma4::readPosFile(const std::string &filename, vpColVector &q)
 {
+  std::ifstream fd(filename.c_str(), std::ios::in);
 
-  FILE * fd ;
-  fd = fopen(filename, "r") ;
-  if (fd == NULL)
+  if(! fd.is_open()) {
     return false;
+  }
 
-  char line[FILENAME_MAX];
-  char dummy[FILENAME_MAX];
-  char head[] = "R:";
-  bool sortie = false;
+  std::string line;
+  std::string key("R:");
+  std::string id("#AFMA4 - Position");
+  bool pos_found = false;
+  int lineNum = 0;
 
-  do {
-    // Saut des lignes commencant par #
-    if (fgets (line, FILENAME_MAX, fd) != NULL) {
-      if ( strncmp (line, "#", 1) != 0) {
-	// La ligne n'est pas un commentaire
-	if ( strncmp (line, head, sizeof(head)-1) == 0) {
-	  sortie = true; 	// Position robot trouvee.
-	}
-// 	else
-// 	  return (false); // fin fichier sans position robot.
+  q.resize(njoint);
+
+  while(std::getline(fd, line)) {
+    lineNum ++;
+    if (lineNum == 1) {
+      if(! (line.compare(0, id.size(), id) == 0)) { // check if Afma4 position file
+        std::cout << "Error: this position file " << filename << " is not for Afma4 robot" << std::endl;
+        return false;
       }
     }
-    else {
-      return (false);		/* fin fichier 	*/
+    if((line.compare(0, 1, "#") == 0)) { // skip comment
+      continue;
     }
+    if((line.compare(0, key.size(), key) == 0)) { // decode position
+      // check if there are at least njoint values in the line
+      std::vector<std::string> chain = vpIoTools::splitChain(line, std::string(" "));
+      if (chain.size() < njoint+1) // try to split with tab separator
+        chain = vpIoTools::splitChain(line, std::string("\t"));
+      if(chain.size() < njoint+1)
+        continue;
 
+      std::istringstream ss(line);
+      std::string key_;
+      ss >> key_;
+      for (unsigned int i=0; i< njoint; i++)
+        ss >> q[i];
+      pos_found = true;
+      break;
+    }
   }
-  while ( sortie != true );
-
-  // Lecture des positions
-  q.resize(4);
-  sscanf(line, "%s %lf %lf %lf %lf",
-	 dummy,
-	 &q[0], &q[1], &q[2], &q[3]);
 
   // converts rotations from degrees into radians
   q[0] = vpMath::rad(q[0]);
   q[2] = vpMath::rad(q[2]);
   q[3] = vpMath::rad(q[3]);
 
+  fd.close();
 
-  fclose(fd) ;
-  return (true);
+  if (!pos_found) {
+    std::cout << "Error: unable to find a position for Afma4 robot in " << filename << std::endl;
+    return false;
+  }
+
+  return true;
 }
 
 /*!
@@ -1688,11 +1696,11 @@ vpRobotAfma4::readPosFile(const char *filename, vpColVector &q)
 */
 
 bool
-vpRobotAfma4::savePosFile(const char *filename, const vpColVector &q)
+vpRobotAfma4::savePosFile(const std::string &filename, const vpColVector &q)
 {
 
   FILE * fd ;
-  fd = fopen(filename, "w") ;
+  fd = fopen(filename.c_str(), "w") ;
   if (fd == NULL)
     return false;
 
@@ -1817,7 +1825,6 @@ vpRobotAfma4::getDisplacement(vpRobot::vpControlFrameType frame,
     case vpRobot::CAMERA_FRAME: {
       std::cout << "getDisplacement() CAMERA_FRAME not implemented\n";
       return;
-      break ;
     }
 
     case vpRobot::ARTICULAR_FRAME: {
@@ -1828,13 +1835,11 @@ vpRobotAfma4::getDisplacement(vpRobot::vpControlFrameType frame,
     case vpRobot::REFERENCE_FRAME: {
       std::cout << "getDisplacement() REFERENCE_FRAME not implemented\n";
       return;
-      break ;
     }
 
     case vpRobot::MIXT_FRAME: {
       std::cout << "getDisplacement() MIXT_FRAME not implemented\n";
       return;
-      break ;
     }
     }
   }

@@ -1,7 +1,7 @@
 #############################################################################
 #
 # This file is part of the ViSP software.
-# Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+# Copyright (C) 2005 - 2017 by Inria. All rights reserved.
 #
 # This software is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -32,15 +32,33 @@
 #
 #############################################################################
 
+if(NOT COMMAND find_host_program)
+  # macro to find programs on the host OS
+  macro( find_host_program )
+    set( CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER )
+    set( CMAKE_FIND_ROOT_PATH_MODE_LIBRARY NEVER )
+    set( CMAKE_FIND_ROOT_PATH_MODE_INCLUDE NEVER )
+    find_program( ${ARGN} )
+    set( CMAKE_FIND_ROOT_PATH_MODE_PROGRAM ONLY )
+    set( CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY )
+    set( CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY )
+    mark_as_advanced(${ARGV0})
+  endmacro()
+endif()
+
+if(NOT COMMAND find_host_package)
+  macro(find_host_package)
+    find_package(${ARGN})
+  endmacro()
+endif()
+
 # adds include directories in such way that directories from the ViSP source tree go first
 function(vp_include_directories)
   vp_debug_message("vp_include_directories( ${ARGN} )")
   set(__add_before "")
   foreach(dir ${ARGN})
     get_filename_component(__abs_dir "${dir}" ABSOLUTE)
-    string(REPLACE "+" "\\+" __VISP_BINARY_DIR_filtered ${VISP_BINARY_DIR})
-#    if("${__abs_dir}" MATCHES "^${VISP_SOURCE_DIR}" OR "${__abs_dir}" MATCHES "^${VISP_BINARY_DIR}")
-    if("${__abs_dir}" MATCHES "^${VISP_SOURCE_DIR}" OR "${__abs_dir}" MATCHES "^${__VISP_BINARY_DIR_filtered}")
+    if("${__abs_dir}" MATCHES "^${VISP_SOURCE_DIR}" OR "${__abs_dir}" MATCHES "^${VISP_BINARY_DIR}")
       list(APPEND __add_before "${dir}")
     else()
       include_directories(AFTER SYSTEM "${dir}")
@@ -105,6 +123,31 @@ macro(vp_list_unique __lst)
   endif()
 endmacro()
 
+# list empty elements removal macro
+macro(vp_list_remove_empty __lst)
+  if(${__lst})
+    list(REMOVE_ITEM ${__lst} "")
+  endif()
+endmacro()
+
+# list elements removal macro
+macro(vp_list_remove_item __lst __item)
+  if(${__lst})
+    list(REMOVE_ITEM ${__lst} ${__item})
+  endif()
+endmacro()
+
+# macro that creates a list from a string. Spaces or tab are considered as list separator
+# In other words split a string into list elements
+macro(vp_create_list_from_string STR LST)
+  if(NOT ${STR} STREQUAL "")
+    set(__lst ${STR})
+    string(REPLACE " " ";" __lst ${__lst})
+    vp_list_remove_empty(${__lst})
+    set(${LST} ${__lst})
+  endif()
+endmacro()
+
 # safe list sorting macro
 macro(vp_list_sort __lst)
   if(${__lst})
@@ -142,16 +185,33 @@ endmacro()
 #             "help string describing the option"
 #             "advanced list of vars separated by ;"
 #             <initial value or boolean expression> [IF <condition>])
+#
+# Example:
+#   VP_OPTION(USE_VTK "VTK" "QUIET" "Include vtk support" "" ON)
+#   VP_OPTION(USE_VTK "VTK;COMPONENTS;vtkCommonCore;vtkFiltersSources" "" "Include vtk support" "" ON)
+
 macro(VP_OPTION variable package quiet description advanced value)
   set(__option TRUE)
   set(__value ${value})
   set(__condition "")
   set(__varname "__value")
-  set(__p ${package})
+
+  set(__components "")
+  set(__eltIsComponent FALSE)
+  set(__package "") # without components
+  foreach(p ${package})
+    if(${p} MATCHES "COMPONENTS")
+      set(__eltIsComponent TRUE)
+    elseif(__eltIsComponent)
+      list(APPEND __components ${p})
+    else()
+      list(APPEND __package ${p})
+    endif()
+  endforeach()
 
   # get the first package considered as the main package from a list: ie "Zlib;MyZlib"
   set(__first_package "")
-  foreach(p ${package})
+  foreach(p ${__package})
     if(${p} MATCHES "^My")
       string(REGEX REPLACE "^My" "" p "${p}")
     endif()
@@ -160,15 +220,12 @@ macro(VP_OPTION variable package quiet description advanced value)
   endforeach()
 
   if(NOT ${__first_package} STREQUAL "")
-    # get the first package name from the list
-    #list(GET ${package} 0 ${__package})
     string(TOLOWER "${__first_package}" __package_lower)
     string(TOUPPER "${__first_package}" __package_upper) # useful for Qt -> QT_FOUND
-  endif()
 
-  # set VISP_HAVE_<package>_FOUND="no"
-  set(__alias_have_found_str VISP_HAVE_${__package_upper}_FOUND)
-  set(${__alias_have_found_str} "no")
+    # make var <package>_DIR advanced
+    mark_as_advanced(${__first_package}_DIR)
+  endif()
 
   foreach(arg ${ARGN})
     if(arg STREQUAL "IF" OR arg STREQUAL "if")
@@ -184,11 +241,19 @@ macro(VP_OPTION variable package quiet description advanced value)
   if(${__condition})
 
     if(NOT ${__first_package} STREQUAL "")
-      foreach(p ${package})
+      foreach(p ${__package})
         if("${quiet}" STREQUAL "")
-          find_package(${p})
+          if(__components)
+            find_package(${p} COMPONENTS ${__components})
+          else()
+            find_package(${p})
+          endif()
         else()
-          find_package(${p} ${quiet})
+          if(__components)
+            find_package(${p} ${quiet} COMPONENTS ${__components})
+          else()
+            find_package(${p} ${quiet})
+          endif()
         endif()
         if(${__package_upper}_FOUND OR ${__first_package}_FOUND)
           set(__option TRUE)
@@ -229,11 +294,9 @@ macro(VP_OPTION variable package quiet description advanced value)
   if(${variable} AND NOT ${__first_package} STREQUAL "")
     # set VISP_HAVE_<package>=TRUE and VISP_HAVE_<package>_FOUND="yes"
     message(STATUS "${__package_lower} found")
-    set(${__alias_have_found_str} "yes") # for ViSP-third-party.txt
   endif()
   unset(__option)
   unset(__alias_have)
-  unset(__alias_have_found_str)
 endmacro()
 
 # Provides a macro to set a var.
@@ -297,7 +360,7 @@ function(vp_source_group group)
     foreach(f ${files})
       file(RELATIVE_PATH fpart "${SG_DIRBASE}" "${f}")
       if(fpart MATCHES "^\\.\\.")
-        message(AUTHOR_WARNING "Can't detect subpath for source_group command: Group=${group} FILE=${f} DIRBASE=${SG_DIRBASE}")
+        message(AUTHOR_WARNING "Can't detect subpath for vp_source_group command: Group=${group} FILE=${f} DIRBASE=${SG_DIRBASE}")
         set(fpart "")
       else()
         get_filename_component(fpart "${fpart}" PATH)
@@ -454,4 +517,331 @@ macro(vp_get_relative_subdirs var path)
       list(APPEND ${ALIAS} ${d})
     endforeach()
     list(REMOVE_DUPLICATES ${ALIAS})
+endmacro()
+
+set(VP_COMPILER_FAIL_REGEX
+    "command line option .* is valid for .* but not for C\\+\\+" # GNU
+    "command line option .* is valid for .* but not for C" # GNU
+    "unrecognized .*option"                     # GNU
+    "unknown .*option"                          # Clang
+    "ignoring unknown option"                   # MSVC
+    "warning D9002"                             # MSVC, any lang
+    "option .*not supported"                    # Intel
+    "[Uu]nknown option"                         # HP
+    "[Ww]arning: [Oo]ption"                     # SunPro
+    "command option .* is not recognized"       # XL
+    "not supported in this configuration; ignored"       # AIX
+    "File with unknown suffix passed to linker" # PGI
+    "WARNING: unknown flag:"                    # Open64
+  )
+
+# test if a compiler flag is supported
+macro(vp_check_compiler_flag LANG FLAG RESULT)
+  if(NOT DEFINED ${RESULT})
+
+    if("_${LANG}_" MATCHES "_CXX_")
+      set(_fname "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/src.cxx")
+      #if("${CMAKE_CXX_FLAGS} ${FLAG} " MATCHES "-Werror " OR "${CMAKE_CXX_FLAGS} ${FLAG} " MATCHES "-Werror=unknown-pragmas ")
+        file(WRITE "${_fname}" "int main() { return 0; }\n")
+      #else()
+      #  file(WRITE "${_fname}" "#pragma\nint main() { return 0; }\n")
+      #endif()
+    elseif("_${LANG}_" MATCHES "_C_")
+      set(_fname "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/src.c")
+      #if("${CMAKE_C_FLAGS} ${FLAG} " MATCHES "-Werror " OR "${CMAKE_C_FLAGS} ${FLAG} " MATCHES "-Werror=unknown-pragmas ")
+        file(WRITE "${_fname}" "int main(void) { return 0; }\n")
+      #else()
+      #  file(WRITE "${_fname}" "#pragma\nint main(void) { return 0; }\n")
+      #endif()
+    elseif("_${LANG}_" MATCHES "_OBJCXX_")
+      set(_fname "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp/src.mm")
+      #if("${CMAKE_CXX_FLAGS} ${FLAG} " MATCHES "-Werror " OR "${CMAKE_CXX_FLAGS} ${FLAG} " MATCHES "-Werror=unknown-pragmas ")
+        file(WRITE "${_fname}" "int main() { return 0; }\n")
+      #else()
+      #  file(WRITE "${_fname}" "#pragma\nint main() { return 0; }\n")
+      #endif()
+    else()
+      unset(_fname)
+    endif()
+    if(_fname)
+      message(STATUS "Performing Test ${RESULT}")
+      try_compile(${RESULT}
+        "${CMAKE_BINARY_DIR}"
+        "${_fname}"
+        COMPILE_DEFINITIONS "${FLAG}"
+        OUTPUT_VARIABLE OUTPUT)
+
+      foreach(_regex ${VP_COMPILER_FAIL_REGEX})
+        if("${OUTPUT}" MATCHES "${_regex}")
+          set(${RESULT} 0)
+          break()
+        endif()
+      endforeach()
+
+      if(${RESULT})
+        set(${RESULT} 1 CACHE INTERNAL "Test ${RESULT}")
+        message(STATUS "Performing Test ${RESULT} - Success")
+      else()
+        message(STATUS "Performing Test ${RESULT} - Failed")
+        set(${RESULT} "" CACHE INTERNAL "Test ${RESULT}")
+        file(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeError.log
+            "Compilation failed:\n"
+            "    source file: '${_fname}'\n"
+            "    check option: '${FLAG}'\n"
+            "===== BUILD LOG =====\n"
+            "${OUTPUT}\n"
+            "===== END =====\n\n")
+      endif()
+    else()
+      set(${RESULT} 0)
+    endif()
+  endif()
+endmacro()
+
+# check if a compiler flag is supported
+macro(vp_check_flag_support lang flag varname)
+  if("_${lang}_" MATCHES "_CXX_")
+    set(_lang CXX)
+  elseif("_${lang}_" MATCHES "_C_")
+    set(_lang C)
+  else()
+    set(_lang ${lang})
+  endif()
+
+  string(TOUPPER "${flag}" ${varname})
+  string(REGEX REPLACE "^(/|-)" "HAVE_${_lang}_" ${varname} "${${varname}}")
+  string(REGEX REPLACE " -|-|=| |\\." "_" ${varname} "${${varname}}")
+
+  vp_check_compiler_flag("${_lang}" "${ARGN} ${flag}" ${${varname}})
+endmacro()
+
+# turns off warnings
+macro(vp_warnings_disable)
+    set(_flag_vars "")
+    set(_msvc_warnings "")
+    set(_gxx_warnings "")
+    foreach(arg ${ARGN})
+      if(arg MATCHES "^CMAKE_")
+        list(APPEND _flag_vars ${arg})
+      elseif(arg MATCHES "^/wd")
+        list(APPEND _msvc_warnings ${arg})
+      elseif(arg MATCHES "^-W")
+        list(APPEND _gxx_warnings ${arg})
+      endif()
+    endforeach()
+    if(MSVC AND _msvc_warnings AND _flag_vars)
+      foreach(var ${_flag_vars})
+        foreach(warning ${_msvc_warnings})
+          set(${var} "${${var}} ${warning}")
+        endforeach()
+      endforeach()
+    elseif((CMAKE_COMPILER_IS_GNUCXX OR (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")) AND _gxx_warnings AND _flag_vars)
+      foreach(var ${_flag_vars})
+        foreach(warning ${_gxx_warnings})
+          if(NOT warning MATCHES "^-Wno-")
+            string(REPLACE "${warning}" "" ${var} "${${var}}")
+            string(REPLACE "-W" "-Wno-" warning "${warning}")
+          endif()
+          vp_check_flag_support(${var} "${warning}" _varname)
+          if(${_varname})
+            set(${var} "${${var}} ${warning}")
+          endif()
+        endforeach()
+      endforeach()
+    endif()
+    unset(_flag_vars)
+    unset(_msvc_warnings)
+    unset(_gxx_warnings)
+endmacro()
+
+macro(vp_set_source_file_compile_flag file)
+  if(ACTIVATE_WARNING_3PARTY_MUTE)
+    set(__cxxflags "")
+    foreach(cxxflag ${ARGN})
+      vp_check_flag_support(CXX ${cxxflag} __support_flag)
+      if(${__support_flag})
+        set(__cxxflags "${__cxxflags} ${cxxflag}")
+      endif()
+    endforeach()
+    if(NOT ${__cxxflags} STREQUAL "")
+      if(EXISTS ${CMAKE_CURRENT_LIST_DIR}/${file})
+        set_source_files_properties(${CMAKE_CURRENT_LIST_DIR}/${file} PROPERTIES COMPILE_FLAGS ${__cxxflags})
+      elseif(EXISTS ${file}) # for files that are in the build tree (like those produced by qt moc
+        set_source_files_properties(${CMAKE_CURRENT_LIST_DIR}/${file} PROPERTIES COMPILE_FLAGS ${__cxxflags})
+      endif()
+    endif()
+  endif()
+endmacro()
+
+macro(vp_add_subdirectories lst subdir)
+  if(${lst})
+    foreach(__path ${${lst}})
+      if(EXISTS ${__path}/${subdir})
+        file(GLOB __subdirs RELATIVE "${__path}/${subdir}" "${__path}/${subdir}/*")
+        foreach(__s ${__subdirs})
+          if(EXISTS "${__path}/${subdir}/${__s}/CMakeLists.txt")
+            add_subdirectory("${__path}/${subdir}/${__s}" "${CMAKE_BINARY_DIR}/${subdir}/${__s}")
+          endif()
+        endforeach()
+      endif()
+    endforeach()
+  endif()
+endmacro()
+
+set(VISP_BUILD_INFO_FILE "${CMAKE_BINARY_DIR}/visp-build-info.tmp")
+set(VISP_TXT_INFO_FILE "${CMAKE_BINARY_DIR}/ViSP-third-party.txt")
+file(REMOVE "${VISP_BUILD_INFO_FILE}")
+file(REMOVE "${VISP_TXT_INFO_FILE}")
+function(vp_output_status msg)
+  message(STATUS "${msg}")
+  string(REPLACE "\\" "\\\\" msg "${msg}")
+  string(REPLACE "\"" "\\\"" msg "${msg}")
+  string(REPLACE "\\\\" "\\" msg_txt "${msg}")
+  file(APPEND "${VISP_BUILD_INFO_FILE}" "\"${msg}\\n\"\n")
+  file(APPEND "${VISP_TXT_INFO_FILE}" "${msg_txt}\n")
+endfunction()
+
+macro(vp_finalize_status)
+  if(DEFINED VISP_MODULE_visp_core_BINARY_DIR)
+    execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different "${VISP_BUILD_INFO_FILE}" "${VISP_MODULE_visp_core_BINARY_DIR}/version_string.inc" OUTPUT_QUIET)
+  endif()
+endmacro()
+
+# Status report function.
+# Automatically align right column and selects text based on condition.
+# Usage:
+#   status(<text>)
+#   status(<heading> <value1> [<value2> ...])
+#   status(<heading> <condition> THEN <text for TRUE> ELSE <text for FALSE> )
+function(status text)
+  set(status_cond)
+  set(status_then)
+  set(status_else)
+
+  set(status_current_name "cond")
+  foreach(arg ${ARGN})
+    if(arg STREQUAL "THEN")
+      set(status_current_name "then")
+    elseif(arg STREQUAL "ELSE")
+      set(status_current_name "else")
+    else()
+      list(APPEND status_${status_current_name} ${arg})
+    endif()
+  endforeach()
+
+  if(DEFINED status_cond)
+    set(status_placeholder_length 32)
+    string(RANDOM LENGTH ${status_placeholder_length} ALPHABET " " status_placeholder)
+    string(LENGTH "${text}" status_text_length)
+    if(status_text_length LESS status_placeholder_length)
+      string(SUBSTRING "${text}${status_placeholder}" 0 ${status_placeholder_length} status_text)
+    elseif(DEFINED status_then OR DEFINED status_else)
+      vp_output_status("${text}")
+      set(status_text "${status_placeholder}")
+    else()
+      set(status_text "${text}")
+    endif()
+
+    if(DEFINED status_then OR DEFINED status_else)
+      if(${status_cond})
+        string(REPLACE ";" " " status_then "${status_then}")
+        string(REGEX REPLACE "^[ \t]+" "" status_then "${status_then}")
+        vp_output_status("${status_text} ${status_then}")
+      else()
+        string(REPLACE ";" " " status_else "${status_else}")
+        string(REGEX REPLACE "^[ \t]+" "" status_else "${status_else}")
+        vp_output_status("${status_text} ${status_else}")
+      endif()
+    else()
+      string(REPLACE ";" " " status_cond "${status_cond}")
+      string(REGEX REPLACE "^[ \t]+" "" status_cond "${status_cond}")
+      vp_output_status("${status_text} ${status_cond}")
+    endif()
+  else()
+    vp_output_status("${text}")
+  endif()
+endfunction()
+
+# read set of version defines from the header file
+macro(vp_parse_header FILENAME FILE_VAR)
+  set(vars_regex "")
+  set(__parnet_scope OFF)
+  set(__add_cache OFF)
+  foreach(name ${ARGN})
+    if(${name} STREQUAL "PARENT_SCOPE")
+      set(__parnet_scope ON)
+    elseif(${name} STREQUAL "CACHE")
+      set(__add_cache ON)
+    elseif(vars_regex)
+      set(vars_regex "${vars_regex}|${name}")
+    else()
+      set(vars_regex "${name}")
+    endif()
+  endforeach()
+  if(EXISTS "${FILENAME}")
+    file(STRINGS "${FILENAME}" ${FILE_VAR} REGEX "#define[ \t]+(${vars_regex})[ \t]+[0-9]+" )
+  else()
+    unset(${FILE_VAR})
+  endif()
+  foreach(name ${ARGN})
+    if(NOT ${name} STREQUAL "PARENT_SCOPE" AND NOT ${name} STREQUAL "CACHE")
+      if(${FILE_VAR})
+        if(${FILE_VAR} MATCHES ".+[ \t]${name}[ \t]+([0-9]+).*")
+          string(REGEX REPLACE ".+[ \t]${name}[ \t]+([0-9]+).*" "\\1" ${name} "${${FILE_VAR}}")
+        else()
+          set(${name} "")
+        endif()
+        if(__add_cache)
+          set(${name} ${${name}} CACHE INTERNAL "${name} parsed from ${FILENAME}" FORCE)
+        elseif(__parnet_scope)
+          set(${name} "${${name}}" PARENT_SCOPE)
+        endif()
+      else()
+        unset(${name} CACHE)
+      endif()
+    endif()
+  endforeach()
+endmacro()
+
+# read single version define from the header file
+macro(vp_parse_header2 LIBNAME HDR_PATH VARNAME)
+  vp_clear_vars(${LIBNAME}_VERSION_MAJOR
+                ${LIBNAME}_VERSION_MAJOR
+                ${LIBNAME}_VERSION_MINOR
+                ${LIBNAME}_VERSION_PATCH
+                ${LIBNAME}_VERSION_TWEAK
+                ${LIBNAME}_VERSION_STRING)
+  set(${LIBNAME}_H "")
+  if(EXISTS "${HDR_PATH}")
+    file(STRINGS "${HDR_PATH}" ${LIBNAME}_H REGEX "^#define[ \t]+${VARNAME}[ \t]+\"[^\"]*\".*$" LIMIT_COUNT 1)
+  endif()
+
+  if(${LIBNAME}_H)
+    string(REGEX REPLACE "^.*[ \t]${VARNAME}[ \t]+\"([0-9]+).*$" "\\1" ${LIBNAME}_VERSION_MAJOR "${${LIBNAME}_H}")
+    string(REGEX REPLACE "^.*[ \t]${VARNAME}[ \t]+\"[0-9]+\\.([0-9]+).*$" "\\1" ${LIBNAME}_VERSION_MINOR  "${${LIBNAME}_H}")
+    string(REGEX REPLACE "^.*[ \t]${VARNAME}[ \t]+\"[0-9]+\\.[0-9]+\\.([0-9]+).*$" "\\1" ${LIBNAME}_VERSION_PATCH "${${LIBNAME}_H}")
+    set(${LIBNAME}_VERSION_MAJOR ${${LIBNAME}_VERSION_MAJOR} ${ARGN})
+    set(${LIBNAME}_VERSION_MINOR ${${LIBNAME}_VERSION_MINOR} ${ARGN})
+    set(${LIBNAME}_VERSION_PATCH ${${LIBNAME}_VERSION_PATCH} ${ARGN})
+    set(${LIBNAME}_VERSION_STRING "${${LIBNAME}_VERSION_MAJOR}.${${LIBNAME}_VERSION_MINOR}.${${LIBNAME}_VERSION_PATCH}")
+
+    # append a TWEAK version if it exists:
+    set(${LIBNAME}_VERSION_TWEAK "")
+    if("${${LIBNAME}_H}" MATCHES "^.*[ \t]${VARNAME}[ \t]+\"[0-9]+\\.[0-9]+\\.[0-9]+\\.([0-9]+).*$")
+      set(${LIBNAME}_VERSION_TWEAK "${CMAKE_MATCH_1}" ${ARGN})
+    endif()
+    if(${LIBNAME}_VERSION_TWEAK)
+      set(${LIBNAME}_VERSION_STRING "${${LIBNAME}_VERSION_STRING}.${${LIBNAME}_VERSION_TWEAK}" ${ARGN})
+    else()
+      set(${LIBNAME}_VERSION_STRING "${${LIBNAME}_VERSION_STRING}" ${ARGN})
+    endif()
+  endif()
+endmacro()
+
+# read single version info from the pkg file
+macro(vp_get_version_from_pkg LIBNAME PKG_PATH OUTPUT_VAR)
+  if(EXISTS "${PKG_PATH}/${LIBNAME}.pc")
+    file(STRINGS "${PKG_PATH}/${LIBNAME}.pc" line_to_parse REGEX "^Version:[ \t]+[0-9.]*.*$" LIMIT_COUNT 1)
+    string(REGEX REPLACE ".*Version: ([^ ]+).*" "\\1" ${OUTPUT_VAR} "${line_to_parse}" )
+  endif()
 endmacro()

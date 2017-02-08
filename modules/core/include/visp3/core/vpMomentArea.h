@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -51,15 +51,18 @@ class vpMomentCentered;		// Required for discrete case of vpMomentObject
 
 */
 class VISP_EXPORT vpMomentArea : public vpMoment {
- public:
-        vpMomentArea();
-        void compute();
-        /*!
-        Moment name.
-        */
-        const char* name() const {return "vpMomentArea";}
-        friend VISP_EXPORT std::ostream & operator<<(std::ostream & os, const vpMomentArea& m);
-        void printDependencies(std::ostream& os) const;
+public:
+  vpMomentArea();
+  virtual ~vpMomentArea() {};
+
+  /** @name Inherited functionalities from vpMomentArea */
+  //@{
+  void compute();
+  //! Moment name.
+  const char* name() const {return "vpMomentArea";}
+  void printDependencies(std::ostream& os) const;
+  //@}
+  friend VISP_EXPORT std::ostream & operator<<(std::ostream & os, const vpMomentArea& m);
 };
 
 #endif

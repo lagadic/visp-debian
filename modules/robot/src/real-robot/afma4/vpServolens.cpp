@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -190,7 +190,7 @@ void
 vpServolens::close()
 {
   if (isinit) {
-    printf("\nClose the serial connexion with Servolens\n");
+    printf("\nClose the serial connection with Servolens\n");
     ::close(this->remfd);
     isinit = false;
   }
@@ -708,6 +708,10 @@ vpServolens::wait() const
   do {
     r = ::read(this->remfd, &c, 1);
     c &= 0x7f;
+    if (r != 1) {
+      throw vpRobotException (vpRobotException::communicationError,
+            "Cannot read on Servolens.");
+    }
   }
   while (c != '>');
   return c;
@@ -799,7 +803,6 @@ vpServolens::read(char *c, long timeout_s) const
 			    "Cannot dial with Servolens.");
   }
 
-  int n;
   fd_set         readfds; /* list of fds for select to listen to */
   struct timeval timeout = {timeout_s, 0}; // seconde, micro-sec
 
@@ -808,7 +811,7 @@ vpServolens::read(char *c, long timeout_s) const
 
   if (select(FD_SETSIZE, &readfds, (fd_set *)NULL,
 	     (fd_set *)NULL, &timeout) > 0) {
-    n = ::read(this->remfd, c, 1); /* read one character at a time */
+    ssize_t n = ::read(this->remfd, c, 1); /* read one character at a time */
     if (n != 1)
       return false;
     *c &= 0x7f;

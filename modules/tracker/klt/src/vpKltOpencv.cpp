@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -198,7 +198,7 @@ void vpKltOpencv::track(const cv::Mat &I)
   \param y : y coordinate.
 
 */
-void vpKltOpencv::getFeature(const int &index, int &id, float &x, float &y) const
+void vpKltOpencv::getFeature(const int &index, long &id, float &x, float &y) const
 {
   if ((size_t)index >= m_points[1].size()){
     throw(vpException(vpException::badValue, "Feature [%d] doesn't exist", index));
@@ -1092,7 +1092,7 @@ void vpKltOpencv::display(const vpImage<unsigned char> &I,
   \param y : y coordinate
 
 */
-void vpKltOpencv::getFeature(int index, int &id, float &x, float &y) const
+void vpKltOpencv::getFeature(int index, long &id, float &x, float &y) const
 {
   if (index >= countFeatures)
   {
@@ -1348,8 +1348,18 @@ void vpKltOpencv::display(const vpImage<vpRGBa>& I,const CvPoint2D32f* features_
     vpDisplay::displayText(I, ip, id, color);
   }
 }
+#else
 
-#elif !defined(VISP_BUILD_SHARED_LIBS)
-// Work arround to avoid warning: libvisp_vision.a(vpKltOpencv.cpp.o) has no symbols
-void dummy_vpKltOpencv() {};
+// Work arround to avoid visp_klt library empty when OpenCV is not installed or used
+class VISP_EXPORT dummy_vpKltOpencv
+{
+public:
+	dummy_vpKltOpencv() {};
+};
+
+#if !defined(VISP_BUILD_SHARED_LIBS)
+// Work arround to avoid warning: libvisp_klt.a(vpKltOpenCV.cpp.o) has no symbols
+void dummy_vpKltOpenCV_fct() {};
+#endif
+
 #endif

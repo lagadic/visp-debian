@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -40,6 +40,10 @@
 #include <visp3/core/vpPolygon.h>
 
 #if defined(VISP_HAVE_MODULE_KLT) && (defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION >= 0x020100))
+
+#if defined(__APPLE__) && defined(__MACH__) // Apple OSX and iOS (Darwin)
+#  include <TargetConditionals.h> // To detect OSX or IOS using TARGET_OS_IPHONE or TARGET_OS_IOS macro
+#endif
 
 /*!
   Basic constructor.
@@ -82,7 +86,7 @@ vpMbtDistanceKltPoints::init(const vpKltOpencv& _tracker)
   polygon->getRoiClipped(cam, roi);
 
   for (unsigned int i = 0; i < static_cast<unsigned int>(_tracker.getNbFeatures()); i ++){
-    int id;
+    long id;
     float x_tmp, y_tmp;
     _tracker.getFeature((int)i, id, x_tmp, y_tmp);
 
@@ -100,10 +104,16 @@ vpMbtDistanceKltPoints::init(const vpKltOpencv& _tracker)
       add = true;
     }
 
-    if(add){
+    if(add){      
+#if TARGET_OS_IPHONE
+      initPoints[(int)id] = vpImagePoint(y_tmp, x_tmp);
+      curPoints[(int)id] = vpImagePoint(y_tmp, x_tmp);
+      curPointsInd[(int)id] = (int)i;
+#else
       initPoints[id] = vpImagePoint(y_tmp, x_tmp);
       curPoints[id] = vpImagePoint(y_tmp, x_tmp);
       curPointsInd[id] = (int)i;
+#endif
       nbPointsInit++;
       nbPointsCur++;
     }
@@ -133,7 +143,7 @@ vpMbtDistanceKltPoints::init(const vpKltOpencv& _tracker)
 unsigned int
 vpMbtDistanceKltPoints::computeNbDetectedCurrent(const vpKltOpencv& _tracker)
 {
-  int id;
+  long id;
   float x, y;
   nbPointsCur = 0;
   curPoints = std::map<int, vpImagePoint>();
@@ -141,9 +151,14 @@ vpMbtDistanceKltPoints::computeNbDetectedCurrent(const vpKltOpencv& _tracker)
 
   for (unsigned int i = 0; i < static_cast<unsigned int>(_tracker.getNbFeatures()); i++){
     _tracker.getFeature((int)i, id, x, y);
-    if(isTrackedFeature(id)){
+    if(isTrackedFeature((int)id)){
+#if TARGET_OS_IPHONE
+      curPoints[(int)id] = vpImagePoint(static_cast<double>(y),static_cast<double>(x));
+      curPointsInd[(int)id] = (int)i;
+#else
       curPoints[id] = vpImagePoint(static_cast<double>(y),static_cast<double>(x));
       curPointsInd[id] = (int)i;
+#endif
       nbPointsCur++;
     }
   }
@@ -448,9 +463,6 @@ vpMbtDistanceKltPoints::removeOutliers(const vpColVector& _w, const double &thre
   }
 
   if(nbSupp != 0){
-    curPoints = std::map<int, vpImagePoint>();
-    curPointsInd = std::map<int, int>();
-
     curPoints = tmp;
     curPointsInd = tmp2;
     if(nbPointsCur >= minNbPoint) enoughPoints = true;
@@ -512,7 +524,7 @@ void
 vpMbtDistanceKltPoints::display(const vpImage<unsigned char> &I, const vpHomogeneousMatrix &/*cMo*/, const vpCameraParameters &camera,
                                 const vpColor col, const unsigned int thickness, const bool displayFullModel)
 {
-    if(polygon->isVisible() || displayFullModel)
+    if( (polygon->isVisible() && isTrackedKltPoints) || displayFullModel)
     {
       std::vector<std::pair<vpPoint,unsigned int> > roi;
       polygon->getPolygonClipped(roi);
@@ -551,7 +563,7 @@ void
 vpMbtDistanceKltPoints::display(const vpImage<vpRGBa> &I, const vpHomogeneousMatrix &/*cMo*/, const vpCameraParameters &camera,
                                 const vpColor col, const unsigned int thickness, const bool displayFullModel)
 {
-  if(polygon->isVisible() || displayFullModel)
+  if( (polygon->isVisible() && isTrackedKltPoints) || displayFullModel)
   {
     std::vector<std::pair<vpPoint,unsigned int> > roi;
     polygon->getPolygonClipped(roi);
@@ -587,5 +599,5 @@ vpMbtDistanceKltPoints::display(const vpImage<vpRGBa> &I, const vpHomogeneousMat
 
 #elif !defined(VISP_BUILD_SHARED_LIBS)
 // Work arround to avoid warning: libvisp_mbt.a(vpMbtDistanceKltPoints.cpp.o) has no symbols
-void dummy_vpMbKltTracker() {};
+void dummy_vpMbtDistanceKltPoints() {};
 #endif

@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -45,6 +45,8 @@
 #ifndef vpIMAGECONVERT_H
 #define vpIMAGECONVERT_H
 
+#include <stdint.h>
+
 // image
 #include <visp3/core/vpConfig.h>
 #include <visp3/core/vpImage.h>
@@ -56,10 +58,11 @@
 #  if (VISP_HAVE_OPENCV_VERSION >= 0x030000) // Require opencv >= 3.0.0
 #    include <opencv2/core/core.hpp>
 #    include <opencv2/highgui/highgui.hpp>
-#    include <opencv2/imgproc/imgproc_c.h>
+#    include <opencv2/imgproc/imgproc.hpp>
 #  elif (VISP_HAVE_OPENCV_VERSION >= 0x020408) // Require opencv >= 2.4.8
 #    include <opencv2/core/core.hpp>
 #    include <opencv2/highgui/highgui.hpp>
+#    include <opencv2/imgproc/imgproc.hpp>
 #  elif (VISP_HAVE_OPENCV_VERSION >= 0x020101) // Require opencv >= 2.1.1
 #    include <opencv2/core/core.hpp>
 #    include <opencv2/legacy/legacy.hpp>
@@ -95,40 +98,41 @@ class VISP_EXPORT vpImageConvert
 {
 
 public:
-  static void convert(const vpImage<unsigned char> &src,
-          vpImage<vpRGBa> & dest) ;
-  static void convert(const vpImage<vpRGBa> &src,
-          vpImage<unsigned char> & dest) ;
-          
-  static void convert(const vpImage<float> &src,
-          vpImage<unsigned char> &dest);
-  static void convert(const vpImage<unsigned char> &src,
-          vpImage<float> &dest);
+  static void createDepthHistogram(const vpImage<uint16_t> &src_depth, vpImage<vpRGBa> &dest_rgba);
+  static void convert(const vpImage<unsigned char> &src, vpImage<vpRGBa> & dest) ;
+  static void convert(const vpImage<vpRGBa> &src, vpImage<unsigned char> & dest) ;
+
+  static void convert(const vpImage<float> &src, vpImage<unsigned char> &dest);
+  static void convert(const vpImage<unsigned char> &src, vpImage<float> &dest);
   
-  static void convert(const vpImage<double> &src,
-          vpImage<unsigned char> &dest);
-  static void convert(const vpImage<unsigned char> &src,
-          vpImage<double> &dest);
-          
+  static void convert(const vpImage<double> &src, vpImage<unsigned char> &dest);
+  static void convert(const vpImage<unsigned char> &src, vpImage<double> &dest);
+
+  static void convert(const vpImage<uint16_t> &src, vpImage<unsigned char> &dest);
+  static void convert(const vpImage<unsigned char> &src, vpImage<uint16_t> &dest);
+
+  /*!
+    Make a copy of an image.
+    \param src : source image.
+    \param dest : destination image.
+  */
+  template< typename Type>
+  static void convert(const vpImage<Type> &src, vpImage<Type> & dest)
+  {
+    dest = src;
+  }
+
 #ifdef VISP_HAVE_OPENCV
   // Deprecated: will be removed with OpenCV transcient from C to C++ api
-  static void convert(const IplImage* src,
-          vpImage<vpRGBa> & dest, bool flip = false) ;
-  static void convert(const IplImage* src,
-          vpImage<unsigned char> & dest, bool flip = false) ;
-  static void convert(const vpImage<vpRGBa> & src,
-          IplImage *&dest) ;
-  static void convert(const vpImage<unsigned char> & src,
-          IplImage* &dest) ;
+  static void convert(const IplImage* src, vpImage<vpRGBa> & dest, bool flip = false) ;
+  static void convert(const IplImage* src, vpImage<unsigned char> & dest, bool flip = false) ;
+  static void convert(const vpImage<vpRGBa> & src, IplImage *&dest) ;
+  static void convert(const vpImage<unsigned char> & src, IplImage* &dest) ;
 #  if VISP_HAVE_OPENCV_VERSION >= 0x020100
-  static void convert(const cv::Mat& src,
-          vpImage<vpRGBa>& dest, const bool flip = false);
-  static void convert(const cv::Mat& src,
-          vpImage<unsigned char>& dest, const bool flip = false);
-  static void convert(const vpImage<vpRGBa> & src,
-          cv::Mat& dest) ;
-  static void convert(const vpImage<unsigned char> & src,
-          cv::Mat& dest, const bool copyData = true) ;
+  static void convert(const cv::Mat& src, vpImage<vpRGBa>& dest, const bool flip = false);
+  static void convert(const cv::Mat& src, vpImage<unsigned char>& dest, const bool flip = false);
+  static void convert(const vpImage<vpRGBa> & src, cv::Mat& dest) ;
+  static void convert(const vpImage<unsigned char> & src, cv::Mat& dest, const bool copyData = true) ;
 #  endif
 #endif
     
@@ -201,7 +205,7 @@ public:
       r = (unsigned char) dr;
       g = (unsigned char) dg;
       b = (unsigned char) db;
-    };
+    }
   static void YUYVToRGBa(unsigned char* yuyv, unsigned char* rgba,
       unsigned int width, unsigned int height);
   static void YUYVToRGB(unsigned char* yuyv, unsigned char* rgb,
@@ -247,14 +251,12 @@ public:
   static void RGBaToRGB(unsigned char* rgba,
       unsigned char* rgb, unsigned int size);
 
-  static void RGBToGrey(unsigned char* rgb,
-      unsigned char* grey, unsigned int size);
-  static void RGBaToGrey(unsigned char* rgba,
-      unsigned char* grey, unsigned int size);
+  static void RGBToGrey(unsigned char* rgb, unsigned char* grey, unsigned int size);
+  static void RGBaToGrey(unsigned char* rgba, unsigned char* grey, unsigned int size);
 
-  static void RGBToRGBa(unsigned char * bgr, unsigned char * rgba,
+  static void RGBToRGBa(unsigned char * rgb, unsigned char * rgba,
       unsigned int width, unsigned int height, bool flip = false);
-  static void RGBToGrey(unsigned char * bgr, unsigned char * grey,
+  static void RGBToGrey(unsigned char * rgb, unsigned char * grey,
       unsigned int width, unsigned int height, bool flip = false);
 
   static void GreyToRGBa(unsigned char* grey,

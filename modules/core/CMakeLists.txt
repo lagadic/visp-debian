@@ -1,7 +1,7 @@
 #############################################################################
 #
 # This file is part of the ViSP software.
-# Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+# Copyright (C) 2005 - 2017 by Inria. All rights reserved.
 #
 # This software is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -63,6 +63,9 @@ if(WIN32 AND NOT CYGWIN)
         list(APPEND opt_libs "${WS2_32_LIBRARY}")
       endif()
     endif()
+  elseif(WINRT)
+    # Since check_library_exists() and find_library() does't work to detect ws2_32.lib we add the lib that is part of Windows SDK
+    list(APPEND opt_libs "ws2_32.lib")
   else() # pure WIN32
     CHECK_LIBRARY_EXISTS("ws2_32.lib" getch "" HAVE_LIBWS2_32) # for inet_ntoa() and socket functionalities
     if(HAVE_LIBWS2_32)
@@ -166,20 +169,20 @@ if(USE_OPENCV)
       # Fix Error on non-existent target in get_target_property for 3rd party location extraction
       cmake_policy(POP)
     endif()
-
+  elseif(APPLE_FRAMEWORK)
+    # Add opencv framework
+    list(APPEND opt_libs ${OpenCV_LIBRARIES})    # see FindMyOpenCV.cmake
+  elseif(CMAKE_TOOLCHAIN_FILE AND I_AM_A_ROBOT)
+    # Add opencv framework from naoqi atom toolchain
+    list(APPEND opt_libs ${OpenCV_LIBRARIES})    # see FindMyOpenCV.cmake
   else()
     # this should be an old OpenCV version that doesn't have the previous behavior
     list(APPEND opt_libs ${OpenCV_LIBS})
   endif()
-  list(APPEND opt_incs ${OpenCV_INCLUDE_DIRS})
-  #list(APPEND opt_libs ${OpenCV_LIBS})
-  #MESSAGE("OpenCV_INCLUDE_DIRS = ${OpenCV_INCLUDE_DIRS}")
-  #MESSAGE("OpenCV_LIBS = ${OpenCV_LIBS}")
-  #MESSAGE("OpenCV_LIB_DIR = ${OpenCV_LIB_DIR}")
-  #message("OpenCV_NONFREE_FOUND: ${OPENCV_NONFREE_FOUND}")
+  if(OpenCV_INCLUDE_DIRS)
+    list(APPEND opt_incs ${OpenCV_INCLUDE_DIRS})
+  endif()
 endif(USE_OPENCV)
-
-
 
 if(USE_YARP)
   list(APPEND opt_incs ${YARP_INCLUDE_DIRS})
@@ -243,8 +246,25 @@ if(USE_ZLIB)
   list(APPEND opt_libs ${ZLIB_LIBRARIES})
 endif()
 
+if(MSVC)
+  # Disable Visual C++ C4996 warning
+  # warning C4996: 'gethostbyname': Use getaddrinfo() or GetAddrInfoW() instead
+  # warning C4996: 'inet_ntoa': Use inet_ntop() or InetNtop() instead
+  # warning C4996: 'inet_addr': Use inet_pton() or InetPton() instead
+  vp_set_source_file_compile_flag(src/tools/network/vpClient.cpp /wd4996)
+  vp_set_source_file_compile_flag(src/tools/network/vpServer.cpp /wd4996)
+  vp_set_source_file_compile_flag(src/tools/network/vpNetwork.cpp /wd4996)
+  if(BUILD_TESTS)
+    vp_set_source_file_compile_flag(test/network/testClient.cpp /wd4996)
+    vp_set_source_file_compile_flag(test/network/testServer.cpp /wd4996)
+  endif()
+endif()
+
 vp_add_module(core)
-vp_glob_module_sources()
+
+vp_source_group("Src" FILES "${VISP_MODULE_visp_core_BINARY_DIR}/version_string.inc")
+
+vp_glob_module_sources(SOURCES "${VISP_MODULE_visp_core_BINARY_DIR}/version_string.inc")
 vp_module_include_directories(${opt_incs})
 vp_create_module(${opt_libs})
 vp_create_compat_headers("include/visp3/core/vpConfig.h")

@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -92,6 +92,8 @@ public: /* Methodes publiques */
   /*! Destructor that does nothing. */
   virtual ~vpPtu46() {};
 
+  /** @name Inherited functionalities from vpPtu46 */
+  //@{
   void init (void);
 
   void  computeMGD (const vpColVector &q, vpHomogeneousMatrix & fMc) const;
@@ -103,16 +105,8 @@ public: /* Methodes publiques */
   void get_eJe(const vpColVector &q, vpMatrix &eJe) const;
   void get_fJe(const vpColVector &q, vpMatrix &fJe) const;
 
+  //@}
   friend VISP_EXPORT std::ostream & operator << (std::ostream & os, const vpPtu46 & constant);
 };
-
-
-
-
-/*
- * Local variables:
- * c-basic-offset: 2
- * End:
- */
 
 #endif

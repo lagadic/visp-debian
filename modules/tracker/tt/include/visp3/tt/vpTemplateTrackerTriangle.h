@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -126,7 +126,8 @@ class VISP_EXPORT vpTemplateTrackerTriangle
        - if i = 0, return corner 1 coordinates,
        - if i = 1, return corner 2 coordinates,
        - if i = 2, return corner 3 coordinates.
-       \param x,y : The coordinates of the corner.
+       \param x : The coordinate of the corner along horizontal axis.
+       \param y : The coordinate of the corner along vertical axis.
      */
     void getCorner(unsigned int i, double &x, double &y) const {
       assert(i<3);

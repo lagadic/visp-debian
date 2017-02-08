@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -125,7 +125,7 @@ int main(int argc, const char **argv)
 #endif
 
     vpHomogeneousMatrix wMo; // Set to indentity. Robot world frame is equal to object frame
-    vpHomogeneousMatrix cMo (-0.5, 0.5, 4., vpMath::rad(10), vpMath::rad(20), vpMath::rad(90));
+    vpHomogeneousMatrix cMo (-0.5, 0.5, 2., vpMath::rad(10), vpMath::rad(20), vpMath::rad(30));
     vpHomogeneousMatrix cdMo(0., 0., 1., vpMath::rad(0), vpMath::rad(0), vpMath::rad(0));
     vpHomogeneousMatrix wMc; // Camera location in the robot world frame
 
@@ -167,7 +167,7 @@ int main(int argc, const char **argv)
     vpServo task;
     task.setServo(vpServo::EYEINHAND_CAMERA);
     task.setInteractionMatrixType(vpServo::CURRENT);
-    task.setLambda(1) ;
+    task.setLambda(2.) ;
 
     for (int i=0; i <2; i++)
       task.addFeature(seg_cur[i], seg_des[i]);
@@ -200,8 +200,10 @@ int main(int argc, const char **argv)
 
     //param robot
     vpSimulatorCamera robot;
-    float sampling_time = 0.010f; // Sampling period in seconds
+    float sampling_time = 0.02f; // Sampling period in seconds
     robot.setSamplingTime(sampling_time);
+    robot.setMaxTranslationVelocity(5.);
+    robot.setMaxRotationVelocity(vpMath::rad(90.));
     wMc = wMo * cMo.inverse();
     robot.setPosition(wMc);
     int iter=0;
@@ -259,7 +261,7 @@ int main(int argc, const char **argv)
     std::cout << "final error=" << ( task.getError() ).sumSquare() << std::endl;
     return 0;
   }
-  catch(vpException e) {
+  catch(vpException &e) {
     std::cout << "Catch an exception: " << e << std::endl;
     return 1;
   }

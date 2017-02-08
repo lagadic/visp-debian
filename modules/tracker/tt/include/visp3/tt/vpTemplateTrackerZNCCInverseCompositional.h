@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -51,7 +51,7 @@
 /*!
   \class vpTemplateTrackerZNCCInverseCompositional
   \ingroup group_tt_tracker
-  The algorithm implemented in this class is described in \cite Irani98a.
+  The algorithm implemented in this class is described in \cite Irani98a and \cite Marchand16a.
  */
 class VISP_EXPORT vpTemplateTrackerZNCCInverseCompositional: public vpTemplateTrackerZNCC
 {

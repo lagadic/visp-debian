@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -444,8 +444,9 @@ void vpPoseFeatures::computePoseVVS(vpHomogeneousMatrix & cMo)
     
     unsigned int iter = 0;
     
-    while((int)((residu_1 - r)*1e12) != 0 )
-    {         
+    //while((int)((residu_1 - r)*1e12) != 0 )
+    while(std::fabs((residu_1 - r)*1e12) > std::numeric_limits<double>::epsilon() )
+    {
       residu_1 = r ;
 
       // Compute the interaction matrix and the error
@@ -509,7 +510,8 @@ void vpPoseFeatures::computePoseRobustVVS(vpHomogeneousMatrix & cMo)
     
     unsigned int iter = 0 ;
     
-    while((int)((residu_1 - r)*1e12) !=0)
+    //while((int)((residu_1 - r)*1e12) !=0)
+    while(std::fabs((residu_1 - r)*1e12) > std::numeric_limits<double>::epsilon())
     {     
       residu_1 = r ;
       
@@ -520,12 +522,12 @@ void vpPoseFeatures::computePoseRobustVVS(vpHomogeneousMatrix & cMo)
       r = error.sumSquare() ;
       
       if(iter == 0){
-        res = vpColVector(error.getRows()/2);
-        W = vpMatrix(error.getRows(),error.getRows());
-        w = vpColVector(error.getRows()/2);
+        res.resize(error.getRows()/2);
+        w.resize(error.getRows()/2);
+        W.resize(error.getRows(),error.getRows());
         w = 1;
       }
-      
+
       for(unsigned int k=0 ; k < error.getRows()/2 ; k++)
       {
         res[k] = vpMath::sqr(error[2*k]) + vpMath::sqr(error[2*k+1]) ;
@@ -544,7 +546,7 @@ void vpPoseFeatures::computePoseRobustVVS(vpHomogeneousMatrix & cMo)
       vpMatrix LRank;
       (W*L).pseudoInverse(Lp,1e-6) ;
       unsigned int rank = L.pseudoInverse(LRank,1e-6) ;
-      
+
       if(rank < 6){
         if(verbose)
           vpTRACE("Rank must be at least 6 ! cMo not computed.");

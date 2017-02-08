@@ -1,7 +1,7 @@
 #############################################################################
 #
 # This file is part of the ViSP software.
-# Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+# Copyright (C) 2005 - 2017 by Inria. All rights reserved.
 #
 # This software is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -51,6 +51,12 @@ set(example_cpp
 
 foreach(cpp ${example_cpp})
   visp_add_target(${cpp})
+
+  if(VISP_HAVE_PIONEER)
+    # Add specific build flag to turn off warnings coming from libaria 3rd party
+    visp_set_source_file_compile_flag(${cpp} -Wno-unused-parameter)
+  endif()
+
   if(COMMAND visp_add_dependency)
     visp_add_dependency(${cpp} "examples")
   endif()

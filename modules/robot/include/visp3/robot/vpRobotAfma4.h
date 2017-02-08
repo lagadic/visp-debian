@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -260,8 +260,8 @@ public:  /* Methode publiques */
   void powerOn() ;
   void powerOff() ;
 
-  static bool readPosFile(const char *filename, vpColVector &q)  ;
-  static bool savePosFile(const char *filename, const vpColVector &q)  ;
+  static bool readPosFile(const std::string &filename, vpColVector &q)  ;
+  static bool savePosFile(const std::string &filename, const vpColVector &q)  ;
 
   /* --- POSITIONNEMENT --------------------------------------------------- */
   void setPosition(const vpRobot::vpControlFrameType frame,

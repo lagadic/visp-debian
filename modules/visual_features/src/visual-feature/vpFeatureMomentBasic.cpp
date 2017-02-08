@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -64,7 +64,7 @@ void vpFeatureMomentBasic::compute_interaction(){
     const vpMomentObject& m = moment->getObject();
     order = m.getOrder()+1;
     interaction_matrices.resize(order*order);
-    for(std::vector< vpMatrix >::iterator i=interaction_matrices.begin();i!=interaction_matrices.end();i++)
+    for(std::vector< vpMatrix >::iterator i=interaction_matrices.begin();i!=interaction_matrices.end();++i)
         i->resize(1,6);
     if (m.getType()==vpMomentObject::DISCRETE){
         delta=0;

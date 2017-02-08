@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -54,6 +54,8 @@
 /*!
   \class vpTemplateTracker
   \ingroup group_tt_tracker
+
+  This class allows to instanciate a template tracker using image registration algorithms \cite Dame10c \cite Dame11c.
 */
 class VISP_EXPORT vpTemplateTracker
 {
@@ -258,8 +260,6 @@ class VISP_EXPORT vpTemplateTracker
     void            computeOptimalBrentGain(const vpImage<unsigned char> &I,vpColVector &tp,double tMI,vpColVector &direction,double &alpha);
     virtual double  getCost(const vpImage<unsigned char> &I, const vpColVector &tp) = 0;
     void            getGaussianBluredImage(const vpImage<unsigned char> &I){ vpImageFilter::filter(I, BI,fgG,taillef); }
-    void            initCompInverse(const vpImage<unsigned char> &I);
-    virtual void    initCompInversePyr(const vpImage<unsigned char> &I);
     virtual void    initHessienDesired(const vpImage<unsigned char> &I)=0;
     virtual void    initHessienDesiredPyr(const vpImage<unsigned char> &I);
     virtual void    initPyramidal(unsigned int nbLvl,unsigned int l0);

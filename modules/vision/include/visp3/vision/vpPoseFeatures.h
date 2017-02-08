@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -648,7 +648,7 @@ void vpPoseFeatures::addSpecificFeature(RetType (*fct_ptr)(ArgsFunc ...), Args &
   
   totalSize++;
   if(featureSpecific_list.size() > maxSize)
-    maxSize = featureSpecific_list.size();
+    maxSize = (unsigned int)featureSpecific_list.size();
 }
 
 /*!
@@ -727,7 +727,7 @@ void vpPoseFeatures::addSpecificFeature(ObjType *obj, RetType (ObjType::*fct_ptr
   
   totalSize++;
   if(featureSpecific_list.size() > maxSize)
-    maxSize = featureSpecific_list.size();
+    maxSize = (unsigned int)featureSpecific_list.size();
 }
 #endif
 

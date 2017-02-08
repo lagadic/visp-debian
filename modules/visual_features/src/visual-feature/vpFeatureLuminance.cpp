@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -252,29 +252,27 @@ vpFeatureLuminance::buildFrom(vpImage<unsigned char> &I)
 */
 void
 vpFeatureLuminance::interaction(vpMatrix &L)
-{
-  double x,y,Ix,Iy,Zinv;
-
+{  
   L.resize(dim_s,6) ;
 
   for(unsigned int m = 0; m< L.getRows(); m++)
+  {
+    double Ix = pixInfo[m].Ix;
+    double Iy = pixInfo[m].Iy;
+
+    double x = pixInfo[m].x ;
+    double y = pixInfo[m].y ;
+    double Zinv =  1 / pixInfo[m].Z;
+
     {
-      Ix = pixInfo[m].Ix;
-      Iy = pixInfo[m].Iy;
-
-      x = pixInfo[m].x ;
-      y = pixInfo[m].y ;
-      Zinv =  1 / pixInfo[m].Z;
-
-      {
-	L[m][0] = Ix * Zinv;
-	L[m][1] = Iy * Zinv;
-	L[m][2] = -(x*Ix+y*Iy)*Zinv;
-	L[m][3] = -Ix*x*y-(1+y*y)*Iy;
-	L[m][4] = (1+x*x)*Ix + Iy*x*y;
-	L[m][5]  = Iy*x-Ix*y;
-      }
+      L[m][0] = Ix * Zinv;
+      L[m][1] = Iy * Zinv;
+      L[m][2] = -(x*Ix+y*Iy)*Zinv;
+      L[m][3] = -Ix*x*y-(1+y*y)*Iy;
+      L[m][4] = (1+x*x)*Ix + Iy*x*y;
+      L[m][5]  = Iy*x-Ix*y;
     }
+  }
 }
 
 /*!

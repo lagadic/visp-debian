@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -76,6 +76,21 @@ vpRGBa::operator=(const vpRGBa &v)
   this->A = v.A;
   return *this;
 }
+
+#ifdef VISP_HAVE_CPP11_COMPATIBILITY
+/*!
+  Move operator.
+*/
+vpRGBa &
+vpRGBa::operator=(const vpRGBa &&v)
+{
+  this->R = std::move(v.R);
+  this->G = std::move(v.G);
+  this->B = std::move(v.B);
+  this->A = std::move(v.A);
+  return *this;
+}
+#endif
 
 /*!
   Cast a vpColVector in a vpRGBa
@@ -248,8 +263,30 @@ vpRGBa operator*(const double &x, const vpRGBa  &rgb)
 	return rgb*x;
 }
 
-/*
- * Local variables:
- * c-basic-offset: 2
- * End:
- */
+/*!
+
+  \relates vpRGBa
+
+  Writes the RGBA values to the stream \e os, and
+  returns a reference to the stream. The
+  coordinates are separated by a comma.
+
+  The following code prints the intensity of the pixel in the middle of the image:
+  \code
+#include <visp3/core/vpImage.h>
+
+int main()
+{
+  vpImage<vpRGBa> I(480,640);
+
+  std::cout << "RGB: " << I[240][320] << std::endl;
+
+  return 0;
+}
+  \endcode
+*/
+VISP_EXPORT std::ostream& operator<< (std::ostream &os, const vpRGBa& rgba)
+{
+  os << "(" << (int)rgba.R << "," << (int)rgba.G << "," << (int)rgba.B << "," << (int)rgba.A << ")";
+  return os;
+}

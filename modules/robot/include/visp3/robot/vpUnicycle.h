@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -67,6 +67,8 @@ public:
     */
   virtual ~vpUnicycle() {};
 
+  /** @name Inherited functionalities from vpUnicycle */
+  //@{
   /*!
     Return the tranformation \f${^c}{\bf M}_e\f$ between the camera frame
     and the mobile robot end effector frame.
@@ -131,6 +133,7 @@ public:
   {
     eJe_ = eJe;
   }
+  //@}
 
 protected:
   vpHomogeneousMatrix cMe_; // Camera frame to mobile platform frame
