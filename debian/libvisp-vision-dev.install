@@ -1,4 +1,5 @@
 # header files
 usr/include/*/visp3/vision/*
+usr/include/*/visp3/visp_vision.h
 # libraries
 usr/lib/*/libvisp_vision.so

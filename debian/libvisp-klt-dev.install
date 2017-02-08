@@ -1,4 +1,5 @@
 # header files
 usr/include/*/visp3/klt/*
+usr/include/*/visp3/visp_klt.h
 # libraries
 usr/lib/*/libvisp_klt.so

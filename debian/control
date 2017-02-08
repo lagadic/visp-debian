@@ -12,7 +12,7 @@ Build-Depends: debhelper (>= 9),
 	libcoin80-dev,
 	libsoqt4-dev,
 	libdc1394-22-dev [linux-any],
-	libv4l-dev [linux-any],
+	libv4l-dev [!hurd-any],
 	libfreenect-dev [!hurd-any !kfreebsd-any],
 	libxml2-dev,
 	libjpeg-dev,
@@ -20,11 +20,12 @@ Build-Depends: debhelper (>= 9),
 	libx11-dev,
 	libzbar-dev,
 	libdmtx-dev,
+	libogre-1.9-dev,
 	visp-images-data
-Standards-Version: 3.9.6
-Vcs-Browser: http://anonscm.debian.org/gitweb/?p=debian-science/packages/visp.git
-Vcs-Git: git://anonscm.debian.org/debian-science/packages/visp.git
-Homepage: http://visp.inria.fr
+Standards-Version: 3.9.8
+Vcs-Browser: https://anonscm.debian.org/debian-science/packages/visp.git
+Vcs-Git: https://anonscm.debian.org/debian-science/packages/visp.git
+Homepage: https://visp.inria.fr
 
 Package: libvisp-dev
 Section: libdevel
@@ -72,8 +73,6 @@ Depends: ${misc:Depends},
 	liblapack-dev,
 	libgsl-dev,
 	libxml2-dev
-Replaces: libvisp-dev (<< 3.0.0-1)
-Breaks: libvisp-dev (<< 3.0.0-1)
 Description: development files for libvisp-core
  This package contains the header files and static library needed to compile
  applications that use ViSP (Visual Servoing Platform) core.
@@ -785,7 +784,7 @@ Depends: ${misc:Depends},
 Description: development files for libvisp-vision
  This package contains the header files and static library needed to compile
  applications that use ViSP (Visual Servoing Platform) computer vision
- (vision) library.
+ library.
  .
  ViSP standing for Visual Servoing Platform is a modular cross
  platform library that allows prototyping and developing applications
@@ -807,7 +806,7 @@ Depends: ${misc:Depends},
 	libvisp-visual-features3.0 (= ${binary:Version})
 Description: visual servoing platform vision library
  This package contains the ViSP (Visual Servoing Platform) computer vision
- (vision) runtime library.
+ runtime library.
  .
  ViSP standing for Visual Servoing Platform is a modular cross
  platform library that allows prototyping and developing applications

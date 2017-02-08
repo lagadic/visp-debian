@@ -26,6 +26,7 @@ endif
 # CMake flags
 CMAKE_FLAGS = \
 	-DCMAKE_INSTALL_PREFIX=/usr \
+	-DCMAKE_INSTALL_INCLUDEDIR="include/$(DEB_HOST_MULTIARCH)" \
 	-DCMAKE_INSTALL_LIBDIR="lib/$(DEB_HOST_MULTIARCH)" \
 	-DCMAKE_VERBOSE_MAKEFILE=ON \
 	-DCMAKE_C_FLAGS_RELEASE="$(CFLAGS)" \
@@ -50,6 +51,7 @@ CMAKE_FLAGS = \
 	-DUSE_X11=ON \
 	-DUSE_ZBAR=ON \
 	-DUSE_DMTX=ON \
+	-DUSE_OGRE=ON \
 	$(CMAKE_ARCH_FLAGS)
 
 %:
@@ -86,9 +88,6 @@ override_dh_strip:
 	dh_strip -plibvisp-tt-mi3.0 --dbg-package=libvisp-tt-mi3.0-dbg
 	dh_strip
 
-# Parallelism is disabled in tests as some cannot run at the same
-# time
-#
 # Due to numerical imprecision, some tests are failing on ia64.
 # This is not a critical issue so we let the testing fail on this
 # architecture for now.
@@ -103,7 +102,7 @@ override_dh_auto_test-indep:
 
 override_dh_auto_test-arch:
 	export VISP_INPUT_IMAGE_PATH=/usr/share/visp-images-data/ \
-	 && dh_auto_test --max-parallel=1 || ${DH_AUTOTEST_CAN_FAIL}
+	 && dh_auto_test || ${DH_AUTOTEST_CAN_FAIL}
 
 # Since Ogre removal no more useful
 #override_dh_install:

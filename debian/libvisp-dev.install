@@ -1,3 +1,6 @@
+# header files
+usr/include/*/visp3/visp.h
+usr/include/*/visp/*
 # visp detection helpers
 usr/bin/visp-config
 usr/lib/*/cmake/*
