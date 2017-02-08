@@ -1,7 +1,7 @@
 #############################################################################
 #
 # This file is part of the ViSP software.
-# Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+# Copyright (C) 2005 - 2017 by Inria. All rights reserved.
 #
 # This software is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -141,12 +141,10 @@ if(USE_COIN3D)
     # We manage QT libraries
     if(DESIRED_QT_VERSION MATCHES 3)
       #Add Qt3 libraries
-      set(VISP_HAVE_QT3_FOUND "yes")       # for ViSP-third-party.txt
       #message("QT_QT_LIBRARY ${QT_QT_LIBRARY}")
       list(APPEND opt_libs ${QT_QT_LIBRARY})
     elseif(DESIRED_QT_VERSION MATCHES 4)
       #Add Qt4 libraries
-      set(VISP_HAVE_QT4_FOUND "yes")       # for ViSP-third-party.txt
       #message("QT_QTGUI_LIBRARY ${QT_QTGUI_LIBRARY}")
       #message("QT_QTGUI_LIBRARY_RELEASE ${QT_QTGUI_LIBRARY_RELEASE}")
       #message("QT_QTGUI_LIBRARY_DEBUG ${QT_QTGUI_LIBRARY_DEBUG}")
@@ -179,5 +177,11 @@ endif(USE_COIN3D)
 
 vp_add_module(ar visp_core OPTIONAL visp_io)
 vp_glob_module_sources()
+
+if(USE_OGRE)
+  # Add specific build flag to turn off warnings coming from libogre and libois 3rd party
+  vp_set_source_file_compile_flag(src/ogre-simulator/vpAROgre.cpp -Wno-unused-parameter -Wno-unused-but-set-parameter)
+endif()
+
 vp_module_include_directories(${opt_incs})
 vp_create_module(${opt_libs})

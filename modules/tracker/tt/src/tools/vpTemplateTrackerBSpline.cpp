@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -49,13 +49,12 @@ double vpTemplateTrackerBSpline::getSubPixBspline4(const vpImage<double> &I, dou
   double et=(double)t-ct;
   int height=(int)I.getHeight();//r
   int width=(int)I.getWidth();//t
-  volatile int tr,tt;
   for(int ir=-1;ir<=2;ir++)
   {
-    tr=ir+cr;
+    int tr=ir+cr;
     for(int it=-1;it<=2;it++)
     {
-      tt=it+ct;
+      int tt=it+ct;
       if(tr>=0 && tr <height && tt>=0 && tt <width)
         res+=Bspline4((double)ir-er)*Bspline4((double)it-et)*I[tr][tt];
     }

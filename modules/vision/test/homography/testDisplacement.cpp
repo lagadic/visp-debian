@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -71,15 +71,16 @@ bool test(const std::string &s, const vpHomography &H, const std::vector<double>
 
   return true;
 }
+
 int main()
 {
   try {
-    int err = 1;
     {
       vpHomography H;
       H.eye();
       std::vector<double> bench(9, 0);
       bench[0] = bench[4] = bench[8] = 1.;
+      int err = 1;
       if (test("H", H, bench) == false)
         return err;
       if (test("H", H/H[2][2], bench) == false)
@@ -186,7 +187,7 @@ int main()
     std::cout << "All tests succeed" << std::endl;
     return 0;
   }
-  catch(vpException e) {
+  catch(vpException &e) {
     std::cout << "Catch an exception: " << e << std::endl;
     return 1;
   }

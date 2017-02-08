@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -63,7 +63,7 @@ vpPose::poseDementhonNonPlan(vpHomogeneousMatrix &cMo)
 {
   double normI = 0., normJ = 0.;
   double Z0 = 0.;
-  double seuil=1.0;
+  //double seuil=1.0;
   double f=1.;
 
   vpPoint p0 = listP.front() ;
@@ -150,12 +150,12 @@ vpPose::poseDementhonNonPlan(vpHomogeneousMatrix &cMo)
 
     k = vpColVector::cross(I,J) ;
     Z0=2*f/(normI+normJ);
-    cpt=cpt+1; seuil=0.0;
+    cpt=cpt+1; //seuil=0.0;
     for (unsigned int i=0; i<npt; i++)
     {
-      double      epsi_1 = eps[i] ;
+      //double      epsi_1 = eps[i] ;
       eps[i]=(c3d[i].get_oX()*k[0]+c3d[i].get_oY()*k[1]+c3d[i].get_oZ()*k[2])/Z0;
-      seuil+=fabs(eps[i]-epsi_1);
+      //seuil+=fabs(eps[i]-epsi_1);
     }
     if (npt==0)
     {
@@ -163,7 +163,7 @@ vpPose::poseDementhonNonPlan(vpHomogeneousMatrix &cMo)
       throw(vpException(vpException::divideByZeroError,
                         "Division by zero in Dementhon pose computation: no points")) ;
     }
-    seuil/=npt;
+    //seuil/=npt;
   }
   k.normalize();
   J = vpColVector::cross(k,I) ;
@@ -285,12 +285,8 @@ vpPose::calculArbreDementhon(vpMatrix &b, vpColVector &U,
   std::cout << "begin vpPose::CalculArbreDementhon() " << std::endl;
 #endif
 
-  unsigned int i, k;
   int erreur = 0;
-  unsigned int cpt;
-  double s,c,si,co;
-  double smin,smin_old, s1,s2;
-  double r, theta;
+  double smin;
   vpHomogeneousMatrix  cMo1,cMo2,cMo_old;
 
   unsigned int iter_max = 20;
@@ -298,7 +294,7 @@ vpPose::calculArbreDementhon(vpMatrix &b, vpColVector &U,
 
 
   // on test si tous les points sont devant la camera
-  for(i = 0; i < npt; i++)
+  for(unsigned int i = 0; i < npt; i++)
   {
     double z ;
     z = cMo[2][0]*c3d[i].get_oX()+cMo[2][1]*c3d[i].get_oY()+cMo[2][2]*c3d[i].get_oZ() + cMo[2][3];
@@ -312,8 +308,8 @@ vpPose::calculArbreDementhon(vpMatrix &b, vpColVector &U,
 
   if (erreur==0)
   {
-    k=0;
-    for(i = 0; i < npt; i++)
+    unsigned int k=0;
+    for(unsigned int i = 0; i < npt; i++)
     {
       xi[k] = c3d[i].get_x();
       yi[k] = c3d[i].get_y();
@@ -333,11 +329,13 @@ vpPose::calculArbreDementhon(vpMatrix &b, vpColVector &U,
     vpColVector I(3) ;
     vpColVector J(3) ;
 
-    smin_old = 2*smin ;
+    double smin_old = 2*smin ;
 
-    cpt = 0;
+    unsigned int cpt = 0;
     while ((cpt<20) && (smin_old > 0.01) && (smin <= smin_old))
     {
+      double r, theta, s1, s2;
+
 #if (DEBUG_LEVEL2)
       {
         std::cout << "cpt " << cpt << std::endl ;
@@ -352,9 +350,9 @@ vpPose::calculArbreDementhon(vpMatrix &b, vpColVector &U,
       I0 = 0 ;
       J0 = 0 ;
 
-      for (i=1;i<npt;i++)
+      for (unsigned int i=1;i<npt;i++)
       {
-        s = (1.0+eps[cpt][i])*xi[i] - xi[0];
+        double s = (1.0+eps[cpt][i])*xi[i] - xi[0];
         I0[0] += b[0][i-1] * s;
         I0[1] += b[1][i-1] * s;
         I0[2] += b[2][i-1] * s;
@@ -364,12 +362,12 @@ vpPose::calculArbreDementhon(vpMatrix &b, vpColVector &U,
         J0[2] += b[2][i-1] * s;
       }
 
-      s = -2.0*(vpColVector::dotProd(I0,J0));
-      c = J0.sumSquare() - I0.sumSquare() ;
+      double s = -2.0*(vpColVector::dotProd(I0,J0));
+      double c = J0.sumSquare() - I0.sumSquare() ;
 
       calculRTheta(s,c,r,theta);
-      co = cos(theta);
-      si = sin(theta);
+      double co = cos(theta);
+      double si = sin(theta);
 
       /* 1ere branche	*/
       I = I0 + U*r*co ;
@@ -409,7 +407,7 @@ vpPose::calculArbreDementhon(vpMatrix &b, vpColVector &U,
       {
         smin = s1;
         k = 0;
-        for(i = 0; i < npt; i++)
+        for(unsigned int i = 0; i < npt; i++)
         {
           if (k != 0) { // On ne prend pas le 1er point
             eps[cpt][k] = (cMo1[2][0]*c3d[i].get_oX() + cMo1[2][1]*c3d[i].get_oY()
@@ -423,7 +421,7 @@ vpPose::calculArbreDementhon(vpMatrix &b, vpColVector &U,
       {
         smin = s2;
         k = 0;
-        for(i = 0; i < npt; i++)
+        for(unsigned int i = 0; i < npt; i++)
         {
           if (k != 0) { // On ne prend pas le 1er point
             eps[cpt][k] = (cMo2[2][0]*c3d[i].get_oX() + cMo2[2][1]*c3d[i].get_oY()

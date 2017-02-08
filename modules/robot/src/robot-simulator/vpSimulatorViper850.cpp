@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -39,7 +39,7 @@
 
 #include <visp3/robot/vpSimulatorViper850.h>
 
-#if defined(VISP_HAVE_MODULE_GUI) && (defined(_WIN32) || defined(VISP_HAVE_PTHREAD))
+#if defined(VISP_HAVE_MODULE_GUI) && ((defined(_WIN32) && !defined(WINRT_8_0)) || defined(VISP_HAVE_PTHREAD))
 
 #include <visp3/core/vpTime.h>
 #include <visp3/core/vpImagePoint.h>
@@ -49,6 +49,11 @@
 #include <cmath>    // std::fabs
 #include <limits>   // numeric_limits
 #include <string>
+
+#include "../wireframe-simulator/vpBound.h"
+#include "../wireframe-simulator/vpVwstack.h"
+#include "../wireframe-simulator/vpRfstack.h"
+#include "../wireframe-simulator/vpScene.h"
 
 const double vpSimulatorViper850::defaultPositioningVelocity = 25.0;
 
@@ -66,11 +71,19 @@ vpSimulatorViper850::vpSimulatorViper850()
   tcur = vpTime::measureTimeMs();
 
   #if defined(_WIN32)
-  mutex_fMi = CreateMutex(NULL,FALSE,NULL);
-  mutex_artVel = CreateMutex(NULL,FALSE,NULL);
-  mutex_artCoord = CreateMutex(NULL,FALSE,NULL);
-  mutex_velocity = CreateMutex(NULL,FALSE,NULL);
-  mutex_display = CreateMutex(NULL,FALSE,NULL);
+#  ifdef WINRT_8_1
+  mutex_fMi = CreateMutexEx(NULL, NULL, 0, NULL);
+  mutex_artVel = CreateMutexEx(NULL, NULL, 0, NULL);
+  mutex_artCoord = CreateMutexEx(NULL, NULL, 0, NULL);
+  mutex_velocity = CreateMutexEx(NULL, NULL, 0, NULL);
+  mutex_display = CreateMutexEx(NULL, NULL, 0, NULL);
+#  else
+  mutex_fMi = CreateMutex(NULL, FALSE, NULL);
+  mutex_artVel = CreateMutex(NULL, FALSE, NULL);
+  mutex_artCoord = CreateMutex(NULL, FALSE, NULL);
+  mutex_velocity = CreateMutex(NULL, FALSE, NULL);
+  mutex_display = CreateMutex(NULL, FALSE, NULL);
+#  endif
 
 
   DWORD   dwThreadIdArray;
@@ -114,12 +127,19 @@ vpSimulatorViper850::vpSimulatorViper850(bool do_display)
   tcur = vpTime::measureTimeMs();
   
     #if defined(_WIN32)
+#  ifdef WINRT_8_1
+  mutex_fMi = CreateMutexEx(NULL, NULL, 0, NULL);
+  mutex_artVel = CreateMutexEx(NULL, NULL, 0, NULL);
+  mutex_artCoord = CreateMutexEx(NULL, NULL, 0, NULL);
+  mutex_velocity = CreateMutexEx(NULL, NULL, 0, NULL);
+  mutex_display = CreateMutexEx(NULL, NULL, 0, NULL);
+#  else
   mutex_fMi = CreateMutex(NULL,FALSE,NULL);
   mutex_artVel = CreateMutex(NULL,FALSE,NULL);
   mutex_artCoord = CreateMutex(NULL,FALSE,NULL);
   mutex_velocity = CreateMutex(NULL,FALSE,NULL);
   mutex_display = CreateMutex(NULL,FALSE,NULL);
-
+#  endif
 
   DWORD   dwThreadIdArray;
   hThread = CreateThread( 
@@ -153,7 +173,11 @@ vpSimulatorViper850::~vpSimulatorViper850()
   robotStop = true;
   
   #if defined(_WIN32)
-  WaitForSingleObject(hThread,INFINITE);
+#  if defined(WINRT_8_1)
+  WaitForSingleObjectEx(hThread, INFINITE, FALSE);
+#  else // pure win32
+  WaitForSingleObject(hThread, INFINITE);
+#  endif
   CloseHandle(hThread);
   CloseHandle(mutex_fMi);
   CloseHandle(mutex_artVel);
@@ -292,8 +316,8 @@ vpSimulatorViper850::initDisplay()
   \sa vpCameraParameters, init()
 */
 void
-vpSimulatorViper850::init (vpViper850::vpToolType tool,
-           vpCameraParameters::vpCameraParametersProjType proj_model)
+vpSimulatorViper850::init(vpViper850::vpToolType tool,
+                          vpCameraParameters::vpCameraParametersProjType proj_model)
 {
   this->projModel = proj_model;
   
@@ -322,6 +346,7 @@ vpSimulatorViper850::init (vpViper850::vpToolType tool,
       break;
     }
   case vpViper850::TOOL_SCHUNK_GRIPPER_CAMERA:
+  case vpViper850::TOOL_CUSTOM:
   case vpViper850::TOOL_GENERIC_CAMERA: {
       std::cout << "This tool is not handled in vpSimulatorViper850.cpp" << std::endl;
       break;
@@ -347,8 +372,8 @@ vpSimulatorViper850::init (vpViper850::vpToolType tool,
 
 void
 vpSimulatorViper850::getCameraParameters (vpCameraParameters &cam,
-				 const unsigned int &image_width,
-				 const unsigned int &image_height)
+                                          const unsigned int &image_width,
+                                          const unsigned int &image_height)
 {
   if (toolCustom)
   {
@@ -358,11 +383,11 @@ vpSimulatorViper850::getCameraParameters (vpCameraParameters &cam,
   switch (getToolType()) {
   case vpViper850::TOOL_MARLIN_F033C_CAMERA: {
     // Set default intrinsic camera parameters for 640x480 images
-    if (image_width == 640 && image_height == 480) 
+    if (image_width == 640 && image_height == 480)
     {
-      std::cout << "Get default camera parameters for camera \"" 
-		<< vpViper850::CONST_MARLIN_F033C_CAMERA_NAME << "\"" << std::endl;
-	cam.initPersProjWithoutDistortion(1232.0, 1233.0, 320, 240);
+      std::cout << "Get default camera parameters for camera \""
+                << vpViper850::CONST_MARLIN_F033C_CAMERA_NAME << "\"" << std::endl;
+      cam.initPersProjWithoutDistortion(1232.0, 1233.0, 320, 240);
     }
     else {
       vpTRACE("Cannot get default intrinsic camera parameters for this image resolution");
@@ -372,9 +397,9 @@ vpSimulatorViper850::getCameraParameters (vpCameraParameters &cam,
   case vpViper850::TOOL_PTGREY_FLEA2_CAMERA: {
     // Set default intrinsic camera parameters for 640x480 images
     if (image_width == 640 && image_height == 480) {
-      std::cout << "Get default camera parameters for camera \"" 
-		<< vpViper850::CONST_PTGREY_FLEA2_CAMERA_NAME << "\"" << std::endl;
-	cam.initPersProjWithoutDistortion(868.0, 869.0, 320, 240);
+      std::cout << "Get default camera parameters for camera \""
+                << vpViper850::CONST_PTGREY_FLEA2_CAMERA_NAME << "\"" << std::endl;
+      cam.initPersProjWithoutDistortion(868.0, 869.0, 320, 240);
     }
     else {
       vpTRACE("Cannot get default intrinsic camera parameters for this image resolution");
@@ -382,10 +407,11 @@ vpSimulatorViper850::getCameraParameters (vpCameraParameters &cam,
     break;
   }
   case vpViper850::TOOL_SCHUNK_GRIPPER_CAMERA:
+  case vpViper850::TOOL_CUSTOM:
   case vpViper850::TOOL_GENERIC_CAMERA: {
-      std::cout << "This tool is not handled in vpSimulatorViper850.cpp" << std::endl;
-      break;
-    }
+    std::cout << "This tool is not handled in vpSimulatorViper850.cpp" << std::endl;
+    break;
+  }
   }
   return;
 }
@@ -460,7 +486,6 @@ vpSimulatorViper850::updateArticularPosition()
       }
       
       vpColVector articularCoordinates = get_artCoord();
-      articularCoordinates = get_artCoord();
       vpColVector articularVelocities = get_artVel();
       
       if (jointLimit)
@@ -700,7 +725,11 @@ vpSimulatorViper850::compute_fMi()
   vpViper::get_fMc(q,fMit[7]);
   
   #if defined(_WIN32)
-  WaitForSingleObject(mutex_fMi,INFINITE);
+#  if defined(WINRT_8_1)
+  WaitForSingleObjectEx(mutex_fMi, INFINITE, FALSE);
+#  else // pure win32
+  WaitForSingleObject(mutex_fMi, INFINITE);
+#  endif
   for (int i = 0; i < 8; i++)
     fMi[i] = fMit[i];
   ReleaseMutex(mutex_fMi);
@@ -835,8 +864,6 @@ vpSimulatorViper850::setVelocity (const vpRobot::vpControlFrameType frame, const
   
   vpColVector vel_sat(6);
 
-  double scale_trans_sat = 1;
-  double scale_rot_sat   = 1;
   double scale_sat       = 1;
   double vel_trans_max = getMaxTranslationVelocity();
   double vel_rot_max   = getMaxRotationVelocity();
@@ -852,65 +879,68 @@ vpSimulatorViper850::setVelocity (const vpRobot::vpControlFrameType frame, const
     {
       if (vel.getRows() != 6)
       {
-	vpERROR_TRACE ("The velocity vector must have a size of 6 !!!!");
-	throw;
+        vpERROR_TRACE ("The velocity vector must have a size of 6 !!!!");
+        throw;
       }
-      
+
       for (unsigned int i = 0 ; i < 3; ++ i)
       {
         vel_abs = fabs (vel[i]);
         if (vel_abs > vel_trans_max && !jointLimit)
         {
-	  vel_trans_max = vel_abs;
-	  vpERROR_TRACE ("Excess velocity %g m/s in TRANSLATION "
-		         "(axis nr. %d).", vel[i], i+1);
+          vel_trans_max = vel_abs;
+          vpERROR_TRACE ("Excess velocity %g m/s in TRANSLATION "
+                         "(axis nr. %d).", vel[i], i+1);
         }
-      
+
         vel_abs = fabs (vel[i+3]);
         if (vel_abs > vel_rot_max && !jointLimit) {
-	  vel_rot_max = vel_abs;
-	  vpERROR_TRACE ("Excess velocity %g rad/s in ROTATION "
-		       "(axis nr. %d).", vel[i+3], i+4);
+          vel_rot_max = vel_abs;
+          vpERROR_TRACE ("Excess velocity %g rad/s in ROTATION "
+                         "(axis nr. %d).", vel[i+3], i+4);
         }
       }
-    
-      if (vel_trans_max > getMaxTranslationVelocity())                     
+
+      double scale_trans_sat = 1;
+      double scale_rot_sat   = 1;
+      if (vel_trans_max > getMaxTranslationVelocity())
         scale_trans_sat = getMaxTranslationVelocity() / vel_trans_max;
-    
+
       if (vel_rot_max > getMaxRotationVelocity())
-        scale_rot_sat = getMaxRotationVelocity() / vel_rot_max; 
-    
+        scale_rot_sat = getMaxRotationVelocity() / vel_rot_max;
+
       if ( (scale_trans_sat < 1) || (scale_rot_sat < 1) )
       {
-        if (scale_trans_sat < scale_rot_sat)  
-	  scale_sat = scale_trans_sat;                    
-        else                        
-	  scale_sat = scale_rot_sat;
+        if (scale_trans_sat < scale_rot_sat)
+          scale_sat = scale_trans_sat;
+        else
+          scale_sat = scale_rot_sat;
       }
       break;
     }
-    
-    // saturation in joint space
+
+      // saturation in joint space
     case vpRobot::ARTICULAR_FRAME :
     {
       if (vel.getRows() != 6)
       {
-	vpERROR_TRACE ("The velocity vector must have a size of 6 !!!!");
-	throw;
+        vpERROR_TRACE ("The velocity vector must have a size of 6 !!!!");
+        throw;
       }
       for (unsigned int i = 0 ; i < 6; ++ i)
       {
         vel_abs = fabs (vel[i]);
         if (vel_abs > vel_rot_max && !jointLimit)
         {
-	  vel_rot_max = vel_abs;
-	  vpERROR_TRACE ("Excess velocity %g rad/s in ROTATION "
-		       "(axis nr. %d).", vel[i], i+1);
+          vel_rot_max = vel_abs;
+          vpERROR_TRACE ("Excess velocity %g rad/s in ROTATION "
+                         "(axis nr. %d).", vel[i], i+1);
         }
       }
+      double scale_rot_sat   = 1;
       if (vel_rot_max > getMaxRotationVelocity())
-        scale_rot_sat = getMaxRotationVelocity() / vel_rot_max; 
-      if ( scale_rot_sat < 1 ) 
+        scale_rot_sat = getMaxRotationVelocity() / vel_rot_max;
+      if ( scale_rot_sat < 1 )
         scale_sat = scale_rot_sat;
       break;
     }
@@ -934,10 +964,7 @@ vpSimulatorViper850::computeArticularVelocity()
 {
   vpRobot::vpControlFrameType frame = getRobotFrame();
   
-  double scale_rot_sat   = 1;
-  double scale_sat       = 1;
   double vel_rot_max   = getMaxRotationVelocity();
-  double vel_abs;
   
   vpColVector articularCoordinates = get_artCoord();
   vpColVector velocityframe = get_velocity();
@@ -980,8 +1007,6 @@ vpSimulatorViper850::computeArticularVelocity()
     }
   }
   
-  
-  
   switch(frame)
   {
     case vpRobot::CAMERA_FRAME :
@@ -989,7 +1014,7 @@ vpSimulatorViper850::computeArticularVelocity()
     {
       for (unsigned int i = 0 ; i < 6; ++ i)
       {
-        vel_abs = fabs (articularVelocity[i]);
+        double vel_abs = fabs (articularVelocity[i]);
         if (vel_abs > vel_rot_max && !jointLimit)
         {
           vel_rot_max = vel_abs;
@@ -997,6 +1022,9 @@ vpSimulatorViper850::computeArticularVelocity()
              "(axis nr. %d).", articularVelocity[i], i+1);
         }
       }
+      double scale_rot_sat = 1;
+      double scale_sat     = 1;
+
       if (vel_rot_max > getMaxRotationVelocity())
         scale_rot_sat = getMaxRotationVelocity() / vel_rot_max; 
       if ( scale_rot_sat < 1 ) 
@@ -1281,7 +1309,7 @@ int main()
   try {
     robot.setPosition(vpRobot::CAMERA_FRAME, position);
   }
-  catch (vpRobotException e) {
+  catch (vpRobotException &e) {
     if (e.getCode() == vpRobotException::positionOutOfRangeError) {
     std::cout << "The position is out of range" << std::endl;
   }
@@ -1427,7 +1455,6 @@ vpSimulatorViper850::setPosition(const vpRobot::vpControlFrameType frame,const v
       throw vpRobotException (vpRobotException::lowLevelError,
 			      "Positionning error: "
 			      "Mixt frame not implemented.");
-      break ;
     }
   }
 }
@@ -1676,7 +1703,6 @@ vpSimulatorViper850::getPosition(const vpRobot::vpControlFrameType frame, vpColV
       throw vpRobotException (vpRobotException::lowLevelError,
 			      "Positionning error: "
 			      "Mixt frame not implemented.");
-      break ;
     }
   }
 }
@@ -1962,7 +1988,6 @@ vpSimulatorViper850::getDisplacement(vpRobot::vpControlFrameType frame,
       {
         std::cout << "getDisplacement() CAMERA_FRAME not implemented\n";
         return;
-        break ;
       }
 
       case vpRobot::ARTICULAR_FRAME: 
@@ -1975,14 +2000,12 @@ vpSimulatorViper850::getDisplacement(vpRobot::vpControlFrameType frame,
       {
         std::cout << "getDisplacement() REFERENCE_FRAME not implemented\n";
         return;
-        break ;
       }
 
       case vpRobot::MIXT_FRAME: 
       {
         std::cout << "getDisplacement() MIXT_FRAME not implemented\n";
         return;
-        break ;
       }
     }
   }
@@ -2057,52 +2080,62 @@ int main()
 \sa savePosFile()
 */
 bool
-vpSimulatorViper850::readPosFile(const char *filename, vpColVector &q)
+vpSimulatorViper850::readPosFile(const std::string &filename, vpColVector &q)
 {
-  FILE * fd ;
-  fd = fopen(filename, "r") ;
-  if (fd == NULL)
+  std::ifstream fd(filename.c_str(), std::ios::in);
+
+  if(! fd.is_open()) {
     return false;
+  }
 
-  char line[FILENAME_MAX];
-  char dummy[FILENAME_MAX];
-  char head[] = "R:";
-  bool sortie = false;
+  std::string line;
+  std::string key("R:");
+  std::string id("#Viper850 - Position");
+  bool pos_found = false;
+  int lineNum = 0;
 
-  do {
-    // Saut des lignes commencant par #
-    if (fgets (line, FILENAME_MAX, fd) != NULL) {
-      if ( strncmp (line, "#", 1) != 0) {
-        // La ligne n'est pas un commentaire
-        if ( strncmp (line, head, sizeof(head)-1) == 0) {
-          sortie = true; 	// Position robot trouvee.
-        }
-        // 	else
-        // 	  return (false); // fin fichier sans position robot.
+  q.resize(njoint);
+
+  while(std::getline(fd, line)) {
+    lineNum ++;
+    if (lineNum == 1) {
+      if(! (line.compare(0, id.size(), id) == 0)) { // check if Viper850 position file
+        std::cout << "Error: this position file " << filename << " is not for Viper850 robot" << std::endl;
+        return false;
       }
     }
-    else {
-      fclose(fd) ;
-      return (false);		/* fin fichier 	*/
+    if((line.compare(0, 1, "#") == 0)) { // skip comment
+      continue;
     }
-  }
-  while ( sortie != true );
+    if((line.compare(0, key.size(), key) == 0)) { // decode position
+      // check if there are at least njoint values in the line
+      std::vector<std::string> chain = vpIoTools::splitChain(line, std::string(" "));
+      if (chain.size() < njoint+1) // try to split with tab separator
+        chain = vpIoTools::splitChain(line, std::string("\t"));
+      if(chain.size() < njoint+1)
+        continue;
 
-  // Lecture des positions
-  q.resize(njoint);
-  int ret = sscanf(line, "%s %lf %lf %lf %lf %lf %lf",
-                   dummy,
-                   &q[0], &q[1], &q[2], &q[3], &q[4], &q[5]);
-  if (ret != 7) {
-    fclose(fd) ;
-    return false;
+      std::istringstream ss(line);
+      std::string key_;
+      ss >> key_;
+      for (unsigned int i=0; i< njoint; i++)
+        ss >> q[i];
+      pos_found = true;
+      break;
+    }
   }
 
   // converts rotations from degrees into radians
   q.deg2rad();
 
-  fclose(fd) ;
-  return (true);
+  fd.close();
+
+  if (!pos_found) {
+    std::cout << "Error: unable to find a position for Viper850 robot in " << filename << std::endl;
+    return false;
+  }
+
+  return true;
 }
 
 /*!
@@ -2127,11 +2160,11 @@ vpSimulatorViper850::readPosFile(const char *filename, vpColVector &q)
   \sa readPosFile()
 */
 bool
-vpSimulatorViper850::savePosFile(const char *filename, const vpColVector &q)
+vpSimulatorViper850::savePosFile(const std::string &filename, const vpColVector &q)
 {
 
   FILE * fd ;
-  fd = fopen(filename, "w") ;
+  fd = fopen(filename.c_str(), "w") ;
   if (fd == NULL)
     return false;
 

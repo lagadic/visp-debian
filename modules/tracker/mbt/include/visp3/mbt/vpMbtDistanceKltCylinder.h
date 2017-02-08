@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -152,6 +152,10 @@ public:
   inline std::map<int, vpImagePoint>& getCurrentPoints() {return curPoints; }
 
   inline std::map<int, int>& getCurrentPointsInd() {return curPointsInd; }
+
+  inline vpCylinder getCylinder() const {
+    return cylinder;
+  }
 
   /*!
     Get the number of point that was belonging to the face at the initialisation

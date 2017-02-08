@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -67,13 +67,10 @@ void vpTemplateTrackerMIForwardAdditional::initHessienDesired(const vpImage<unsi
   vpImageFilter::getGradXGauss2D(I, dIx, fgG,fgdG,taillef);
   vpImageFilter::getGradYGauss2D(I, dIy, fgG,fgdG,taillef);
 
-  double i2,j2;
   double Tij;
   double IW,dx,dy;
   int cr,ct;
   double er,et;
-
-  int i,j;
 
   Nbpoint=0;
 
@@ -81,15 +78,16 @@ void vpTemplateTrackerMIForwardAdditional::initHessienDesired(const vpImage<unsi
   Warp->computeCoeff(p);
   for(unsigned int point=0;point<templateSize;point++)
   {
-    i=ptTemplate[point].y;
-    j=ptTemplate[point].x;
+    int i=ptTemplate[point].y;
+    int j=ptTemplate[point].x;
     X1[0]=j;X1[1]=i;
     X2[0]=j;X2[1]=i;
 
     Warp->computeDenom(X1,p);
     Warp->warpX(X1,X2,p);
 
-    j2=X2[0];i2=X2[1];
+    double j2=X2[0];
+    double i2=X2[1];
 
     if((i2>=0)&&(j2>=0)&&(i2<I.getHeight()-1)&&(j2<I.getWidth()-1))
     {
@@ -153,7 +151,7 @@ void vpTemplateTrackerMIForwardAdditional::trackNoPyr(const vpImage<unsigned cha
 {
   dW=0;
 
-  double erreur=0;
+  //double erreur=0;
   int Nbpoint=0;
   if(blur)
     vpImageFilter::filter(I, BI,fgG,taillef);
@@ -164,15 +162,8 @@ void vpTemplateTrackerMIForwardAdditional::trackNoPyr(const vpImage<unsigned cha
 
   MI_preEstimation=-getCost(I,p);
 
-  double i2,j2;
-  double Tij;
-  double IW,dx,dy;
-  //unsigned
-  int cr,ct;
-  double er,et;
   double alpha=2.;
 
-  int i,j;
   unsigned int iteration=0;
 
   initPosEvalRMS(p);
@@ -183,7 +174,7 @@ void vpTemplateTrackerMIForwardAdditional::trackNoPyr(const vpImage<unsigned cha
     Nbpoint=0;
     MIprec=MI;
     MI=0;
-    erreur=0;
+    //erreur=0;
 
     zeroProbabilities();
 
@@ -192,39 +183,40 @@ void vpTemplateTrackerMIForwardAdditional::trackNoPyr(const vpImage<unsigned cha
     int nthreads = omp_get_num_procs() ;
     //std::cout << "file: " __FILE__ << " line: " << __LINE__ << " function: " << __FUNCTION__ << " nthread: " << nthreads << std::endl;
     omp_set_num_threads(nthreads);
-#pragma omp parallel for private(Tij,IW,i,j,i2,j2,cr,ct,er,et,dx,dy) default(shared)
+#pragma omp parallel for default(shared)
 #endif
     for(int point=0;point<(int)templateSize;point++)
     {
-      i=ptTemplate[point].y;
-      j=ptTemplate[point].x;
+      int i=ptTemplate[point].y;
+      int j=ptTemplate[point].x;
       X1[0]=j;X1[1]=i;
 
       Warp->computeDenom(X1,p);
       Warp->warpX(X1,X2,p);
 
-      j2=X2[0];i2=X2[1];
+      double j2=X2[0];
+			double i2=X2[1];
 
       if((i2>=0)&&(j2>=0)&&(i2<I.getHeight()-1)&&(j2<I.getWidth()-1))
       {
         Nbpoint++;
-        Tij=ptTemplate[point].val;
-        //Tij=Iterateurvecteur->val;
+        double Tij=ptTemplate[point].val;
+				double IW;
         if(!blur)
           IW=I.getValue(i2,j2);
         else
           IW=BI.getValue(i2,j2);
 
-        dx=1.*dIx.getValue(i2,j2)*(Nc-1)/255.;
-        dy=1.*dIy.getValue(i2,j2)*(Nc-1)/255.;
+        double dx=1.*dIx.getValue(i2,j2)*(Nc-1)/255.;
+        double dy=1.*dIy.getValue(i2,j2)*(Nc-1)/255.;
 
-        ct=(int)((IW*(Nc-1))/255.);
-        cr=(int)((Tij*(Nc-1))/255.);
-        et=(IW*(Nc-1))/255.-ct;
-        er=((double)Tij*(Nc-1))/255.-cr;
+        int ct=(int)((IW*(Nc-1))/255.);
+        int cr=(int)((Tij*(Nc-1))/255.);
+        double et=(IW*(Nc-1))/255.-ct;
+        double er=((double)Tij*(Nc-1))/255.-cr;
 
         //calcul de l'erreur
-        erreur+=(Tij-IW)*(Tij-IW);
+        //erreur+=(Tij-IW)*(Tij-IW);
 
         //Calcul de l'histogramme joint par interpolation bilinÃaire (Bspline ordre 1)
         Warp->dWarp(X1,X2,p,dW);
@@ -324,12 +316,11 @@ void vpTemplateTrackerMIForwardAdditional::trackNoPyr(const vpImage<unsigned cha
 
     case vpTemplateTrackerMIForwardAdditional::USE_QUASINEWTON:
     {
-      double s_scal_y;
       if(iterationGlobale!=0)
       {
         vpColVector s_quasi=p-p_prec;
         vpColVector y_quasi=G-G_prec;
-        s_scal_y=s_quasi.t()*y_quasi;
+        double s_scal_y=s_quasi.t()*y_quasi;
         //if(s_scal_y!=0)//BFGS
         //	KQuasiNewton=KQuasiNewton-(s_quasi*y_quasi.t()*KQuasiNewton+KQuasiNewton*y_quasi*s_quasi.t())/s_scal_y+(1.+y_quasi.t()*(KQuasiNewton*y_quasi)/s_scal_y)*s_quasi*s_quasi.t()/s_scal_y;
         //if(s_scal_y!=0)//DFP

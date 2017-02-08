@@ -1,7 +1,7 @@
 #############################################################################
 #
 # This file is part of the ViSP software.
-# Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+# Copyright (C) 2005 - 2017 by Inria. All rights reserved.
 #
 # This software is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -35,14 +35,61 @@
 #
 #############################################################################
 
-# Need to be befor project(VISP) to work
-if(WIN32)
+# Detect crosscompiling; need to be before project(VISP) to work
+if(NOT CMAKE_TOOLCHAIN_FILE)
+  # Modify default install prefix
+  if(WIN32)
+    set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/install" CACHE PATH "Installation Directory")
+  endif()
+else()
+  # Crosscompiling
   set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/install" CACHE PATH "Installation Directory")
+endif()
+
+if(CMAKE_SYSTEM_NAME MATCHES WindowsPhone OR CMAKE_SYSTEM_NAME MATCHES WindowsStore)
+  set(WINRT TRUE)
+endif(CMAKE_SYSTEM_NAME MATCHES WindowsPhone OR CMAKE_SYSTEM_NAME MATCHES WindowsStore)
+
+if(WINRT)
+  add_definitions(-DWINRT)
+  
+  if(CMAKE_SYSTEM_NAME MATCHES WindowsPhone)
+    set(WINRT_PHONE TRUE)
+    add_definitions(-DWINRT_PHONE)
+  elseif(CMAKE_SYSTEM_NAME MATCHES WindowsStore)
+    set(WINRT_STORE TRUE)
+    add_definitions(-DWINRT_STORE)
+  endif()
+
+  if(CMAKE_SYSTEM_VERSION MATCHES 10 OR CMAKE_SYSTEM_VERSION MATCHES 10.0)
+    set(WINRT_10 TRUE)
+    add_definitions(-DWINRT_10)
+  elseif(CMAKE_SYSTEM_VERSION MATCHES 8.1)
+    set(WINRT_8_1 TRUE)
+    add_definitions(-DWINRT_8_1)
+  elseif(CMAKE_SYSTEM_VERSION MATCHES 8.0)
+    set(WINRT_8_0 TRUE)
+    add_definitions(-DWINRT_8_0)
+  endif()
+endif()
+
+# By default set release configuration
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE "Release" CACHE String "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel." FORCE)
 endif()
 
 project(VISP C CXX)
 
+# Detect if the toolchain is for Aldebaran naoqi
+if(CMAKE_TOOLCHAIN_FILE AND I_AM_A_ROBOT)
+  include(platforms/naoqi/cmake/extra.cmake)
+endif()
+
 cmake_minimum_required(VERSION 2.8.3)
+
+if(POLICY CMP0022)
+  cmake_policy(SET CMP0022 NEW) # Due to sensor ATIDAQ_LIBRARIES
+endif()
 
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 
@@ -54,7 +101,7 @@ vp_clear_vars(VISPModules_TARGETS)
 # VISP version number.  An even minor number corresponds to releases.
 set(VISP_VERSION_MAJOR "3")
 set(VISP_VERSION_MINOR "0")
-set(VISP_VERSION_PATCH "0")
+set(VISP_VERSION_PATCH "1")
 set(VISP_VERSION "${VISP_VERSION_MAJOR}.${VISP_VERSION_MINOR}.${VISP_VERSION_PATCH}")
 # Package revision number
 set(VISP_REVISION "1")
@@ -67,16 +114,54 @@ else()
   include(cmake/GNUInstallDirs.cmake)
 endif()
 
-# the include directory we depend on
-set(VISP_INCLUDE_DIR ${VISP_BINARY_DIR}/${CMAKE_INSTALL_INCLUDEDIR})
+#----------------------------------------------------------------------
+# Platform specific
+#----------------------------------------------------------------------
+include(cmake/VISPDetectPlatform.cmake)
+
+# Set the path where to install the lib
+if(WIN32)
+  if(DEFINED VISP_RUNTIME AND DEFINED VISP_ARCH)
+    set(VISP_INSTALL_BINARIES_PREFIX "${VISP_ARCH}/${VISP_RUNTIME}/")
+  else()
+    message(STATUS "Can't detect runtime and/or arch")
+    set(VISP_INSTALL_BINARIES_PREFIX "")
+  endif()
+else()
+  set(VISP_INSTALL_BINARIES_PREFIX "")
+endif()
+
+# where to install the library and headers
+if(WIN32)
+  set(VISP_INC_INSTALL_PATH     ${CMAKE_INSTALL_INCLUDEDIR})
+  if(VISP_STATIC)
+    set(VISP_LIB_INSTALL_PATH  "${VISP_INSTALL_BINARIES_PREFIX}static${CMAKE_INSTALL_LIBDIR}")
+  else()
+    set(VISP_LIB_INSTALL_PATH  "${VISP_INSTALL_BINARIES_PREFIX}${CMAKE_INSTALL_LIBDIR}")
+  endif()
+  set(VISP_BIN_INSTALL_PATH    "${VISP_INSTALL_BINARIES_PREFIX}${CMAKE_INSTALL_BINDIR}")
+  set(VISP_3P_LIB_INSTALL_PATH "${VISP_INSTALL_BINARIES_PREFIX}static${CMAKE_INSTALL_LIBDIR}")
+else()
+  # The location where includes and libraries will be installed
+
+  # The 2 following commented lines should be used to enable multi-arch support.
+  # Since catkin doesn't support multi-arch we keep these 2 lines commented for the moment.
+  # set(VISP_INC_INSTALL_PATH     ${CMAKE_INSTALL_INCLUDEDIR}/${CMAKE_LIBRARY_ARCHITECTURE})
+  # set(VISP_LIB_INSTALL_PATH     ${CMAKE_INSTALL_LIBDIR}/${CMAKE_LIBRARY_ARCHITECTURE})
+  set(VISP_INC_INSTALL_PATH     ${CMAKE_INSTALL_INCLUDEDIR})
+  set(VISP_LIB_INSTALL_PATH     ${CMAKE_INSTALL_LIBDIR})
+  set(VISP_BIN_INSTALL_PATH     ${CMAKE_INSTALL_BINDIR})
+  set(VISP_3P_LIB_INSTALL_PATH  share/ViSP/3rdparty/${VISP_LIB_INSTALL_PATH})
+endif()
+set(VISP_3P_LIBRARY_OUTPUT_PATH "${VISP_BINARY_DIR}/3rdparty/lib")
+
+# the include directory we depend on for the build
+set(VISP_INCLUDE_DIR ${VISP_BINARY_DIR}/${VISP_INC_INSTALL_PATH})
 set(VISP_DOC_DIR "${VISP_BINARY_DIR}/doc")
 
-# The location in which to install VISP libraries.
-set(LIBRARY_OUTPUT_PATH ${VISP_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR})
-# The location in which to install some VISP binaries.
-set(BINARY_OUTPUT_PATH ${VISP_BINARY_DIR}/${CMAKE_INSTALL_BINDIR})
-
-include_directories(${VISP_BINARY_DIR}/include)
+# The location where includes and libraries will be build
+set(LIBRARY_OUTPUT_PATH ${VISP_BINARY_DIR}/${VISP_LIB_INSTALL_PATH})
+set(BINARY_OUTPUT_PATH ${VISP_BINARY_DIR}/${VISP_BIN_INSTALL_PATH})
 
 if(WIN32)
   # Postfix of .lib and .dll
@@ -86,6 +171,15 @@ else()
   set(VISP_DEBUG_POSTFIX "")
   set(VISP_DLLVERSION "")
 endif()
+
+include_directories(${VISP_INCLUDE_DIR})
+
+#----------------------------------------------------------------------
+# SSE optimization
+#----------------------------------------------------------------------
+VP_OPTION(ENABLE_SSE2  "" "" "Enable SSE2 instructions"  "" ON IF ((MSVC OR CMAKE_COMPILER_IS_GNUCXX) AND (X86 OR X86_64)) )
+VP_OPTION(ENABLE_SSE3  "" "" "Enable SSE3 instructions"  "" ON IF ((MSVC OR CMAKE_COMPILER_IS_GNUCXX) AND (X86 OR X86_64)) )
+VP_OPTION(ENABLE_SSSE3 "" "" "Enable SSSE3 instructions" "" ON IF ((MSVC OR CMAKE_COMPILER_IS_GNUCXX) AND (X86 OR X86_64)) )
 
 # ----------------------------------------------------------------------------
 # Handle always full RPATH
@@ -104,16 +198,16 @@ set(CMAKE_SKIP_BUILD_RPATH  FALSE)
 # (but later on when installing)
 set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
 
-set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
+set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${VISP_LIB_INSTALL_PATH}")
 
 # add the automatically determined parts of the RPATH
 # which point to directories outside the build tree to the install RPATH
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 # the RPATH to be used when installing, but only if it's not a system directory
-list(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}" isSystemDir)
+list(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/${VISP_LIB_INSTALL_PATH}" isSystemDir)
 if("${isSystemDir}" STREQUAL "-1")
-  set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
+  set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${VISP_LIB_INSTALL_PATH}")
 endif("${isSystemDir}" STREQUAL "-1")
 
 # ----------------------------------------------------------------------------
@@ -150,12 +244,12 @@ endif(UNIX)
 #--------------------------------------------------------------------
 
 # Choose static or shared libraries.
-VP_OPTION(BUILD_SHARED_LIBS  "" "" "Build ViSP shared libraries (.dll/.so) instead of static ones (.lib/.a)" "" ON)
+VP_OPTION(BUILD_SHARED_LIBS  "" "" "Build ViSP shared libraries (.dll/.so) instead of static ones (.lib/.a)" "" NOT APPLE_FRAMEWORK)
 # Build examples as an option.
 VP_OPTION(BUILD_EXAMPLES  "" "" "Build ViSP examples" "" ON)
 # Build examples as an option.
 VP_OPTION(BUILD_TESTS  "" "" "Build ViSP tests" "" ON)
-VP_OPTION(BUILD_COVERAGE "" "" "Enables test coverage" "" OFF IF (BUILD_TESTS AND CMAKE_COMPILER_IS_GNUCXX AND NOT BUILD_SHARED_LIBS AND CMAKE_BUILD_TYPE MATCHES "Debug"))
+VP_OPTION(BUILD_COVERAGE "" "" "Enables test coverage" "" OFF IF (BUILD_TESTS AND CMAKE_COMPILER_IS_GNUCXX AND CMAKE_BUILD_TYPE MATCHES "Debug"))
 
 # Build demos as an option.
 VP_OPTION(BUILD_DEMOS  "" "" "Build ViSP demos" "" ON)
@@ -168,9 +262,19 @@ VP_OPTION(ACTIVATE_DEBUG_TRACE  "" "" "Enable debug and trace printings" "" ON)
 
 VP_OPTION(BUILD_WITH_STATIC_CRT  "" "" "Enables use of staticaly linked CRT for staticaly linked ViSP" "" ON IF MSVC)
 
-# Note that it is better to set MOMENTS_COMBINE_MATRICES to OFF
-VP_OPTION(MOMENTS_COMBINE_MATRICES  "" "" "Use linear combination of matrices instead of linear combination of moments to compute interaction matrices." "MOMENTS_COMBINE_MATRICES" OFF)
-VP_OPTION(ENABLE_TEST_WITHOUT_DISPLAY  "" "" "Don't use display features when testing" "ENABLE_TEST_WITHOUT_DISPLAY" ON)
+# ----------------------------------------------------------------------------
+# Build options
+# ----------------------------------------------------------------------------
+VP_OPTION(ENABLE_SOLUTION_FOLDERS "" "" "Solution folder in Visual Studio or in other IDEs" "" (MSVC_IDE OR CMAKE_GENERATOR MATCHES Xcode))
+# Note that it is better to set ENABLE_MOMENTS_COMBINE_MATRICES to OFF
+VP_OPTION(ENABLE_MOMENTS_COMBINE_MATRICES  "" "" "Use linear combination of matrices instead of linear combination of moments to compute interaction matrices." "ENABLE_MOMENTS_COMBINE_MATRICES" OFF)
+VP_OPTION(ENABLE_TEST_WITHOUT_DISPLAY      "" "" "Don't use display feature when testing" "" ON)
+VP_OPTION(ENABLE_FULL_DOC      "" "" "Build doc with internal classes that are by default not part of the doc" "" OFF)
+
+if(ENABLE_SOLUTION_FOLDERS)
+  set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+  set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "CMakeTargets")
+endif()
 
 if(ENABLE_TEST_WITHOUT_DISPLAY)
   set(OPTION_TO_DESACTIVE_DISPLAY "-d")
@@ -181,68 +285,114 @@ VP_CHECK_PACKAGE(RAW1394)
 VP_CHECK_PACKAGE(RT)
 VP_CHECK_PACKAGE(CALINUX)
 VP_CHECK_PACKAGE(IRISA)
-# Try to determine if Inria's NAS server hosting /udd/ is available
-VP_CHECK_PACKAGE(NAS)
 # check for linux/parport.h
 VP_CHECK_PACKAGE(PARPORT)
-# Find IsNaN
-VP_CHECK_PACKAGE(IsNaN)
-# Find IsInf
-VP_CHECK_PACKAGE(IsInf)
-# Find Round
-VP_CHECK_PACKAGE(Round)
 # OpenGL
 VP_CHECK_PACKAGE(OpenGL)
 # for pioneer
 VP_CHECK_PACKAGE(RT)
 VP_CHECK_PACKAGE(DL)
+# for Afma6 calibration data
+VP_CHECK_PACKAGE(Afma6_data)
+if(AFMA6_DATA_FOUND)
+  set(VISP_AFMA6_DATA_PATH ${AFMA6_DATA_PATH})
+else()
+  set(VISP_AFMA6_DATA_PATH "")
+endif()
+# for Viper850 calibration data
+VP_CHECK_PACKAGE(Viper850_data)
+if(VIPER850_DATA_FOUND)
+  set(VISP_VIPER850_DATA_PATH ${VIPER850_DATA_PATH})
+else()
+  set(VISP_VIPER850_DATA_PATH "")
+endif()
+# for Viper650 calibration data
+VP_CHECK_PACKAGE(Viper650_data)
+if(VIPER650_DATA_FOUND)
+  set(VISP_VIPER650_DATA_PATH ${VIPER650_DATA_PATH})
+else()
+  set(VISP_VIPER650_DATA_PATH "")
+endif()
 
-VP_OPTION(USE_AFMA4    "" "" "Include Afma4 robot support"      "" ON IF (RAW1394_FOUND AND RT_FOUND AND CALINUX_FOUND AND IRISA_FOUND))
-VP_OPTION(USE_AFMA6    "" "" "Include Afma6 robot support"      "" ON IF (RAW1394_FOUND AND RT_FOUND AND CALINUX_FOUND AND IRISA_FOUND))
-VP_OPTION(USE_VIPER650 "" "" "Include Viper s650 robot support" "" ON IF (RAW1394_FOUND AND RT_FOUND AND CALINUX_FOUND AND IRISA_FOUND))
-VP_OPTION(USE_VIPER850 "" "" "Include Viper s850 robot support" "" ON IF (RAW1394_FOUND AND RT_FOUND AND CALINUX_FOUND AND IRISA_FOUND))
-VP_OPTION(USE_DC1394      DC1394      "" "Include dc1394 support"          "" ON IF UNIX)
-VP_OPTION(USE_V4L2        V4L2        "" "Include v4l2 support"            "" ON IF UNIX)
-VP_OPTION(USE_BICLOPS     BICLOPS     "" "Include biclops support"         "" ON IF UNIX)
-VP_OPTION(USE_PTU46       PTU46       "" "Include ptu-46 support"          "" ON IF UNIX)
-VP_OPTION(USE_CMU1394     CMU1394     "" "Include cmu1494 support"         "" ON IF WIN32)
-VP_OPTION(USE_GDI         GDI         "" "Include gdi support"             "" ON IF WIN32)
-VP_OPTION(USE_DIRECT3D    DIRECT3D    "" "Include d3d support"             "" ON IF WIN32)
-VP_OPTION(USE_DIRECTSHOW  DIRECTSHOW  "" "Include dshow support"           "" ON IF WIN32)
+find_host_program(XRANDR xrandr)
+
+VP_OPTION(USE_AFMA4    "" "" "Include Afma4 robot support"      "" ON IF (RAW1394_FOUND AND RT_FOUND AND CALINUX_FOUND AND IRISA_FOUND AND NOT WINRT))
+VP_OPTION(USE_AFMA6    "" "" "Include Afma6 robot support"      "" ON IF (RAW1394_FOUND AND RT_FOUND AND CALINUX_FOUND AND IRISA_FOUND AND NOT WINRT))
+VP_OPTION(USE_VIPER650 "" "" "Include Viper s650 robot support" "" ON IF (RAW1394_FOUND AND RT_FOUND AND CALINUX_FOUND AND IRISA_FOUND AND NOT WINRT))
+VP_OPTION(USE_VIPER850 "" "" "Include Viper s850 robot support" "" ON IF (RAW1394_FOUND AND RT_FOUND AND CALINUX_FOUND AND IRISA_FOUND AND NOT WINRT))
+VP_OPTION(USE_VIRTUOSE    Virtuose    "" "Include Virtuose SDK support for Haption devices" "" ON IF NOT WINRT)
+VP_OPTION(USE_DC1394      DC1394      "" "Include dc1394 support"          "" ON IF UNIX AND NOT WINRT)
+VP_OPTION(USE_V4L2        V4L2        "" "Include v4l2 support"            "" ON IF UNIX AND NOT WINRT)
+VP_OPTION(USE_FLYCAPTURE  FlyCapture  "" "Include FlyCapture SDK support for PointGrey cameras" "" ON IF NOT WINRT)
+VP_OPTION(USE_COMEDI      Comedi      "" "Include comedi (linux control and measurement device interface) support" "" ON IF NOT WINRT)
+VP_OPTION(USE_BICLOPS     BICLOPS     "" "Include biclops support"         "" ON IF NOT WINRT)
+VP_OPTION(USE_PTU46       PTU46       "" "Include ptu-46 support"          "" ON IF UNIX AND NOT WINRT)
+VP_OPTION(USE_CMU1394     CMU1394     "" "Include cmu1494 support"         "" ON IF WIN32 AND NOT WINRT)
+VP_OPTION(USE_GDI         GDI         "" "Include gdi support"             "" ON IF WIN32 AND NOT WINRT)
+VP_OPTION(USE_DIRECT3D    DIRECT3D    "" "Include d3d support"             "" ON IF WIN32 AND NOT WINRT)
+VP_OPTION(USE_DIRECTSHOW  DIRECTSHOW  "" "Include dshow support"           "" ON IF WIN32 AND NOT WINRT)
 VP_OPTION(USE_OPENMP      OpenMP      "" "Include openmp support"          "" ON)
-VP_OPTION(USE_CPP11       CPP11       "" "Include c++11 support"           "" OFF)
 # Since the FindLAPACK.cmake provided with CMake is for Fortran language,
 # in CMakeModules we have added FindLAPACK_C.cmake for C language
-VP_OPTION(USE_LAPACK      LAPACK_C    "" "Include lapack support"          "" ON)
-VP_OPTION(USE_GSL         GSL         "" "Include gsl support"             "" ON)
-VP_OPTION(USE_COIN3D      "Coin3D;MyCoin3D" "" "Include coin3d support"          "" ON IF OPENGL_FOUND)
-VP_OPTION(USE_YARP        YARP        QUIET "Include yarp support"         "YARP_DIR" ON)
-VP_OPTION(USE_OGRE        OGRE        QUIET "Include Ogre support"         "OGRE_DIR" ON)
-VP_OPTION(USE_OIS         OIS         QUIET "Include Ogre/ois support"     "OIS_DIR"  ON IF USE_OGRE)
-VP_OPTION(USE_LIBFREENECT LIBFREENECT ""    "Include libfreenect support"  "" ON)
-VP_OPTION(USE_LIBUSB_1    LIBUSB_1    ""    "Include libusb-1 support"     "" ON)
-VP_OPTION(USE_SOWIN       SOWIN       ""    "Include Coin/SoWin support"   "" OFF IF (WIN32 AND USE_COIN3D))
-VP_OPTION(USE_SOQT        SOQT        ""    "Include Coin/SoQt support"    "" OFF IF USE_COIN3D)
-VP_OPTION(USE_QT          Qt          ""    "Include Coin/SoQt/Qt support" "" ON  IF USE_SOQT)
-VP_OPTION(USE_SOXT        SOXT        ""    "Include Coin/SoXt support"    "" OFF IF USE_COIN3D)
+VP_OPTION(USE_LAPACK      LAPACK_C    "" "Include lapack support"          "" ON IF NOT WINRT)
+VP_OPTION(USE_GSL         GSL         "" "Include gsl support"             "" ON IF NOT WINRT)
+VP_OPTION(USE_COIN3D      "Coin3D;MyCoin3D" "" "Include coin3d support"    "" ON IF OPENGL_FOUND AND NOT WINRT)
+VP_OPTION(USE_YARP        YARP        QUIET "Include yarp support"         "YARP_DIR" ON IF NOT WINRT)
+VP_OPTION(USE_OGRE        OGRE        QUIET "Include Ogre support"         "OGRE_DIR" ON IF NOT WINRT)
+VP_OPTION(USE_OIS         OIS         QUIET "Include Ogre/ois support"     "OIS_DIR"  ON IF USE_OGRE AND NOT WINRT)
+VP_OPTION(USE_LIBFREENECT LIBFREENECT ""    "Include libfreenect support"  "" ON IF NOT WINRT)
+VP_OPTION(USE_LIBUSB_1    LIBUSB_1    ""    "Include libusb-1 support"     "" ON IF NOT WINRT)
+VP_OPTION(USE_REALSENSE   RealSense   ""    "Include RealSense SDK support" "" ON IF NOT WINRT)
+if(USE_REALSENSE)
+  VP_OPTION(USE_CPP11       CPP11     ""    "Include c++11 support"         "" ON)
+  # if option is OFF, force to ON
+  if(NOT USE_CPP11 AND CPP11_FOUND)
+    unset(USE_REALSENSE)
+    set(USE_REALSENSE OFF CACHE BOOL "Include RealSense SDK support" FORCE)
+    message(WARNING "Realsense 3rd party was detected but turned OFF since USE_CPP11 is OFF. Realsense 3rd party needs cxx11 compiler flags. Thus to enable Realsense usage you have to turn USE_REALSENSE=ON and USE_CPP11=ON.")
+  endif()
+else()
+  VP_OPTION(USE_CPP11       CPP11     ""    "Include c++11 support"        "" OFF)
+endif()
+VP_OPTION(USE_SOWIN       SOWIN       ""    "Include Coin/SoWin support"   "" OFF IF (WIN32 AND USE_COIN3D) AND NOT WINRT)
+VP_OPTION(USE_SOQT        SOQT        ""    "Include Coin/SoQt support"    "" OFF IF USE_COIN3D AND NOT WINRT)
+VP_OPTION(USE_QT          Qt          ""    "Include Coin/SoQt/Qt support" "" ON  IF USE_SOQT AND NOT WINRT)
+VP_OPTION(USE_SOXT        SOXT        ""    "Include Coin/SoXt support"    "" OFF IF USE_COIN3D AND NOT WINRT)
 VP_OPTION(USE_PTHREAD     PTHREAD     ""    "Include pthread support"      "" ON)
-VP_OPTION(USE_XML2        XML2        ""    "Include xml support"          "" ON)
-VP_OPTION(USE_OPENCV      OpenCV      QUIET "Include OpenCV support" "OpenCV_DIR;OpenCV_FOUND;OPENCV_FOUND" ON)
-VP_OPTION(USE_ZLIB        "ZLIB;MyZLIB" ""  "Include zlib support"         "" ON)
-VP_OPTION(USE_X11         X11         ""    "Include X11 support"          "" ON)
+VP_OPTION(USE_XML2        XML2        ""    "Include xml support"          "" ON IF NOT WINRT)
+if(CMAKE_TOOLCHAIN_FILE AND I_AM_A_ROBOT)
+  VP_OPTION(USE_OPENCV      "MyOpenCV" QUIET "Include OpenCV support" "OpenCV_DIR;OpenCV_FOUND;OPENCV_FOUND" ON)
+else()
+  VP_OPTION(USE_OPENCV      "OpenCV;MyOpenCV" QUIET "Include OpenCV support" "OpenCV_DIR;OpenCV_FOUND;OPENCV_FOUND" ON)
+endif()
+VP_OPTION(USE_ZLIB        "ZLIB;MyZLIB" ""  "Include zlib support"         "" ON IF NOT WINRT)
+VP_OPTION(USE_X11         X11         ""    "Include X11 support"          "" ON IF NOT WINRT)
 # The native FindGTK2.cmake doesn't consider libgobject-2.0 that is 
 # requested by ViSP. That's why we use our FindMyGTK2.cmake 
-VP_OPTION(USE_GTK2        MyGTK2       ""    "Include gtk2 support"         "" OFF)
+VP_OPTION(USE_GTK2        MyGTK2       ""    "Include gtk2 support"         "" OFF IF NOT WINRT)
 VP_OPTION(USE_JPEG       "JPEG;MyJPEG" ""    "Include jpeg support"         "" ON)
 VP_OPTION(USE_PNG        "PNG;MyPNG"   ""    "Include png support"          "" ON)
 VP_OPTION(USE_FFMPEG      FFMPEG       ""    "Include ffmpeg support"       "" OFF)
 # To control Pioneer mobile robots, under UNIX we need Aria, pthread, rt and dl 3rd party libraries
-VP_OPTION(USE_ARIA        ARIA         ""    "Include aria support"         "" ON)
+VP_OPTION(USE_ARIA        ARIA         ""    "Include aria support"         "" ON IF NOT WINRT)
 #VP_OPTION(USE_RT          RT           ""    "Include rt support"           "" ON)
 #VP_OPTION(USE_DL          DL           ""    "Include dl support"           "" ON)
 # bar codes
-VP_OPTION(USE_ZBAR        ZBAR         ""    "Include zbar support"         "" ON)
-VP_OPTION(USE_DMTX        DMTX         ""    "Include dmtx support"         "" ON)
+VP_OPTION(USE_ZBAR        ZBAR         ""    "Include zbar support"         "" ON IF NOT WINRT)
+VP_OPTION(USE_DMTX        DMTX         ""    "Include dmtx support"         "" ON IF NOT WINRT)
+VP_OPTION(USE_PCL         PCL          QUIET "Include Point Cloud Library support" "" ON IF USE_REALSENSE AND NOT WINRT)
+VP_OPTION(BUILD_ATIDAQ    ""           ""    "Include atidaq-c support"     "" ON IF USE_COMEDI AND NOT WINRT)
+
+# Find IsNaN (should be after USE_CPP11)
+VP_CHECK_PACKAGE(IsNaN)
+# Find IsInf (should be after USE_CPP11)
+VP_CHECK_PACKAGE(IsInf)
+# Find Round (should be after USE_CPP11)
+VP_CHECK_PACKAGE(Round)
+# Find Erfc
+VP_CHECK_PACKAGE(Erfc)
+# Find Strtof
+VP_CHECK_PACKAGE(Strtof)
 
 #----------------------------------------------------------------------
 # For Dart server and tests
@@ -262,7 +412,6 @@ endif()
 find_package(Doxygen)
 if(DOXYGEN_FOUND)
   set(VISP_HAVE_DOXYGEN "yes")        # for header vpConfig.h
-  set(VISP_HAVE_DOXYGEN_FOUND "yes")  # for ViSP-third-party.txt
   ## we need latex for doxygen because of the formulas
   find_package(LATEX)
   if(NOT LATEX_COMPILER)
@@ -275,38 +424,73 @@ if(DOXYGEN_FOUND)
     message(STATUS "dvips command DVIPS_CONVERTER not found but usually required.")
   endif()
 
+  # set vars used in doxygen config file
+  # - DOXYGEN_STRIP_FROM_INC_PATH corresponding to STRIP_FROM_INC_PATH in the doxy file
+  set(DOXYGEN_STRIP_FROM_INC_PATH "")
+  foreach(m ${VISP_MODULES_BUILD} ${VISP_MODULES_DISABLED_USER} ${VISP_MODULES_DISABLED_AUTO} ${VISP_MODULES_DISABLED_FORCE})
+    if(m MATCHES "^visp_")
+      set(DOXYGEN_STRIP_FROM_INC_PATH "${DOXYGEN_STRIP_FROM_INC_PATH} \\ \n\t\t\t \"${VISP_MODULE_${m}_LOCATION}/include\"")
+    endif()
+  endforeach()
+  # - DOXYGEN_IMAGE_PATH corresponding to IMAGE_PATH in the doxy file
+  set(DOXYGEN_IMAGE_PATH "\"${VISP_SOURCE_DIR}/doc/image\"")
+  if(VISP_CONTRIB_MODULES_PATH)
+    foreach(contrib ${VISP_CONTRIB_MODULES_PATH})
+      set(image_path_ "${VISP_CONTRIB_MODULES_PATH}/doc/image")
+      if(EXISTS ${image_path_})
+        set(DOXYGEN_IMAGE_PATH "${DOXYGEN_IMAGE_PATH} \\ \n\t\t\t \"${image_path_}\"")
+      endif()
+    endforeach()
+  endif()
+  # - DOXYGEN_SHOULD_SKIP_THIS var
+  if (ENABLE_FULL_DOC)
+    set(DOXYGEN_SHOULD_SKIP_THIS "")
+  else()
+    set(DOXYGEN_SHOULD_SKIP_THIS "DOXYGEN_SHOULD_SKIP_THIS")
+  endif()
+
   configure_file(${VISP_SOURCE_DIR}/doc/config-doxygen.in
     ${VISP_DOC_DIR}/config-doxygen
     @ONLY )
+
+  # set vars used in mainpage.doc.in
+  # - VISP_MAINPAGE_EXTENSION
+  set(VISP_MAINPAGE_EXTENSION "")
+  if(VISP_CONTRIB_MODULES_PATH)
+    foreach(contrib ${VISP_CONTRIB_MODULES_PATH})
+      set(mainpage_ext_file_ "${contrib}/doc/mainpage_extension.doc")
+      if(EXISTS ${mainpage_ext_file_})
+        file(READ ${mainpage_ext_file_} mainpage_ext_content_)
+        set(VISP_MAINPAGE_EXTENSION "${VISP_MAINPAGE_EXTENSION}\n${mainpage_ext_content_}")
+      endif()
+    endforeach()
+  endif()
 
   configure_file(${VISP_SOURCE_DIR}/doc/mainpage.doc.in
     ${VISP_DOC_DIR}/mainpage.doc
     @ONLY )
 else()
   set(VISP_HAVE_DOXYGEN "no")        # for header vpConfig.h
-  set(VISP_HAVE_DOXYGEN_FOUND "no")  # for ViSP-third-party.txt
 endif()
 
 # ----------------------------------------------------------------------------
-# Solution folders:
-# ----------------------------------------------------------------------------
-if(MSVC_IDE OR CMAKE_GENERATOR MATCHES Xcode)
-  option(ENABLE_SOLUTION_FOLDERS "Solution folder in Visual Studio or in other IDEs" ON)
-endif()
-
-if(ENABLE_SOLUTION_FOLDERS)
-  set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-  set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "CMakeTargets")
-endif()
-
 # Extra ViSP targets: uninstall, etc.
+# ----------------------------------------------------------------------------
 include(cmake/VISPExtraTargets.cmake)
 
-include(CheckLibraryExists)
+# Ogre plugins and resources
+include(cmake/OgreTools.cmake)
+if(USE_OGRE)
+  vp_set_ogre_media()
+elseif(CMAKE_TOOLCHAIN_FILE)
+  vp_set_ogre_advanced_var()
+endif()
 
 # ----------------------------------------------------------------------------
 # Check for system libs
 # ----------------------------------------------------------------------------
+include(CheckLibraryExists)
+
 if(UNIX)
   # try to found -lm requested on some platforms to link with X11
   find_library(M_LIBRARY NAMES m)
@@ -348,37 +532,6 @@ if(MSVC)
 endif(MSVC)
 
 #----------------------------------------------------------------------
-# Platform specific
-#----------------------------------------------------------------------
-include(cmake/VISPDetectPlatform.cmake)
-
-# Set the path where to install the lib
-if(WIN32)
-  if(DEFINED VISP_RUNTIME AND DEFINED VISP_ARCH)
-    set(VISP_INSTALL_BINARIES_PREFIX "${VISP_ARCH}/${VISP_RUNTIME}/")
-  else()
-    message(STATUS "Can't detect runtime and/or arch")
-    set(VISP_INSTALL_BINARIES_PREFIX "")
-  endif()
-else()
-  set(VISP_INSTALL_BINARIES_PREFIX "")
-endif()
-
-# where to install the library
-if(WIN32)
-  if(VISP_STATIC)
-    set(VISP_LIB_INSTALL_PATH   "${VISP_INSTALL_BINARIES_PREFIX}static${CMAKE_INSTALL_LIBDIR}")
-  else()
-    set(VISP_LIB_INSTALL_PATH   "${VISP_INSTALL_BINARIES_PREFIX}${CMAKE_INSTALL_LIBDIR}")
-  endif()
-  set(VISP_BIN_INSTALL_PATH   "${VISP_INSTALL_BINARIES_PREFIX}${CMAKE_INSTALL_BINDIR}")
-else()
-  set(VISP_LIB_INSTALL_PATH     ${CMAKE_INSTALL_LIBDIR})
-  set(VISP_BIN_INSTALL_PATH     ${CMAKE_INSTALL_BINDIR})
-endif()
-
-
-#----------------------------------------------------------------------
 # Configure the files that depend on the build <binary dir> or
 # installation <install dir> usage. This is the case of:
 # vpConfig.h
@@ -408,31 +561,42 @@ endif()
 # append to VISP_HAVE_OGRE_PLUGINS_PATH the path of the installed plugins.cfg file
 # to be able to use ViSP from build tree or install tree
 if(VISP_INSTALL_DIR_OGRE_RESOURCES)
-  list(APPEND VISP_HAVE_OGRE_PLUGINS_PATH "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/visp/data/ogre-simulator")
+  list(APPEND VISP_HAVE_OGRE_PLUGINS_PATH "${CMAKE_INSTALL_PREFIX}/${VISP_LIB_INSTALL_PATH}/visp/data/ogre-simulator")
 endif()
 
 #----------------------------------------------------------------------
 # Create and install visp-config.1.gz man page
 #----------------------------------------------------------------------
 if(UNIX)
-  FIND_PROGRAM(GZIP gzip)
-  file(MAKE_DIRECTORY ${VISP_BINARY_DIR}/doc/man/man1)
-  ADD_CUSTOM_COMMAND(
-    OUTPUT ${VISP_BINARY_DIR}/doc/man/man1/visp-config.1.gz
-    COMMAND ${GZIP} --best -c ${CMAKE_CURRENT_SOURCE_DIR}/doc/man/man1/visp-config.1 > ${VISP_BINARY_DIR}/doc/man/man1/visp-config.1.gz
-    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/doc/man/man1/visp-config.1
-  )
-  ADD_CUSTOM_TARGET(man ALL
-    DEPENDS ${VISP_BINARY_DIR}/doc/man/man1/visp-config.1.gz
-  )
-  INSTALL(FILES
-    ${VISP_BINARY_DIR}/doc/man/man1/visp-config.1.gz
-    DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/man/man1
-    PERMISSIONS OWNER_READ GROUP_READ WORLD_READ OWNER_WRITE
-    COMPONENT dev
-  )
-  MARK_AS_ADVANCED(GZIP)
+  find_host_program(GZIP gzip)
+  if(GZIP)
+    file(MAKE_DIRECTORY ${VISP_BINARY_DIR}/doc/man/man1)
+    add_custom_command(
+      OUTPUT ${VISP_BINARY_DIR}/doc/man/man1/visp-config.1.gz
+      COMMAND ${GZIP} --best -c ${CMAKE_CURRENT_SOURCE_DIR}/doc/man/man1/visp-config.1 > ${VISP_BINARY_DIR}/doc/man/man1/visp-config.1.gz
+      DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/doc/man/man1/visp-config.1
+    )
+    add_custom_target(man ALL
+      DEPENDS ${VISP_BINARY_DIR}/doc/man/man1/visp-config.1.gz
+    )
+    install(FILES
+      ${VISP_BINARY_DIR}/doc/man/man1/visp-config.1.gz
+      DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/man/man1
+      PERMISSIONS OWNER_READ GROUP_READ WORLD_READ OWNER_WRITE
+      COMPONENT dev
+    )
+  endif()
 endif()
+
+#----------------------------------------------------------------------
+# Add 3rd-party libraries
+#----------------------------------------------------------------------
+include(cmake/VISP3rdParty.cmake)
+
+#-----------------------------------------------------------------------------
+# Add extra compilation flags
+#-----------------------------------------------------------------------------
+include(cmake/AddExtraCompilationFlags.cmake) # should be called after FindOpenMP
 
 #----------------------------------------------------------------------
 # Modules
@@ -442,14 +606,8 @@ include(cmake/VISPModule.cmake)
 # process subdirectories
 add_subdirectory(modules)
 
-#-----------------------------------------------------------------------------
-# Add extra compilation flags under UNIX
-#-----------------------------------------------------------------------------
-include(cmake/AddExtraCompilationFlags.cmake) # should be called after FindOpenMP
-vp_add_extra_compilation_flags()
-
 #-------------------------------------------------------------------------------
-# specific things that need to be updated in vpConfig.h and ViSP-third-party.txt
+# specific things that need to be updated in vpConfig.h
 #-------------------------------------------------------------------------------
 VP_SET(VISP_HAVE_OPENMP      TRUE IF USE_OPENMP)
 VP_SET(VISP_HAVE_OPENCV      TRUE IF (BUILD_MODULE_visp_core AND USE_OPENCV))
@@ -465,6 +623,7 @@ VP_SET(VISP_HAVE_LAPACK_C    TRUE IF (BUILD_MODULE_visp_core AND USE_LAPACK))
 VP_SET(VISP_HAVE_PTHREAD     TRUE IF (BUILD_MODULE_visp_core AND USE_PTHREAD))
 VP_SET(VISP_HAVE_XML2        TRUE IF (BUILD_MODULE_visp_core AND USE_XML2))
 VP_SET(VISP_HAVE_FFMPEG      TRUE IF (BUILD_MODULE_visp_core AND USE_FFMPEG))
+VP_SET(VISP_HAVE_PCL         TRUE IF (BUILD_MODULE_visp_core AND USE_PCL))
 
 VP_SET(VISP_HAVE_OGRE        TRUE IF (BUILD_MODULE_visp_ar AND USE_OGRE))
 VP_SET(VISP_HAVE_OIS         TRUE IF (BUILD_MODULE_visp_ar AND USE_OIS))
@@ -491,6 +650,14 @@ if(BUILD_MODULE_visp_robot AND USE_ARIA)
     set(VISP_HAVE_PIONEER TRUE)
   endif()
 endif()
+#VP_SET(VISP_HAVE_VIRTUOSE    TRUE IF (BUILD_MODULE_visp_robot AND USE_VIRTUOSE))
+if(BUILD_MODULE_visp_robot AND USE_VIRTUOSE)
+  if(UNIX AND USE_PTHREAD AND RT_FOUND AND DL_FOUND)
+    set(VISP_HAVE_VIRTUOSE TRUE)
+  elseif(NOT UNIX)
+    set(VISP_HAVE_VIRTUOSE TRUE)
+  endif()
+endif()
 VP_SET(VISP_HAVE_COIN3D      TRUE IF (BUILD_MODULE_visp_robot AND USE_COIN3D))
 
 VP_SET(VISP_HAVE_V4L2        TRUE IF (BUILD_MODULE_visp_sensor AND USE_V4L2))
@@ -499,21 +666,22 @@ VP_SET(VISP_HAVE_CMU1394     TRUE IF (BUILD_MODULE_visp_sensor AND USE_CMU1394))
 VP_SET(VISP_HAVE_DIRECTSHOW  TRUE IF (BUILD_MODULE_visp_sensor AND USE_DIRECTSHOW))
 VP_SET(VISP_HAVE_LIBFREENECT TRUE IF (BUILD_MODULE_visp_sensor AND USE_LIBFREENECT))
 VP_SET(VISP_HAVE_LIBUSB_1    TRUE IF (BUILD_MODULE_visp_sensor AND USE_LIBUSB_1))
-
-#VP_SET(VISP_HAVE_COIN3D      TRUE IF (BUILD_MODULE_visp_mbt AND USE_COIN3D))
-
+VP_SET(VISP_HAVE_REALSENSE   TRUE IF (BUILD_MODULE_visp_sensor AND USE_REALSENSE))
+VP_SET(VISP_HAVE_FLYCAPTURE  TRUE IF (BUILD_MODULE_visp_sensor AND USE_FLYCAPTURE))
+VP_SET(VISP_HAVE_COMEDI      TRUE IF (BUILD_MODULE_visp_sensor AND USE_COMEDI))
+VP_SET(VISP_HAVE_ATIDAQ      TRUE IF (BUILD_MODULE_visp_sensor AND BUILD_ATIDAQ))
 
 VP_SET(VISP_BUILD_SHARED_LIBS TRUE IF BUILD_SHARED_LIBS) # for header vpConfig.h
 VP_SET(VISP_HAVE_DC1394_CAMERA_ENUMERATE TRUE IF (USE_DC1394 AND DC1394_CAMERA_ENUMERATE_FOUND)) # for header vpConfig.h
 VP_SET(VISP_HAVE_DC1394_FIND_CAMERAS     TRUE IF (USE_DC1394 AND DC1394_FIND_CAMERAS_FOUND)) # for header vpConfig.h
 VP_SET(VISP_HAVE_D3D9     TRUE IF USE_DIRECT3D) # for header vpConfig.h
-VP_SET(VISP_HAVE_GTK     TRUE IF USE_GTK2) # for header vpConfig.h
+VP_SET(VISP_HAVE_GTK      TRUE IF USE_GTK2) # for header vpConfig.h
+VP_SET(VISP_HAVE_XRANDR   TRUE IF XRANDR) # for header vpConfig.h
 
 # Check if libfreenect dependencies (ie libusb-1.0 and libpthread) are available
 if(USE_LIBFREENECT AND USE_LIBUSB_1 AND USE_PTHREAD)
   if(LIBFREENECT_FOUND AND LIBUSB_1_FOUND AND PTHREAD_FOUND)
     set(VISP_HAVE_LIBFREENECT_AND_DEPENDENCIES TRUE)
-    set(VISP_HAVE_LIBFREENECT_AND_DEPENDENCIES_FOUND "yes")  # for ViSP-third-party.txt
 
     # The material is found. Check if libfreenect is an old version
     include(CheckCXXSourceCompiles)
@@ -542,11 +710,11 @@ endif()
 
 # check OpenCV nonfree modules and version
 if(USE_OPENCV)
-  set(VISP_HAVE_OPENCV_VERSION "(${OpenCV_VERSION_MAJOR}*65536 + ${OpenCV_VERSION_MINOR}*256 + ${OpenCV_VERSION_PATCH})") # for vpConfig.h
+  set(VISP_HAVE_OPENCV_VERSION "(${OpenCV_VERSION_MAJOR}<<16 | ${OpenCV_VERSION_MINOR}<<8 | ${OpenCV_VERSION_PATCH})") # for vpConfig.h
   if(OpenCV_VERSION)
     if(OpenCV_VERSION VERSION_LESS "2.4.0")
       message(STATUS "opencv nonfree module found")
-       set(VISP_HAVE_OPENCV_NONFREE TRUE)  # for header vpConfig.h
+      set(VISP_HAVE_OPENCV_NONFREE TRUE)  # for header vpConfig.h
     elseif(OPENCV_NONFREE_FOUND) # OpenCV < 3.0.0
       message(STATUS "opencv xfeatures2d module found")
       set(VISP_HAVE_OPENCV_NONFREE TRUE)  # for header vpConfig.h
@@ -562,29 +730,13 @@ if(USE_OPENCV)
 endif()
 
 # coin and gui
-set(VISP_HAVE_COIN3D_AND_GUI_FOUND "no")     # for ViSP-third-party.txt
-set(VISP_HAVE_QT3_FOUND "no")              # for ViSP-third-party.txt
-set(VISP_HAVE_QT4_FOUND "no")              # for ViSP-third-party.txt
-if(USE_SOWIN)
+if(USE_SOWIN OR USE_SOXT OR (USE_SOQT AND USE_QT))
   set(VISP_HAVE_COIN3D_AND_GUI TRUE)         # for header vpConfig.h
-  set(VISP_HAVE_COIN3D_AND_GUI_FOUND "yes")  # for ViSP-third-party.txt
-elseif(USE_SOXT)
-  set(VISP_HAVE_COIN3D_AND_GUI TRUE)         # for header vpConfig.h
-  set(VISP_HAVE_COIN3D_AND_GUI_FOUND "yes")  # for ViSP-third-party.txt
-elseif(USE_SOQT AND USE_QT)
-  set(VISP_HAVE_COIN3D_AND_GUI TRUE)         # for header vpConfig.h
-  set(VISP_HAVE_COIN3D_AND_GUI_FOUND "yes")  # for ViSP-third-party.txt
-  if(DESIRED_QT_VERSION MATCHES 3)
-    set(VISP_HAVE_QT3_FOUND "yes")         # for ViSP-third-party.txt
-  elseif(DESIRED_QT_VERSION MATCHES 4)
-    set(VISP_HAVE_QT4_FOUND "yes")         # for ViSP-third-party.txt
-  endif()
 endif()
 
-# Ogre plugins and resources
-if(USE_OGRE)
-  include(cmake/OgreTools.cmake)
-  vp_set_ogre_media()
+# PCL and 3rd party advanced vars
+if(USE_PCL)
+  include(cmake/PCLTools.cmake)
 endif()
 
 # Find isnan macro (C-style)
@@ -603,52 +755,26 @@ VP_SET(VISP_HAVE_FUNC__FINITE TRUE IF HAVE_FUNC__FINITE) # for header vpConfig.h
 VP_SET(VISP_HAVE_FUNC_ROUND TRUE IF HAVE_FUNC_ROUND) # for header vpConfig.h
 # Find std::round function (cmath)
 VP_SET(VISP_HAVE_FUNC_STD_ROUND TRUE IF HAVE_FUNC_STD_ROUND) # for header vpConfig.h
+# Find erfc function (math.h)
+VP_SET(VISP_HAVE_FUNC_ERFC TRUE IF HAVE_FUNC_ERFC) # for header vpConfig.h
+# Find std::erfc function (cmath)
+VP_SET(VISP_HAVE_FUNC_STD_ERFC TRUE IF HAVE_FUNC_STD_ERFC) # for header vpConfig.h
+# Find strtof function (stdlib.h)
+VP_SET(VISP_HAVE_FUNC_STRTOF TRUE IF HAVE_FUNC_STRTOF) # for header vpConfig.h
 
-VP_SET(VISP_HAVE_ACCESS_TO_NAS TRUE IF NAS_FOUND) # for header vpConfig.h
 VP_SET(VISP_BUILD_DEPRECATED_FUNCTIONS TRUE IF BUILD_DEPRECATED_FUNCTIONS) # for header vpConfig.h
-VP_SET(MOMENTS_COMBINE_MATRICES TRUE IF VISP_MOMENTS_COMBINE_MATRICES) # for header vpConfig.h
+VP_SET(VISP_MOMENTS_COMBINE_MATRICES TRUE IF ENABLE_MOMENTS_COMBINE_MATRICES) # for header vpConfig.h
 VP_SET(VISP_USE_MSVC TRUE IF MSVC) # for header vpConfig.h
 VP_SET(VISP_HAVE_CPP11_COMPATIBILITY TRUE IF USE_CPP11) # for header vpConfig.h
 VP_SET(VISP_HAVE_BICLOPS_AND_GET_HOMED_STATE_FUNCTION TRUE IF (USE_BICLOPS AND BICLOPS_HAVE_GET_HOMED_STATE_FUNCTION)) # for header vpConfig.h
-
-if(USE_CPP11)
-  set(VISP_HAVE_CPP11_COMPATIBILITY_FOUND "yes")  # for ViSP-third-party.txt
-else()
-  set(VISP_HAVE_CPP11_COMPATIBILITY_FOUND "no")  # for ViSP-third-party.txt
-endif()
 
 # libraries for Pioneer mobile robots
 if(USE_ARIA AND UNIX)
   if(ARIA_FOUND AND USE_PTHREAD AND RT_FOUND AND DL_FOUND)
     set(VISP_HAVE_PIONEER TRUE) # for header vpConfig.h
-    set(VISP_HAVE_PIONEER_FOUND "yes")  # for ViSP-third-party.txt
   endif()
 elseif(USE_ARIA AND NOT UNIX)
   set(VISP_HAVE_PIONEER TRUE) # for header vpConfig.h
-  set(VISP_HAVE_PIONEER_FOUND "yes")  # for ViSP-third-party.txt
-else()
-  set(VISP_HAVE_PIONEER_FOUND "no")  # for ViSP-third-party.txt
-endif()
-
-if(USE_AFMA4)
-  set(VISP_HAVE_AFMA4_FOUND "yes")  # for ViSP-third-party.txt
-else()
-  set(VISP_HAVE_AFMA4_FOUND "no")  # for ViSP-third-party.txt
-endif()
-if(USE_AFMA6)
-  set(VISP_HAVE_AFMA6_FOUND "yes")  # for ViSP-third-party.txt
-else()
-  set(VISP_HAVE_AFMA6_FOUND "no")  # for ViSP-third-party.txt
-endif()
-if(USE_VIPER650)
-  set(VISP_HAVE_VIPER650_FOUND "yes")  # for ViSP-third-party.txt
-else()
-  set(VISP_HAVE_VIPER650_FOUND "no")  # for ViSP-third-party.txt
-endif()
-if(USE_VIPER850)
-  set(VISP_HAVE_VIPER850_FOUND "yes")  # for ViSP-third-party.txt
-else()
-  set(VISP_HAVE_VIPER850_FOUND "no")  # for ViSP-third-party.txt
 endif()
 
 # ----------------------------------------------------------------------------
@@ -670,6 +796,11 @@ include(cmake/VISPGenerateHeaders.cmake)
 #   include_directories(${VISP_INCLUDE_DIRS})
 #   target_link_libraries(<target> ${VISP_LIBRARIES})
 include(cmake/VISPGenerateConfig.cmake)
+
+# Generate Info.plist for the IOS/OSX frameworks
+if(APPLE_FRAMEWORK)
+  include(cmake/VISPGenerateInfoPlist.cmake)
+endif()
 
 #----------------------------------------------------------------------
 # For Dart server and tests
@@ -713,10 +844,286 @@ mark_as_advanced(VISP_INCLUDE_DIRS)
 
 if(BUILD_DEMOS)
   add_subdirectory(demo)
+  vp_add_subdirectories(VISP_CONTRIB_MODULES_PATH demo)
 endif()
 if(BUILD_EXAMPLES)
   add_subdirectory(example)
+  vp_add_subdirectories(VISP_CONTRIB_MODULES_PATH example)
 endif()
 if(BUILD_TUTORIALS)
   add_subdirectory(tutorial)
+  vp_add_subdirectories(VISP_CONTRIB_MODULES_PATH tutorial)
 endif()
+
+# ----------------------------------------------------------------------------
+#  Update version of 3rd party for which info is missing
+# ----------------------------------------------------------------------------
+if(USE_JPEG)
+  if(NOT JPEG_LIB_VERSION)
+    vp_parse_header("${JPEG_INCLUDE_DIR}/jpeglib.h" JPEG_VERSION_LINES JPEG_LIB_VERSION)
+  endif()
+  if(NOT JPEG_LIB_VERSION)
+    get_filename_component(JPEG_LIB_DIR ${JPEG_LIBRARIES} PATH)
+    string(REPLACE "lib" "include" JPEG_INC_DIR ${JPEG_LIB_DIR})
+    vp_parse_header("${JPEG_INC_DIR}/jconfig.h" JPEG_VERSION_LINES JPEG_LIB_VERSION)
+  endif()
+endif()
+
+# ----------------------------------------------------------------------------
+#  Autodetect if we are in a GIT repository
+# ----------------------------------------------------------------------------
+find_host_package(Git QUIET)
+
+if(NOT DEFINED VISP_VCSVERSION AND GIT_FOUND)
+  execute_process(COMMAND "${GIT_EXECUTABLE}" describe --tags --always --dirty --match "[0-9].[0-9].[0-9]*"
+    WORKING_DIRECTORY "${VISP_SOURCE_DIR}"
+    OUTPUT_VARIABLE VISP_VCSVERSION
+    RESULT_VARIABLE GIT_RESULT
+    ERROR_QUIET
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+  if(NOT GIT_RESULT EQUAL 0)
+    set(VISP_VCSVERSION "unknown")
+  endif()
+elseif(NOT DEFINED VISP_VCSVERSION)
+  # We don't have git:
+  set(VISP_VCSVERSION "unknown")
+endif()
+
+# ----------------------------------------------------------------------------
+# Summary:
+# ----------------------------------------------------------------------------
+status("")
+status("==========================================================")
+status("General configuration information for ViSP ${VISP_VERSION}")
+status("")
+if(VISP_VCSVERSION)
+  status("  Version control:" ${VISP_VCSVERSION})
+endif()
+
+if(VISP_CONTRIB_MODULES_PATH)
+  set(__dump_extra_header OFF)
+  foreach(p ${VISP_CONTRIB_MODULES_PATH})
+    if(EXISTS ${p})
+      if(NOT __dump_extra_header)
+        set(__dump_extra_header ON)
+        status("")
+        status("  Extra modules:")
+      else()
+        status("")
+      endif()
+      set(EXTRA_MODULES_VCSVERSION "unknown")
+      if(GIT_FOUND)
+        execute_process(COMMAND "${GIT_EXECUTABLE}" describe --tags --always --dirty --match "[0-9].[0-9].[0-9]*"
+          WORKING_DIRECTORY "${p}"
+          OUTPUT_VARIABLE EXTRA_MODULES_VCSVERSION
+          RESULT_VARIABLE GIT_RESULT
+          ERROR_QUIET
+          OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+        if(NOT GIT_RESULT EQUAL 0)
+          set(EXTRA_MODULES_VCSVERSION "unknown")
+        endif()
+      endif()
+      status("    Location (extra):" ${p})
+      status("    Version control (extra):" ${EXTRA_MODULES_VCSVERSION})
+    endif()
+  endforeach()
+  unset(__dump_extra_header)
+endif()
+
+# ========================== build platform ==========================
+status("")
+status("  Platform:")
+if(NOT CMAKE_VERSION VERSION_LESS 2.8.11)
+  string(TIMESTAMP TIMESTAMP "" UTC)
+  if(TIMESTAMP)
+    status("    Timestamp:"    ${TIMESTAMP})
+  endif()
+endif()
+status("    Host:"             ${CMAKE_HOST_SYSTEM_NAME} ${CMAKE_HOST_SYSTEM_VERSION} ${CMAKE_HOST_SYSTEM_PROCESSOR})
+if(CMAKE_CROSSCOMPILING)
+  status("    Target:"         ${CMAKE_SYSTEM_NAME} ${CMAKE_SYSTEM_VERSION} ${CMAKE_SYSTEM_PROCESSOR})
+endif()
+status("    CMake:"            ${CMAKE_VERSION})
+status("    CMake generator:"  ${CMAKE_GENERATOR})
+status("    CMake build tool:" ${CMAKE_BUILD_TOOL})
+if(MSVC)
+  status("    MSVC:"           ${MSVC_VERSION})
+endif()
+if(CMAKE_GENERATOR MATCHES Xcode)
+  status("    Xcode:"          ${XCODE_VERSION})
+endif()
+if(NOT CMAKE_GENERATOR MATCHES "Xcode|Visual Studio")
+  status("    Configuration:"  ${CMAKE_BUILD_TYPE})
+endif()
+
+# ========================== C/C++ options ==========================
+if(CMAKE_CXX_COMPILER_VERSION)
+  set(VISP_COMPILER_STR "${CMAKE_CXX_COMPILER} ${CMAKE_CXX_COMPILER_ARG1} (ver ${CMAKE_CXX_COMPILER_VERSION})")
+elseif(CMAKE_COMPILER_IS_CLANGCXX)
+  set(VISP_COMPILER_STR "${CMAKE_CXX_COMPILER} ${CMAKE_CXX_COMPILER_ARG1} (ver ${CMAKE_CLANG_REGEX_VERSION})")
+elseif(CMAKE_COMPILER_IS_GNUCXX)
+  set(VISP_COMPILER_STR "${CMAKE_CXX_COMPILER} ${CMAKE_CXX_COMPILER_ARG1} (ver ${CMAKE_GCC_REGEX_VERSION})")
+else()
+  set(VISP_COMPILER_STR "${CMAKE_CXX_COMPILER} ${CMAKE_CXX_COMPILER_ARG1}")
+endif()
+string(STRIP "${VISP_COMPILER_STR}" VISP_COMPILER_STR)
+
+status("")
+status("  C/C++:")
+status("    Built as dynamic libs?:" BUILD_SHARED_LIBS THEN "yes" ELSE "no")
+status("    C++ Compiler:"           ${VISP_COMPILER_STR})
+status("    C++ flags (Release):"    ${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELEASE})
+status("    C++ flags (Debug):"      ${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_DEBUG})
+status("    C Compiler:"             ${CMAKE_C_COMPILER} ${CMAKE_C_COMPILER_ARG1})
+status("    C flags (Release):"      ${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_RELEASE})
+status("    C flags (Debug):"        ${CMAKE_C_FLAGS} ${CMAKE_C_FLAGS_DEBUG})
+if(WIN32)
+  status("    Linker flags (Release):" ${CMAKE_EXE_LINKER_FLAGS} ${CMAKE_EXE_LINKER_FLAGS_RELEASE})
+  status("    Linker flags (Debug):"   ${CMAKE_EXE_LINKER_FLAGS} ${CMAKE_EXE_LINKER_FLAGS_DEBUG})
+else()
+  status("    Linker flags (Release):" ${CMAKE_SHARED_LINKER_FLAGS} ${CMAKE_SHARED_LINKER_FLAGS_RELEASE})
+  status("    Linker flags (Debug):"   ${CMAKE_SHARED_LINKER_FLAGS} ${CMAKE_SHARED_LINKER_FLAGS_DEBUG})
+endif()
+
+# ========================== ViSP modules ==========================
+status("")
+status("  ViSP modules:")
+string(REPLACE "visp_" "" VISP_MODULES_BUILD_ST          "${VISP_MODULES_BUILD}")
+string(REPLACE "visp_" "" VISP_MODULES_DISABLED_USER_ST  "${VISP_MODULES_DISABLED_USER}")
+string(REPLACE "visp_" "" VISP_MODULES_DISABLED_FORCE_ST "${VISP_MODULES_DISABLED_FORCE}")
+set(VISP_MODULES_DISABLED_AUTO_ST "")
+foreach(m ${VISP_MODULES_DISABLED_AUTO})
+  set(__mdeps "")
+  foreach(d ${VISP_MODULE_${m}_DEPS})
+    if(d MATCHES "^visp_" AND NOT USE_${d})
+      list(APPEND __mdeps ${d})
+    endif()
+  endforeach()
+  if(__mdeps)
+    list(APPEND VISP_MODULES_DISABLED_AUTO_ST "${m}(deps: ${__mdeps})")
+  else()
+    list(APPEND VISP_MODULES_DISABLED_AUTO_ST "${m}")
+  endif()
+endforeach()
+string(REPLACE "visp_" "" VISP_MODULES_DISABLED_AUTO_ST  "${VISP_MODULES_DISABLED_AUTO_ST}")
+
+status("    To be built:"            VISP_MODULES_BUILD          THEN ${VISP_MODULES_BUILD_ST}          ELSE "-")
+status("    Disabled:"               VISP_MODULES_DISABLED_USER  THEN ${VISP_MODULES_DISABLED_USER_ST}  ELSE "-")
+status("    Disabled by dependency:" VISP_MODULES_DISABLED_AUTO  THEN ${VISP_MODULES_DISABLED_AUTO_ST}  ELSE "-")
+status("    Unavailable:"            VISP_MODULES_DISABLED_FORCE THEN ${VISP_MODULES_DISABLED_FORCE_ST} ELSE "-")
+
+# ================== Windows RT features ==================
+if(WIN32)
+  status("")
+  status("  Windows RT support:" WINRT THEN "yes" ELSE "no")
+  if(WINRT)
+    status("    Building for Microsoft platform: " ${CMAKE_SYSTEM_NAME})
+    status("    Building for architectures: " ${CMAKE_VS_EFFECTIVE_PLATFORMS})
+    status("    Building for version: " ${CMAKE_SYSTEM_VERSION})
+  endif()
+endif()
+
+# ============================ Options ===========================
+status("")
+status("  Build options: ")
+status("    Build deprecated:"           BUILD_DEPRECATED_FUNCTIONS      THEN "yes" ELSE "no")
+status("    Build with moment combine:"  ENABLE_MOMENTS_COMBINE_MATRICES THEN "yes" ELSE "no")
+
+
+# ===================== Optional 3rd parties =====================
+status("")
+status("  Mathematics: ")
+status("    Use GSL:"             USE_GSL          THEN "yes (ver ${GSL_VERSION})" ELSE "no")
+status("    Use Lapack/blas:"     USE_LAPACK       THEN "yes (ver ${LAPACK_C_VERSION})" ELSE "no")
+status("")
+status("  Simulator: ")
+status("    Ogre simulator: ")
+status("    \\- Use Ogre3D:"      USE_OGRE         THEN "yes" ELSE "no")
+status("    \\- Use OIS:"         USE_OIS          THEN "yes" ELSE "no")
+status("    Coin simulator: ")
+status("    \\- Use Coin3D:"      USE_OGRE         THEN "yes" ELSE "no")
+status("    \\- Use SoWin:"       USE_SOWIN        THEN "yes" ELSE "no")
+status("    \\- Use SoXt:"        USE_SOXT         THEN "yes" ELSE "no")
+status("    \\- Use SoQt:"        USE_SOQT         THEN "yes" ELSE "no")
+status("    \\- Use Qt4:"         USE_QT AND DESIRED_QT_VERSION MATCHES 4  THEN "yes" ELSE "no")
+status("    \\- Use Qt3:"         USE_QT AND DESIRED_QT_VERSION MATCHES 3  THEN "yes" ELSE "no")
+status("")
+status("  Media I/O: ")
+status("    Use JPEG:"            USE_JPEG         THEN "yes (ver ${JPEG_LIB_VERSION})" ELSE "no")
+status("    Use PNG:"             USE_PNG          THEN "yes (ver ${PNG_VERSION_STRING})" ELSE "no")
+status("    \\- Use ZLIB:"        USE_ZLIB         THEN "yes (ver ${ZLIB_VERSION_STRING})" ELSE "no")
+status("    Use FFMPEG:"          USE_FFMPEG       THEN "yes" ELSE "no")
+status("    Use OpenCV:"          USE_OPENCV       THEN "yes (ver ${OpenCV_VERSION})" ELSE "no")
+status("")
+status("  Real robots: ")
+status("    Use Afma4:"           USE_AFMA4        THEN "yes" ELSE "no")
+status("    Use Afma6:"           USE_AFMA6        THEN "yes" ELSE "no")
+status("    Use Viper650:"        USE_VIPER850     THEN "yes" ELSE "no")
+status("    Use Viper850:"        USE_VIPER850     THEN "yes" ELSE "no")
+status("    Use aria (Pioneer):"  USE_ARIA         THEN "yes" ELSE "no")
+status("    Use PTU46:"           USE_PTU46        THEN "yes" ELSE "no")
+status("    Use Biclops PT:"      USE_BICLOPS      THEN "yes" ELSE "no")
+status("")
+status("  GUI: ")
+status("    Use X11:"             USE_X11          THEN "yes" ELSE "no")
+status("    Use GTK:"             USE_GTK2         THEN "yes (ver ${GTK2_VERSION})" ELSE "no")
+status("    Use OpenCV:"          USE_OPENCV       THEN "yes (ver ${OpenCV_VERSION})" ELSE "no")
+status("    Use GDI:"             USE_GDI          THEN "yes" ELSE "no")
+status("    Use Direct3D:"        USE_DIRECT3D     THEN "yes" ELSE "no")
+status("")
+status("  Cameras: ")
+status("    Use DC1394-2.x:"      USE_DC1394       THEN "yes (ver ${DC1394_VERSION})" ELSE "no")
+status("    Use CMU 1394:"        USE_CMU1394      THEN "yes" ELSE "no")
+status("    Use V4L2:"            USE_V4L2         THEN "yes (ver ${V4L2_VERSION})" ELSE "no")
+status("    Use directshow:"      USE_DIRECTSHOW   THEN "yes" ELSE "no")
+status("    Use OpenCV:"          USE_OPENCV       THEN "yes (ver ${OpenCV_VERSION})" ELSE "no")
+status("    Use Flycapture:"      USE_FLYCAPTURE   THEN "yes (ver ${FLYCAPTURE_VERSION})" ELSE "no")
+status("")
+status("  RGB-D sensors: ")
+status("    Use Realsense:"       USE_REALSENSE    THEN "yes (ver ${REALSENSE_VERSION})" ELSE "no")
+status("    \\- Use PCL:"         USE_PCL          THEN "yes (ver ${PCL_VERSION})" ELSE "no")
+status("       \\- Use VTK:"      VTK_FOUND        THEN "yes (ver ${VTK_VERSION})" ELSE "no")
+status("    Use Kinect:"          USE_LIBFREENECT AND USE_LIBUSB_1 AND USE_PTHREAD THEN "yes" ELSE "no")
+status("    \\- Use libfreenect:" USE_LIBFREENECT  THEN "yes (ver ${LIBFREENECT_VERSION})" ELSE "no")
+status("    \\- Use libusb-1:"    USE_LIBUSB_1     THEN "yes (ver ${LIBUSB_1_VERSION})" ELSE "no")
+status("    \\- Use pthread:"     USE_PTHREAD      THEN "yes" ELSE "no")
+status("")
+status("  F/T sensors: ")
+status("    Use atidaq:"          BUILD_ATIDAQ     THEN "yes (build)" ELSE "no")
+status("    Use comedi:"          USE_COMEDI       THEN "yes (ver ${COMEDI_VERSION})" ELSE "no")
+status("")
+status("  Detection: ")
+status("    Use zbar:"            USE_ZBAR         THEN "yes (ver ${ZBAR_VERSION})" ELSE "no")
+status("    Use dmtx:"            USE_DMTX         THEN "yes (ver ${DMTX_VERSION})" ELSE "no")
+status("")
+status("  Misc: ")
+status("    Use XML2:"            USE_XML2         THEN "yes (ver ${XML2_VERSION_STRING})" ELSE "no")
+status("")
+status("  Optimization: ")
+status("    Use OpenMP:"          USE_OPENMP       THEN "yes" ELSE "no")
+status("    Use pthread:"         USE_PTHREAD      THEN "yes" ELSE "no")
+status("    Use cxx11:"           USE_CPP11        THEN "yes" ELSE "no")
+
+# ========================== documentation ==========================
+status("")
+status("  Documentation: ")
+status("    Use doxygen:"         DOXYGEN_FOUND    THEN "yes" ELSE "no")
+
+# ========================== samples and tests ==========================
+status("")
+status("  Tests and samples:")
+status("    Tests:"               BUILD_TESTS      THEN "yes" ELSE "no")
+status("    Demos:"               BUILD_DEMOS      THEN "yes" ELSE "no")
+status("    Examples:"            BUILD_EXAMPLES   THEN "yes" ELSE "no")
+status("    Tutorials:"           BUILD_TUTORIALS  THEN "yes" ELSE "no")
+
+# ========================== auxiliary ==========================
+status("")
+status("  Install path:" "${CMAKE_INSTALL_PREFIX}")
+status("")
+
+status("==========================================================")
+
+vp_finalize_status()

@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -74,7 +74,10 @@
 
   \ingroup group_ar_renderer
 
-  \brief Implementation of an augmented reality viewer.
+  \brief Implementation of an augmented reality viewer using Ogre3D 3rd party.
+
+  Thus to be enabled this class requires Ogre3D 3rd party installation.
+  Installation instructions are provided here https://visp.inria.fr/3rd_ogre.
 
   This class provides methods to show a 3D scene in a real world. To do that
   you will need to initialise it with the parameters of your camera, then each

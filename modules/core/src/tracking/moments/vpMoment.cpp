@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -123,7 +123,7 @@ void vpMoment::update(vpMomentObject& moment_object){
   \param m : a moment instance.
 */
 VISP_EXPORT std::ostream & operator<<(std::ostream & os, const vpMoment& m){
-  for(std::vector<double>::const_iterator i = m.values.begin();i!=m.values.end();i++)
+  for(std::vector<double>::const_iterator i = m.values.begin();i!=m.values.end(); ++i)
     os << *i << ",";
 
   return os;

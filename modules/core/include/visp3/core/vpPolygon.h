@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -41,6 +41,7 @@
 #define vpPolygon_h
 
 #include <vector>
+#include <list>
 
 #include <visp3/core/vpImagePoint.h>
 #include <visp3/core/vpRect.h>
@@ -104,24 +105,33 @@ class VISP_EXPORT vpPolygon
     vpImagePoint _center;
     //! Area of the polygon.
     double _area;
-    //! Flag to indicate whether the polygon is a good polygon (ie. it has more than two corners, ...)
+    //! Flag set to true when the polygon is a good polygon (ie. it has more than two corners) or false otherwise.
     bool _goodPoly;
-    //! Boumding box containing the polygon.
+    //! Bounding box containing the polygon.
     vpRect _bbox;
     
   public:
+    enum PointInPolygonMethod {
+      PnPolySegmentIntersection,  /*!< Legacy Point In Polygon test. */
+      PnPolyRayCasting            /*!< Point In Polygon test using ray casting method (faster). */
+    };
+
     vpPolygon();
     vpPolygon(const std::vector<vpImagePoint>& corners);
+    vpPolygon(const std::list<vpImagePoint>& corners);
     vpPolygon(const vpPolygon &poly);
     virtual ~vpPolygon();
     
     vpPolygon &operator=(const vpPolygon& poly);
     
     void buildFrom(const std::vector<vpImagePoint>& corners);
+    void buildFrom(const std::list<vpImagePoint>& corners);
     void buildFrom(const std::vector<vpPoint>& corners, const vpCameraParameters& cam);
+
+    unsigned int getSize() const;
     void initClick(const vpImage<unsigned char>& I);
     
-    bool isInside(const vpImagePoint &iP);
+    bool isInside(const vpImagePoint &iP, const PointInPolygonMethod &method=PnPolyRayCasting) const;
 
     void display(const vpImage<unsigned char>& I, const vpColor& color, unsigned int thickness=1) const;
     
@@ -167,19 +177,24 @@ class VISP_EXPORT vpPolygon
 
   protected:
     void init(const std::vector<vpImagePoint>& corners);
+    void init(const std::list<vpImagePoint>& corners);
     void updateArea();
     void updateCenter();
     void updateBoundingBox();
     
   private:
-    bool testIntersectionSegments(const vpImagePoint& ip1, const vpImagePoint& ip2, const vpImagePoint& ip3, const vpImagePoint& ip4); 
+    bool testIntersectionSegments(const vpImagePoint& ip1, const vpImagePoint& ip2, const vpImagePoint& ip3, const vpImagePoint& ip4) const;
+    void precalcValuesPnPoly();
+
+    std::vector<double> m_PnPolyConstants;
+    std::vector<double> m_PnPolyMultiples;
 
   //###################
   // Static Functions
   //###################
 
   public:
-    static bool isInside(const std::vector<vpImagePoint>& roi, const double &i, const double  &j);
+    static bool isInside(const std::vector<vpImagePoint>& roi, const double &i, const double  &j, const PointInPolygonMethod &method=PnPolyRayCasting);
   private:
     static bool intersect(const vpImagePoint& p1, const vpImagePoint& p2, const double  &i, const double  &j, const double  &i_test, const double  &j_test);
 };

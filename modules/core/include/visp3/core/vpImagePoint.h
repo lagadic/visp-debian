@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -110,16 +110,25 @@ class VISP_EXPORT vpImagePoint
   inline virtual ~vpImagePoint() { ; }
 
   /*!
-
     Copy operator.
-
   */
   inline const vpImagePoint& operator=(const vpImagePoint &ip) {
     this->i = ip.i;
     this->j = ip.j;
     return *this;
   }
-   vpImagePoint& operator+=(const vpImagePoint &ip);
+#ifdef VISP_HAVE_CPP11_COMPATIBILITY
+  /*!
+    Move operator.
+  */
+  inline const vpImagePoint& operator=(const vpImagePoint &&ip) {
+    this->i = std::move(ip.i);
+    this->j = std::move(ip.j);
+    return *this;
+  }
+#endif
+
+  vpImagePoint& operator+=(const vpImagePoint &ip);
 
   /*!
 
@@ -293,9 +302,11 @@ class VISP_EXPORT vpImagePoint
   friend VISP_EXPORT vpImagePoint operator+=( const vpImagePoint &ip1, const vpImagePoint &ip2 );
   friend VISP_EXPORT vpImagePoint operator+( const vpImagePoint &ip1, const vpImagePoint &ip2 );
   friend VISP_EXPORT vpImagePoint operator+( const vpImagePoint &ip1, const int offset );
+  friend VISP_EXPORT vpImagePoint operator+( const vpImagePoint &ip1, const unsigned int offset );
   friend VISP_EXPORT vpImagePoint operator+( const vpImagePoint &ip1, const double offset );
   friend VISP_EXPORT vpImagePoint operator-( const vpImagePoint &ip1, const vpImagePoint &ip2 );
   friend VISP_EXPORT vpImagePoint operator-( const vpImagePoint &ip1, const int offset );
+  friend VISP_EXPORT vpImagePoint operator-( const vpImagePoint &ip1, const unsigned int offset );
   friend VISP_EXPORT vpImagePoint operator-( const vpImagePoint &ip1, const double offset );
   friend VISP_EXPORT vpImagePoint operator*( const vpImagePoint &ip1, const double scale );
   friend VISP_EXPORT vpImagePoint operator/( const vpImagePoint &ip1, const double scale );

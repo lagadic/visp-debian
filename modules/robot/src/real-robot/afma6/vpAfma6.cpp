@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -43,6 +43,8 @@
 
 */
 
+#include <sstream>
+#include <iostream>
 
 #include <visp3/core/vpDebug.h>
 #include <visp3/core/vpVelocityTwistMatrix.h>
@@ -58,82 +60,42 @@
 /* --- STATIC ------------------------------------------------------------ */
 /* ---------------------------------------------------------------------- */
 
-#ifdef VISP_HAVE_ACCESS_TO_NAS
 static const char *opt_Afma6[] = {"JOINT_MAX","JOINT_MIN","LONG_56","COUPL_56",
                                   "CAMERA", "eMc_ROT_XYZ","eMc_TRANS_XYZ",
                                   NULL};
 
-const char * const vpAfma6::CONST_AFMA6_FILENAME
-#if defined(_WIN32)
-= "Z:/robot/Afma6/current/include/const_Afma6.cnf";
-#else
-= "/udd/fspindle/robot/Afma6/current/include/const_Afma6.cnf";
-#endif
+#ifdef VISP_HAVE_AFMA6_DATA
+const std::string vpAfma6::CONST_AFMA6_FILENAME =
+    std::string(VISP_AFMA6_DATA_PATH) + std::string("/include/const_Afma6.cnf");
 
-const char * const vpAfma6::CONST_EMC_CCMOP_WITHOUT_DISTORTION_FILENAME
-#if defined(_WIN32)
-= "Z:/robot/Afma6/current/include/const_eMc_ccmop_without_distortion_Afma6.cnf";
-#else
-= "/udd/fspindle/robot/Afma6/current/include/const_eMc_ccmop_without_distortion_Afma6.cnf";
-#endif
+const std::string vpAfma6::CONST_EMC_CCMOP_WITHOUT_DISTORTION_FILENAME =
+    std::string(VISP_AFMA6_DATA_PATH) + std::string("/include/const_eMc_ccmop_without_distortion_Afma6.cnf");
 
-const char * const vpAfma6::CONST_EMC_CCMOP_WITH_DISTORTION_FILENAME
-#if defined(_WIN32) 
-= "Z:/robot/Afma6/current/include/const_eMc_ccmop_with_distortion_Afma6.cnf";
-#else
-= "/udd/fspindle/robot/Afma6/current/include/const_eMc_ccmop_with_distortion_Afma6.cnf";
-#endif
+const std::string vpAfma6::CONST_EMC_CCMOP_WITH_DISTORTION_FILENAME =
+    std::string(VISP_AFMA6_DATA_PATH) + std::string("/include/const_eMc_ccmop_with_distortion_Afma6.cnf");
 
-const char * const vpAfma6::CONST_EMC_GRIPPER_WITHOUT_DISTORTION_FILENAME
-#if defined(_WIN32)
-= "Z:/robot/Afma6/current/include/const_eMc_gripper_without_distortion_Afma6.cnf";
-#else
-= "/udd/fspindle/robot/Afma6/current/include/const_eMc_gripper_without_distortion_Afma6.cnf";
-#endif
+const std::string vpAfma6::CONST_EMC_GRIPPER_WITHOUT_DISTORTION_FILENAME =
+    std::string(VISP_AFMA6_DATA_PATH) + std::string("/include/const_eMc_gripper_without_distortion_Afma6.cnf");
 
-const char * const vpAfma6::CONST_EMC_GRIPPER_WITH_DISTORTION_FILENAME
-#if defined(_WIN32) 
-= "Z:/robot/Afma6/current/include/const_eMc_gripper_with_distortion_Afma6.cnf";
-#else
-= "/udd/fspindle/robot/Afma6/current/include/const_eMc_gripper_with_distortion_Afma6.cnf";
-#endif
+const std::string vpAfma6::CONST_EMC_GRIPPER_WITH_DISTORTION_FILENAME =
+    std::string(VISP_AFMA6_DATA_PATH) + std::string("/include/const_eMc_gripper_with_distortion_Afma6.cnf");
 
-const char * const vpAfma6::CONST_EMC_VACUUM_WITHOUT_DISTORTION_FILENAME
-#if defined(_WIN32)
-= "Z:/robot/Afma6/current/include/const_eMc_vacuum_without_distortion_Afma6.cnf";
-#else
-= "/udd/fspindle/robot/Afma6/current/include/const_eMc_vacuum_without_distortion_Afma6.cnf";
-#endif
+const std::string vpAfma6::CONST_EMC_VACUUM_WITHOUT_DISTORTION_FILENAME =
+    std::string(VISP_AFMA6_DATA_PATH) + std::string("/include/const_eMc_vacuum_without_distortion_Afma6.cnf");
 
-const char * const vpAfma6::CONST_EMC_VACUUM_WITH_DISTORTION_FILENAME
-#if defined(_WIN32)
-= "Z:/robot/Afma6/current/include/const_eMc_vacuum_with_distortion_Afma6.cnf";
-#else
-= "/udd/fspindle/robot/Afma6/current/include/const_eMc_vacuum_with_distortion_Afma6.cnf";
-#endif
+const std::string vpAfma6::CONST_EMC_VACUUM_WITH_DISTORTION_FILENAME =
+    std::string(VISP_AFMA6_DATA_PATH) + std::string("/include/const_eMc_vacuum_with_distortion_Afma6.cnf");
 
-const char * const vpAfma6::CONST_EMC_GENERIC_WITHOUT_DISTORTION_FILENAME
-#if defined(_WIN32)
-= "Z:/robot/Afma6/current/include/const_eMc_generic_without_distortion_Afma6.cnf";
-#else
-= "/udd/fspindle/robot/Afma6/current/include/const_eMc_generic_without_distortion_Afma6.cnf";
-#endif
+const std::string vpAfma6::CONST_EMC_GENERIC_WITHOUT_DISTORTION_FILENAME =
+    std::string(VISP_AFMA6_DATA_PATH) + std::string("/include/const_eMc_generic_without_distortion_Afma6.cnf");
 
-const char * const vpAfma6::CONST_EMC_GENERIC_WITH_DISTORTION_FILENAME
-#if defined(_WIN32)
-= "Z:/robot/Afma6/current/include/const_eMc_generic_with_distortion_Afma6.cnf";
-#else
-= "/udd/fspindle/robot/Afma6/current/include/const_eMc_generic_with_distortion_Afma6.cnf";
-#endif
+const std::string vpAfma6::CONST_EMC_GENERIC_WITH_DISTORTION_FILENAME =
+    std::string(VISP_AFMA6_DATA_PATH) + std::string("/include/const_eMc_generic_with_distortion_Afma6.cnf");
 
-const char * const vpAfma6::CONST_CAMERA_AFMA6_FILENAME
-#if defined(_WIN32) 
-= "Z:/robot/Afma6/current/include/const_camera_Afma6.xml";
-#else
-= "/udd/fspindle/robot/Afma6/current/include/const_camera_Afma6.xml";
-#endif
+const std::string vpAfma6::CONST_CAMERA_AFMA6_FILENAME =
+    std::string(VISP_AFMA6_DATA_PATH) + std::string("/include/const_camera_Afma6.xml");
 
-#endif // VISP_HAVE_ACCESS_TO_NAS
+#endif // VISP_HAVE_AFMA6_DATA
 
 const char * const vpAfma6::CONST_CCMOP_CAMERA_NAME = "Dragonfly2-8mm-ccmop";
 const char * const vpAfma6::CONST_GRIPPER_CAMERA_NAME = "Dragonfly2-6mm-gripper";
@@ -154,8 +116,7 @@ vpAfma6::vpAfma6()
     tool_current(vpAfma6::defaultTool),
     projModel(vpCameraParameters::perspectiveProjWithoutDistortion)
 {
-  // Set the default parameters in case of the config files on the NAS
-  // at Inria are not available.
+  // Set the default parameters in case of the config files are not available.
 
   //
   // Geometric model constant parameters
@@ -203,29 +164,92 @@ vpAfma6::init (void)
   Read files containing the constant parameters related to the robot
   kinematics and to the end-effector to camera transformation.
 
-  \warning This function is only available if the macro
-  VISP_HAVE_ACCESS_TO_NAS is defined in vpConfig.h.
+  \param camera_extrinsic_parameters : Filename containing the constant parameters of
+  the robot kinematics \f$^e{\bf M}_c \f$ transformation.
 
-  \param paramAfma6 : Filename containing the constant parameters of
-  the robot kinematics.
-
-  \param paramCamera : Filename containing the camera extrinsic parameters.
+  \param camera_intrinsic_parameters : Filename containing the camera extrinsic parameters.
 
 */
-#ifdef VISP_HAVE_ACCESS_TO_NAS
 void
-vpAfma6::init (const char * paramAfma6,
-               const char * paramCamera)
+vpAfma6::init (const std::string &camera_extrinsic_parameters,
+               const std::string &camera_intrinsic_parameters)
 {
-  //  vpTRACE ("Parsage fichier robot.");
-  this->parseConfigFile (paramAfma6);
+  this->parseConfigFile (camera_extrinsic_parameters);
 
-  //vpTRACE ("Parsage fichier camera.");
-  this->parseConfigFile (paramCamera);
-
-  return ;
+  this->parseConfigFile (camera_intrinsic_parameters);
 }
-#endif
+
+/*!
+
+  Set the type of tool attached to the robot and transformation
+  between the end-effector and the tool (\f$^e{\bf M}c\f$).
+  This last parameter is loaded from a file.
+
+  \param tool : Type of tool in use.
+
+  \param filename : Path of the configuration file containing the
+  transformation between the end-effector frame and the tool frame.
+
+  The configuration file should have the form below:
+
+  \code
+# Start with any number of consecutive lines
+# beginning with the symbol '#'
+#
+# The 3 following lines contain the name of the camera,
+# the rotation parameters of the geometric transformation
+# using the Euler angles in degrees with convention XYZ and
+# the translation parameters expressed in meters
+CAMERA CameraName
+eMc_ROT_XYZ 10.0 -90.0 20.0
+eMc_TRANS_XYZ  0.05 0.01 0.06
+    \endcode
+
+  \sa init(vpAfma6::vpToolType, vpCameraParameters::vpCameraParametersProjType),
+  init(vpAfma6::vpToolType, const vpHomogeneousMatrix&)
+*/
+void
+vpAfma6::init(vpAfma6::vpAfma6ToolType tool, const std::string &filename)
+{
+  this->setToolType(tool);
+  this->parseConfigFile(filename.c_str());
+}
+
+/*!
+
+  Read files containing the constant parameters related to the robot
+  tools in order to set the end-effector to tool transformation.
+
+  \param camera_extrinsic_parameters : Filename containing the camera
+  extrinsic parameters.
+
+*/
+void
+vpAfma6::init (const std::string &camera_extrinsic_parameters)
+{
+  this->parseConfigFile (camera_extrinsic_parameters);
+}
+
+/*!
+
+  Set the type of tool attached to the robot and the transformation
+  between the end-effector and the tool (\f$^e{\bf M}c\f$).
+
+  \param tool : Type of tool in use.
+
+  \param eMc : Homogeneous matrix representation of the transformation
+  between the end-effector frame and the tool frame.
+
+  \sa init(vpAfma6::vpAfma6ToolType, vpCameraParameters::vpCameraParametersProjType),
+  init(vpAfma6::vpAfma6ToolType, const std::string&)
+
+*/
+void
+vpAfma6::init(vpAfma6::vpAfma6ToolType tool, const vpHomogeneousMatrix &eMc)
+{
+    this->setToolType(tool);
+    this->set_eMc(eMc);
+}
 
 /*!
 
@@ -233,6 +257,11 @@ vpAfma6::init (const char * paramAfma6,
   the end-effector to camera transformation (eMc) corresponding to the
   camera extrinsic parameters. These last parameters depend on the
   camera and projection model in use.
+
+  \warning If the macro VISP_HAVE_AFMA6_DATA is defined in vpConfig.h
+  this function reads the camera extrinsic parameters from the file
+  corresponding to the specified camera type and projection type.
+  Otherwise corresponding default parameters are loaded.
 
   \param tool : Camera in use.
 
@@ -246,29 +275,17 @@ vpAfma6::init (vpAfma6::vpAfma6ToolType tool,
   
   this->projModel = proj_model;
   
-#ifdef VISP_HAVE_ACCESS_TO_NAS
+#ifdef VISP_HAVE_AFMA6_DATA
   // Read the robot parameters from files
-  char filename_eMc [FILENAME_MAX];
+  std::string filename_eMc;
   switch (tool) {
   case vpAfma6::TOOL_CCMOP: {
     switch(projModel) {
     case vpCameraParameters::perspectiveProjWithoutDistortion :
-#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
-      snprintf(filename_eMc, FILENAME_MAX, "%s",
-               CONST_EMC_CCMOP_WITHOUT_DISTORTION_FILENAME);
-#else // _WIN32
-      _snprintf(filename_eMc, FILENAME_MAX, "%s",
-                CONST_EMC_CCMOP_WITHOUT_DISTORTION_FILENAME);
-#endif
+        filename_eMc = CONST_EMC_CCMOP_WITHOUT_DISTORTION_FILENAME;
       break;
     case vpCameraParameters::perspectiveProjWithDistortion :
-#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
-      snprintf(filename_eMc, FILENAME_MAX, "%s",
-               CONST_EMC_CCMOP_WITH_DISTORTION_FILENAME);
-#else // _WIN32
-      _snprintf(filename_eMc, FILENAME_MAX, "%s",
-                CONST_EMC_CCMOP_WITH_DISTORTION_FILENAME);
-#endif
+        filename_eMc = CONST_EMC_CCMOP_WITH_DISTORTION_FILENAME;
       break;
     }
     break;
@@ -276,22 +293,10 @@ vpAfma6::init (vpAfma6::vpAfma6ToolType tool,
   case vpAfma6::TOOL_GRIPPER: {
     switch(projModel) {
     case vpCameraParameters::perspectiveProjWithoutDistortion :
-#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
-      snprintf(filename_eMc, FILENAME_MAX, "%s",
-               CONST_EMC_GRIPPER_WITHOUT_DISTORTION_FILENAME);
-#else // _WIN32
-      _snprintf(filename_eMc, FILENAME_MAX, "%s",
-                CONST_EMC_GRIPPER_WITHOUT_DISTORTION_FILENAME);
-#endif
+        filename_eMc = CONST_EMC_GRIPPER_WITHOUT_DISTORTION_FILENAME;
       break;
     case vpCameraParameters::perspectiveProjWithDistortion :
-#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
-      snprintf(filename_eMc, FILENAME_MAX, "%s",
-               CONST_EMC_GRIPPER_WITH_DISTORTION_FILENAME);
-#else // _WIN32
-      _snprintf(filename_eMc, FILENAME_MAX, "%s",
-                CONST_EMC_GRIPPER_WITH_DISTORTION_FILENAME);
-#endif
+        filename_eMc = CONST_EMC_GRIPPER_WITH_DISTORTION_FILENAME;
       break;
     }
     break;
@@ -299,22 +304,10 @@ vpAfma6::init (vpAfma6::vpAfma6ToolType tool,
   case vpAfma6::TOOL_VACUUM: {
     switch(projModel) {
     case vpCameraParameters::perspectiveProjWithoutDistortion :
-#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
-      snprintf(filename_eMc, FILENAME_MAX, "%s",
-               CONST_EMC_VACUUM_WITHOUT_DISTORTION_FILENAME);
-#else // _WIN32
-      _snprintf(filename_eMc, FILENAME_MAX, "%s",
-                CONST_EMC_VACUUM_WITHOUT_DISTORTION_FILENAME);
-#endif
+        filename_eMc = CONST_EMC_VACUUM_WITHOUT_DISTORTION_FILENAME;
       break;
     case vpCameraParameters::perspectiveProjWithDistortion :
-#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
-      snprintf(filename_eMc, FILENAME_MAX, "%s",
-               CONST_EMC_VACUUM_WITH_DISTORTION_FILENAME);
-#else // _WIN32
-      _snprintf(filename_eMc, FILENAME_MAX, "%s",
-                CONST_EMC_VACUUM_WITH_DISTORTION_FILENAME);
-#endif
+        filename_eMc = CONST_EMC_VACUUM_WITH_DISTORTION_FILENAME;
       break;
     }
     break;
@@ -322,22 +315,10 @@ vpAfma6::init (vpAfma6::vpAfma6ToolType tool,
   case vpAfma6::TOOL_GENERIC_CAMERA: {
     switch(projModel) {
     case vpCameraParameters::perspectiveProjWithoutDistortion :
-#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
-      snprintf(filename_eMc, FILENAME_MAX, "%s",
-               CONST_EMC_GENERIC_WITHOUT_DISTORTION_FILENAME);
-#else // _WIN32
-      _snprintf(filename_eMc, FILENAME_MAX, "%s",
-                CONST_EMC_GENERIC_WITHOUT_DISTORTION_FILENAME);
-#endif
+        filename_eMc = CONST_EMC_GENERIC_WITHOUT_DISTORTION_FILENAME;
       break;
     case vpCameraParameters::perspectiveProjWithDistortion :
-#if !defined(_WIN32) && (defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))) // UNIX
-      snprintf(filename_eMc, FILENAME_MAX, "%s",
-               CONST_EMC_GENERIC_WITH_DISTORTION_FILENAME);
-#else // _WIN32
-      _snprintf(filename_eMc, FILENAME_MAX, "%s",
-                CONST_EMC_GENERIC_WITH_DISTORTION_FILENAME);
-#endif
+        filename_eMc = CONST_EMC_GENERIC_WITH_DISTORTION_FILENAME;
       break;
     }
     break;
@@ -358,7 +339,7 @@ vpAfma6::init (vpAfma6::vpAfma6ToolType tool,
   
   this->init (vpAfma6::CONST_AFMA6_FILENAME, filename_eMc);
 
-#else // VISP_HAVE_ACCESS_TO_NAS
+#else // VISP_HAVE_AFMA6_DATA
 
   // Use here default values of the robot constant parameters.
   switch (tool) {
@@ -425,6 +406,7 @@ vpAfma6::init (vpAfma6::vpAfma6ToolType tool,
     }
     break;
   }
+  case vpAfma6::TOOL_CUSTOM:
   case vpAfma6::TOOL_GENERIC_CAMERA: {
     switch(projModel) {
     case vpCameraParameters::perspectiveProjWithoutDistortion :
@@ -443,7 +425,7 @@ vpAfma6::init (vpAfma6::vpAfma6ToolType tool,
   }
   vpRotationMatrix eRc(_erc);
   this->_eMc.buildFrom(_etc, eRc);
-#endif // VISP_HAVE_ACCESS_TO_NAS
+#endif // VISP_HAVE_AFMA6_DATA
 
   setToolType(tool);
   return ;
@@ -858,6 +840,21 @@ vpAfma6::get_cMe(vpHomogeneousMatrix &cMe) const
 {
   cMe = this->_eMc.inverse();
 }
+/*!
+
+  Get the geometric transformation between the end-effector frame and the
+  camera or tool frame. This transformation is constant and correspond
+  to the extrinsic camera parameters estimated by calibration.
+
+  \return Transformation between the end-effector frame and the
+  camera frame.
+
+*/
+vpHomogeneousMatrix
+vpAfma6::get_eMc() const
+{
+  return(this->_eMc);
+}
 
 /*!
 
@@ -1057,110 +1054,89 @@ vpAfma6::getLong56() const
 
   This function gets the robot constant parameters from a file.
 
-  \warning This function is only available if the macro
-  VISP_HAVE_ACCESS_TO_NAS is defined in vpConfig.h.
-
   \param filename : File name containing the robot constant
   parameters, like max/min joint values, distance between 5 and 6 axis,
   coupling factor between axis 5 and 6, and the hand-to-eye homogeneous matrix.
 
 */
-#ifdef VISP_HAVE_ACCESS_TO_NAS
 void
-vpAfma6::parseConfigFile (const char * filename)
+vpAfma6::parseConfigFile (const std::string &filename)
 {
-  size_t            dim;
-  int               code;
-  char              Ligne[FILENAME_MAX];
-  char              namoption[100];
-  FILE *            fdtask;
-  int               numLn = 0;
   double rot_eMc[3]; // rotation
   double trans_eMc[3]; // translation
-  bool get_rot_eMc = false;
-  bool get_trans_eMc = false;
 
-  //vpTRACE("Read the config file for constant parameters %s.", filename);
-  if ((fdtask = fopen(filename, "r" )) == NULL)
-  {
-    vpERROR_TRACE ("Impossible to read the config file %s.",
-                   filename);
+  std::ifstream fdconfig(filename.c_str(), std::ios::in);
+
+  if(! fdconfig.is_open()) {
     throw vpRobotException (vpRobotException::readingParametersError,
-                            "Impossible to read the config file.");
+                            "Impossible to read the config file: %s", filename.c_str());
   }
 
-  while (fgets(Ligne, FILENAME_MAX, fdtask) != NULL) {
-    numLn ++;
-    if ('#' == Ligne[0]) { continue; }
-    sscanf(Ligne, "%s", namoption);
-    dim = strlen(namoption);
+  std::string line;
+  int lineNum = 0;
+  bool get_rot_eMc = false;
+  bool get_trans_eMc = false;
+  int code;
 
-    for (code = 0;
-         NULL != opt_Afma6[code];
-         ++ code)
-    {
-      if (strncmp(opt_Afma6[code], namoption, dim) == 0)
-      {
+  while(std::getline(fdconfig, line)) {
+    lineNum ++;
+    if((line.compare(0, 1, "#") == 0)) { // skip comment
+      continue;
+    }
+    std::istringstream ss(line);
+    std::string key;
+    ss >> key;
+
+    for (code = 0; NULL != opt_Afma6[code]; ++ code) {
+      if (key.compare(opt_Afma6[code]) == 0) {
         break;
       }
     }
 
     switch(code)
     {
-    case 0:
-      sscanf(Ligne, "%s %lf %lf %lf %lf %lf %lf",
-             namoption,
-             &this->_joint_max[0], &this->_joint_max[1],
-             &this->_joint_max[2], &this->_joint_max[3],
-             &this->_joint_max[4], &this->_joint_max[5]);
-      break;
+      case 0:
+        ss >> this->_joint_max[0] >> this->_joint_max[1] >> this->_joint_max[2]
+            >> this->_joint_max[3] >> this->_joint_max[4] >> this->_joint_max[5];
+        break;
 
-    case 1:
-      sscanf(Ligne, "%s %lf %lf %lf %lf %lf %lf", namoption,
-             &this->_joint_min[0], &this->_joint_min[1],
-             &this->_joint_min[2], &this->_joint_min[3],
-             &this->_joint_min[4], &this->_joint_min[5]);
-      break;
+      case 1:
+        ss >> this->_joint_min[0] >> this->_joint_min[1] >> this->_joint_min[2]
+            >> this->_joint_min[3] >> this->_joint_min[4] >> this->_joint_min[5];
+        break;
 
-    case 2:
-      sscanf(Ligne, "%s %lf", namoption, &this->_long_56);
-      break;
+      case 2:
+        ss >> this->_long_56;
+        break;
 
-    case 3:
-      sscanf(Ligne, "%s %lf", namoption, &this->_coupl_56);
-      break;
+      case 3:
+        ss >> this->_coupl_56;
+        break;
 
-    case 4:
-      break; // Nothing to do: camera name
+      case 4:
+        break; // Nothing to do: camera name
 
-    case 5:
-      sscanf(Ligne, "%s %lf %lf %lf", namoption,
-             &rot_eMc[0],
-             &rot_eMc[1],
-             &rot_eMc[2]);
+      case 5:
+        ss >> rot_eMc[0] >> rot_eMc[1] >> rot_eMc[2];
 
-      // Convert rotation from degrees to radians
-      rot_eMc[0] *= M_PI / 180.0;
-      rot_eMc[1] *= M_PI / 180.0;
-      rot_eMc[2] *= M_PI / 180.0;
-      get_rot_eMc = true;
-      break;
+        // Convert rotation from degrees to radians
+        rot_eMc[0] *= M_PI / 180.0;
+        rot_eMc[1] *= M_PI / 180.0;
+        rot_eMc[2] *= M_PI / 180.0;
+        get_rot_eMc = true;
+        break;
 
-    case 6:
-      sscanf(Ligne, "%s %lf %lf %lf", namoption,
-             &trans_eMc[0],
-             &trans_eMc[1],
-             &trans_eMc[2]);
-      get_trans_eMc = true;
-      break;
+      case 6:
+        ss >> trans_eMc[0] >> trans_eMc[1] >> trans_eMc[2];
+        get_trans_eMc = true;
+        break;
 
-    default:
-      vpERROR_TRACE ("Bad configuration file %s  "
-                     "ligne #%d.", filename, numLn);
+      default:
+        throw(vpRobotException(vpRobotException::readingParametersError,
+                               "Bad configuration file %s line #%d",
+                               filename.c_str(), lineNum));
     } /* SWITCH */
   } /* WHILE */
-
-  fclose (fdtask);
 
   // Compute the eMc matrix from the translations and rotations
   if (get_rot_eMc && get_trans_eMc) {
@@ -1173,9 +1149,26 @@ vpAfma6::parseConfigFile (const char * filename)
     this->_eMc.buildFrom(_etc, eRc);
   }
 
-  return;
+  fdconfig.close();
 }
-#endif
+
+/*!
+
+  Set the geometric transformation between the end-effector frame and
+  the tool frame (commonly a camera).
+
+  \param eMc : Transformation between the end-effector frame
+  and the tool frame.
+*/
+void
+vpAfma6::set_eMc(const vpHomogeneousMatrix &eMc)
+{
+  this->_eMc = eMc;
+  this->_etc = eMc.getTranslationVector();
+
+  vpRotationMatrix R(eMc);
+  this->_erc.buildFrom(R);
+}
 
 /*!
   Get the current intrinsic camera parameters obtained by calibration.
@@ -1185,14 +1178,12 @@ vpAfma6::parseConfigFile (const char * filename)
   parameters. If XML is detected by ViSP, VISP_HAVE_XML2 macro is
   defined in include/visp3/core/vpConfig.h file.
 
-  \warning Thid method needs also an access to the file located on
-  Inria's NAS server and containing the camera parameters in XML
-  format. This access is available if VISP_HAVE_ACCESS_TO_NAS macro is
-  defined in include/visp3/core/vpConfig.h file.
+  \warning Thid method needs also an access to the files containing the
+  camera parameters in XML format. This access is available if
+  VISP_HAVE_AFMA6_DATA macro is defined in include/visp3/core/vpConfig.h file.
 
-  - If VISP_HAVE_ACCESS_TO_NAS and VISP_HAVE_XML2 macros are defined,
-  this method gets the camera parameters from
-  /udd/fspindle/robot/Afma6/current/include/const_camera_Afma6.xml
+  - If VISP_HAVE_AFMA6_DATA and VISP_HAVE_XML2 macros are defined,
+  this method gets the camera parameters from const_camera_Afma6.xml
   config file.
 
   - If these two macros are not defined, this method set the camera parameters
@@ -1225,7 +1216,7 @@ int main()
   // Get the intrinsic camera parameters depending on the image size
   // Camera parameters are read from
   // /udd/fspindle/robot/Afma6/current/include/const_camera_Afma6.xml
-  // if VISP_HAVE_ACCESS_TO_NAS and VISP_HAVE_XML2 macros are defined in vpConfig.h file
+  // if VISP_HAVE_AFMA6_DATA and VISP_HAVE_XML2 macros are defined in vpConfig.h file
   try {
     robot.getCameraParameters (cam, I.getWidth(), I.getHeight());
   }
@@ -1245,7 +1236,7 @@ vpAfma6::getCameraParameters (vpCameraParameters &cam,
                               const unsigned int &image_width,
                               const unsigned int &image_height) const
 {
-#if defined(VISP_HAVE_XML2) && defined (VISP_HAVE_ACCESS_TO_NAS)
+#if defined(VISP_HAVE_XML2) && defined (VISP_HAVE_AFMA6_DATA)
   vpXmlParserCamera parser;
   switch (getToolType()) {
   case vpAfma6::TOOL_CCMOP: {
@@ -1320,7 +1311,6 @@ vpAfma6::getCameraParameters (vpCameraParameters &cam,
     //        "fonction init(camera).");
     throw vpRobotException (vpRobotException::readingParametersError,
                             "Impossible to read the camera parameters.");
-    break;
   }
   }
 #else

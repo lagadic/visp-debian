@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -282,12 +282,11 @@ vpNurbs::computeCurveDersPoint(double l_u, unsigned int l_i,
   vpMatrix Awders = computeCurveDers(l_u, l_i, l_p, l_der, l_knots, A, l_weights);
 
   vpImagePoint* CK = new vpImagePoint[l_der+1];
-  double ic,jc;
 
   for(unsigned int k = 0; k <= l_der; k++)
   {
-    ic = Awders[k][0];
-    jc = Awders[k][1];
+    double ic = Awders[k][0];
+    double jc = Awders[k][1];
     for(unsigned int j = 1; j <= k; j++)
     {
       double tmpComb = static_cast<double>( vpMath::comb(k,j) );
@@ -556,7 +555,7 @@ vpNurbs::removeCurveKnot(double l_u, unsigned int l_r, unsigned int l_num, doubl
   unsigned int t = 0;
   double alfi = 0;
   double alfj = 0;
-  unsigned int i, j, ii, jj;
+  unsigned int i, j;
 
   for(t = 0; t < l_num; t++)
   {
@@ -567,8 +566,8 @@ vpNurbs::removeCurveKnot(double l_u, unsigned int l_r, unsigned int l_num, doubl
     tempW[last+1-off] = l_weights[last+1];
     i = first;
     j = last;
-    ii = 1;
-    jj = last -off;
+    unsigned int ii = 1;
+    unsigned int jj = last -off;
     int remflag = 0;
     while (j-i > t)
     {
@@ -714,9 +713,10 @@ void vpNurbs::globalCurveInterp(std::vector<vpImagePoint> &l_crossingPoints, uns
   //Compute ubar
   std::vector<double> ubar;
   ubar.push_back(0.0);
-  for(unsigned int k=1; k<n; k++)
+  for(unsigned int k=1; k<n; k++) {
     ubar.push_back(ubar[k-1]+distance(l_crossingPoints[k],1,l_crossingPoints[k-1],1)/d);
-    ubar.push_back(1.0);
+  }
+  ubar.push_back(1.0);
 
   //Compute the knot vector
   for(unsigned int k = 0; k <= l_p; k++)
@@ -893,11 +893,10 @@ void vpNurbs::globalCurveApprox(std::vector<vpImagePoint> &l_crossingPoints, uns
   
   d = (double)(m+1)/(double)(l_n-l_p+1);
   
-  double alpha;
   for(unsigned int j = 1; j <= l_n-l_p; j++)
   {
     double i = floor(j*d);
-    alpha = j*d-i;
+    double alpha = j*d-i;
     l_knots.push_back((1.0-alpha)*ubar[(unsigned int)i-1]+alpha*ubar[(unsigned int)i]);
   }
 
@@ -957,10 +956,9 @@ void vpNurbs::globalCurveApprox(std::vector<vpImagePoint> &l_crossingPoints, uns
   vpColVector Ri(l_n-1);
   vpColVector Rj(l_n-1);
   vpColVector Rw(l_n-1);
-  double sum;
   for (unsigned int i = 0; i < l_n-1; i++)
   {
-    sum =0;
+    double sum =0;
     for (unsigned int k = 0; k < m-1; k++) sum = sum + A[k][i]*Rk[k].get_i();
     Ri[i] = sum;
     sum = 0;

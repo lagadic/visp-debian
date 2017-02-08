@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -146,7 +146,7 @@ vpCalibration::calibLagrange(vpCameraParameters &cam_est, vpHomogeneousMatrix &c
     }
   }
 
-  svm *= 0.1; /* for the rank */
+  //svm *= 0.1; /* for the rank */
 
   for (unsigned int i=0;i<x1.getRows();i++)
   {
@@ -1104,15 +1104,15 @@ vpCalibration::calibVVSWithDistortionMulti(std::vector<vpCalibration> &table_cal
                                  "Maximum number of iterations reached")) ;
   }
 
-  double perViewError;
-  double totalError = 0;
-  int totalPoints = 0;
+  //double perViewError;
+  //double totalError = 0;
+  //int totalPoints = 0;
   for (unsigned int p = 0 ; p < nbPose ; p++)
   {
     table_cal[p].cam_dist = cam_est ;
-    perViewError = table_cal[p].computeStdDeviation_dist(table_cal[p].cMo_dist, cam_est);
-    totalError += perViewError*perViewError * table_cal[p].npt;
-    totalPoints += (int)table_cal[p].npt;
+    //perViewError = table_cal[p].computeStdDeviation_dist(table_cal[p].cMo_dist, cam_est);
+    //totalError += perViewError*perViewError * table_cal[p].npt;
+    //totalPoints += (int)table_cal[p].npt;
   }
   globalReprojectionError = sqrt(r/(nbPointTotal));
 

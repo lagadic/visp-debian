@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -94,12 +94,12 @@ void vpException::setMessage(const char* format, va_list args)
 /* --- ACCESSORS ---------------------------------------------------------- */
 /* ------------------------------------------------------------------------ */
 
-const char *vpException::getMessage (void)
+const char *vpException::getMessage (void) const
 {
     return (this->message) .c_str();
 }
 
-const std::string &vpException::getStringMessage (void)
+const std::string &vpException::getStringMessage (void) const
 {
     return this->message;
 }

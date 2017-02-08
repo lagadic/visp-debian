@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -52,7 +52,7 @@ void vpCreateWindow(threadParam * param)
 {
   //char* title = param->title;
   (param->vpDisp)->window.initWindow(param->title.c_str(), param->x, param->y,
-				     param->w, param->h);
+                                     param->w, param->h);
   delete param;
 }
 
@@ -85,20 +85,23 @@ vpDisplayWin32::~vpDisplayWin32()
 
 */
 void vpDisplayWin32::init(vpImage<unsigned char> &I,
-			  int x,
-			  int y,
-			  const char *title)
+                          int x,
+                          int y,
+                          const std::string &title)
 {
-	if ((I.getHeight() == 0) || (I.getWidth()==0))
-    {
-      vpERROR_TRACE("Image not initialized " ) ;
-      throw(vpDisplayException(vpDisplayException::notInitializedError,
-			       "Image not initialized")) ;
-    }
+  if ((I.getHeight() == 0) || (I.getWidth()==0))
+  {
+    vpERROR_TRACE("Image not initialized " ) ;
+    throw(vpDisplayException(vpDisplayException::notInitializedError,
+                             "Image not initialized")) ;
+  }
 
+  setScale(m_scaleType, I.getWidth(), I.getHeight());
+  init(I.getWidth(), I.getHeight(), x, y, title);
+  window.renderer->setWidth(I.getWidth()/m_scale);
+  window.renderer->setHeight(I.getHeight()/m_scale);
   window.renderer->setImg(I);
 
-  init (I.getWidth(), I.getHeight(), x, y, title) ;
   I.display = this ;
 }
 
@@ -112,20 +115,23 @@ void vpDisplayWin32::init(vpImage<unsigned char> &I,
   \param title : Window title.
 */
 void vpDisplayWin32::init(vpImage<vpRGBa> &I,
-			  int x,
-			  int y,
-			  const char *title)
+                          int x,
+                          int y,
+                          const std::string &title)
 {
   if ((I.getHeight() == 0) || (I.getWidth()==0))
-    {
-      vpERROR_TRACE("Image not initialized " ) ;
-      throw(vpDisplayException(vpDisplayException::notInitializedError,
-			       "Image not initialized")) ;
-    }
+  {
+    vpERROR_TRACE("Image not initialized " ) ;
+    throw(vpDisplayException(vpDisplayException::notInitializedError,
+                             "Image not initialized")) ;
+  }
 
+  setScale(m_scaleType, I.getWidth(), I.getHeight());
+  init (I.getWidth(), I.getHeight(), x, y, title) ;
+  window.renderer->setWidth(I.getWidth()/m_scale);
+  window.renderer->setHeight(I.getHeight()/m_scale);
   window.renderer->setImg(I);
 
-  init (I.getWidth(), I.getHeight(), x, y, title) ;
   I.display = this ;
 }
 
@@ -139,36 +145,37 @@ void vpDisplayWin32::init(vpImage<vpRGBa> &I,
 
 */
 void vpDisplayWin32::init(unsigned int width, unsigned int height,
-			  int x, int y,
-			  const char *title)
+                          int x, int y,
+                          const std::string &title)
 {
-  if (title != NULL)
-    title_ = std::string(title);
+  if (!title.empty())
+    m_title = title;
   else
-    title_ = std::string(" ");
+    m_title = std::string(" ");
 
   if (x != -1)
-    windowXPosition = x;
+    m_windowXPosition = x;
   if (y != -1)
-    windowYPosition = y;
+    m_windowYPosition = y;
 
   //we prepare the window's thread creation
+  setScale(m_scaleType, width, height);
   threadParam * param = new threadParam;
-  param->x = windowXPosition;
-  param->y = windowYPosition;
-  param->w = width;
-  param->h = height;
+  param->x = m_windowXPosition;
+  param->y = m_windowYPosition;
+  param->w = width / m_scale;
+  param->h = height / m_scale;
   param->vpDisp = this;
-  param->title = this->title_;
+  param->title = this->m_title;
 
   //creates the window in a separate thread
   hThread = CreateThread(NULL,0,(LPTHREAD_START_ROUTINE)vpCreateWindow,
-			 param,0,&threadId);
+                         param,0,&threadId);
 
   //the initialization worked
   iStatus = (hThread != (HANDLE)NULL);
 
-  displayHasBeenInitialized = true;
+  m_displayHasBeenInitialized = true;
 }
 
 
@@ -180,13 +187,13 @@ void vpDisplayWin32::waitForInit()
 {
   //if the window is not initialized yet
   if(!window.isInitialized())
-    {
-      //wait
-      if( WAIT_OBJECT_0 != WaitForSingleObject(window.semaInit,MAX_INIT_DELAY))
-	throw(vpDisplayException(vpDisplayException::notInitializedError,
-				 "Window not initialized")) ;
-      //problem : the window is not initialized
-    }
+  {
+    //wait
+    if( WAIT_OBJECT_0 != WaitForSingleObject(window.semaInit,MAX_INIT_DELAY))
+      throw(vpDisplayException(vpDisplayException::notInitializedError,
+                               "Window not initialized")) ;
+    //problem : the window is not initialized
+  }
 }
 
 
@@ -232,7 +239,7 @@ void vpDisplayWin32::displayImage(const vpImage<vpRGBa> &I)
 */
 void vpDisplayWin32::displayImageROI ( const vpImage<vpRGBa> &I,const vpImagePoint &iP, const unsigned int width, const unsigned int height )
 {
-	//waits if the window is not initialized
+  //waits if the window is not initialized
   waitForInit();
 
   //sets the image to render
@@ -302,8 +309,8 @@ void vpDisplayWin32::displayImageROI ( const vpImage<unsigned char> &I,const vpI
   - When set to false, returns true only if a mouse button is
     pressed, otherwise returns false.
 
-  \return 
-  - true if a button was clicked. This is always the case if blocking is set 
+  \return
+  - true if a button was clicked. This is always the case if blocking is set
     to \e true.
   - false if no button was clicked. This can occur if blocking is set
     to \e false.
@@ -314,10 +321,10 @@ bool vpDisplayWin32::getClick( bool blocking)
   waitForInit();
   bool ret = false;
   //sends a message to the window
-//   PostMessage(window.getHWnd(), vpWM_GETCLICK, 0,0);
+  //   PostMessage(window.getHWnd(), vpWM_GETCLICK, 0,0);
 
   //waits for a button to be pressed
-  if(blocking){ 
+  if(blocking){
     WaitForSingleObject(window.semaClick, 0);
     WaitForSingleObject(window.semaClickUp, 0); //to erase previous events
     WaitForSingleObject(window.semaClick, INFINITE);
@@ -327,7 +334,7 @@ bool vpDisplayWin32::getClick( bool blocking)
     ret = (WAIT_OBJECT_0 == WaitForSingleObject(window.semaClick, 0));
   }
 
-  return ret; 
+  return ret;
 }
 
 
@@ -340,8 +347,8 @@ bool vpDisplayWin32::getClick( bool blocking)
   \param blocking [in] : true for a blocking behaviour waiting a mouse
   button click, false for a non blocking behaviour.
 
-  \return 
-  - true if a button was clicked. This is always the case if blocking is set 
+  \return
+  - true if a button was clicked. This is always the case if blocking is set
     to \e true.
   - false if no button was clicked. This can occur if blocking is set
     to \e false.
@@ -355,22 +362,22 @@ bool vpDisplayWin32::getClick(vpImagePoint &ip, bool blocking)
   bool ret = false ;
   double u, v;
   //tells the window there has been a getclick demand
-//   PostMessage(window.getHWnd(), vpWM_GETCLICK, 0,0);
+  //   PostMessage(window.getHWnd(), vpWM_GETCLICK, 0,0);
   //waits for a click
   if(blocking){
     WaitForSingleObject(window.semaClick, 0);
     WaitForSingleObject(window.semaClickUp, 0);//to erase previous events
     WaitForSingleObject(window.semaClick, INFINITE);
-    ret = true;  
-  }  
+    ret = true;
+  }
   else {
     ret = (WAIT_OBJECT_0 == WaitForSingleObject(window.semaClick, 0));
   }
   
   u = window.clickX;
   v = window.clickY;
-  ip.set_u( u );
-  ip.set_v( v );
+  ip.set_u( u*m_scale );
+  ip.set_v( v*m_scale);
 
   return ret;
 }
@@ -384,7 +391,7 @@ bool vpDisplayWin32::getClick(vpImagePoint &ip, bool blocking)
 
   \param button [out] : The button used to click.
 
-  \param blocking [in] : 
+  \param blocking [in] :
   - When set to true, this method waits until a mouse button is
     pressed and then returns always true.
   - When set to false, returns true only if a mouse button is
@@ -403,7 +410,7 @@ bool vpDisplayWin32::getClick(vpImagePoint &ip,
   bool ret = false;
   double u, v;
   //tells the window there has been a getclickup demand
-//   PostMessage(window.getHWnd(), vpWM_GETCLICK, 0,0);
+  //   PostMessage(window.getHWnd(), vpWM_GETCLICK, 0,0);
   //waits for a click
   if(blocking){
     WaitForSingleObject(window.semaClick, 0);
@@ -416,8 +423,8 @@ bool vpDisplayWin32::getClick(vpImagePoint &ip,
   
   u = window.clickX;
   v = window.clickY;
-  ip.set_u( u );
-  ip.set_v( v );
+  ip.set_u( u*m_scale);
+  ip.set_v( v*m_scale);
   button = window.clickButton;
 
   return ret;
@@ -437,8 +444,8 @@ bool vpDisplayWin32::getClick(vpImagePoint &ip,
   \param blocking [in] : true for a blocking behaviour waiting a mouse
   button click, false for a non blocking behaviour.
 
-  \return 
-  - true if a button was clicked. This is always the case if blocking is set 
+  \return
+  - true if a button was clicked. This is always the case if blocking is set
     to \e true.
   - false if no button was clicked. This can occur if blocking is set
     to \e false.
@@ -455,7 +462,7 @@ bool vpDisplayWin32::getClickUp(vpImagePoint &ip,
   bool ret = false;
   double u, v;
   //tells the window there has been a getclickup demand
-//   PostMessage(window.getHWnd(), vpWM_GETCLICKUP, 0,0);
+  //   PostMessage(window.getHWnd(), vpWM_GETCLICKUP, 0,0);
 
   //waits for a click release
   if(blocking){
@@ -469,8 +476,8 @@ bool vpDisplayWin32::getClickUp(vpImagePoint &ip,
   
   u = window.clickXUp;
   v = window.clickYUp;
-  ip.set_u( u );
-  ip.set_v( v );
+  ip.set_u( u*m_scale);
+  ip.set_v( v*m_scale);
   button = window.clickButtonUp;
 
   return ret;
@@ -485,8 +492,8 @@ bool vpDisplayWin32::getClickUp(vpImagePoint &ip,
   - When set to false, returns true only if a key is
     pressed, otherwise returns false.
 
-  \return 
-  - true if a key was pressed. This is always the case if blocking is set 
+  \return
+  - true if a key was pressed. This is always the case if blocking is set
     to \e true.
   - false if no key was pressed. This can occur if blocking is set
     to \e false.
@@ -502,8 +509,8 @@ bool vpDisplayWin32::getKeyboardEvent( bool blocking )
     WaitForSingleObject(window.semaKey, 0); // key down
     WaitForSingleObject(window.semaKey, 0); // key up
     WaitForSingleObject(window.semaKey, INFINITE);
-    ret = true;  
-  }  
+    ret = true;
+  }
   else
     ret = (WAIT_OBJECT_0 == WaitForSingleObject(window.semaKey, 0));
   
@@ -519,16 +526,16 @@ bool vpDisplayWin32::getKeyboardEvent( bool blocking )
   - When set to false, returns true only if a key is
     pressed, otherwise returns false.
 
-  \param string [out]: If possible, an ISO Latin-1 character
+  \param key [out]: If possible, an ISO Latin-1 character
   corresponding to the keyboard key.
 
-  \return 
-  - true if a key was pressed. This is always the case if blocking is set 
+  \return
+  - true if a key was pressed. This is always the case if blocking is set
     to \e true.
   - false if no key was pressed. This can occur if blocking is set
     to \e false.
 */
-bool vpDisplayWin32::getKeyboardEvent(char *string, bool blocking)
+bool vpDisplayWin32::getKeyboardEvent(std::string &key, bool blocking)
 {
   //wait if the window is not initialized
   waitForInit();
@@ -539,13 +546,15 @@ bool vpDisplayWin32::getKeyboardEvent(char *string, bool blocking)
     WaitForSingleObject(window.semaKey, 0); // key down
     WaitForSingleObject(window.semaKey, 0); // key up
     WaitForSingleObject(window.semaKey, INFINITE);
-    ret = true;  
-  }  
+    ret = true;
+  }
   else {
-     ret = (WAIT_OBJECT_0 == WaitForSingleObject(window.semaKey, 0));
+    ret = (WAIT_OBJECT_0 == WaitForSingleObject(window.semaKey, 0));
   }
   //  printf("key: %ud\n", window.key);
-  sprintf(string, "%s", window.lpString);
+  std::stringstream ss;
+  ss << window.lpString;
+  key = ss.str();
   
   return ret;
 }
@@ -565,20 +574,17 @@ vpDisplayWin32::getPointerMotionEvent (vpImagePoint &ip)
   //wait if the window is not initialized
   waitForInit();
 
-  bool ret = false;
-
-  ret = (WAIT_OBJECT_0 == WaitForSingleObject(window.semaMove, 0));
+  bool ret = (WAIT_OBJECT_0 == WaitForSingleObject(window.semaMove, 0));
   if (ret)
   {
     double u, v;
-	std::cout << "toto";
     //tells the window there has been a getclick demand
     //PostMessage(window.getHWnd(), vpWM_GETPOINTERMOTIONEVENT, 0,0);
-  
+
     u = window.coordX;
     v = window.coordY;
-    ip.set_u( u );
-    ip.set_v( v );
+    ip.set_u( u*m_scale);
+    ip.set_v( v*m_scale);
   }
 
   return ret;
@@ -607,8 +613,8 @@ vpDisplayWin32::getPointerPosition (vpImagePoint &ip)
   
   u = window.coordX;
   v = window.coordY;
-  ip.set_u( u );
-  ip.set_v( v );
+  ip.set_u( u*m_scale);
+  ip.set_v( v*m_scale);
 
   return ret;
 }
@@ -626,7 +632,7 @@ void vpDisplayWin32::setWindowPosition(int winx, int winy)
 
   //cahange the window position only
   SetWindowPos(window.hWnd,HWND_TOP, winx, winy, 0, 0,
-	       SWP_ASYNCWINDOWPOS | SWP_NOACTIVATE | SWP_NOZORDER |SWP_NOSIZE);
+               SWP_ASYNCWINDOWPOS | SWP_NOACTIVATE | SWP_NOZORDER |SWP_NOSIZE);
 
 }
 
@@ -636,11 +642,11 @@ void vpDisplayWin32::setWindowPosition(int winx, int winy)
 
   \param windowtitle : Window title.
 */
-void vpDisplayWin32::setTitle(const char *windowtitle)
+void vpDisplayWin32::setTitle(const std::string &windowtitle)
 {
   //wait if the window is not initialized
   waitForInit();
-  SetWindowText(window.hWnd, windowtitle);
+  SetWindowText(window.hWnd, windowtitle.c_str());
 }
 
 
@@ -649,9 +655,9 @@ void vpDisplayWin32::setTitle(const char *windowtitle)
   \param fontname : Name of the font.
  */
 
-void vpDisplayWin32::setFont(const char * /* fontname */)
+void vpDisplayWin32::setFont(const std::string & /* fontname */)
 {
-	vpERROR_TRACE("Not yet implemented" ) ;
+  vpERROR_TRACE("Not yet implemented" ) ;
 }
 
 
@@ -701,13 +707,19 @@ void vpDisplayWin32::flushDisplayROI(const vpImagePoint &iP, const unsigned int 
   Display a point at the image point \e ip location.
   \param ip : Point location.
   \param color : Point color.
+  \param thickness : Point thickness.
 */
 void vpDisplayWin32::displayPoint(const vpImagePoint &ip,
-                                  const vpColor &color )
+                                  const vpColor &color, unsigned int thickness)
 {
   //wait if the window is not initialized
   waitForInit();
-  window.renderer->setPixel(ip, color);
+  if (thickness == 1) {
+    window.renderer->setPixel(ip, color);
+  }
+  else {
+    window.renderer->drawRect(ip, thickness*m_scale, thickness*m_scale, color, true, 1);
+  }
 }
 
 /*!
@@ -717,9 +729,9 @@ void vpDisplayWin32::displayPoint(const vpImagePoint &ip,
   \param thickness : Line thickness.
 */
 void vpDisplayWin32::displayLine( const vpImagePoint &ip1, 
-			                      const vpImagePoint &ip2,
-                                  const vpColor &color, 
-			                      unsigned int thickness )
+                                  const vpImagePoint &ip2,
+                                  const vpColor &color,
+                                  unsigned int thickness )
 {
   //wait if the window is not initialized
   waitForInit();
@@ -737,13 +749,13 @@ void vpDisplayWin32::displayLine( const vpImagePoint &ip1,
   \param thickness : Line thickness.
 */
 void vpDisplayWin32::displayDotLine(const vpImagePoint &ip1, 
-				    const vpImagePoint &ip2,
-                                    const vpColor &color, 
-				    unsigned int thickness )
+                                    const vpImagePoint &ip2,
+                                    const vpColor &color,
+                                    unsigned int thickness )
 {
   //wait if the window is not initialized
   waitForInit();
-  window.renderer->drawLine(ip1,ip2,color,thickness,PS_DASHDOT);
+  window.renderer->drawLine(ip1, ip2, color, thickness, PS_DASHDOT);
 }
 
 /*!  
@@ -762,7 +774,7 @@ void vpDisplayWin32::displayDotLine(const vpImagePoint &ip1,
 void vpDisplayWin32::displayRectangle( const vpImagePoint &topLeft,
                                        unsigned int width, unsigned int height,
                                        const vpColor &color, bool fill,
-			               unsigned int thickness )
+                                       unsigned int thickness )
 {
   //wait if the window is not initialized
   waitForInit();
@@ -785,7 +797,7 @@ void vpDisplayWin32::displayRectangle( const vpImagePoint &topLeft,
 void vpDisplayWin32::displayRectangle( const vpImagePoint &topLeft,
                                        const vpImagePoint &bottomRight,
                                        const vpColor &color, bool fill,
-			                                 unsigned int thickness )
+                                       unsigned int thickness )
 {
   //wait if the window is not initialized
   waitForInit();
@@ -807,7 +819,7 @@ void vpDisplayWin32::displayRectangle( const vpImagePoint &topLeft,
 */
 void vpDisplayWin32::displayRectangle( const vpRect &rectangle,
                                        const vpColor &color, bool fill,
-			                                 unsigned int thickness )
+                                       unsigned int thickness )
 {
   //wait if the window is not initialized
   waitForInit();
@@ -817,7 +829,7 @@ void vpDisplayWin32::displayRectangle( const vpRect &rectangle,
   window.renderer->drawRect(topLeft,
                             static_cast<unsigned int>( rectangle.getWidth() ),
                             static_cast<unsigned int>( rectangle.getHeight() ),
-			                      color, fill, thickness);
+                            color, fill, thickness);
 }
 
 
@@ -827,7 +839,7 @@ void vpDisplayWin32::displayRectangle( const vpRect &rectangle,
   \param radius : Circle radius.
   \param color : Circle color.
   \param fill : When set to true fill the circle.
-  \param thickness : Thickness of the circle. This parameter is only useful 
+  \param thickness : Thickness of the circle. This parameter is only useful
   when \e fill is set to false.
 */
 void vpDisplayWin32::displayCircle(const vpImagePoint &center,
@@ -848,8 +860,8 @@ void vpDisplayWin32::displayCircle(const vpImagePoint &center,
   \param color : The text's color
 */
 void vpDisplayWin32::displayCharString(const vpImagePoint &ip,
-                                     const char *text, 
-				     const vpColor &color )
+                                       const char *text,
+                                       const vpColor &color )
 {
   //wait if the window is not initialized
   waitForInit();
@@ -864,9 +876,9 @@ void vpDisplayWin32::displayCharString(const vpImagePoint &ip,
   \param thickness : Thickness of the lines used to display the cross.
 */
 void vpDisplayWin32::displayCross( const vpImagePoint &ip, 
-                                   unsigned int size, 
-				   const vpColor &color,
-				   unsigned int thickness)
+                                   unsigned int size,
+                                   const vpColor &color,
+                                   unsigned int thickness)
 {
   //wait if the window is not initialized
   waitForInit();
@@ -882,10 +894,10 @@ void vpDisplayWin32::displayCross( const vpImagePoint &ip,
   \param thickness : Thickness of the lines used to display the arrow.
 */
 void vpDisplayWin32::displayArrow(const vpImagePoint &ip1, 
-		    const vpImagePoint &ip2,
-		    const vpColor &color,
-		    unsigned int w,unsigned int h,
-		    unsigned int thickness)
+                                  const vpImagePoint &ip2,
+                                  const vpColor &color,
+                                  unsigned int w,unsigned int h,
+                                  unsigned int thickness)
 
 {
   //wait if the window is not initialized
@@ -911,7 +923,7 @@ void vpDisplayWin32::clearDisplay(const vpColor &color){
 */
 void vpDisplayWin32::closeDisplay()
 {
-  if (displayHasBeenInitialized) {
+  if (m_displayHasBeenInitialized) {
     waitForInit();
     PostMessage(window.getHWnd(), vpWM_CLOSEDISPLAY, 0,0);
     //if the destructor is called for a reason different than a
@@ -921,8 +933,8 @@ void vpDisplayWin32::closeDisplay()
       WaitForSingleObject(hThread, INFINITE);
       CloseHandle(hThread);
     }
-    displayHasBeenInitialized = false ;
-	window.initialized = false ;
+    m_displayHasBeenInitialized = false ;
+    window.initialized = false ;
   }
 }
 
@@ -937,6 +949,35 @@ void vpDisplayWin32::getImage(vpImage<vpRGBa> &I)
   window.renderer->getImage(I);
 }
 
+/*!
+  Gets screen resolution.
+  \param w, h : Horizontal and vertical screen resolution.
+ */
+void vpDisplayWin32::getScreenSize ( unsigned int &w, unsigned int &h )
+{
+  w = GetSystemMetrics(SM_CXSCREEN);
+  h = GetSystemMetrics(SM_CYSCREEN);
+}
+
+/*!
+  Gets the screen horizontal resolution.
+ */
+unsigned int vpDisplayWin32::getScreenWidth()
+{
+  unsigned int width, height;
+  getScreenSize(width, height);
+  return width;
+}
+
+/*!
+  Gets the screen vertical resolution.
+ */
+unsigned int vpDisplayWin32::getScreenHeight()
+{
+  unsigned int width, height;
+  getScreenSize(width, height);
+  return height;
+}
 #elif !defined(VISP_BUILD_SHARED_LIBS)
 // Work arround to avoid warning: libvisp_core.a(vpDisplayWin32.cpp.o) has no symbols
 void dummy_vpDisplayWin32() {};

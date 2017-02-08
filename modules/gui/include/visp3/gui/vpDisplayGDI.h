@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -101,23 +101,23 @@ int main()
   vpDisplay::flush(I);
 
   // Get non blocking keyboard events
-  std::cout << "Check keyboard events..." << std::endl; 
+  std::cout << "Check keyboard events..." << std::endl;
   char key[10];
   bool ret;
   for (int i=0; i< 200; i++) {
     bool ret = vpDisplay::getKeyboardEvent(I, key, false);
-    if (ret) 
+    if (ret)
       std::cout << "keyboard event: key: " << "\"" << key << "\"" << std::endl;
     vpTime::wait(40);
   }
 
   // Get a blocking keyboard event
-  std::cout << "Wait for a keyboard event..." << std::endl; 
+  std::cout << "Wait for a keyboard event..." << std::endl;
   ret = vpDisplay::getKeyboardEvent(I, key, true);
   std::cout << "keyboard event: " << ret << std::endl;
-  if (ret) 
+  if (ret)
     std::cout << "key: " << "\"" << key << "\"" << std::endl;
-  
+
   // Wait for a click in the display window
   std::cout << "Wait for a button click..." << std::endl;
   vpDisplay::getClick(I);
@@ -129,9 +129,11 @@ class VISP_EXPORT vpDisplayGDI : public vpDisplayWin32
 {
 public:
   vpDisplayGDI();
-  vpDisplayGDI(int winx, int winy, const char *title=NULL);
-  vpDisplayGDI(vpImage<vpRGBa> &I,int winx=-1, int winy=-1, const char *title=NULL);
-  vpDisplayGDI(vpImage<unsigned char> &I, int winx=-1, int winy=-1, const char *title=NULL);
+  vpDisplayGDI(int winx, int winy, const std::string &title="");
+  vpDisplayGDI(vpImage<unsigned char> &I, vpScaleType type);
+  vpDisplayGDI(vpImage<unsigned char> &I, int winx=-1, int winy=-1, const std::string &title="", vpScaleType type=SCALE_DEFAULT) ;
+  vpDisplayGDI(vpImage<vpRGBa> &I, vpScaleType type);
+  vpDisplayGDI(vpImage<vpRGBa> &I, int winx=-1, int winy=-1, const std::string &title="", vpScaleType type=SCALE_DEFAULT) ;
 
   virtual ~vpDisplayGDI();
 };

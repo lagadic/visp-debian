@@ -1,6 +1,6 @@
 /**
 
-\page tutorial-install-win10-msvc14 Tutorial: Installation from source on Windows 10 with Visual C++ 2015
+\page tutorial-install-win10-msvc14 Tutorial: Installation from source for Windows 10 with Visual C++ 2015
 \tableofcontents
 
 In this tutorial you will learn how to install ViSP from source on Windows 10 with Visual C++. These steps have been tested on Windows 10 (64 bit), with CMake 3.3.2 and Visual Studio Community 2015. 
@@ -36,7 +36,7 @@ setx OpenCV_DIR C:\OpenCV\opencv\build
 \endcode
 where \c C:\\OpenCV\\opencv\\build is where you have the build directory (extracted or built).  Inside this folder you should have a file named \c OpenCVConfig.cmake. 
 
-- You have also to add the location of OpenCV libraries in the PATH environment variable following the indications mentioned in \ref install_win81_msvc_env_var.
+- You have also to add the location of OpenCV libraries in the PATH environment variable following the indications mentioned in \ref install_win10_msvc14_env_var.
 
 \section install_win10_msvc14_install_visp Install ViSP from source code
 \subsection install_win10_msvc14_get_source Getting ViSP source code
@@ -52,13 +52,13 @@ There are different ways to get ViSP source code.
 C:\ViSP> git clone https://github.com/lagadic/visp.git
 \endcode
 
-We suppose now that ViSP source is in a directory denoted  \<source_dir\>, for example \c C:\\ViSP\\visp
+We suppose now that ViSP source is in a directory denoted \c \<source_dir\>, for example \c C:\\ViSP\\visp
 
 \subsection install_win10_msvc14_config Configuring ViSP from source 
 
-The goal of the configuration step is now to use CMake to produce a Visual Studio C++ solution that will be located in \<binary_dir\>, for example \c C:/ViSP/visp-build.
+The goal of the configuration step is now to use CMake to produce a Visual Studio C++ solution that will be located in \c \<binary_dir\>, for example \c C:/ViSP/visp-build.
 
-- Launch CMake (cmake-gui) and complete the \<source_dir\> and \<binary_dir\> locations as in the next image.
+- Launch CMake (cmake-gui) and complete the \c \<source_dir\> and \c \<binary_dir\> locations as in the next image.
 
 \image html img-cmake-win10-msvc-launch.png
 
@@ -98,7 +98,7 @@ The goal of the configuration step is now to use CMake to produce a Visual Studi
 
 - Enter menu "BUILD/Build Solution" to build ViSP.
 
-\image html img-win10-msvc-build.png 
+\image html img-win10-msvc-build.jpeg
 
 - At the end of the build process you should have the following indicating that all the build succeeded.
 
@@ -106,7 +106,7 @@ The goal of the configuration step is now to use CMake to produce a Visual Studi
 
 - Now to install ViSP, build "INSTALL" project. To this end, apply a left click on "INSTALL" to select the project, then a right click to enter in the "Build" menu.
 
-\image html img-win10-msvc-install.png
+\image html img-win10-msvc-install.jpeg
 
 - At the end of the installation, you should have the following.
 
@@ -118,7 +118,7 @@ The goal of the configuration step is now to use CMake to produce a Visual Studi
 
 - We recommend now to do the same with \c Release settings. As shown in the next image, select the \c Release configuration. 
 
-\image html img-win10-msvc-release.png
+\image html img-win10-msvc-release.jpeg
 
 - Now, as previously, build and install ViSP again.
 

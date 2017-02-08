@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -101,10 +101,9 @@ vpColVector operator*(const double &x,const vpRotationVector &v)
 double vpRotationVector::sumSquare() const
 {
   double sum_square=0.0;
-  double x ;
 
   for (unsigned int i=0;i<rowNum;i++) {
-    x=rowPtrs[i][0];
+    double x=rowPtrs[i][0];
     sum_square += x*x;
   }
 

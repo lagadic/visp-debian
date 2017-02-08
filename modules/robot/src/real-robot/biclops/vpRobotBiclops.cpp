@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -51,6 +51,7 @@
 #include <visp3/robot/vpRobotBiclops.h>
 #include <visp3/robot/vpRobotException.h>
 #include <visp3/core/vpExponentialMap.h>
+#include <visp3/core/vpIoTools.h>
 
 //#define VP_DEBUG        // Activate the debug mode
 //#define VP_DEBUG_MODE 10 // Activate debug level 1 and 2
@@ -159,7 +160,7 @@ int main()
   \endcode
 
 */
-vpRobotBiclops::vpRobotBiclops (const char * filename)
+vpRobotBiclops::vpRobotBiclops (const std::string &filename)
   : vpBiclops(), vpRobot(), control_thread(), controller(),
     positioningVelocity(defaultPositioningVelocity), q_previous(), controlThreadCreated(false)
 {
@@ -195,11 +196,10 @@ vpRobotBiclops::~vpRobotBiclops (void)
   pthread_mutex_unlock(&vpEndThread_mutex);
 
   /* wait the end of the control thread */
-  int code;
   vpDEBUG_TRACE (12, "Wait end of control thread");
 
   if (controlThreadCreated == true) {
-    code = pthread_join(control_thread, NULL);
+    int code = pthread_join(control_thread, NULL);
     if (code != 0) {
       vpCERROR << "Cannot terminate the control thread: " << code
 	     << " strErr=" << strerror(errno)
@@ -229,9 +229,9 @@ vpRobotBiclops::~vpRobotBiclops (void)
 
 */
 void
-vpRobotBiclops::setConfigFile(const char * filename)
+vpRobotBiclops::setConfigFile(const std::string &filename)
 {
-  sprintf(configfile, "%s", filename);
+  this->configfile = filename;
 }
 
 /*!
@@ -247,11 +247,11 @@ void
 vpRobotBiclops::init ()
 {
   // test if the config file exists
-  FILE *fd = fopen(configfile, "r");
+  FILE *fd = fopen(configfile.c_str(), "r");
   if (fd == NULL) {
     vpCERROR << "Cannot open biclops config file: " << configfile << std::endl;
     throw vpRobotException (vpRobotException::constructionError,
- 			    "Cannot open connexion with biclops");
+          "Cannot open connection with biclops");
   }
   fclose(fd);
 
@@ -1035,8 +1035,7 @@ vpRobotBiclops::setVelocity (const vpRobot::vpControlFrameType frame,
       throw vpRobotException (vpRobotException::wrongStateError,
 			      "Cannot send a velocity to the robot "
 			      "in the camera frame:"
-			      "functionality not implemented");
-      break ;
+            "functionality not implemented");
     }
   case vpRobot::ARTICULAR_FRAME :
     {
@@ -1056,8 +1055,7 @@ vpRobotBiclops::setVelocity (const vpRobot::vpControlFrameType frame,
       throw vpRobotException (vpRobotException::wrongStateError,
 			      "Cannot send a velocity to the robot "
 			      "in the reference frame:"
-			      "functionality not implemented");
-      break ;
+            "functionality not implemented");
     }
   case vpRobot::MIXT_FRAME :
     {
@@ -1067,8 +1065,7 @@ vpRobotBiclops::setVelocity (const vpRobot::vpControlFrameType frame,
       throw vpRobotException (vpRobotException::wrongStateError,
 			      "Cannot send a velocity to the robot "
 			      "in the mixt frame:"
-			      "functionality not implemented");
-      break ;
+            "functionality not implemented");
     }
   default:
     {
@@ -1254,57 +1251,62 @@ vpRobotBiclops::getVelocity (vpRobot::vpControlFrameType frame)
 
 */
 bool
-vpRobotBiclops::readPositionFile(const char *filename, vpColVector &q)
+vpRobotBiclops::readPositionFile(const std::string &filename, vpColVector &q)
 {
-  FILE * pt_f ;
-  pt_f = fopen(filename,"r") ;
+  std::ifstream fd(filename.c_str(), std::ios::in);
 
-  if (pt_f == NULL) {
-    vpERROR_TRACE ("Can not open biclops position file %s", filename);
+  if(! fd.is_open()) {
     return false;
   }
 
-  char line[FILENAME_MAX];
-  char head[] = "R:";
-  bool end = false;
+  std::string line;
+  std::string key("R:");
+  std::string id("#PTU-EVI - Position");
+  bool pos_found = false;
+  int lineNum = 0;
 
-  do {
-    // skip lines begining with # for comments
-    if (fgets (line, 100, pt_f) != NULL) {
-      if ( strncmp (line, "#", 1) != 0) {
-        // this line is not a comment
-        if ( fscanf (pt_f, "%s", line) != EOF)   {
-          if ( strcmp (line, head) == 0)
-            end = true; 	// robot position was found
-        }
-        else {
-          fclose(pt_f);
-          return (false); // end of file without position
-        }
+  q.resize(vpBiclops::ndof);
+
+  while(std::getline(fd, line)) {
+    lineNum ++;
+    if (lineNum == 1) {
+      if(! (line.compare(0, id.size(), id) == 0)) { // check if Biclops position file
+        std::cout << "Error: this position file " << filename << " is not for Biclops robot" << std::endl;
+        return false;
       }
     }
-    else {
-      fclose(pt_f);
-      return (false);// end of file
+    if((line.compare(0, 1, "#") == 0)) { // skip comment
+      continue;
     }
+    if((line.compare(0, key.size(), key) == 0)) { // decode position
+      // check if there are at least njoint values in the line
+      std::vector<std::string> chain = vpIoTools::splitChain(line, std::string(" "));
+      if (chain.size() < vpBiclops::ndof+1) // try to split with tab separator
+        chain = vpIoTools::splitChain(line, std::string("\t"));
+      if(chain.size() < vpBiclops::ndof+1)
+        continue;
 
+      std::istringstream ss(line);
+      std::string key_;
+      ss >> key_;
+      for (unsigned int i=0; i< vpBiclops::ndof; i++)
+        ss >> q[i];
+      pos_found = true;
+      break;
+    }
   }
-  while ( end != true );
 
-  double q1,q2;
-  // Read positions
-  if (fscanf(pt_f, "%lf %lf", &q1, &q2) == EOF) {
-    fclose(pt_f);
-    std::cout << "Cannot read joint positions." << std::endl;
+  // converts rotations from degrees into radians
+  q.deg2rad();
+
+  fd.close();
+
+  if (!pos_found) {
+    std::cout << "Error: unable to find a position for Biclops robot in " << filename << std::endl;
     return false;
   }
-  q.resize(vpBiclops::ndof) ;
 
-  q[0] = vpMath::rad(q1) ; // Rot tourelle
-  q[1] = vpMath::rad(q2) ;
-
-  fclose(pt_f) ;
-  return (true);
+  return true;
 }
 
 /*!

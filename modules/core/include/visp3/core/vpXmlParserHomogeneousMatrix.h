@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -60,6 +60,9 @@
   \ingroup group_core_transformations
 
   \brief XML parser to load and save an homogeneous matrix in a file.
+
+  \warning This class is only available if libxml2 is installed and detected by ViSP.
+  Installation instructions are provided here https://visp.inria.fr/3rd_xml2.
 
   To have a complete description of the homogeneous matrix implemented in ViSP, see
   vpHomogeneousMatrix.
@@ -193,7 +196,8 @@ public:
 
   vpXmlParserHomogeneousMatrix();
   vpXmlParserHomogeneousMatrix(vpXmlParserHomogeneousMatrix& twinParser);
-  ~vpXmlParserHomogeneousMatrix(){}
+  //! Default destructor.
+  virtual ~vpXmlParserHomogeneousMatrix(){}
 
   // get/set functions
   vpHomogeneousMatrix getHomogeneousMatrix() const {return this->m_M;}

@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -111,14 +111,14 @@ vpRobotBiclopsController::~vpRobotBiclopsController()
     which is the used serial port.
 */
 void
-vpRobotBiclopsController::init(const char *configfile)
+vpRobotBiclopsController::init(const std::string &configfile)
 {
   vpDEBUG_TRACE (12, "Initialize biclops.");
   bool binit = false;
   for (int i=0; i<1; i++) {
     try {
       std::cout << "Try to initialize biclops head " << std::endl;
-      binit = biclops.Initialize(configfile);
+      binit = biclops.Initialize(configfile.c_str());
       usleep(100000);
       if (binit) {
         // Initialization completed successfully. Close the config file.
@@ -174,7 +174,7 @@ vpRobotBiclopsController::init(const char *configfile)
   else {
     vpERROR_TRACE("Homing sequence failed. Program is stopped");
     throw vpRobotException (vpRobotException::constructionError,
-                            "Cannot open connexion with biclops");
+                            "Cannot open connection with biclops");
   }
 
   // Get the currently defined (default) motion profiles.

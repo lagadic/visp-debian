@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -56,6 +56,16 @@ vpThetaUVector::vpThetaUVector()
 vpThetaUVector::vpThetaUVector(const vpThetaUVector &tu)
   : vpRotationVector(tu)
 {}
+/*! Copy constructor from a 3-dimension vector. */
+vpThetaUVector::vpThetaUVector(const vpColVector &tu)
+  : vpRotationVector(3)
+{
+  if (tu.size() != 3) {
+    throw(vpException(vpException::dimensionError, "Cannot construct a theta-u vector from a %d-dimension col vector", tu.size()));
+  }
+  for (unsigned int i=0; i< 3; i++)
+    data[i] = tu[i];
+}
 
 /*!
 Initialize a \f$\theta {\bf u}\f$ vector from an homogeneous matrix.
@@ -160,7 +170,7 @@ Converts a rotation matrix into a \f$\theta {\bf u}\f$ vector.
 vpThetaUVector
 vpThetaUVector::buildFrom(const vpRotationMatrix& R)
 {
-  double s,c,theta,sinc;
+  double s,c,theta;
 
   s = (R[1][0]-R[0][1])*(R[1][0]-R[0][1])
     + (R[2][0]-R[0][2])*(R[2][0]-R[0][2])
@@ -172,7 +182,7 @@ vpThetaUVector::buildFrom(const vpRotationMatrix& R)
   // General case when theta != pi. If theta=pi, c=-1
   if ( (1+c) > minimum) // Since -1 <= c <= 1, no fabs(1+c) is required
   {
-    sinc = vpMath::sinc(s,theta);
+    double sinc = vpMath::sinc(s,theta);
 
     data[0] = (R[2][1]-R[1][2])/(2*sinc);
     data[1] = (R[0][2]-R[2][0])/(2*sinc);
@@ -284,21 +294,70 @@ vpThetaUVector &vpThetaUVector::operator=(double v)
 
 /*!
 
-Extract the rotation angle \f$ \theta \f$ and the unit vector
-\f$\bf u \f$ from the \f$ \theta {\bf u} \f$ representation.
+  Copy operator that initializes a \f$\theta {\bf u}\f$ vector from a 3-dimension column vector \e tu.
 
-\param theta : Rotation angle \f$ \theta \f$.
+  \param tu : 3-dimension vector containing the values of the \f$\theta {\bf u}\f$  vector.
 
-\param u : Unit vector \f${\bf u} = (u_{x},u_{y},u_{z})^{\top} \f$
-representing the rotation axis.
+\code
+#include <visp3/core/vpThetaUVector.h>
 
+int main()
+{
+  vpColVector v(3);
+  v[0] = 0.1;
+  v[1] = 0.2;
+  v[2] = 0.3;
+  vpThetaUVector tu;
+  tu = v;
+  // tu is now equal to v : 0.1, 0.2, 0.3
+}
+\endcode
+*/
+vpThetaUVector &vpThetaUVector::operator=(const vpColVector &tu)
+{
+  if (tu.size() != 3) {
+    throw(vpException(vpException::dimensionError, "Cannot set a theta-u vector from a %d-dimension col vector", tu.size()));
+  }
+  for (unsigned int i=0; i< 3; i++)
+    data[i] = tu[i];
+
+  return *this;
+}
+
+/*!
+
+  Extract the rotation angle \f$ \theta \f$ and the unit vector
+  \f$\bf u \f$ from the \f$ \theta {\bf u} \f$ representation.
+
+  \param theta : Rotation angle \f$ \theta \f$ in rad.
+
+  \param u : 3-dim unit vector \f${\bf u} = (u_{x},u_{y},u_{z})^{\top} \f$
+  representing the rotation axis.
+
+  The following example shows how to use this function:
+  \code
+#include <visp3/core/vpThetaUVector.h>
+
+int main()
+{
+  vpHomogeneousMatrix M(0, 0, 1., vpMath::rad(10), vpMath::rad(20), vpMath::rad(30));
+
+  double theta;
+  vpColVector u;
+  M.getRotationMatrix().getThetaUVector().extract(theta, u);
+  std::cout << "theta: " << theta << std::endl;
+  std::cout << "u    : " << u.t() << std::endl;
+}
+  \endcode
+
+  \sa getTheta(), getU()
 */
 void 
 vpThetaUVector::extract(double &theta, vpColVector &u) const
 {
   u.resize(3);
 
-  theta = sqrt(data[0]*data[0] + data[1]*data[1] + data[2]*data[2]);
+  theta = getTheta();
   //if (theta == 0) {
   if (std::fabs(theta) <= std::numeric_limits<double>::epsilon()) {
     u = 0;
@@ -307,6 +366,70 @@ vpThetaUVector::extract(double &theta, vpColVector &u) const
   for (unsigned int i=0 ; i < 3 ; i++) 
     u[i] = data[i] / theta ;
 }
+
+/*!
+
+  Get the rotation angle \f$ \theta \f$ from the \f$ \theta {\bf u} \f$ representation.
+
+  \return Rotation angle \f$ \theta \f$ in rad.
+
+  The following example shows how to use this function:
+  \code
+#include <visp3/core/vpThetaUVector.h>
+
+int main()
+{
+  vpHomogeneousMatrix M(0, 0, 1., vpMath::rad(10), vpMath::rad(20), vpMath::rad(30));
+
+  std::cout << "theta: " << M.getRotationMatrix().getThetaUVector().getTheta() << std::endl;
+  std::cout << "u    : " << M.getRotationMatrix().getThetaUVector().getU().t() << std::endl;
+}
+  \endcode
+
+  \sa getTheta(), extract()
+*/
+double vpThetaUVector::getTheta() const
+{
+  return sqrt(data[0]*data[0] + data[1]*data[1] + data[2]*data[2]);
+}
+
+/*!
+
+  Get the unit vector \f$\bf u \f$ from the \f$ \theta {\bf u} \f$ representation.
+
+  \return 3-dim unit vector \f${\bf u} = (u_{x},u_{y},u_{z})^{\top} \f$
+  representing the rotation axis.
+
+  The following example shows how to use this function:
+  \code
+#include <visp3/core/vpThetaUVector.h>
+
+int main()
+{
+  vpHomogeneousMatrix M(0, 0, 1., vpMath::rad(10), vpMath::rad(20), vpMath::rad(30));
+
+  std::cout << "theta: " << M.getRotationMatrix().getThetaUVector().getTheta() << std::endl;
+  std::cout << "u    : " << M.getRotationMatrix().getThetaUVector().getU().t() << std::endl;
+}
+  \endcode
+
+  \sa getTheta(), extract()
+*/
+vpColVector vpThetaUVector::getU() const
+{
+  vpColVector u(3);
+
+  double theta = getTheta();
+  //if (theta == 0) {
+  if (std::fabs(theta) <= std::numeric_limits<double>::epsilon()) {
+    u = 0;
+    return u;
+  }
+  for (unsigned int i=0 ; i < 3 ; i++)
+    u[i] = data[i] / theta;
+  return u;
+}
+
 
 /*!
   Build a \f$\theta {\bf u}\f$ vector from 3 angles in radian.

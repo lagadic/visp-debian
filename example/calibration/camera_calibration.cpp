@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -282,12 +282,37 @@ int main(int argc, const char ** argv)
       return 0;
     }
 
-    std::cout << "\nCalibration without distorsion in progress on " << calibrator.size() << " images..." << std::endl;
+    std::stringstream ss_additional_info;
+    ss_additional_info << "<date>" << vpTime::getDateTime() << "</date>";
+    ss_additional_info << "<nb_calibration_images>" << calibrator.size() << "</nb_calibration_images>";
+    ss_additional_info << "<calibration_pattern_type>";
+
+    switch(s.calibrationPattern) {
+    case Settings::CHESSBOARD:
+      ss_additional_info << "Chessboard";
+      break;
+
+    case Settings::CIRCLES_GRID:
+      ss_additional_info << "Circles grid";
+      break;
+
+    case Settings::UNDEFINED:
+    default:
+      ss_additional_info << "Undefined";
+      break;
+    }
+    ss_additional_info << "</calibration_pattern_type>";
+    ss_additional_info << "<board_size>" << s.boardSize.width << "x" << s.boardSize.height << "</board_size>";
+    ss_additional_info << "<square_size>" << s.squareSize << "</square_size>";
+
+    std::cout << "\nCalibration without distortion in progress on " << calibrator.size() << " images..." << std::endl;
     vpCameraParameters cam;
     double error;
     if (vpCalibration::computeCalibrationMulti(vpCalibration::CALIB_VIRTUAL_VS, calibrator, cam, error, false) == 0) {
       std::cout << cam << std::endl;
       std::cout << "Global reprojection error: " << error << std::endl;
+      ss_additional_info << "<global_reprojection_error><without_distortion>" << error << "</without_distortion>";
+
 #ifdef VISP_HAVE_XML2
       vpXmlParserCamera xml;
 
@@ -302,15 +327,16 @@ int main(int argc, const char ** argv)
     else
       std::cout << "Calibration without distortion failed." << std::endl;
 
-    std::cout << "\nCalibration with distorsion in progress on " << calibrator.size() << " images..." << std::endl;
+    std::cout << "\nCalibration with distortion in progress on " << calibrator.size() << " images..." << std::endl;
     if (vpCalibration::computeCalibrationMulti(vpCalibration::CALIB_VIRTUAL_VS_DIST, calibrator, cam, error, false) == 0) {
       std::cout << cam << std::endl;
       std::cout << "Global reprojection error: " << error << std::endl;
+      ss_additional_info << "<with_distortion>" << error << "</with_distortion></global_reprojection_error>";
 
 #ifdef VISP_HAVE_XML2
       vpXmlParserCamera xml;
 
-      if(xml.save(cam, outputFileName.c_str(), "Camera", I.getWidth(), I.getHeight()) == vpXmlParserCamera::SEQUENCE_OK)
+      if(xml.save(cam, outputFileName.c_str(), "Camera", I.getWidth(), I.getHeight(), ss_additional_info.str()) == vpXmlParserCamera::SEQUENCE_OK)
         std::cout << "Camera parameters without distortion successfully saved in \"" << outputFileName << "\"" << std::endl;
       else {
         std::cout << "Failed to save the camera parameters without distortion in \"" << outputFileName << "\"" << std::endl;
@@ -327,7 +353,7 @@ int main(int argc, const char ** argv)
 
     return 0;
   }
-  catch(vpException e) {
+  catch(vpException &e) {
     std::cout << "Catch an exception: " << e << std::endl;
     return 1;
   }

@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -251,7 +251,7 @@ main(int argc, const char ** argv)
       std::cout << "Read image: " << filename << std::endl;
       vpImageIo::read(I, filename) ;
     }
-    catch(vpException e) {
+    catch(vpException &e) {
       std::cout << "Catch an exception due to a non existing file: " << e << std::endl;
     }
 
@@ -261,12 +261,12 @@ main(int argc, const char ** argv)
       std::cout << "Write image: " << filename << std::endl;
       vpImageIo::write(I, filename) ;
     }
-    catch(vpException e) {
+    catch(vpException &e) {
       std::cout << "Catch an exception due to a non existing file: " << e << std::endl;
     }
     return 0;
   }
-  catch(vpException e) {
+  catch(vpException &e) {
     std::cout << "Catch an exception: " << e << std::endl;
     return 1;
   }

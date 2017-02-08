@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -202,20 +202,6 @@ vpMatrix::eye()
 }
 
 /*!
-  Set the matrix diagonal elements to \e val.
-  More generally set M[i][i] = val.
-*/
-void
-vpMatrix::setIdentity(const double & val)
-{
-  for (unsigned int i=0;i<rowNum;i++)
-    for (unsigned int j=0;j<colNum;j++)
-      if (i==j) (*this)[i][j] = val ;
-      else      (*this)[i][j] = 0;
-}
-
-
-/*!
   Compute and return the transpose of the matrix.
 */
 vpMatrix vpMatrix::t() const
@@ -355,10 +341,9 @@ void vpMatrix::AtA(vpMatrix &B) const
   unsigned int i,j,k;
   double s;
   double *ptr;
-  double *Bi;
   for (i=0;i<colNum;i++)
   {
-    Bi = B[i] ;
+    double *Bi = B[i] ;
     for (j=0;j<i;j++)
     {
       ptr=data;
@@ -439,7 +424,7 @@ vpMatrix::operator=(double x)
 
 
 /*!
-  Assigment from an array of double. This methos has to be used carefully since
+  Assigment from an array of double. This method has to be used carefully since
   the array allocated behind \e x pointer should have the same dimension than the matrix.
 */
 vpMatrix &
@@ -2733,13 +2718,39 @@ vpMatrix::print(std::ostream& s, unsigned int length, char const* intro) const
 
 
 /*!
-  Print using matlab syntax, to be put in matlab later.
+  Print using Matlab syntax, to copy/paste in Matlab later.
 
-  Print using the following form:
+  The following code
   \code
-[ a,b,c;
-d,e,f;
-g,h,i]
+#include <visp3/core/vpMatrix.h>
+
+int main()
+{
+  vpMatrix M(2,3);
+  int cpt = 0;
+  for (unsigned int i=0; i<M.getRows(); i++)
+    for (unsigned int j=0; j<M.getCols(); j++)
+      M[i][j] = cpt++;
+
+  std::cout << "M = "; M.matlabPrint(std::cout);
+}
+  \endcode
+  produces this output:
+  \code
+M = [ 0, 1, 2, ;
+3, 4, 5, ]
+  \endcode
+  that could be copy/paste in Matlab:
+  \code
+>> M = [ 0, 1, 2, ;
+3, 4, 5, ]
+
+M =
+
+    0    1    2
+    3    4    5
+
+>>
   \endcode
 */
 std::ostream & vpMatrix::matlabPrint(std::ostream & os) const
@@ -2756,16 +2767,32 @@ std::ostream & vpMatrix::matlabPrint(std::ostream & os) const
 };
 
 /*!
-  Print using MAPLE matrix input format.
+  Print using Maple syntax, to copy/paste in Maple later.
 
-Print using the following way so that this output can be directly copied into MAPLE:
+  The following code
   \code
-([
-[0.939846, 0.0300754, 0.340272, ],
-[0.0300788, 0.984961, -0.170136, ],
-[-0.340272, 0.170136, 0.924807, ],
+#include <visp3/core/vpMatrix.h>
+
+int main()
+{
+  vpMatrix M(2,3);
+  int cpt = 0;
+  for (unsigned int i=0; i<M.getRows(); i++)
+    for (unsigned int j=0; j<M.getCols(); j++)
+      M[i][j] = cpt++;
+
+  std::cout << "M = "; M.maplePrint(std::cout);
+}
+  \endcode
+  produces this output:
+  \code
+M = ([
+[0, 1, 2, ],
+[3, 4, 5, ],
 ])
   \endcode
+  that could be copy/paste in Maple.
+
 */
 std::ostream & vpMatrix::maplePrint(std::ostream & os) const
 {
@@ -2782,13 +2809,30 @@ std::ostream & vpMatrix::maplePrint(std::ostream & os) const
 };
 
 /*!
-  Print matrix in csv format.
+  Print/save a matrix in csv format.
 
-  Print as comma separated values so that this output can be imported into any program which has a csv data import option:
+  The following code
   \code
-0.939846, 0.0300754, 0.340272
-0.0300788, 0.984961, -0.170136
--0.340272, 0.170136, 0.924807
+#include <visp3/core/vpMatrix.h>
+
+int main()
+{
+  std::ofstream ofs("log.csv", std::ofstream::out);
+  vpMatrix M(2,3);
+  int cpt = 0;
+  for (unsigned int i=0; i<M.getRows(); i++)
+    for (unsigned int j=0; j<M.getCols(); j++)
+      M[i][j] = cpt++;
+
+  M.csvPrint(ofs);
+
+  ofs.close();
+}
+  \endcode
+  produces log.csv file that contains:
+  \code
+0, 1, 2
+3, 4, 5
   \endcode
 */
 std::ostream & vpMatrix::csvPrint(std::ostream & os) const
@@ -2806,31 +2850,46 @@ std::ostream & vpMatrix::csvPrint(std::ostream & os) const
 
 
 /*!
- Print to be used as part of a C++ code later.
+  Print to be used as part of a C++ code later.
 
-  Print under the following form:
-  \code
-vpMatrix A(6,4);
-A[0][0] = 1.4;
-A[0][1] = 0.6; ...
-  \endcode
-
-  \param os: the stream to be printed in.
-  \param matrixName: name of the matrix, "A" by default, to be used for
-  the line vpMatrix A(6,7) (see example).
-  \param octet: if false, print using double, if true, print byte per byte
+  \param os : the stream to be printed in.
+  \param matrixName : name of the matrix, "A" by default.
+  \param octet : if false, print using double, if true, print byte per byte
   each bytes of the double array.
-*/
-std::ostream & vpMatrix::cppPrint(std::ostream & os, const char * matrixName, bool octet) const
+
+  The following code shows how to use this function:
+  \code
+#include <visp3/core/vpMatrix.h>
+
+int main()
 {
-  const char defaultName [] = "A";
-  if (NULL == matrixName)
-  {
-    matrixName = defaultName;
-  }
-  os << "vpMatrix " << defaultName
-    << " (" << this ->getRows ()
-    << ", " << this ->getCols () << "); " <<std::endl;
+  vpMatrix M(2,3);
+  int cpt = 0;
+  for (unsigned int i=0; i<M.getRows(); i++)
+    for (unsigned int j=0; j<M.getCols(); j++)
+      M[i][j] = cpt++;
+
+  M.cppPrint(std::cout, "M");
+}
+  \endcode
+  It produces the following output that could be copy/paste in a C++ code:
+  \code
+vpMatrix M (2, 3);
+M[0][0] = 0;
+M[0][1] = 1;
+M[0][2] = 2;
+
+M[1][0] = 3;
+M[1][1] = 4;
+M[1][2] = 5;
+
+  \endcode
+*/
+std::ostream & vpMatrix::cppPrint(std::ostream & os, const std::string &matrixName, bool octet) const
+{
+  os << "vpMatrix " << matrixName
+     << " (" << this ->getRows ()
+     << ", " << this ->getCols () << "); " <<std::endl;
 
   for (unsigned int i=0; i < this->getRows(); ++ i)
   {
@@ -2838,18 +2897,18 @@ std::ostream & vpMatrix::cppPrint(std::ostream & os, const char * matrixName, bo
     {
       if (! octet)
       {
-        os << defaultName << "[" << i << "][" << j
-          << "] = " << (*this)[i][j] << "; " << std::endl;
+        os << matrixName << "[" << i << "][" << j
+           << "] = " << (*this)[i][j] << "; " << std::endl;
       }
       else
       {
         for (unsigned int k = 0; k < sizeof(double); ++ k)
         {
-          os << "((unsigned char*)&(" << defaultName
-            << "[" << i << "][" << j << "]) )[" << k
-            <<"] = 0x" <<std::hex<<
-            (unsigned int)((unsigned char*)& ((*this)[i][j])) [k]
-          << "; " << std::endl;
+          os << "((unsigned char*)&(" << matrixName
+             << "[" << i << "][" << j << "]) )[" << k
+             << "] = 0x" << std::hex
+             << (unsigned int)((unsigned char*)& ((*this)[i][j])) [k]
+             << "; " << std::endl;
         }
       }
     }
@@ -3035,7 +3094,7 @@ vpColVector vpMatrix::eigenValues() const
     gsl_eigen_symmv_workspace * w =  gsl_eigen_symmv_alloc (rowNum);
     gsl_matrix *m = gsl_matrix_alloc(rowNum, colNum);
 
-    unsigned int Atda = m->tda ;
+    unsigned int Atda = (unsigned int)m->tda ;
     for (unsigned int i=0 ; i < rowNum ; i++){
       unsigned int k = i*Atda ;
       for (unsigned int j=0 ; j < colNum ; j++)
@@ -3152,7 +3211,7 @@ void vpMatrix::eigenValues(vpColVector & /* evalue */, vpMatrix & /* evector */)
     gsl_eigen_symmv_workspace * w =  gsl_eigen_symmv_alloc (rowNum);
     gsl_matrix *m = gsl_matrix_alloc(rowNum, colNum);
 
-    unsigned int Atda = m->tda ;
+    unsigned int Atda = (unsigned int)m->tda ;
     for (unsigned int i=0 ; i < rowNum ; i++){
       unsigned int k = i*Atda ;
       for (unsigned int j=0 ; j < colNum ; j++)
@@ -3165,7 +3224,7 @@ void vpMatrix::eigenValues(vpColVector & /* evalue */, vpMatrix & /* evector */)
     for (unsigned int i=0; i < rowNum; i++) {
       evalue[i] = gsl_vector_get (eval, i);
     }
-    Atda = evec->tda ;
+    Atda = (unsigned int)evec->tda ;
     for (unsigned int i=0; i < rowNum; i++) {
       unsigned int k = i*Atda ;
       for (unsigned int j=0; j < rowNum; j++) {
@@ -3203,10 +3262,6 @@ vpMatrix::kernel(vpMatrix &kerA, double svThreshold) const
   unsigned int i, j ;
   unsigned int nbline = getRows() ;
   unsigned int nbcol = getCols() ;
-
-  if ( (nbline <= 0) || (nbcol <= 0) ) {
-    throw( vpException(vpException::dimensionError, "Cannot compute kernel of a zero-size matrix") );
-  }
 
   vpMatrix A ; // Copy of the matrix, SVD function is destructive
   vpColVector sv(nbcol) ;   // singular values
@@ -3268,7 +3323,7 @@ vpMatrix::kernel(vpMatrix &kerA, double svThreshold) const
   Compute the determinant of a n-by-n matrix.
 
   \param method : Method used to compute the determinant. Default LU
-  decomposition methos is faster than the method based on Gaussian
+  decomposition method is faster than the method based on Gaussian
   elimination.
 
   \return Determinant of the matrix.
@@ -3497,9 +3552,9 @@ void vpMatrix::computeHLM(const vpMatrix &H, const double &alpha, vpMatrix &HLM)
 double vpMatrix::euclideanNorm() const
 {
   double norm=0.0;
-  double x ;
   for (unsigned int i=0;i<dsize;i++) {
-    x = *(data +i); norm += x*x;
+    double x = *(data +i);
+    norm += x*x;
   }
 
   return sqrt(norm);
@@ -3518,9 +3573,8 @@ double vpMatrix::euclideanNorm() const
 double vpMatrix::infinityNorm() const
 {
   double norm=0.0;
-  double x ;
   for (unsigned int i=0;i<rowNum;i++){
-    x = 0;
+    double x = 0;
     for (unsigned int j=0; j<colNum;j++){
       x += fabs (*(*(rowPtrs + i)+j)) ;
     }
@@ -3571,5 +3625,52 @@ void vpMatrix::stackMatrices(const vpMatrix &A, const vpRowVector &B, vpMatrix &
 {
   vpMatrix::stack(A, B, C);
 };
+
+/*!
+  \deprecated This method is deprecated. You should use getRow().
+
+  Return the i-th row of the matrix.
+  \warning notice row(1) is the 0th row.
+*/
+vpRowVector
+vpMatrix::row(const unsigned int i)
+{
+  vpRowVector c(getCols()) ;
+
+  for (unsigned int j =0 ; j < getCols() ; j++)  c[j] = (*this)[i-1][j] ;
+  return c ;
+}
+
+/*!
+  \deprecated This method is deprecated. You should use getCol().
+
+  Return the j-th columns of the matrix.
+  \warning notice column(1) is the 0-th column.
+  \param j : Index of the column to extract.
+*/
+vpColVector
+vpMatrix::column(const unsigned int j)
+{
+  vpColVector c(getRows()) ;
+
+  for (unsigned int i =0 ; i < getRows() ; i++)     c[i] = (*this)[i][j-1] ;
+  return c ;
+}
+
+/*!
+  \deprecated You should rather use diag(const double &)
+
+  Set the matrix diagonal elements to \e val.
+  More generally set M[i][i] = val.
+*/
+void
+vpMatrix::setIdentity(const double & val)
+{
+  for (unsigned int i=0;i<rowNum;i++)
+    for (unsigned int j=0;j<colNum;j++)
+      if (i==j) (*this)[i][j] = val ;
+      else      (*this)[i][j] = 0;
+}
+
 #endif //#if defined(VISP_BUILD_DEPRECATED_FUNCTIONS)
 

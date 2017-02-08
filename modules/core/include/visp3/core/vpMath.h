@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -105,7 +105,7 @@ class VISP_EXPORT vpMath
 
   /*!
     Compute x square value.
-    \return \f$ x^2 \f$.
+    \return Square value \f$ x^2 \f$.
   */
   static inline double sqr(double x) { return x*x ; }
 
@@ -119,8 +119,7 @@ class VISP_EXPORT vpMath
   static inline int round(const double x) ;
 
   //   return the sign of x (+-1)
-  static inline int sign(double x) ;
-
+  static inline int (sign)(double x) ;
 
   // test if a number equals 0 (with threshold value)
   static inline bool nul(double x, double s=0.001);
@@ -203,6 +202,8 @@ class VISP_EXPORT vpMath
   static double getMedian(const std::vector<double> &v);
   static double getStdev(const std::vector<double> &v, const bool useBesselCorrection=false);
 
+  static int modulo(const int a, const int n);
+
  private:
   static const double ang_min_sinc;
   static const double ang_min_mc;
@@ -228,7 +229,7 @@ double vpMath::fact(unsigned int x)
   \param n : total number of elements.
   \param p : requested number of elements.
 
-  \return \f$ n! / ((n-p)! p!) \f$
+  \return Combination number \f$ n! / ((n-p)! p!) \f$
 */
 long double vpMath::comb(unsigned int n, unsigned int p)
 {
@@ -251,7 +252,7 @@ int vpMath::round(const double x)
   //:: to design the global namespace and avoid to call recursively vpMath::round
   return (int)::round(x);
 #elif defined(VISP_HAVE_FUNC_STD_ROUND)
-  return (int)std::round(x)
+  return (int)std::round(x);
 #else
   return (x > 0.0) ? ((int) floor(x + 0.5)) : ((int) ceil(x - 0.5));
 #endif
@@ -263,7 +264,15 @@ int vpMath::round(const double x)
   \return -1 if x is negative, +1 if positive and 0 if zero.
 
 */
-int vpMath::sign(double x)
+int
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+(
+#endif
+    vpMath::sign
+#ifndef DOXYGEN_SHOULD_SKIP_THIS
+)
+#endif
+(double x)
 {
   if (fabs(x) < std::numeric_limits<double>::epsilon())
     return 0;
@@ -319,7 +328,7 @@ bool vpMath::greater(double x, double y, double s)
  \param x1 : Upper bound (default 1).
   \param n : Degree of the exponential (default 12).
 
-\return \f$1/(1+exp(-n*((x-x0)/(x1-x0)-0.5)))\f$
+\return Sigmoid value \f$1/(1+exp(-n*((x-x0)/(x1-x0)-0.5)))\f$
  */
 double vpMath::sigmoid(double x, double x0,double x1, double n)
 {
@@ -334,7 +343,15 @@ double vpMath::sigmoid(double x, double x0,double x1, double n)
 
 //unsigned char
 template<> inline unsigned char vpMath::saturate<unsigned char>(char v) {
-  return (unsigned char) (std::max)((int) v, 0);
+  // On big endian arch like powerpc, char implementation is unsigned
+  // with CHAR_MIN=0, CHAR_MAX=255 and SCHAR_MIN=-128, SCHAR_MAX=127
+  // leading to (int)(char -127) = 129.
+  // On little endian arch, CHAR_MIN=-127 and CHAR_MAX=128 leading to
+  // (int)(char -127) = -127.
+  if (std::numeric_limits<char>::is_signed)
+    return (unsigned char) ((std::max)((int) v, 0));
+  else
+    return (unsigned char) ((unsigned int) v > SCHAR_MAX ? 0 : v);
 }
 
 template<> inline unsigned char vpMath::saturate<unsigned char>(unsigned short v) {
@@ -397,7 +414,15 @@ template<> inline char vpMath::saturate<char>(double v) {
 
 //unsigned short
 template<> inline unsigned short vpMath::saturate<unsigned short>(char v) {
-  return (unsigned short) (std::max)((int) v, 0);
+  // On big endian arch like powerpc, char implementation is unsigned
+  // with CHAR_MIN=0, CHAR_MAX=255 and SCHAR_MIN=-128, SCHAR_MAX=127
+  // leading to (int)(char -127) = 129.
+  // On little endian arch, CHAR_MIN=-127 and CHAR_MAX=128 leading to
+  // (int)(char -127) = -127.
+  if (std::numeric_limits<char>::is_signed)
+    return (unsigned char) ((std::max)((int) v, 0));
+  else
+    return (unsigned char) ((unsigned int) v > SCHAR_MAX ? 0 : v);
 }
 
 template<> inline unsigned short vpMath::saturate<unsigned short>(short v) {
@@ -462,11 +487,4 @@ template<> inline unsigned int vpMath::saturate<unsigned int>(double v) {
   return (unsigned int) vpMath::round(v);
 }
 
-
 #endif
-
-/*
- * Local variables:
- * c-basic-offset: 2
- * End:
- */

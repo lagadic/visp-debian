@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -48,7 +48,7 @@
 #if defined(VISP_HAVE_DISPLAY)
 vpPlotCurve::vpPlotCurve() :
   color(vpColor::red), curveStyle(point), thickness(1), nbPoint(0), lastPoint(),
-  pointListx(), pointListy(), pointListz(), xmin(0), xmax(0), ymin(0), ymax(0)
+  pointListx(), pointListy(), pointListz(), legend(), xmin(0), xmax(0), ymin(0), ymax(0)
 {
 }
 

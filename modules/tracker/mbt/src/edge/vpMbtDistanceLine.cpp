@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -164,7 +164,10 @@ buildLine(vpPoint &P1, vpPoint &P2, vpPoint &P3, vpPoint &P4, vpLine &L)
 void
 vpMbtDistanceLine::buildFrom(vpPoint &_p1, vpPoint &_p2)
 {
-  line = new vpLine ;
+  if (line == NULL) {
+    line = new vpLine ;
+  }
+
   poly.setNbPoint(2);
   poly.addPoint(0, _p1);
   poly.addPoint(1, _p2);
@@ -398,9 +401,8 @@ vpMbtDistanceLine::initMovingEdge(const vpImage<unsigned char> &I, const vpHomog
         catch(...)
         {
           //vpTRACE("the line can't be initialized");
-  //        if (melinePt!=NULL) delete melinePt;
-  //        melinePt=NULL;
-  //        isvisible = false;
+          delete melinePt;
+          isvisible = false;
           return false;
         }
       }
@@ -622,7 +624,7 @@ void
 vpMbtDistanceLine::display(const vpImage<unsigned char> &I, const vpHomogeneousMatrix &cMo,
                            const vpCameraParameters &camera, const vpColor col, const unsigned int thickness, const bool displayFullModel)
 {
-  if(isvisible || displayFullModel){
+  if( (isvisible && isTrackedLine) || displayFullModel){
     p1->changeFrame(cMo);
     p2->changeFrame(cMo);
 
@@ -678,7 +680,7 @@ vpMbtDistanceLine::display(const vpImage<vpRGBa> &I, const vpHomogeneousMatrix &
                            const vpCameraParameters &camera, const vpColor col,
                            const unsigned int thickness, const bool displayFullModel)
 {
-  if(isvisible || displayFullModel){
+  if( (isvisible && isTrackedLine) || displayFullModel){
     p1->changeFrame(cMo);
     p2->changeFrame(cMo);
 

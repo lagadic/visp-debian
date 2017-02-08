@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -47,22 +47,18 @@ void vpTemplateTrackerMIForwardCompositional::initCompo()
 {
   std::cout<<"Initialise precomputed value of Compositionnal Direct"<<std::endl;
   ptTemplateSupp=new vpTemplateTrackerPointSuppMIInv[templateSize];
-  int i,j;
-  double et;
-  int ct;
-  double Tij;
   for(unsigned int point=0;point<templateSize;point++)
   {
-    i=ptTemplate[point].y;
-    j=ptTemplate[point].x;
+    int i=ptTemplate[point].y;
+    int j=ptTemplate[point].x;
     X1[0]=j;X1[1]=i;
     Warp->computeDenom(X1,p);
     ptTemplate[point].dW=new double[2*nbParam];
     Warp->getdWdp0(i,j,ptTemplate[point].dW);
 
-    Tij=ptTemplate[point].val;
-    ct=(int)((Tij*(Nc-1))/255.);
-    et=(Tij*(Nc-1))/255.-ct;
+    double Tij=ptTemplate[point].val;
+    int ct=(int)((Tij*(Nc-1))/255.);
+    double et=(Tij*(Nc-1))/255.-ct;
     ptTemplateSupp[point].et=et;
     ptTemplateSupp[point].ct=ct;
     ptTemplateSupp[point].Bt=new double[4];
@@ -89,38 +85,37 @@ void vpTemplateTrackerMIForwardCompositional::initHessienDesired(const vpImage<u
   vpImageFilter::getGradXGauss2D(I, dIx, fgG,fgdG,taillef);
   vpImageFilter::getGradYGauss2D(I, dIy, fgG,fgdG,taillef);
 
-  double erreur=0;
+  //double erreur=0;
   int Nbpoint=0;
 
-  double i2,j2;
-  double Tij;
+  //double Tij;
   double IW,dx,dy;
   int cr,ct;
   double er,et;
 
-  int i,j;
-
   Nbpoint=0;
-  erreur=0;
+  //erreur=0;
 
   zeroProbabilities();
 
   Warp->computeCoeff(p);
   for(unsigned int point=0;point<templateSize;point++)
   {
-    i=ptTemplate[point].y;
-    j=ptTemplate[point].x;
-    X1[0]=j;X1[1]=i;
+    int i=ptTemplate[point].y;
+    int j=ptTemplate[point].x;
+    X1[0]=j;
+    X1[1]=i;
 
     Warp->computeDenom(X1,p);
     Warp->warpX(X1,X2,p);
 
-    j2=X2[0];i2=X2[1];
+    double j2=X2[0];
+    double i2=X2[1];
 
     if((i2>=0)&&(j2>=0)&&(i2<I.getHeight()-1)&&(j2<I.getWidth()-1))
     {
       Nbpoint++;
-      Tij=ptTemplate[point].val;
+      //Tij=ptTemplate[point].val;
       if(!blur)
         IW=I.getValue(i2,j2);
       else
@@ -141,7 +136,7 @@ void vpTemplateTrackerMIForwardCompositional::initHessienDesired(const vpImage<u
         tptemp[it] =dW[0][it]*dx+dW[1][it]*dy;
 
       //calcul de l'erreur
-      erreur+=(Tij-IW)*(Tij-IW);
+      //erreur+=(Tij-IW)*(Tij-IW);
 
       vpTemplateTrackerMIBSpline::PutTotPVBspline(PrtTout, cr, er, ct, et, Nc,tptemp, nbParam, bspline);
 
@@ -173,9 +168,7 @@ void vpTemplateTrackerMIForwardCompositional::trackNoPyr(const vpImage<unsigned 
   vpImageFilter::getGradXGauss2D(I, dIx, fgG,fgdG,taillef);
   vpImageFilter::getGradYGauss2D(I, dIy, fgG,fgdG,taillef);
 
-  double erreur=0;
-  int Nbpoint=0;
-
+  //double erreur=0;
 
   lambda=lambdaDep;
   double MI=0,MIprec=-1000;
@@ -183,7 +176,7 @@ void vpTemplateTrackerMIForwardCompositional::trackNoPyr(const vpImage<unsigned 
   MI_preEstimation=-getCost(I,p);
 
   double i2,j2;
-  double Tij;
+  //double Tij;
   double IW;
   //unsigned
   int cr,ct;
@@ -197,10 +190,10 @@ void vpTemplateTrackerMIForwardCompositional::trackNoPyr(const vpImage<unsigned 
   unsigned int iteration=0;
   do
   {
-    Nbpoint=0;
+    int Nbpoint=0;
     MIprec=MI;
     MI=0;
-    erreur=0;
+    //erreur=0;
 
     zeroProbabilities();
 
@@ -218,7 +211,7 @@ void vpTemplateTrackerMIForwardCompositional::trackNoPyr(const vpImage<unsigned 
       if((i2>=0)&&(j2>=0)&&(i2<I.getHeight()-1)&&(j2<I.getWidth()-1))
       {
         Nbpoint++;
-        Tij=ptTemplate[point].val;
+        //Tij=ptTemplate[point].val;
         if(!blur)
           IW=I.getValue(i2,j2);
         else
@@ -240,7 +233,7 @@ void vpTemplateTrackerMIForwardCompositional::trackNoPyr(const vpImage<unsigned 
 
 
         //calcul de l'erreur
-        erreur+=(Tij-IW)*(Tij-IW);
+        //erreur+=(Tij-IW)*(Tij-IW);
 
         if(ApproxHessian==HESSIAN_NONSECOND||hessianComputation==vpTemplateTrackerMI::USE_HESSIEN_DESIRE)
           vpTemplateTrackerMIBSpline::PutTotPVBsplineNoSecond(PrtTout, cr, er, ct, et, Nc, tptemp, nbParam, bspline);

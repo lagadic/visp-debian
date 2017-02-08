@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -67,8 +67,7 @@ const unsigned int vpAfma4::njoint = 4;
 vpAfma4::vpAfma4()
   : _a1(0), _d3(0), _d4(0), _etc(), _erc(), _eMc()
 {
-  // Set the default parameters in case of the config files on the NAS
-  // at Inria are not available.
+  // Set the default parameters in case of the config files are not available.
 
   //
   // Geometric model constant parameters

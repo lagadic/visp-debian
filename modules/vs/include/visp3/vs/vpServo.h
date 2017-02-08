@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -351,6 +351,7 @@ public:
   vpColVector secondaryTaskJointLimitAvoidance(const vpColVector &q, const vpColVector &dq, const vpColVector & jointMin,
                                                const vpColVector & jointMax, const double &rho=0.1, const double &rho1=0.3, const double &lambda_tune=0.7) const;
 
+  void setCameraDoF(const vpColVector& dof);
 
   /*!
     Set a variable which enables to compute the interaction matrix at each iteration.
@@ -361,7 +362,7 @@ public:
     need to be computed at each iteration of the servo loop. This method allows to force the computation of
     \f${\widehat {\bf L}}\f$ in this particular case.
 
-    \param force_computation: If true it forces the interaction matrix computation even if it is already done.
+    \param force_computation : If true it forces the interaction matrix computation even if it is already done.
 
   */
   void setForceInteractionMatrixComputation(bool force_computation)
@@ -598,8 +599,6 @@ public:
    */
   vpMatrix P;
 
-
-
   //! Singular values from the pseudo inverse.
   vpColVector sv ;
 
@@ -607,6 +606,11 @@ public:
 
   vpColVector e1_initial;
 
+  //! Boolean to know if cJc is identity (for fast computation)
+  bool iscJcIdentity;
+
+  //! A diag matrix used to determine which are the degrees of freedom that are controlled in the camera frame
+  vpMatrix cJc;
 } ;
 
 #endif

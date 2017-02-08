@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -191,7 +191,7 @@ main(int argc, const char **argv)
       light.pulse();
     }
   }
-  catch (vpParallelPortException e) {
+  catch (vpParallelPortException &e) {
     switch(e.getCode()) {
     case vpParallelPortException::opening:
       printf("Can't open the parallel port to access to the ring light device\n");

@@ -1,7 +1,7 @@
 #############################################################################
 #
 # This file is part of the ViSP software.
-# Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+# Copyright (C) 2005 - 2017 by Inria. All rights reserved.
 #
 # This software is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -48,9 +48,21 @@ set(example_cpp
   grabV4l2.cpp
   grabDirectShow.cpp
   grabDirectShowMulti.cpp
+  grabFlyCapture.cpp
   grabOpenCV.cpp
-  grabOpenCV-2.cpp
+  grabRealSense.cpp
+  grabV4l2MultiCpp11Thread.cpp
 )
+
+if(VISP_HAVE_FLYCAPTURE)
+  # Add specific build flag to turn off warnings coming from PointGrey flycapture 3rd party
+  visp_set_source_file_compile_flag(grabFlyCapture.cpp -Wno-unknown-pragmas -Wno-ignored-qualifiers)
+endif()
+
+if(VISP_HAVE_PCL)
+  # Add specific build flag to turn off warnings coming from PCL 3rd party
+  visp_set_source_file_compile_flag(grabRealSense.cpp -Wno-deprecated-declarations -Wno-inconsistent-missing-override -Wno-sign-conversion -Wno-float-equal)
+endif()
 
 foreach(cpp ${example_cpp})
   visp_add_target(${cpp})
@@ -58,14 +70,3 @@ foreach(cpp ${example_cpp})
     visp_add_dependency(${cpp} "examples")
   endif()
 endforeach()
-
-# Add test
-# To run these tests automaticaly using the crontab under Unix or the task
-# manager under windows, we have to add the -d option to turn off the display
-# of acquired images
-#ADD_TEST(grab1394Two      grab1394Two ${OPTION_TO_DESACTIVE_DISPLAY})
-#ADD_TEST(grabDisk         grabDisk ${OPTION_TO_DESACTIVE_DISPLAY})
-#ADD_TEST(grabV4l2         grabV4l2 ${OPTION_TO_DESACTIVE_DISPLAY})
-#ADD_TEST(grabDirectShow   grabDirectShow ${OPTION_TO_DESACTIVE_DISPLAY})
-#ADD_TEST(grabDirectShowMulti   grabDirectShowMulti ${OPTION_TO_DESACTIVE_DISPLAY})
-#ADD_TEST(grabOpenCV       grabOpenCV ${OPTION_TO_DESACTIVE_DISPLAY})

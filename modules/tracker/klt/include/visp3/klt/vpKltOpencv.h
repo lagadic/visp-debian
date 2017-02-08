@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -63,7 +63,8 @@
   \ingroup module_klt
 
   \brief Wrapper for the KLT (Kanade-Lucas-Tomasi) feature tracker
-  implemented in OpenCV.
+  implemented in OpenCV. Thus to enable this class OpenCV should be installed. Installation
+  instructions are provided here https://visp.inria.fr/3rd_opencv.
 
   The following example available in tutorial-klt-tracker.cpp shows how to use
   the main functions of the class.
@@ -98,7 +99,7 @@ public:
 
   //! Get the size of the averaging block used to track the features.
   int getBlockSize() const {return m_blockSize;}
-  void getFeature(const int &index, int &id, float &x, float &y) const;
+  void getFeature(const int &index, long &id, float &x, float &y) const;
   //! Get the list of current features.
   std::vector<cv::Point2f> getFeatures() const {return m_points[1];}
   //CvPoint2D32f* getFeatures() const {return features;}
@@ -283,7 +284,7 @@ public:
 
   //! Get the block size
   int getBlockSize() const {return block_size;}
-  void getFeature(int index, int &id, float &x, float &y) const;
+  void getFeature(int index, long &id, float &x, float &y) const;
   //! Get the list of features
   CvPoint2D32f* getFeatures() const {return features;}
   //! Get the list of features id

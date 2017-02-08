@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -67,10 +67,10 @@ bool test(const std::string &s, const vpArray2D<double> &A, const std::vector<do
 }
 int main()
 {
-  int err = 1;
   {
     vpPoseVector p;
     std::vector<double> bench(6,0);
+    int err = 1;
     if (test("p", p, bench) == false)
       return err;
     p[0] = bench[0] = 0.1;

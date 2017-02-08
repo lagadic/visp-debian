@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -289,10 +289,10 @@ void *mainLoop (void *_simu)
     if(SAVE==1)
     {
       char name[FILENAME_MAX];
-      sprintf(name,"/tmp/image.%04d.external.png",iter) ;
+      sprintf(name,"/tmp/image.%04u.external.png",iter) ;
       std::cout << name << std::endl ;
       simu->write(name) ;
-      sprintf(name,"/tmp/image.%04d.internal.png",iter) ;
+      sprintf(name,"/tmp/image.%04u.internal.png",iter) ;
       simu->write(name) ;
     }
 
@@ -320,7 +320,6 @@ int main(int argc, const char ** argv)
     std::string opt_ipath;
     std::string ipath;
     std::string filename;
-    std::string username;
     bool opt_display = true;
 
     // Get the visp-images-data package path or VISP_INPUT_IMAGE_PATH environment variable value
@@ -387,7 +386,7 @@ int main(int argc, const char ** argv)
     }
     return 0;
   }
-  catch(vpException e) {
+  catch(vpException &e) {
     std::cout << "Catch an exception: " << e << std::endl;
     return 1;
   }

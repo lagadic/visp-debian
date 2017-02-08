@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -48,29 +48,35 @@
 
 #include <visp3/core/vpColVector.h>
 
-
 /*!
   \class vpRGBa
 
   \ingroup group_core_image
 
-  \brief Class that defines a RGB 32 bits structure.
+  Class that defines a RGBa 32 bits structure that is used to build color
+  images. RGBa stands for red green blue alpha color space.
 
-  Define the object vpRGBa that is used to build color
-  images (it define a RGB 32 bits structure, fourth byte is not used)
+  The alpha channel is normally used as an opacity channel. If a pixel has a value
+  of 0 in its alpha channel, it is fully transparent, whereas a value of 255 in the alpha
+  channel gives a fully opaque pixel.
 
+  By default the alpha channel is set to vpRGBa::alpha_default.
   \sa vpImage
 */
 class VISP_EXPORT vpRGBa
 {
 public:
+  enum AlphaDefault {
+    alpha_default = 255
+  };
+
   /*!
     Basic constructor.
     
     Build a black value.
     
   */
-  inline vpRGBa() : R(0), G(0), B(0), A(0) {};
+  inline vpRGBa() : R(0), G(0), B(0), A(vpRGBa::alpha_default) {}
   
   /*!
     Constructor.
@@ -85,7 +91,7 @@ public:
   */
   inline vpRGBa(const unsigned char &r, const unsigned char &g,
     const unsigned char &b, const unsigned char &a=0)
-    : R(r), G(g), B(b), A(a) {};
+    : R(r), G(g), B(b), A(a) {}
 
 
   /*!
@@ -96,13 +102,13 @@ public:
     \param v : Value to set.
     
   */
-  inline vpRGBa(const unsigned char &v) : R(v), G(v), B(v), A(v) {};
+  inline vpRGBa(const unsigned char &v) : R(v), G(v), B(v), A(v) {}
 
 
   /*!
     Copy constructor.
   */
-  inline vpRGBa(const vpRGBa &v) : R(v.R), G(v.G), B(v.B), A(v.A) {};
+  inline vpRGBa(const vpRGBa &v) : R(v.R), G(v.G), B(v.B), A(v.A) {}
 
   /*!
     Create a RGBa value from a 4 dimension column vector.
@@ -113,10 +119,10 @@ public:
     A=v[3]
     
   */
-  inline vpRGBa(const vpColVector &v) : R(0), G(0), B(0), A(0)
+  inline vpRGBa(const vpColVector &v) : R(0), G(0), B(0), A(vpRGBa::alpha_default)
   {
     *this = v;
-  };
+  }
 
   // We cannot add here the following destructor without changing the hypothesis that the size of this class is 4.
   // With the destructor it becomes 16 that does break a lot of things arround image conversions
@@ -124,6 +130,9 @@ public:
 
   vpRGBa & operator=(const unsigned char &v) ;
   vpRGBa & operator=(const vpRGBa &v) ;
+#ifdef VISP_HAVE_CPP11_COMPATIBILITY
+  vpRGBa & operator=(const vpRGBa &&v);
+#endif
   vpRGBa & operator=(const vpColVector &v) ;
   bool operator==(const vpRGBa &v);
   bool operator!=(const vpRGBa &v);
@@ -138,6 +147,8 @@ public:
   bool operator<(const vpRGBa &v) const;
   bool operator>(const vpRGBa &v) const;
 
+  friend VISP_EXPORT std::ostream& operator<< (std::ostream &os, const vpRGBa& rgba);
+
  public:
   unsigned char R ; //!< Red component.
   unsigned char G ; //!< Green component.
@@ -150,8 +161,3 @@ public:
 
 #endif
 
-/*
- * Local variables:
- * c-basic-offset: 2
- * End:
- */

@@ -1,7 +1,7 @@
 #############################################################################
 #
 # This file is part of the ViSP software.
-# Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+# Copyright (C) 2005 - 2017 by Inria. All rights reserved.
 #
 # This software is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -40,6 +40,10 @@ include(CheckIncludeFiles)
 include(CheckCXXSourceCompiles)
 
 macro(check_math_expr _expr _var)
+    unset(${_var} CACHE)
+    if(USE_CPP11)
+      set(CMAKE_REQUIRED_FLAGS ${CPP11_CXX_FLAGS})
+    endif()
     check_cxx_source_compiles("
 #include <cmath>
 int main(int argc, char ** argv)
@@ -55,6 +59,10 @@ check_math_expr("isinf(1.0)"        HAVE_FUNC_ISINF)
 check_math_expr("std::isinf(1.0)"   HAVE_FUNC_STD_ISINF)
 
 if(HAVE_FLOAT_H)
+    unset(HAVE_FUNC__FINITE CACHE)
+    if(USE_CPP11)
+      set(CMAKE_REQUIRED_FLAGS ${CPP11_CXX_FLAGS})
+    endif()
     # The version that should work with MSVC
     check_cxx_source_compiles("
 #include <float.h>
@@ -63,7 +71,7 @@ int main(int argc, char ** argv)
     (void)_finite(1.0);
     return 0;
 }
-" HAVE_FUNC__ISINF)
+" HAVE_FUNC__FINITE)
 else()
     set(HAVE_FUNC__FINITE FALSE)
 endif()

@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -66,7 +66,6 @@
 */
 class VISP_EXPORT vpImageFilter
 {
-
 public:
 #if defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION >= 0x020100)
   static void canny(const vpImage<unsigned char>& I,
@@ -80,7 +79,7 @@ public:
    Apply a 1x3 derivative filter to an image pixel.
 
    \param I : Image to filter
-   \param r: coordinates (row) of the pixel
+   \param r : coordinates (row) of the pixel
    \param c : coordinates (column) of the pixel
    */
   template<class T>
@@ -170,13 +169,18 @@ public:
   static void filter(const vpImage<double> &I,
                      vpImage<double>& Iu,
                      vpImage<double>& Iv,
-                     const vpMatrix& M) ;
-
+                     const vpMatrix& M,
+                     const bool convolve=false);
 
   static void filter(const vpImage<unsigned char> &I,
                      vpImage<double>& If,
-                     const vpMatrix& M) ;
+                     const vpMatrix& M,
+                     const bool convolve=false);
 
+  static void sepFilter(const vpImage<unsigned char> &I,
+                        vpImage<double>& If,
+                        const vpColVector& kernelH,
+                        const vpColVector& kernelV);
 
   static void filter(const vpImage<unsigned char> &I, vpImage<double>& GI, const double *filter,unsigned  int size);
   static void filter(const vpImage<double> &I, vpImage<double>& GI, const double *filter,unsigned  int size);
@@ -438,8 +442,7 @@ public:
   static void getGradY(const vpImage<double> &I, vpImage<double>& dIy, const double *filter, unsigned int size);
   static void getGradYGauss2D(const vpImage<unsigned char> &I, vpImage<double>& dIy, const double *gaussianKernel,
                               const double *gaussianDerivativeKernel,unsigned  int size);
-
-} ;
+};
 
 
 #endif

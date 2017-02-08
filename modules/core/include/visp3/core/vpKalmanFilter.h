@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -156,7 +156,7 @@ public:
   /*!
     Return the iteration number.
   */
-  int getIteration() { return iter ; }
+  long getIteration() { return iter ; }
   /*!
     Sets the verbose mode.
     \param on : If true, activates the verbose mode which consists in printing the Kalman 

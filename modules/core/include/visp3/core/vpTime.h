@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -45,12 +45,13 @@
   \brief Time management and measurement
 
 */
+#include <string>
+#include <iostream>
 
 #include <visp3/core/vpConfig.h>
 #include <visp3/core/vpException.h>
 
 /*!
-  \class vpTime
   \ingroup group_core_time
   \brief Time management and measurement.
 
@@ -74,15 +75,14 @@ int main()
 
 namespace vpTime
 {
-
-VISP_EXPORT double getMinTimeForUsleepCall();
-VISP_EXPORT double measureTimeSecond() ;
-VISP_EXPORT double measureTimeMs() ;
-VISP_EXPORT double measureTimeMicros() ;
-VISP_EXPORT void sleepMs(double t);
-VISP_EXPORT int  wait(double t0, double t) ;
-VISP_EXPORT void wait(double t) ;
-
+  VISP_EXPORT std::string getDateTime(const std::string &format="%Y/%m/%d %H:%M:%S");
+  VISP_EXPORT double getMinTimeForUsleepCall();
+  VISP_EXPORT double measureTimeSecond() ;
+  VISP_EXPORT double measureTimeMs() ;
+  VISP_EXPORT double measureTimeMicros() ;
+  VISP_EXPORT void sleepMs(double t);
+  VISP_EXPORT int  wait(double t0, double t) ;
+  VISP_EXPORT void wait(double t) ;
 };
 
 #endif

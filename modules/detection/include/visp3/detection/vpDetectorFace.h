@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -42,6 +42,8 @@
 
 #if (VISP_HAVE_OPENCV_VERSION >= 0x020200)
 
+#include <algorithm> // needed by std::min in opencv2/objdetect/objdetect.hpp
+
 #include <opencv2/objdetect/objdetect.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -52,7 +54,8 @@
   \class vpDetectorFace
   \ingroup group_detection_face
   The vpDetectorFace class is a wrapper over OpenCV Haar cascade face detection capabilities.
-  To use this class ViSP should be build against OpenCV 2.2.0 or a more recent version.
+  To use this class ViSP should be build against OpenCV 2.2.0 or a more recent version. Installation
+  instructions are provided here https://visp.inria.fr/3rd_opencv.
 
   The following sample code shows how to use this class to detect the largest face in the image.
   The cascade classifier file "haarcascade_frontalface_alt.xml" can be found in ViSP source code or in OpenCV.
@@ -93,6 +96,7 @@ public:
   void setCascadeClassifierFile(const std::string &filename);
 
   bool detect(const vpImage<unsigned char> &I);
+  bool detect(const cv::Mat &frame_gray);
 };
 
 #endif

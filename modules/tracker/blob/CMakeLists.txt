@@ -1,7 +1,7 @@
 #############################################################################
 #
 # This file is part of the ViSP software.
-# Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+# Copyright (C) 2005 - 2017 by Inria. All rights reserved.
 #
 # This software is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -39,4 +39,4 @@ vp_add_module(blob visp_core)
 vp_glob_module_sources()
 vp_module_include_directories()
 vp_create_module()
-vp_add_tests(DEPENDS_ON visp_features)
+vp_add_tests(DEPENDS_ON visp_visual_features visp_gui visp_io)

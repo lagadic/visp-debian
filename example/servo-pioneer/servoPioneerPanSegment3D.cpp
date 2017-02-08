@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -289,9 +289,10 @@ int main(int argc, char **argv)
 #endif
 
     vpColVector v; // vz, wx
-    unsigned int iter = 0;
+
     try
     {
+      unsigned int iter = 0;
       while(1)
       {
 #ifdef USE_REAL_ROBOT
@@ -403,7 +404,7 @@ int main(int argc, char **argv)
     task.print() ;
     task.kill();
   }
-  catch(vpException e) {
+  catch(vpException &e) {
     std::cout << "Catch an exception: " << e << std::endl;
     return 1;
   }

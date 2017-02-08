@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -423,7 +423,7 @@ vpLine::changeFrame(const vpHomogeneousMatrix &cMo, vpColVector &cP_)
   cP_[0] = A1 = a1*d1 ;
   cP_[1] = B1 = b1*d1 ;
   cP_[2] = C1 = c1*d1 ;
-  cP_[3] = D1 = 0 ;
+  cP_[3] = 0 ;
 
   // Constraint A1 A2 + B1 B2 + C1 C2 = 0 (P2 orthogonal to P1)
   // N2_new = (N1 x N2) x N1_new

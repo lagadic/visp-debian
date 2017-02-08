@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -113,6 +113,8 @@ public:
   virtual ~vpSimulatorCamera() ;
 
 public:
+  /** @name Inherited functionalities from vpSimulatorCamera */
+  //@{
   void get_cVe(vpVelocityTwistMatrix &cVe) const;
   void get_eJe(vpMatrix &eJe);
 
@@ -122,6 +124,7 @@ public:
   void setPosition(const vpHomogeneousMatrix &wMc);
   void setVelocity(const vpRobot::vpControlFrameType frame,
                    const  vpColVector &vel)  ;
+  //@}
 
 private:
   void init() ;

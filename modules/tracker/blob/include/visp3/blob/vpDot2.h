@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -49,6 +49,7 @@
 #include <visp3/core/vpTracker.h>
 #include <visp3/core/vpColor.h>
 #include <visp3/core/vpImagePoint.h>
+#include <visp3/core/vpPolygon.h>
 
 #include <vector>
 #include <list>
@@ -226,6 +227,12 @@ public:
   */
   double getMeanGrayLevel() const {
     return (this->mean_gray_level);
+  };
+  /*!
+  \return a vpPolygon made from the edges of the dot.
+  */
+  vpPolygon getPolygon() const {
+    return (vpPolygon(ip_edges_list));
   };
   double getSizePrecision() const;
   double getWidth() const;

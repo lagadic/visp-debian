@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -182,10 +182,12 @@ int main(int argc, const char ** argv) {
 #endif
 
     if (opt_display) {
+      display.setDownScalingFactor(vpDisplay::SCALE_AUTO);
       display.init(I, 0, 0, "ORB keypoints matching");
       Imatch.resize(I.getHeight(), 2*I.getWidth());
       Imatch.insert(I, vpImagePoint(0, 0));
-      display2.init(Imatch, 0, (int)I.getHeight() + 70, "ORB keypoints matching");
+      display2.setDownScalingFactor(vpDisplay::SCALE_AUTO);
+      display2.init(Imatch, 0, (int)I.getHeight()/vpDisplay::getDownScalingFactor(I) + 70, "ORB keypoints matching");
     }
 
     vpCameraParameters cam;

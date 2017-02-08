@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -56,20 +56,17 @@ const double vpHomography::threshold_displacement = 1e-18;
 static void
 updatePoseRotation(vpColVector& dx,vpHomogeneousMatrix&  mati)
 {
-  unsigned int i,j;
-
-  double sinu,cosi,mcosi,u[3],    s;
   vpRotationMatrix rd ;
 
-
-  s = sqrt(dx[0]*dx[0] + dx[1]*dx[1] + dx[2]*dx[2]);
+  double s = sqrt(dx[0]*dx[0] + dx[1]*dx[1] + dx[2]*dx[2]);
   if (s > 1.e-25)
   {
+    double u[3];
 
-    for (i=0;i<3;i++) u[i] = dx[i]/s;
-    sinu = sin(s);
-    cosi = cos(s);
-    mcosi = 1-cosi;
+    for (unsigned int i=0;i<3;i++) u[i] = dx[i]/s;
+    double sinu = sin(s);
+    double cosi = cos(s);
+    double mcosi = 1-cosi;
     rd[0][0] = cosi + mcosi*u[0]*u[0];
     rd[0][1] = -sinu*u[2] + mcosi*u[0]*u[1];
     rd[0][2] = sinu*u[1] + mcosi*u[0]*u[2];
@@ -82,12 +79,11 @@ updatePoseRotation(vpColVector& dx,vpHomogeneousMatrix&  mati)
   }
   else
   {
-    for (i=0;i<3;i++)
+    for (unsigned int i=0;i<3;i++)
     {
-      for (j=0;j<3;j++) rd[i][j] = 0.0;
+      for (unsigned int j=0;j<3;j++) rd[i][j] = 0.0;
       rd[i][i] = 1.0;
     }
-
   }
 
   vpHomogeneousMatrix Delta ;
@@ -117,8 +113,8 @@ vpHomography::computeRotation(unsigned int nbpoint,
   vpMatrix H1(2,3) ;
   vpColVector e1(2) ;
 
-  int only_1 = 0 ;
-  int only_2 = 0 ;
+  bool only_1 = false;
+  bool only_2 = false;
   int iter = 0 ;
 
   unsigned int n=0 ;
@@ -131,7 +127,6 @@ vpHomography::computeRotation(unsigned int nbpoint,
       n++ ;
     }
   }
-  //if ((only_1==1) || (only_2==1))  ; else n *=2 ;
   if ( (! only_1) && (! only_2) )
     n *=2 ;
 
@@ -201,7 +196,7 @@ vpHomography::computeRotation(unsigned int nbpoint,
         e1[0] = Hp1[0] - c2P[i].get_x() ;
         e1[1] = Hp1[1] - c2P[i].get_y() ;
 
-        if (only_2==1)
+        if (only_2)
         {
           if (k == 0) { L = H2 ; e = e2 ; }
           else
@@ -211,7 +206,7 @@ vpHomography::computeRotation(unsigned int nbpoint,
           }
         }
         else
-          if (only_1==1)
+          if (only_1)
           {
             if (k == 0) { L = H1 ; e= e1 ; }
             else
@@ -320,16 +315,13 @@ vpHomography::computeDisplacement(unsigned int nbpoint,
   vpMatrix H1(2,6) ;
   vpColVector e1(2) ;
 
-  int only_1;
-  int only_2;
+  bool only_1 = true;
+  bool only_2 = false;
   int iter = 0 ;
   unsigned int n=0 ;
   n = nbpoint ;
-  only_1 = 1 ;
-  only_2 = 0 ;
 
-  //if ((only_1==1) || (only_2==1))  ; else n *=2 ;
-  // Since only_1 is initialized to 1, the next 2 lines connt be reached. We remove them
+  // next 2 lines are useless (detected by Coverity Scan)
   //if ( (! only_1) && (! only_2) )
   //  n *=2 ;
 
@@ -431,7 +423,7 @@ vpHomography::computeDisplacement(unsigned int nbpoint,
       e1[0] = Hp1[0] - c2P[i].get_x() ;
       e1[1] = Hp1[1] - c2P[i].get_y() ;
 
-      if (only_2==1)
+      if (only_2)
       {
         if (k == 0) { L = H2 ; e = e2 ; }
         else
@@ -441,7 +433,7 @@ vpHomography::computeDisplacement(unsigned int nbpoint,
         }
       }
       else
-        if (only_1==1)
+        if (only_1)
         {
           if (k == 0) { L = H1 ; e= e1 ; }
           else
@@ -534,17 +526,14 @@ vpHomography::computeDisplacement(unsigned int nbpoint,
   vpMatrix H1(2,6) ;
   vpColVector e1(2) ;
 
-
-  int only_1;
-  int only_2;
+  bool only_1 = true;
+  bool only_2 = false;
   int iter = 0 ;
   unsigned int i ;
   unsigned int n=0 ;
-  only_1 = 1 ;
-  only_2 = 0 ;
   n = nbpoint ;
 
-  // Remove next 2 lines, since when only_1 is initialized to 1 (as it is), we cannot reach the code
+  // next 2 lines are useless (detected by Coverity Scan)
   //if ( (! only_1) && (! only_2) )
   //  n *=2 ;
 
@@ -563,10 +552,8 @@ vpHomography::computeDisplacement(unsigned int nbpoint,
   iter =0 ;
   while (vpMath::equal(r_1,r,threshold_displacement) == false )
   {
-
     r_1 =r ;
     // compute current position
-
 
     //Change frame (current)
     vpHomogeneousMatrix c1Mc2, c2Mo ;
@@ -579,8 +566,6 @@ vpHomography::computeDisplacement(unsigned int nbpoint,
     c1Mc2.extract(c1Tc2) ;
 
     c2Mo = c2Mc1*c1Mo ;
-
-
 
     vpMatrix L(2,3), Lp ;
     int k =0 ;
@@ -603,14 +588,12 @@ vpHomography::computeDisplacement(unsigned int nbpoint,
       Hp2 /= Hp2[2] ;  // normalisation
       Hp1 /= Hp1[2] ;
 
-
       // set up the interaction matrix
       double x = Hp2[0] ;
       double y = Hp2[1] ;
       double Z1  ;
 
       Z1 = (N1[0]*x+N1[1]*y+N1[2])/d1 ;        // 1/z
-
 
       H2[0][0] = -Z1 ;  H2[0][1] = 0  ;       H2[0][2] = x*Z1 ;
       H2[1][0] = 0 ;     H2[1][1] = -Z1 ;     H2[1][2] = y*Z1 ;
@@ -650,7 +633,7 @@ vpHomography::computeDisplacement(unsigned int nbpoint,
       e1[1] = Hp1[1] - c2P[i].get_y() ;
 
 
-      if (only_2==1)
+      if (only_2)
       {
         if (k == 0) { L = H2 ; e = e2 ; }
         else
@@ -660,7 +643,7 @@ vpHomography::computeDisplacement(unsigned int nbpoint,
         }
       }
       else
-        if (only_1==1)
+        if (only_1)
         {
           if (k == 0) { L = H1 ; e= e1 ; }
           else
@@ -717,7 +700,6 @@ vpHomography::computeDisplacement(unsigned int nbpoint,
     c2Mc1 = vpExponentialMap::direct(c2Tcc1).inverse()*c2Mc1 ; ;
     //   UpdatePose2(c2Tcc1, c2Mc1) ;
     r =(W*e).sumSquare() ;
-
 
 
   if (r < 1e-15)  {break ; }

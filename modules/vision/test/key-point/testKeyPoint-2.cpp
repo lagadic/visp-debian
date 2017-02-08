@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -176,6 +176,7 @@ int main(int argc, const char ** argv) {
 #endif
 
     if (opt_display) {
+      display.setDownScalingFactor(vpDisplay::SCALE_AUTO);
       display.init(I, 0, 0, "ORB keypoints matching and pose estimation");
     }
 
@@ -255,7 +256,7 @@ int main(int argc, const char ** argv) {
     //Keep only keypoints on the cube
     std::vector<vpPolygon> polygons;
     std::vector<std::vector<vpPoint> > roisPt;
-    std::pair<std::vector<vpPolygon>, std::vector<std::vector<vpPoint> > > pair = tracker.getPolygonFaces(false);
+    std::pair<std::vector<vpPolygon>, std::vector<std::vector<vpPoint> > > pair = tracker.getPolygonFaces(true); //To detect an issue with CI
     polygons = pair.first;
     roisPt = pair.second;
 
@@ -279,7 +280,7 @@ int main(int argc, const char ** argv) {
     keypoints.detect(I, trainKeyPoints, elapsedTime);
 
     //Keep only keypoints on the cube
-    pair = tracker.getPolygonFaces(false);
+    pair = tracker.getPolygonFaces(true, true, true); //To detect an issue with CI
     polygons = pair.first;
     roisPt = pair.second;
 
@@ -302,7 +303,7 @@ int main(int argc, const char ** argv) {
     keypoints.detect(I, trainKeyPoints, elapsedTime);
 
     //Keep only keypoints on the cube
-    pair = tracker.getPolygonFaces(false);
+    pair = tracker.getPolygonFaces(false); //To detect an issue with CI
     polygons = pair.first;
     roisPt = pair.second;
 
@@ -334,7 +335,8 @@ int main(int argc, const char ** argv) {
     keypoints.createImageMatching(I, IMatching);
 
     if (opt_display) {
-      display2.init(IMatching, 0, (int)I.getHeight() + 80, "IMatching");
+      display2.setDownScalingFactor(vpDisplay::SCALE_AUTO);
+      display2.init(IMatching, 0, (int)I.getHeight()/vpDisplay::getDownScalingFactor(I) + 80, "IMatching");
     }
 
     bool opt_click = false;

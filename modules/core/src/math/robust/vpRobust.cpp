@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -75,6 +75,56 @@ vpRobust::vpRobust(unsigned int n_data)
   sorted_residues.resize(n_data);
   // NoiseThreshold=0.0017; //Can not be more accurate than 1 pixel
 }
+
+/*!
+  Default constructor.
+*/
+vpRobust::vpRobust()
+  : normres(), sorted_normres(), sorted_residues(), NoiseThreshold(0.0017), sig_prev(0), it(0), swap(0), size(0)
+{
+}
+
+/*!
+  Copy constructor.
+*/
+vpRobust::vpRobust(const vpRobust &other)
+{
+  *this = other;
+}
+
+/*!
+  Copy operator.
+ */
+vpRobust & vpRobust::operator=(const vpRobust &other)
+{
+  normres = other.normres;
+  sorted_normres = other.sorted_normres;
+  sorted_residues = other.sorted_residues;
+  NoiseThreshold = other.NoiseThreshold;
+  sig_prev = other.sig_prev;
+  it = other.it;
+  swap = other.swap;
+  size = other.size;
+  return *this;
+}
+
+#ifdef VISP_HAVE_CPP11_COMPATIBILITY
+/*!
+  Move operator.
+ */
+vpRobust & vpRobust::operator=(const vpRobust &&other)
+{
+  normres = std::move(other.normres);
+  sorted_normres = std::move(other.sorted_normres);
+  sorted_residues = std::move(other.sorted_residues);
+  NoiseThreshold = std::move(other.NoiseThreshold);
+  sig_prev = std::move(other.sig_prev);
+  it = std::move(other.it);
+  swap = std::move(other.swap);
+  size = std::move(other.size);
+  return *this;
+}
+#endif
 
 /*!
   \brief Resize containers.
@@ -344,7 +394,6 @@ vpRobust::simultMEstimator(vpColVector &residues)
 {
  
   double med=0;					// Median
-  double normmedian=0; 	// Normalized Median
   double sigma=0;				// Standard Deviation
 
   unsigned int n_data = residues.getRows();
@@ -367,7 +416,7 @@ vpRobust::simultMEstimator(vpColVector &residues)
   // For Others use MAD calculated on first iteration
   if(it==0)
   {
-    normmedian = select(norm_res, 0, (int)n_data-1, (int)ind_med/*(int)n_data/2*/);
+    double normmedian = select(norm_res, 0, (int)n_data-1, (int)ind_med/*(int)n_data/2*/); // Normalized Median
     // 1.48 keeps scale estimate consistent for a normal probability dist.
     sigma = 1.4826*normmedian; // Median Absolute Deviation
   }
@@ -401,23 +450,40 @@ vpRobust::scale(vpRobustEstimatorType method, vpColVector &x)
   double sigma2=0;
   /* long */ double Expectation=0;
   /* long */ double Sum_chi=0;
-  /* long*/  double chiTmp =0;
 
   for(unsigned int i=0; i<n; i++)
   {
-
-    chiTmp = constrainedChi(method, x[i]);
+    double chiTmp = constrainedChi(method, x[i]);
+#if defined(VISP_HAVE_FUNC_STD_ERFC)
+    Expectation += chiTmp*std::erfc(chiTmp);
+#elif defined(VISP_HAVE_FUNC_ERFC)
+    Expectation += chiTmp*erfc(chiTmp);
+#else
     Expectation += chiTmp*(1-erf(chiTmp));
+#endif
+
     Sum_chi += chiTmp;
 
 #ifdef VP_DEBUG
 #if VP_DEBUG_MODE == 3
     {
-      std::cout << "erf = " << 1-erf(chiTmp) << std::endl;
+#if defined(VISP_HAVE_FUNC_STD_ERFC)
+      std::cout << "erf = " << std::erfc(chiTmp) << std::endl;
+#elif defined(VISP_HAVE_FUNC_ERFC)
+      std::cout << "erf = " << erfc(chiTmp) << std::endl;
+#else
+      std::cout << "erf = " << (1-erf(chiTmp)) << std::endl;
+#endif
       std::cout << "x[i] = " << x[i] <<std::endl;
       std::cout << "chi = " << chiTmp << std::endl;
       std::cout << "Sum chi = " << chiTmp*vpMath::sqr(sig_prev) << std::endl;
+#if defined(VISP_HAVE_FUNC_STD_ERFC)
+      std::cout << "Expectation = " << chiTmp*std::erfc(chiTmp) << std::endl;
+#elif defined(VISP_HAVE_FUNC_ERFC)
+      std::cout << "Expectation = " << chiTmp*erfc(chiTmp) << std::endl;
+#else
       std::cout << "Expectation = " << chiTmp*(1-erf(chiTmp)) << std::endl;
+#endif
       //getchar();
     }
 #endif
@@ -451,23 +517,40 @@ vpRobust::simultscale(vpColVector &x)
   double sigma2=0;
   /* long */ double Expectation=0;
   /* long */ double Sum_chi=0;
-  /* long */ double chiTmp =0;
 
   for(unsigned int i=0; i<n; i++)
   {
 
-    chiTmp = simult_chi_huber(x[i]);
+    double chiTmp = simult_chi_huber(x[i]);
+#if defined(VISP_HAVE_FUNC_STD_ERFC)
+    Expectation += chiTmp*std::erfc(chiTmp);
+#elif defined(VISP_HAVE_FUNC_ERFC)
+    Expectation += chiTmp*erfc(chiTmp);
+#else
     Expectation += chiTmp*(1-erf(chiTmp));
+#endif
     Sum_chi += chiTmp;
 
 #ifdef VP_DEBUG
 #if VP_DEBUG_MODE == 3
     {
-      std::cout << "erf = " << 1-erf(chiTmp) << std::endl;
+#if defined(VISP_HAVE_FUNC_STD_ERFC)
+      std::cout << "erf = " << std::erfc(chiTmp) << std::endl;
+#elif defined(VISP_HAVE_FUNC_ERFC)
+      std::cout << "erf = " << erfc(chiTmp) << std::endl;
+#else
+      std::cout << "erf = " << (1-erf(chiTmp)) << std::endl;
+#endif
       std::cout << "x[i] = " << x[i] <<std::endl;
       std::cout << "chi = " << chiTmp << std::endl;
       std::cout << "Sum chi = " << chiTmp*vpMath::sqr(sig_prev) << std::endl;
+#if defined(VISP_HAVE_FUNC_STD_ERFC)
+      std::cout << "Expectation = " << chiTmp*std::erfc(chiTmp) << std::endl;
+#elif defined(VISP_HAVE_FUNC_ERFC)
+      std::cout << "Expectation = " << chiTmp*erfc(chiTmp) << std::endl;
+#else
       std::cout << "Expectation = " << chiTmp*(1-erf(chiTmp)) << std::endl;
+#endif
       //getchar();
     }
 #endif
@@ -514,12 +597,12 @@ double
 vpRobust::constrainedChiTukey(double x)
 {
   double sct=0;
-  double a=4.7;
   double s=sig_prev;
   //double epsillon=0.5;
 
   if(fabs(x) <= 4.7*sig_prev)
   {
+    double a=4.7;
     //sct = (vpMath::sqr(s*a-x)*vpMath::sqr(s*a+x)*vpMath::sqr(x))/(s*vpMath::sqr(vpMath::sqr(a*vpMath::sqr(s))));
     sct = (vpMath::sqr(s*a)*x-s*vpMath::sqr(s*a)-x*vpMath::sqr(x))*(vpMath::sqr(s*a)*x+s*vpMath::sqr(s*a)-x*vpMath::sqr(x))/s*vpMath::sqr(vpMath::sqr(vpMath::sqr(s)))/vpMath::sqr(vpMath::sqr(a));
   }
@@ -755,6 +838,7 @@ vpRobust::select(vpColVector &a, int l, int r, int k)
 }
 
 
+#if !defined(VISP_HAVE_FUNC_ERFC) && !defined(VISP_HAVE_FUNC_STD_ERFC)
 double
 vpRobust::erf(double x)
 {
@@ -783,8 +867,6 @@ vpRobust::gammp(double a, double x)
 void
 vpRobust::gser(double *gamser, double a, double x, double *gln)
 {
-  double sum,del,ap;
-
   *gln=gammln(a);
   if (x <= 0.0)
   {
@@ -795,8 +877,9 @@ vpRobust::gser(double *gamser, double a, double x, double *gln)
   }
   else
   {
-    ap=a;
-    del=sum=1.0/a;
+    double ap=a;
+    double sum=1.0/a;
+    double del = sum;
     for (int n=1; n<=vpITMAX; n++)
     {
       ap += 1.0;
@@ -804,8 +887,8 @@ vpRobust::gser(double *gamser, double a, double x, double *gln)
       sum += del;
       if (fabs(del) < fabs(sum)*vpEPS)
       {
-	*gamser=sum*exp(-x+a*log(x)-(*gln));
-	return;
+        *gamser=sum*exp(-x+a*log(x)-(*gln));
+        return;
       }
     }
     std::cout << "a too large, vpITMAX too small in routine GSER";
@@ -817,17 +900,17 @@ void
 vpRobust::gcf(double *gammcf, double a, double x, double *gln)
 {
   double gold=0.0,g,fac=1.0,b1=1.0;
-  double  b0=0.0,anf,ana,an,a1,a0=1.0;
+  double  b0=0.0,a1,a0=1.0;
 
   *gln=gammln(a);
   a1=x;
   for (int n=1; n<=vpITMAX; n++)
   {
-    an=(double) n;
-    ana=an-a;
+    double an=(double) n;
+    double ana=an-a;
     a0=(a1+a0*ana)*fac;
     b0=(b1+b0*ana)*fac;
-    anf=an*fac;
+    double anf=an*fac;
     a1=x*a0+anf*a1;
     b1=x*b0+anf*b1;
     //if (a1)
@@ -837,8 +920,8 @@ vpRobust::gcf(double *gammcf, double a, double x, double *gln)
       g=b1*fac;
       if (fabs((g-gold)/g) < vpEPS)
       {
-	*gammcf=exp(-x+a*log(x)-(*gln))*g;
-	return;
+        *gammcf=exp(-x+a*log(x)-(*gln))*g;
+        return;
       }
       gold=g;
     }
@@ -864,6 +947,7 @@ vpRobust::gammln(double xx)
   }
   return -tmp+log(2.50662827465*ser);
 }
+#endif
 
 
 

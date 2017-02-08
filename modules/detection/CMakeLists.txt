@@ -1,7 +1,7 @@
 #############################################################################
 #
 # This file is part of the ViSP software.
-# Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+# Copyright (C) 2005 - 2017 by Inria. All rights reserved.
 #
 # This software is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -46,6 +46,11 @@ endif()
 if(USE_DMTX)
   list(APPEND opt_incs ${DMTX_INCLUDE_DIRS})
   list(APPEND opt_libs ${DMTX_LIBRARIES})
+endif()
+
+if(USE_ZBAR)
+  # Add specific build flag to turn off warnings coming from zbar 3rd party
+  vp_set_source_file_compile_flag(src/barcode/vpDetectorQRCode.cpp -Wno-unused-parameter)
 endif()
 
 vp_add_module(detection visp_core)

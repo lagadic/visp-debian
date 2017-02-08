@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -494,10 +494,9 @@ void vp1394CMUGrabber::setShutter(unsigned short shutter)
 void
 vp1394CMUGrabber::displayCameraDescription(int cam_id)
 {
-  char buf[512];
-
   if( camera->GetNumberCameras() > cam_id )
   {
+    char buf[512];
     camera->GetNodeDescription(cam_id,buf,512);
     std::cout << "Camera " << cam_id << ": " << buf << std::endl ;
 
@@ -723,6 +722,50 @@ vp1394CMUGrabber::getFramerate()
   initCamera();
   int fps = camera->GetVideoFrameRate();
   return fps;
+}
+
+/*!
+
+   Operator that allows to capture a grey level image.
+   \param I : The captured image.
+
+   \code
+#include <visp3/sensor/vp1394CMUGrabber.h>
+
+int main()
+{
+  vpImage<unsigned char> I;
+  vp1394CMUGrabber g;
+  g >> I;
+}
+   \endcode
+ */
+vp1394CMUGrabber &vp1394CMUGrabber::operator>>(vpImage<unsigned char> &I)
+{
+  this->acquire(I);
+  return *this;
+}
+
+/*!
+
+   Operator that allows to capture a grey level image.
+   \param I : The captured image.
+
+   \code
+#include <visp3/sensor/vp1394CMUGrabber.h>
+
+int main()
+{
+  vpImage<vpRGBa> I;
+  vp1394CMUGrabber g;
+  g >> I;
+}
+   \endcode
+ */
+vp1394CMUGrabber &vp1394CMUGrabber::operator>>(vpImage<vpRGBa> &I)
+{
+  this->acquire(I);
+  return *this;
 }
 
 #elif !defined(VISP_BUILD_SHARED_LIBS)

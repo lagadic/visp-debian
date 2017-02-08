@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -96,14 +96,34 @@ vpTranslationVector::vpTranslationVector(const vpPoseVector &p)
 
   \code
   vpTranslationVector t1(1,2,3); // Create and initialize a translation vector
-
   vpTranslationVector t2(t1);    // t2 is now a copy of t1
   \endcode
-
 */
 vpTranslationVector::vpTranslationVector (const vpTranslationVector &tv)
   : vpArray2D<double>(tv)
 {
+}
+
+/*!
+  Construct a translation vector \f$ \bf t \f$ from a 3-dimension column vector.
+
+  \param v : 3-dimension column vector.
+
+  \code
+  vpColVector v(3);
+  v[0] = 1; v[1] = 2; v[2] = 3; // Create and initialize a column vector
+
+  vpTranslationVector t(v);     // t contains [1, 2, 3,]
+  \endcode
+
+*/
+vpTranslationVector::vpTranslationVector (const vpColVector &v)
+  : vpArray2D<double>(v)
+{
+  if (v.size() != 3) {
+    throw(vpException(vpException::dimensionError,
+                      "Cannot construct a translation vector from a %d-dimension column vector", v.size()));
+  }
 }
 
 /*!
@@ -114,7 +134,7 @@ vpTranslationVector::vpTranslationVector (const vpTranslationVector &tv)
   \bf t \f$ and \f$\theta \bf u \f$ vectors are extracted to initialize
   the pose vector.
 
-  \return The build pose vector.
+  \return The build translation vector.
 
 */
 vpTranslationVector
@@ -130,7 +150,7 @@ vpTranslationVector::buildFrom(const vpHomogeneousMatrix& M)
 
   \param p : Pose vector where translations are in meters.
 
-  \return The build pose vector.
+  \return The build translation vector.
 
 */
 vpTranslationVector
@@ -143,11 +163,34 @@ vpTranslationVector::buildFrom(const vpPoseVector& p)
 }
 
 /*!
+  Build a 3 dimension translation vector \f$ \bf t\f$ from
+  a 3-dimension column vector.
+
+  \param v : 3-dimension column vector.
+
+  \return The build translation vector.
+
+*/
+vpTranslationVector
+vpTranslationVector::buildFrom(const vpColVector& v)
+{
+  if (v.size() != 3) {
+    throw(vpException(vpException::dimensionError,
+                      "Cannot build a translation vector from a %d-dimension column vector", v.size()));
+  }
+
+  (*this)[0] = v[0];
+  (*this)[1] = v[1];
+  (*this)[2] = v[2];
+  return *this ;
+}
+
+/*!
   Build a 3 dimension translation vector \f$ \bf t\f$ from 3 doubles.
 
   \param tx,ty,tz : Translation respectively along x, y and z axis in meter.
 
-  \return The build pose vector.
+  \return The build translation vector.
   \sa set()
 */
 vpTranslationVector
@@ -178,11 +221,11 @@ vpTranslationVector::set(const double tx, const double ty, const double tz)
 
   \return The sum of the current translation vector (*this) and the one to add.
   \code
-  vpTranslationVector t1(1,2,3); 
-  vpTranslationVector t2(4,5,6); 
-  vpTranslationVector t3; 
+  vpTranslationVector t1(1,2,3);
+  vpTranslationVector t2(4,5,6);
+  vpTranslationVector t3;
 
-  t3 = t2 + t1; 
+  t3 = t2 + t1;
   // t1 and t2 leave unchanged
   // t3 is now equal to : 5, 7, 9
   \endcode
@@ -194,6 +237,37 @@ vpTranslationVector::operator+(const vpTranslationVector &tv) const
   vpTranslationVector s;
 
   for (unsigned int i=0;i<3;i++)  s[i] = (*this)[i]+tv[i] ;
+
+  return s;
+}
+/*!
+  Operator that allows to add a translation vector to a column vector.
+
+  \param v : 3-dimension column vector to add.
+
+  \return The sum of the current translation vector (*this) and the column vector to add.
+  \code
+  vpTranslationVector t1(1,2,3);
+  vpColVector v(3);
+  v[0] = 4; v[1] = 5; v[2] = 6;
+  vpTranslationVector t2;
+
+  t2 = t1 + v;
+  // t1 and v leave unchanged
+  // t2 is now equal to : 5, 7, 9
+  \endcode
+
+*/
+vpTranslationVector
+vpTranslationVector::operator+(const vpColVector &v) const
+{
+  if (v.size() != 3) {
+    throw(vpException(vpException::dimensionError,
+                      "Cannot add translation vector to a %d-dimension column vector", v.size()));
+  }
+  vpTranslationVector s;
+
+  for (unsigned int i=0;i<3;i++) s[i] = (*this)[i]+v[i] ;
 
   return s;
 }
@@ -349,16 +423,52 @@ vpTranslationVector vpTranslationVector::operator/(const double x) const
 }
 
 /*!
-  Copy operator.  
+  Copy operator.
   \param tv : Translation vector to copy
   \return A copy of \e tv.
 
   \code
-  vpTranslationVector t1(1,2,3); 
-  vpTranslationVector t2; 
+  vpColVector t1(3);
+  t1[0] = 1;
+  t1[1] = 2;
+  t1[2] = 3;
+  vpTranslationVector t2;
   t2 = t1;
-  // t1 is unchanged 
-  // t2 is now equal to t1 : 1, 2, 3 
+  // t1 is unchanged
+  // t2 is now equal to t1 : 1, 2, 3
+  \endcode
+*/
+vpTranslationVector &vpTranslationVector::operator=(const vpColVector &tv)
+{
+  if (tv.size() != 3) {
+    throw(vpException(vpException::dimensionError, "Cannot initialize a translation vector from a %d-dimension col vector", tv.size()));
+  }
+  unsigned int k = tv.size() ;
+  if (rowNum != k){
+    try {
+      resize(k, 1);
+    }
+    catch(...)
+    {
+      throw ;
+    }
+  }
+
+  memcpy(data, tv.data, rowNum*sizeof(double)) ;
+
+  return *this;
+}
+/*!
+  Copy operator.
+  \param tv : Translation vector to copy
+  \return A copy of \e tv.
+
+  \code
+  vpTranslationVector t1(1,2,3);
+  vpTranslationVector t2;
+  t2 = t1;
+  // t1 is unchanged
+  // t2 is now equal to t1 : 1, 2, 3
   \endcode
 */
 vpTranslationVector &vpTranslationVector::operator=(const vpTranslationVector &tv)
@@ -516,9 +626,9 @@ vpRowVector vpTranslationVector::t() const
 double vpTranslationVector::euclideanNorm() const
 {
   double norm=0.0;
-  double x ;
   for (unsigned int i=0;i<dsize;i++) {
-    x = *(data +i); norm += x*x;
+    double x = *(data +i);
+    norm += x*x;
   }
 
   return sqrt(norm);
@@ -532,10 +642,9 @@ double vpTranslationVector::euclideanNorm() const
 double vpTranslationVector::sumSquare() const
 {
   double sum_square=0.0;
-  double x ;
 
   for (unsigned int i=0;i<rowNum;i++) {
-    x=rowPtrs[i][0];
+    double x=rowPtrs[i][0];
     sum_square += x*x;
   }
 

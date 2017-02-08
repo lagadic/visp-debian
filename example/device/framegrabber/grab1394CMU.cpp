@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -220,7 +220,7 @@ main(int argc, const char ** argv)
 #endif
 
   try {
-    double tbegin=0, tend=0, tloop=0, ttotal=0;
+    double tbegin=0, ttotal=0;
 
     ttotal = 0;
     tbegin = vpTime::measureTimeMs();
@@ -246,8 +246,8 @@ main(int argc, const char ** argv)
         std::cout << "Write: " << filename << std::endl;
         vpImageIo::write(I, filename);
       }
-      tend = vpTime::measureTimeMs();
-      tloop = tend - tbegin;
+      double tend = vpTime::measureTimeMs();
+      double tloop = tend - tbegin;
       tbegin = tend;
       std::cout << "loop time: " << tloop << " ms" << std::endl;
       ttotal += tloop;
@@ -255,7 +255,7 @@ main(int argc, const char ** argv)
     std::cout << "Mean loop time: " << ttotal / nframes << " ms" << std::endl;
     std::cout << "Mean frequency: " << 1000./(ttotal / nframes) << " fps" << std::endl;
   }
-  catch(vpException e) {
+  catch(vpException &e) {
     std::cout << "Catch an exception: " << e << std::endl;
     return 1;
   }

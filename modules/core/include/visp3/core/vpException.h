@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -114,20 +114,22 @@ class VISP_EXPORT vpException : public std::exception
     */
     virtual ~vpException() throw() {}
 
-    //!  send the object code
+    /** @name Inherited functionalities from vpException */
+    //@{
+    //! Send the object code.
     int getCode (void);
 
-    //! send a reference (constant) related the error message (can be empty)
-    const std::string &getStringMessage (void);
+    //! Send a reference (constant) related the error message (can be empty).
+    const std::string &getStringMessage (void) const;
     //! send a pointer on the array of  \e char related to the error string.
-    //!Cannot be  \e NULL.
-    const char *getMessage (void);
+    //! Cannot be  \e NULL.
+    const char *getMessage (void) const;
+    //@}
 
-    //! print the error structure
+    //! Print the error structure.
     friend VISP_EXPORT std::ostream & operator << (std::ostream & os, const vpException & art);
 
     const char* what () const throw();
-
 };
 
 #endif /* #ifndef __vpException_H */

@@ -1,7 +1,7 @@
 #############################################################################
 #
 # This file is part of the ViSP software.
-# Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+# Copyright (C) 2005 - 2017 by Inria. All rights reserved.
 #
 # This software is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -53,10 +53,10 @@ macro(get_path_to_parent path_to_child path_to_parent)
   endwhile(input_)
 endmacro()
 
-# Here we determine the relative path from ./${CMAKE_INSTALL_LIBDIR} to its parent folder
-# if CMAKE_INSTALL_LIBDIR=lib, then VISP_INSTALL_LIBDIR_TO_PARENT=../
-# if CMAKE_INSTALL_LIBDIR=lib/x86_64-linux-gnu, then VISP_INSTALL_LIBDIR_TO_PARENT=../..
-get_path_to_parent(${CMAKE_INSTALL_LIBDIR} VISP_INSTALL_LIBDIR_TO_PARENT)
+# Here we determine the relative path from ./${VISP_LIB_INSTALL_PATH} to its parent folder
+# if VISP_LIB_INSTALL_PATH=lib, then VISP_INSTALL_LIBDIR_TO_PARENT=../
+# if VISP_LIB_INSTALL_PATH=lib/x86_64-linux-gnu, then VISP_INSTALL_LIBDIR_TO_PARENT=../..
+get_path_to_parent(${VISP_LIB_INSTALL_PATH} VISP_INSTALL_LIBDIR_TO_PARENT)
 
 #build list of modules available for the ViSP user
 set(VISP_LIB_COMPONENTS "")
@@ -80,7 +80,7 @@ endif()
 export(TARGETS ${VISPModules_TARGETS} FILE "${PROJECT_BINARY_DIR}/VISPModules.cmake")
 
 ## Update include dirs
-set(VISP_INCLUDE_DIRS_CONFIGCMAKE "${VISP_BINARY_DIR}/${CMAKE_INSTALL_INCLUDEDIR}")
+set(VISP_INCLUDE_DIRS_CONFIGCMAKE "${VISP_INCLUDE_DIR}")
 foreach(m ${VISP_MODULES_BUILD})
   if(EXISTS "${VISP_MODULE_${m}_LOCATION}/include")
     list(APPEND VISP_INCLUDE_DIRS_CONFIGCMAKE "${VISP_MODULE_${m}_LOCATION}/include")
@@ -112,7 +112,7 @@ configure_file(
 # -------------------------------------------------------------------------------------------
 
 if(UNIX)
-  set(VISP_INCLUDE_DIRS_CONFIGCMAKE "\${VISP_INSTALL_PATH}/${CMAKE_INSTALL_INCLUDEDIR}")
+  set(VISP_INCLUDE_DIRS_CONFIGCMAKE "\${VISP_INSTALL_PATH}/${VISP_INC_INSTALL_PATH}")
   foreach(m ${VISP_MODULES_BUILD})
     list(APPEND VISP_INCLUDE_DIRS_CONFIGCMAKE ${VISP_MODULE_${m}_INC_DEPS})
   endforeach()
@@ -140,7 +140,7 @@ if(UNIX)
     ${VISP_BINARY_DIR}/unix-install/VISPConfig.cmake
     ${VISP_BINARY_DIR}/unix-install/VISPConfigVersion.cmake
     ${VISP_BINARY_DIR}/unix-install/VISPUse.cmake
-    DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/visp"
+    DESTINATION "${VISP_LIB_INSTALL_PATH}/cmake/visp"
     PERMISSIONS OWNER_READ GROUP_READ WORLD_READ OWNER_WRITE
     COMPONENT dev
   )
@@ -148,7 +148,7 @@ if(UNIX)
   # Install the export set for use with the install-tree
   install(EXPORT VISPModules
     FILE VISPModules.cmake
-    DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/visp"
+    DESTINATION "${VISP_LIB_INSTALL_PATH}/cmake/visp"
     COMPONENT dev
   )
 endif()
@@ -157,7 +157,7 @@ endif()
 #  Part 3/3: ${BIN_DIR}/win-install/VISPConfig.cmake  -> For use within binary installers/packages
 # --------------------------------------------------------------------------------------------
 if(WIN32)
-  set(VISP_INCLUDE_DIRS_CONFIGCMAKE "\${VISP_CONFIG_PATH}/${CMAKE_INSTALL_INCLUDEDIR}")
+  set(VISP_INCLUDE_DIRS_CONFIGCMAKE "\${VISP_CONFIG_PATH}/${VISP_INC_INSTALL_PATH}")
   foreach(m ${VISP_MODULES_BUILD})
     list(APPEND VISP_INCLUDE_DIRS_CONFIGCMAKE ${VISP_MODULE_${m}_INC_DEPS})
   endforeach()
@@ -181,27 +181,15 @@ if(WIN32)
     IMMEDIATE @ONLY
   )
 
-  if(BUILD_SHARED_LIBS)
-    install(FILES
-      "${CMAKE_BINARY_DIR}/win-install/ViSPConfig.cmake"
-      "${CMAKE_BINARY_DIR}/win-install/ViSPUse.cmake"
-      DESTINATION "${VISP_INSTALL_BINARIES_PREFIX}${CMAKE_INSTALL_LIBDIR}"
-      COMPONENT dev)
-    install(EXPORT VISPModules 
-      DESTINATION "${VISP_INSTALL_BINARIES_PREFIX}${CMAKE_INSTALL_LIBDIR}"
-      FILE VISPModules.cmake 
-      COMPONENT dev)
-  else()
-    install(FILES
-      "${CMAKE_BINARY_DIR}/win-install/ViSPConfig.cmake"
-      "${CMAKE_BINARY_DIR}/win-install/ViSPUse.cmake"
-      DESTINATION "${VISP_INSTALL_BINARIES_PREFIX}static${CMAKE_INSTALL_LIBDIR}"
-      COMPONENT dev)
-    install(EXPORT VISPModules 
-      DESTINATION "${VISP_INSTALL_BINARIES_PREFIX}static${CMAKE_INSTALL_LIBDIR}"
-      FILE VISPModules.cmake 
-      COMPONENT dev)
-  endif()
+  install(FILES
+    "${CMAKE_BINARY_DIR}/win-install/ViSPConfig.cmake"
+    "${CMAKE_BINARY_DIR}/win-install/ViSPUse.cmake"
+    DESTINATION "${VISP_LIB_INSTALL_PATH}"
+    COMPONENT dev)
+  install(EXPORT VISPModules
+    DESTINATION "${VISP_LIB_INSTALL_PATH}"
+    FILE VISPModules.cmake
+    COMPONENT dev)
 
   install(FILES
     "cmake/VISPConfig.cmake"

@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -163,6 +163,7 @@ class VISP_EXPORT vpRxyzVector : public vpRotationVector
 
   // initialize a Rxyz vector from a ThetaU vector
   vpRxyzVector(const vpThetaUVector& tu) ;
+  vpRxyzVector(const vpColVector &rxyz);
 
   //! Destructor.
   virtual ~vpRxyzVector() {};
@@ -175,6 +176,7 @@ class VISP_EXPORT vpRxyzVector : public vpRotationVector
 
   void buildFrom(const double phi, const double theta, const double psi);
 
+  vpRxyzVector &operator=(const vpColVector &rxyz);
   vpRxyzVector &operator=(double x) ;
 } ;
 

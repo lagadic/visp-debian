@@ -2,23 +2,141 @@
                      Visual Servoing Platform
                      Resume of the change log
 
-     Copyright Projet Lagadic / IRISA-INRIA Rennes, 2005 - 2015
-                    http://team.inria.fr/lagadic
+     Copyright (C) 2005 - 2017 by Inria. All rights reserved.
+                      https://visp.inria.fr
 
 
+ViSP 3.0.1 (released February 3rd, 2017)
+  - New features
+    . Compatibility with Microsoft Visual C++ 2017 (MSCV 15)
+    . Compatibility with Universal Windows Platform (UWP); Windows Phone
+      and Windows Store 8.x and 10.0
+    . Add vpMatrix, vpColVector, vpTranslationVector missing member functions
+      to keep compat with ViSP 2.10.0
+    . New vpFlyCaptureGrabber class to capture images from PointGrey
+      cameras (USB-3, firewire, GigE)
+    . New vpVirtuose class, a wrapper over Haption Virtuose SDK that is
+      provided with their haptic devices
+    . New vpComedi and vpForceTorqueAtiSensor classes to get synchonous
+      data from ATI F/T sensors
+    . New vpRealSense class, a wrapper over RealSense SDK to capture
+      data from SR300, F200, R200 RGB-depth sensors:
+      + Acquisition of the color / depth / infrared streams + the associated
+        point cloud
+      + Possibility to set the stream parameters (resolution, FPS, ...)
+      + Possibility to retrieve stream aligned (e.g. color stream aligned to depth)
+    . New cross platform multi-threading capabilities with vpMutex and
+      vpThread classes
+    . Crosscompiling capabilities tested for Raspberry Pi target
+    . Crosscompiling capabilities tested for Nao, Romeo and Pepper robots
+    . OSX/iOS framework creation with support of OpenCV 3rd party
+    . Introduce SSE2, SSE3 and SSSE3 optimizations
+    . New meta-header visp3/visp.h that allows to include all ViSP headers
+      in one line
+    . New meta-header visp3/visp_<module>.h that allows to include all the
+      headers of a given module in one line
+    . When using cxx11 support (USE_CPP11=ON), the corresponding compiler
+      flag is propagated to the project that use ViSP as 3rd party
+    . In vpServo introduce setCameraDoF() that allows to turn off the usage
+      of some dof
+    . Model-based tracker:
+      + Introduce stereo as well as more generic multi camera tracking capabilities
+      + New classes vpMbEdgeMultiTracker, vpMbKltMultiTracker, and
+        vpMbEdgeKltMultiTracker for the hybrid version
+    . Set vpRGBa images alpha channel default value to 255
+    . Allow to resize the display in order to display image that are larger than
+      the screen resolution
+    . Introduce new CMake ENABLE_FULL_DOC var: when turned ON allows to build
+      doxygen documentation with all classes including internal ones
+    . Build information available in ViSP-third-party.txt is now more
+      complete, including OS, compiler, flags and 3rd party versions.
+      This information is also embedded in visp_core library and could
+      be obtained using vpIoTools::getBuildInformation()
+    . Improve RANSAC pose estimation computation time (noticeable with large data)
+    . vpKeyPoint class:
+      + Support for little / big endian architecture when writing learning data
+        into binary file
+      + Add possibility to learn keypoints on cylinders
+      + Add support of the new keypoint methods in OpenCV 3.1 and 3.2
+      + Add possibility to use enum type to select the keypoint
+    . Add possibility to save extra information (time, reprojection error, ...)
+      for the camera calibration process (e.g. in camera_calibration.cpp)
+    . Improve image morphology operations for grayscale images
+    . Add optimized image addition / subtraction for grayscale images
+    . Add possibility to load recursive CAO model with identical filenames
+    . Add possibility to retrieve clipped polygons for the model-based tracker
+    . Improve vpPolygon::isInside() computation time
+    . Add separable filter and switch between correlation / convolution in vpImageFilter
+    . Add possibility to print vpImage class in the terminal
+    . Add basic image resizing (nearest neighbor / bilinear / bicubic interpolation)
+  - Tutorials
+    . New tutorial: How to use multi-threading capabilities
+    . New tutorial: Crosscompilation for Raspberry Pi from Ubuntu host
+    . New tutorial: Installation from prebuilt packages for Arch Linux
+    . New tutorial: Installation from prebuilt packages for ROS
+    . New tutorial: Installation from prebuilt packages for iOS devices
+    . New tutorial: Installation from source for iOS devices
+    . New tutorial: How to create a basic iOS application that uses ViSP
+    . New tutorial: Image processing on iOS
+    . New tutorial: Cross-compilation for NAOqi OS from Ubuntu host
+    . New tutorial: How to create an application that uses ViSP on NAOqi OS
+    . New Tutorial: Markerless model-based tracking with stereo cameras
+    . New Tutorial: How to display an image
+    . New Tutorial: Pose estimation from QRcode
+    . New Tutorial: Installation from source for Universal Windows Platform (UWP)
+  - Bug fixed
+    . [#37] How to build for ios? build failed
+    . [#38] Wrong urls in visp/doc/tutorial-calibration.doc
+    . [#39] Meta header files visp_<module>.h not installed
+    . [#40] vpKeyPoint fails to R/W database on big endian arch
+    . [#42] Fails to build on Fedora 23 with Coin3-devel
+    . [#44] Reshape issue with vpRowVector or vpColVector
+    . [#47] Build issue in vpMath.h around vpMath::sign()
+    . [#48] Fix vpPoseVector::getThetaUVector() to return the adequate vector
+    . [#54] Error in vpHomography::projection()
+    . [#59] Unable to use visp-config or visp-config.bat to build a project
+            without CMake
+    . [#68] Visual C++ 2010 unable to build modules\core\test\math\testMath.cpp
+    . [#69] Unable to build ViSP under Windows without OpenCV 3rdparty
+    . [#75] visp.pc pkgconfig file is corrupted by optimized and debug keywords
+    . [#77] vpAROgre: wrong resources / plugins default path when used from
+            ROS installation
+    . [#82] Problem when comparing two vpImage (operator!=)
+    . [#84] Problem with vpImageMorphology and CONNEXITY_8 and with border pixels
+    . [#90] Fix potential build issue with isnan() and isinf() usage when cxx11
+            flags are used
+    . [#91] vpMeLine::computeRhoTheta should throw exception
+    . [#92] Is there any interface to resize display window?
+    . [#95] setEllipsoidBadPointsPercentage in vpDot2 not completly being taken
+            into account
+    . [#104] vpMomentAlpha: Results are not repeatable
+    . [#105] vpMomentAlpha: Question about symmetric judgement based on centered
+             moments
+    . [#106] Freeze when more than one GDI display is opened with mingw
+    . [#109] Link errors with undefined reference to TIFF
+    . [#111] vpColor doesn't work in mb-hybrid
+    . [#112] vpPose: Possible ambiguity or misunderstanding in doxygen message
+    . [#114] vpMomentAlpha: wrong abs() function using
+    . [#116] Link errors related to openmp
+    . [#117] vpMomentAlpha: out of range of [-Pi, Pi] in relative mode 
+    . [#118] vpKeyPoint: perhaps misleading in document
+    . [#120] Build failed with clang/llvm
+    . [#126] vpPolygon::operator=() does not copy everything.
+
+----------------------------------------------
 ViSP 3.0.0 (released December 18th, 2015)
   - New features
     . Compatibility with Windows 8.1 and 10
     . Compatibility with Microsoft Visual C++ 2015 (MSCV 14)
     . Compatibility with Odroid XU4
-    . Source code migrates to GitHub: http://github.org/lagadic/visp
+    . Source code migrates to GitHub: http://github.com/lagadic/visp
     . Introduce Travis continuous integration
     . New website: http://visp.inria.fr
     . Reorganize source in modules (core, vision, mbt, tt, …) with a library
       per module named libvisp_<module>. Keep compat with previous releases.
     . Allow to link contributions to ViSP source code using
       VISP_CONTRIB_MODULES_PATH CMake var;
-      see http://github.org/lagadic/visp_contrib
+      see http://github.com/lagadic/visp_contrib
     . Model-based tracker:
       + New visibility tests based on the scanline rendering algorithm.
       + Improve Ogre3D visibility tests in order to use it in a probalistic
@@ -33,13 +151,13 @@ ViSP 3.0.0 (released December 18th, 2015)
       vectors.
     . vpKeyPoint class:
       + Full code compatibility with OpenCV 3.0.
-      + Add support to the new Features introduce in OpenCV 3.0 and contrib 
+      + Add support to the new Features introduce in OpenCV 3.0 and contrib
         module releases.
       + Add possibility to detect keypoints on an image pyramid with OpenCV 3.0.
-      + Add possibility to change the image type (jpeg, png, ppm, pgm) when 
+      + Add possibility to change the image type (jpeg, png, ppm, pgm) when
         saving a learning file.
       + Add OpenMP support for Affine SIFT.
-      + Add single matching filter (discard pairs of keypoints where multiple 
+      + Add single matching filter (discard pairs of keypoints where multiple
         query keypoints are matched to the same train keypoints).
       + Add possibility to match train keypoints to query keypoints (could be
         useful when we learn only on one image, it allows to avoid to match
@@ -51,12 +169,13 @@ ViSP 3.0.0 (released December 18th, 2015)
       + Fix displayMatching function and fix small memory leak in loadLearningData.
       + Should be possible to read / write learning files in binary mode regardless
         of the endianness of the host (need to be tested on a real case).
-      + Save learning files in XML mode with the full precision (according to 
+      + Save learning files in XML mode with the full precision (according to
         the data type).
     . and a lot of improvements and fixes
   - Tutorials
     . New tutorial: Bridge over OpenCV
     . New tutorial: Installation from source with Homebrew
+    . New tutorial: Installation from source on Windows 10 with Visual 2015
     . Update all the installation tutorials since GitHub migration and modules
       introduction and make more explicit 3rd party installation
     . Update tutorial: Markerless 3D model-based tracking

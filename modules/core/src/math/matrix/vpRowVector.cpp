@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -45,6 +45,7 @@
 #include <stdlib.h>
 #include <sstream>
 #include <assert.h>
+#include <cmath>
 
 #include <visp3/core/vpArray2D.h>
 #include <visp3/core/vpMatrix.h>
@@ -558,8 +559,10 @@ vpRowVector &vpRowVector::normalize()
   \return The resulting matrix.
 
   \exception vpException::dimensionError If the matrix and the row vector have not the same size.
+
+  \sa reshape(vpMatrix &, const unsigned int &, const unsigned int &)
 */
-vpMatrix vpRowVector::reshape(const unsigned int &nrows,const unsigned int &ncols)
+vpMatrix vpRowVector::reshape(const unsigned int &nrows, const unsigned int &ncols)
 {
   vpMatrix M(nrows,ncols);
   reshape(M, nrows, ncols);
@@ -573,8 +576,43 @@ vpMatrix vpRowVector::reshape(const unsigned int &nrows,const unsigned int &ncol
   \param ncols : number of columns of the matrix.
 
   \exception vpException::dimensionError If the matrix and the row vector have not the same size.
+
+  The following example shows how to use this method.
+  \code
+#include <visp/vpRowVector.h>
+
+int main()
+{
+  int var=0;
+  vpMatrix mat(3, 4);
+  for (int i = 0; i < 3; i++)
+      for (int j = 0; j < 4; j++)
+          mat[i][j] = ++var;
+  std::cout << "mat: \n" << mat << std::endl;
+
+  vpRowVector row = mat.stackRows();
+  std::cout << "row vector: " << row << std::endl;
+
+  vpMatrix remat = row.reshape(3, 4);
+  std::cout << "remat: \n" << remat << std::endl;
+}
+  \endcode
+
+  If you run the previous example, you get:
+  \code
+mat:
+1  2  3  4
+5  6  7  8
+9  10  11  12
+row vector: 1  2  3  4  5  6  7  8  9  10  11  12
+remat:
+1  2  3  4
+5  6  7  8
+9  10  11  12
+  \endcode
 */
-void vpRowVector::reshape(vpMatrix & M,const unsigned int &nrows,const unsigned int &ncols){
+void vpRowVector::reshape(vpMatrix &M, const unsigned int &nrows, const unsigned int &ncols)
+{
   if(dsize!=nrows*ncols) {
     throw(vpException(vpException::dimensionError,
                       "Cannot reshape (1x%d) row vector in (%dx%d) matrix",
@@ -588,7 +626,7 @@ void vpRowVector::reshape(vpMatrix & M,const unsigned int &nrows,const unsigned 
   }
   for(unsigned int i =0; i< nrows; i++)
     for(unsigned int j =0; j< ncols; j++)
-      M[i][j]=data[i*nrows+j];
+      M[i][j]=data[i*ncols+j];
 }
 
 /*!
@@ -931,6 +969,22 @@ vpRowVector operator*(const double &x,const vpRowVector &v)
 }
 
 /*!
+  Return the sum of all the elements \f$v_{i}\f$ of the row vector v(n).
+
+  \return The sum square value: \f$\sum_{j=0}^{n} v_j\f$.
+  */
+double vpRowVector::sum() const
+{
+  double sum=0.0;
+
+  for (unsigned int j=0;j<colNum;j++) {
+    sum += rowPtrs[0][j];
+  }
+
+  return sum;
+}
+
+/*!
   Return the sum square of all the elements \f$v_{i}\f$ of the row vector v(n).
 
   \return The sum square value: \f$\sum_{j=0}^{n} v_j^{2}\f$.
@@ -938,10 +992,9 @@ vpRowVector operator*(const double &x,const vpRowVector &v)
 double vpRowVector::sumSquare() const
 {
   double sum_square=0.0;
-  double x ;
 
   for (unsigned int j=0;j<colNum;j++) {
-    x=rowPtrs[0][j];
+    double x=rowPtrs[0][j];
     sum_square += x*x;
   }
 
@@ -956,9 +1009,8 @@ double vpRowVector::sumSquare() const
 double vpRowVector::euclideanNorm() const
 {
   double norm=0.0;
-  double x ;
   for (unsigned int i=0;i<dsize;i++) {
-    x = *(data +i); norm += x*x;
+    double x = *(data +i); norm += x*x;
   }
 
   return sqrt(norm);
@@ -1012,4 +1064,168 @@ vpRowVector::init(const vpRowVector &v, unsigned int c, unsigned int ncols)
     return; // Noting to do
   for (unsigned int i=0 ; i < ncols; i++)
     (*this)[i] = v[i+c];
+}
+
+/*!
+  Print to be used as part of a C++ code later.
+
+  \param os : the stream to be printed in.
+  \param matrixName : name of the row vector, "A" by default.
+  \param octet : if false, print using double, if true, print byte per byte
+  each bytes of the double array.
+
+  The following code shows how to use this function:
+\code
+#include <visp3/core/vpRowVector.h>
+
+int main()
+{
+  vpRowVector r(3);
+  for (unsigned int i=0; i<r.size(); i++)
+    r[i] = i;
+
+  r.cppPrint(std::cout, "r");
+}
+\endcode
+  It produces the following output that could be copy/paste in a C++ code:
+  \code
+vpRowVector r (3);
+r[0] = 0;
+r[1] = 1;
+r[2] = 2;
+
+  \endcode
+*/
+std::ostream & vpRowVector::cppPrint(std::ostream & os, const std::string &matrixName, bool octet) const
+{
+  os << "vpRowVector " << matrixName
+     << " ("<< this ->getCols () << "); " <<std::endl;
+
+  for (unsigned int j=0; j < this ->getCols(); ++ j) {
+    if (! octet) {
+      os << matrixName << "[" << j
+         << "] = " << (*this)[j] << "; " << std::endl;
+    }
+    else {
+      for (unsigned int k = 0; k < sizeof(double); ++ k) {
+        os << "((unsigned char*)&(" << matrixName
+           << "[" << j << "]) )[" << k
+           <<"] = 0x" <<std::hex<<
+             (unsigned int)((unsigned char*)& ((*this)[j])) [k]
+             << "; " << std::endl;
+      }
+    }
+  }
+  std::cout << std::endl;
+  return os;
+}
+
+/*!
+  Print/save a row vector in csv format.
+
+  The following code
+  \code
+#include <visp3/core/vpRowVector.h>
+
+int main()
+{
+  std::ofstream ofs("log.csv", std::ofstream::out);
+  vpRowVector r(3);
+  for (unsigned int i=0; i<r.size(); i++)
+    r[i] = i;
+
+  r.csvPrint(ofs);
+
+  ofs.close();
+}
+  \endcode
+  produces log.csv file that contains:
+  \code
+0, 1, 2
+  \endcode
+*/
+std::ostream & vpRowVector::csvPrint(std::ostream & os) const
+{
+  for (unsigned int j=0; j < this->getCols(); ++ j) {
+    os <<  (*this)[j];
+    if (!(j==(this->getCols()-1)))
+      os << ", ";
+  }
+  os << std::endl;
+  return os;
+}
+
+/*!
+  Print using Maple syntax, to copy/paste in Maple later.
+
+  The following code
+  \code
+#include <visp3/core/vpRowVector.h>
+
+int main()
+{
+  vpRowVector r(3);
+  for (unsigned int i=0; i<r.size(); i++)
+    r[i] = i;
+  std::cout << "r = "; r.maplePrint(std::cout);
+}
+  \endcode
+  produces this output:
+  \code
+r = ([
+[0, 1, 2, ],
+])
+  \endcode
+  that could be copy/paste in Maple.
+*/
+std::ostream & vpRowVector::maplePrint(std::ostream & os) const
+{
+  os << "([ " << std::endl;
+  os << "[";
+  for (unsigned int j=0; j < this->getCols(); ++ j) {
+    os <<  (*this)[j] << ", ";
+  }
+  os << "]," << std::endl;
+  os << "])" << std::endl;
+  return os;
+}
+
+/*!
+  Print using Matlab syntax, to copy/paste in Matlab later.
+
+  The following code
+  \code
+#include <visp3/core/vpRowVector.h>
+
+int main()
+{
+  vpRowVector r(3);
+  for (unsigned int i=0; i<r.size(); i++)
+    r[i] = i;
+  std::cout << "r = "; r.matlabPrint(std::cout);
+}
+  \endcode
+  produces this output:
+  \code
+r = [ 0, 1, 2, ]
+  \endcode
+  that could be copy/paste in Matlab:
+  \code
+>> r = [ 0, 1, 2, ]
+
+r =
+
+    0   1   2
+
+>>
+  \endcode
+*/
+std::ostream & vpRowVector::matlabPrint(std::ostream & os) const
+{
+  os << "[ ";
+  for (unsigned int j=0; j < this ->getCols(); ++ j) {
+    os <<  (*this)[j] << ", ";
+  }
+  os << "]" << std::endl;
+  return os;
 }

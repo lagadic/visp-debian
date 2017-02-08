@@ -1,7 +1,7 @@
 #############################################################################
 #
 # This file is part of the ViSP software.
-# Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+# Copyright (C) 2005 - 2017 by Inria. All rights reserved.
 #
 # This software is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -34,6 +34,7 @@
 # DMTX_FOUND
 # DMTX_INCLUDE_DIRS
 # DMTX_LIBRARIES
+# DMTX_VERSION
 #
 # Authors:
 # Fabien Spindler
@@ -57,6 +58,10 @@ find_library(DMTX_LIBRARIES
 
 if(DMTX_INCLUDE_DIRS AND DMTX_LIBRARIES)
   set(DMTX_FOUND TRUE)
+
+  get_filename_component(DMTX_LIB_DIR ${DMTX_LIBRARIES} PATH)
+  vp_get_version_from_pkg("libdmtx" "${DMTX_LIB_DIR}/pkgconfig" DMTX_VERSION)
+
 else()
   set(DMTX_FOUND FALSE)
 endif()

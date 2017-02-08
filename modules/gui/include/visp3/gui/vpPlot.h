@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -146,13 +146,13 @@ public:
     vpPlot(const unsigned int nbGraph,
 	   const unsigned int height=700, 
 	   const unsigned int width=700, 
-	   const int x=-1, const int y=-1, const char *title=NULL);
+     const int x=-1, const int y=-1, const std::string &title="");
     ~vpPlot();
     void getPixelValue(const bool block);
     void init(const unsigned int nbGraph,
 	      const unsigned int height=700, 
 	      const unsigned int width=700, 
-	      const int x=-1, const int y=-1, const char *title=NULL);
+        const int x=-1, const int y=-1, const std::string &title="");
     void initGraph (unsigned int graphNum, unsigned int curveNbr);
     
     void initRange (const unsigned int graphNum, double xmin, double xmax, double ymin, double ymax);
@@ -171,7 +171,7 @@ public:
     void resetPointList (const unsigned int graphNum);
     void resetPointList (const unsigned int graphNum, const unsigned int curveNum);
 
-    void saveData(const unsigned int graphNum, const char* dataFile);
+    void saveData(const unsigned int graphNum, const std::string &dataFile, const std::string &title_prefix="");
     void setColor (const unsigned int graphNum, const unsigned int curveNum, vpColor color);
     void setGraphThickness (const unsigned int graphNum, const unsigned int thickness);
     void setGridThickness (const unsigned int graphNum, const unsigned int thickness);
@@ -180,16 +180,16 @@ public:
 
       To know which font are available, on Unix you can use xfontsel or xlsfonts utilities.
       */
-    void setFont(const char *font)
+    void setFont(const std::string &font)
     {
       if (display->isInitialised())
-        vpDisplay::setFont(I, font);
+        vpDisplay::setFont(I, font.c_str());
     }
-    void setLegend (const unsigned int graphNum, const unsigned int curveNum, const char *legend);
-    void setTitle (const unsigned int graphNum, const char *title);
-    void setUnitX (const unsigned int graphNum, const char *unitx);
-    void setUnitY (const unsigned int graphNum, const char *unity);
-    void setUnitZ (const unsigned int graphNum, const char *unitz);
+    void setLegend (const unsigned int graphNum, const unsigned int curveNum, const std::string &legend);
+    void setTitle (const unsigned int graphNum, const std::string &title);
+    void setUnitX (const unsigned int graphNum, const std::string &unitx);
+    void setUnitY (const unsigned int graphNum, const std::string &unity);
+    void setUnitZ (const unsigned int graphNum, const std::string &unitz);
     void setThickness (const unsigned int graphNum, const unsigned int curveNum, const unsigned int thickness);
     
   private:

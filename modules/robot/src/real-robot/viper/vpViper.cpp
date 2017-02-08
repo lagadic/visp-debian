@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -64,7 +64,7 @@ const unsigned int vpViper::njoint = 6;
 
 */
 vpViper::vpViper()
-  : eMc(), etc(), erc(), a1(0), d1(0), a2(), a3(), d4(0), d6(0), c56(0), joint_max(), joint_min()
+  : eMc(), etc(), erc(), a1(0), d1(0), a2(), a3(), d4(0), d6(0), d7(0), c56(0), joint_max(), joint_min()
 {
   // Default values are initialized
 
@@ -75,6 +75,7 @@ vpViper::vpViper()
   d1 = 0.335;
   d4 = 0.405;
   d6 = 0.080;
+  d7 = 0.0666;
   c56 = -341.33 / 9102.22;
 
   // Software joint limits in radians
@@ -393,6 +394,7 @@ vpViper::getInverseKinematicsWrist(const vpHomogeneousMatrix & fMw, vpColVector 
       }
       else {
         // s5 != 0
+#if 0 // Modified 2016/03/10 since if and else are the same
         //if (c4s5 == 0) {
         if (std::fabs(c4s5) <= std::numeric_limits<double>::epsilon()) {
           // c4 = 0
@@ -403,6 +405,9 @@ vpViper::getInverseKinematicsWrist(const vpHomogeneousMatrix & fMw, vpColVector 
         else {
           q_sol[i][3] = atan2(s4s5, c4s5);
         }
+#else
+        q_sol[i][3] = atan2(s4s5, c4s5);
+#endif
         if (convertJointPositionInLimits(3, q_sol[i][3], q4_mod, verbose) == true) {
           q_sol[i][3] = q4_mod;
           c4[i] = cos(q4_mod);
@@ -910,6 +915,22 @@ void
 vpViper::get_eMc(vpHomogeneousMatrix &eMc_) const
 {
   eMc_ = this->eMc;
+}
+
+/*!
+
+  Get the geometric transformation between the end-effector frame and
+  the force/torque sensor frame. This transformation is constant.
+
+  \param eMs : Transformation between the the
+  end-effector frame and the force/torque sensor frame.
+
+*/
+void
+vpViper::get_eMs(vpHomogeneousMatrix &eMs) const
+{
+  eMs.eye();
+  eMs[2][3] = -d7; // tz = -d7
 }
 
 /*!

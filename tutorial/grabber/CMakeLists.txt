@@ -9,14 +9,21 @@ set(tutorial_cpp
   tutorial-grabber-1394.cpp
   tutorial-grabber-1394-writer.cpp
   tutorial-grabber-CMU1394.cpp
+  tutorial-grabber-flycapture.cpp
   tutorial-grabber-opencv.cpp
-  tutorial-grabber-opencv-bis.cpp
+  tutorial-grabber-opencv-threaded.cpp
   tutorial-grabber-v4l2.cpp
+  tutorial-grabber-v4l2-threaded.cpp
   tutorial-video-reader.cpp
   tutorial-video-recorder.cpp
 )
 
 set(tutorial_data "${CMAKE_CURRENT_SOURCE_DIR}/video.mpg")
+
+if(VISP_HAVE_FLYCAPTURE)
+  # Add specific build flag to turn off warnings coming from PointGrey flycapture 3rd party
+  visp_set_source_file_compile_flag(tutorial-grabber-flycapture.cpp -Wno-unknown-pragmas -Wno-ignored-qualifiers)
+endif()
 
 foreach(cpp ${tutorial_cpp})
   visp_add_target(${cpp})

@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -61,7 +61,8 @@
 
   \brief Modelisation of the ADEPT Viper robot 
 
-  This robot has six degrees of freedom.
+  This robot has six degrees of freedom. The model of the robot is the following:
+  \image html model-viper.png Model of the Viper 850 robot.
 
   The non modified Denavit-Hartenberg representation of the robot is
   given in the table below, where \f$q_1^*, \ldots, q_6^*\f$
@@ -82,19 +83,23 @@
   \hline
   \end{tabular}
   \f]
-  
+
   In this modelisation, different frames have to be considered.
-  - \f$ {\cal F}_f \f$: the reference frame, also called world frame,
+
+  - \f$ {\cal F}_f \f$: the reference frame, also called world frame
 
   - \f$ {\cal F}_w \f$: the wrist frame located at the intersection of
-    the last three rotations, with \f$ ^f{\bf M}_w = ^0{\bf M}_6 \f$,
+    the last three rotations, with \f$ ^f{\bf M}_w = ^0{\bf M}_6 \f$
 
-  - \f$ {\cal F}_e \f$: the end-effector frame, with \f$^f{\bf M}_e =
-    0{\bf M}_7 \f$,
+  - \f$ {\cal F}_e \f$: the end-effector frame located at the interface of the
+    two tool changers, with \f$^f{\bf M}_e = 0{\bf M}_7 \f$
 
-  - \f$ {\cal F}_c \f$: the camera frame, with \f$^f{\bf M}_c = ^f{\bf
+  - \f$ {\cal F}_c \f$: the camera or tool frame, with \f$^f{\bf M}_c = ^f{\bf
     M}_e \; ^e{\bf M}_c \f$ where \f$ ^e{\bf M}_c \f$ is the result of
-    a calibration stage.
+    a calibration stage. We can also consider a custom tool TOOL_CUSTOM and set this
+    during robot initialisation or using set_eMc().
+
+  - \f$ {\cal F}_s \f$: the force/torque sensor frame, with \f$d7=0.0666\f$.
   
   The forward kinematics of the robot is implemented in get_fMw(),
   get_fMe() and get_fMc().
@@ -110,6 +115,8 @@ class VISP_EXPORT vpViper
   vpViper();
   virtual ~vpViper() {};
 
+  /** @name Inherited functionalities from vpViper */
+  //@{
   vpHomogeneousMatrix getForwardKinematics(const vpColVector & q) const;
   unsigned int getInverseKinematicsWrist(const vpHomogeneousMatrix & fMw, vpColVector & q, const bool &verbose=false) const;
   unsigned int getInverseKinematics(const vpHomogeneousMatrix & fMc, vpColVector & q, const bool &verbose=false) const;
@@ -117,6 +124,7 @@ class VISP_EXPORT vpViper
   void get_fMw(const vpColVector & q, vpHomogeneousMatrix & fMw) const;
   void get_wMe(vpHomogeneousMatrix & wMe) const;
   void get_eMc(vpHomogeneousMatrix & eMc) const;
+  void get_eMs(vpHomogeneousMatrix & eMs) const;
   void get_fMe(const vpColVector & q, vpHomogeneousMatrix & fMe) const;
   void get_fMc(const vpColVector & q, vpHomogeneousMatrix & fMc) const;
 
@@ -129,11 +137,12 @@ class VISP_EXPORT vpViper
   virtual void set_eMc(const vpHomogeneousMatrix &eMc_);
   virtual void set_eMc(const vpTranslationVector &etc_, const vpRxyzVector &erc_);
 
-  friend VISP_EXPORT std::ostream & operator << (std::ostream & os, const vpViper & viper);
-
   vpColVector getJointMin() const;
   vpColVector getJointMax() const;
   double getCoupl56() const;
+  //@}
+
+  friend VISP_EXPORT std::ostream & operator << (std::ostream & os, const vpViper & viper);
 
  private:
   bool convertJointPositionInLimits(unsigned int joint, const double &q, double &q_mod, const bool &verbose=false) const;
@@ -153,6 +162,7 @@ class VISP_EXPORT vpViper
   double a3;     //!< for joint 3
   double d4;     //!< for joint 4
   double d6;     //!< for joint 6
+  double d7;     //!< for force/torque location
   double c56;    //!< Mechanical coupling between joint 5 and joint 6
   
   // Software joint limits in radians

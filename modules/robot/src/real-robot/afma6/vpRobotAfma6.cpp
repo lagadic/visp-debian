@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -44,13 +44,14 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include <visp3/robot/vpRobotException.h>
 #include <visp3/core/vpExponentialMap.h>
 #include <visp3/core/vpDebug.h>
 #include <visp3/core/vpVelocityTwistMatrix.h>
 #include <visp3/core/vpThetaUVector.h>
-#include <visp3/robot/vpRobotAfma6.h>
+#include <visp3/core/vpIoTools.h>
 #include <visp3/core/vpRotationMatrix.h>
+#include <visp3/robot/vpRobotAfma6.h>
+#include <visp3/robot/vpRobotException.h>
 
 /* ---------------------------------------------------------------------- */
 /* --- STATIC ----------------------------------------------------------- */
@@ -302,9 +303,9 @@ vpRobotAfma6::init (void)
     // Free allocated resources
     ShutDownConnection();
 
-    std::cout << "Cannot open connexion with the motionblox..." << std::endl;
+    std::cout << "Cannot open connection with the motionblox..." << std::endl;
     throw vpRobotException (vpRobotException::constructionError,
-  			  "Cannot open connexion with the motionblox");
+          "Cannot open connection with the motionblox");
   }
   return ;
 }
@@ -349,7 +350,6 @@ void
 vpRobotAfma6::init (vpAfma6::vpAfma6ToolType tool,
                     vpCameraParameters::vpCameraParametersProjType projModel)
 {
-
   InitTry;
   // Read the robot constants from files
   // - joint [min,max], coupl_56, long_56
@@ -378,6 +378,179 @@ vpRobotAfma6::init (vpAfma6::vpAfma6ToolType tool,
 
   CatchPrint();
   return ;
+}
+
+/*!
+
+  Set the geometric transformation between the end-effector frame and
+  the tool frame in the low level controller.
+
+  \warning This function overwrite the transformation parameters that were
+  potentially set using one of the init functions
+
+  \param eMc : Transformation between the end-effector frame
+  and the tool frame.
+*/
+void
+vpRobotAfma6::set_eMc(const vpHomogeneousMatrix &eMc)
+{
+  InitTry;
+  // Set camera extrinsic parameters equal to eMc
+  this->vpAfma6::set_eMc(eMc);
+
+  // Set the camera constant (eMc pose) in the MotionBlox
+  double eMc_pose[6];
+  for (unsigned int i=0; i < 3; i ++) {
+    eMc_pose[i] = _etc[i];   // translation in meters
+    eMc_pose[i+3] = _erc[i]; // rotation in rad
+  }
+  // Update the eMc pose in the low level controller
+  Try( PrimitiveCAMERA_CONST_Afma6(eMc_pose) );
+
+  CatchPrint();
+}
+
+/*!
+
+  Initialize the robot kinematics with user defined parameters
+  (set the eMc homogeneous parameters in the low level controller)
+  and also get the joint limits from the low-level controller.
+
+  \param tool : Tool to use.
+
+  \param eMc : Transformation between the end-effector frame
+  and the tool frame.
+
+  To set the transformation parameters related to the \f$^e{\bf
+  M}_c\f$ matrix, use the code below:
+
+  \code
+#include <visp3/robot/vpRobotAfma6.h>
+
+int main()
+{
+#ifdef VISP_HAVE_AFMA6
+  vpRobotAfma6 robot;
+
+  // Set the transformation between the end-effector frame
+  // and the tool frame.
+  vpHomogeneousMatrix eMc(0.001, 0.0, 0.1, 0.0, 0.0, M_PI/2);
+
+  robot.init(vpAfma6::TOOL_CUSTOM, eMc);
+#endif
+}
+  \endcode
+
+  \sa vpCameraParameters, init(), init(vpAfma6::vpAfma6ToolType,
+  vpCameraParameters::vpCameraParametersProjType),
+  init(vpAfma6::vpAfma6ToolType, const std::string&)
+*/
+void
+vpRobotAfma6::init(vpAfma6::vpAfma6ToolType tool, const vpHomogeneousMatrix &eMc)
+{
+  InitTry;
+  // Read the robot constants from files
+  // - joint [min,max], coupl_56, long_56
+  // ans set camera extrinsic parameters equal to eMc
+  vpAfma6::init(tool, eMc);
+
+  // Set the robot constant (coupl_56, long_56) in the MotionBlox
+  Try( PrimitiveROBOT_CONST_Afma6(_coupl_56, _long_56) );
+
+  // Set the camera constant (eMc pose) in the MotionBlox
+  double eMc_pose[6];
+  for (unsigned int i=0; i < 3; i ++) {
+    eMc_pose[i] = _etc[i];   // translation in meters
+    eMc_pose[i+3] = _erc[i]; // rotation in rad
+  }
+  // Update the eMc pose in the low level controller
+  Try( PrimitiveCAMERA_CONST_Afma6(eMc_pose) );
+
+  // get real joint min/max from the MotionBlox
+  Try( PrimitiveJOINT_MINMAX_Afma6(_joint_min, _joint_max) );
+
+  setToolType(tool);
+
+  CatchPrint();
+}
+
+/*!
+
+  Initialize the robot kinematics (set the eMc homogeneous
+  parameters in the low level controller) from a file and
+  also get the joint limits from the low-level controller.
+
+  \param tool : Tool to use.
+
+  \param filename : Path of the configuration file containing the
+  transformation between the end-effector frame and the tool frame.
+
+  To set the transformation parameters related to the \f$^e{\bf
+  M}_c\f$ matrix, use the code below:
+
+  \code
+#include <visp3/robot/vpRobotAfma6.h>
+
+int main()
+{
+#ifdef VISP_HAVE_AFMA6
+  vpRobotAfma6 robot;
+
+  // Set the transformation between the end-effector frame
+  // and the tool frame from a file
+  std::string filename("./EffectorToolTransformation.cnf");
+
+  robot.init(vpAfma6::TOOL_CUSTOM, filename);
+#endif
+}
+  \endcode
+
+  The configuration file should have the form below:
+
+  \code
+# Start with any number of consecutive lines
+# beginning with the symbol '#'
+#
+# The 3 following lines contain the name of the camera,
+# the rotation parameters of the geometric transformation
+# using the Euler angles in degrees with convention XYZ and
+# the translation parameters expressed in meters
+CAMERA CameraName
+eMc_ROT_XYZ 10.0 -90.0 20.0
+eMc_TRANS_XYZ  0.05 0.01 0.06
+    \endcode
+
+  \sa init(), init(vpAfma6::vpAfma6ToolType,
+  vpCameraParameters::vpCameraParametersProjType),
+  init(vpAfma6::vpAfma6ToolType, const vpHomogeneousMatrix&)
+*/
+void
+vpRobotAfma6::init (vpAfma6::vpAfma6ToolType tool, const std::string &filename)
+{
+  InitTry;
+  // Read the robot constants from files
+  // - joint [min,max], coupl_56, long_56
+  // ans set camera extrinsic parameters from file name
+  vpAfma6::init(tool, filename);
+
+  // Set the robot constant (coupl_56, long_56) in the MotionBlox
+  Try( PrimitiveROBOT_CONST_Afma6(_coupl_56, _long_56) );
+
+  // Set the camera constant (eMc pose) in the MotionBlox
+  double eMc_pose[6];
+  for (unsigned int i=0; i < 3; i ++) {
+    eMc_pose[i] = _etc[i];   // translation in meters
+    eMc_pose[i+3] = _erc[i]; // rotation in rad
+  }
+  // Update the eMc pose in the low level controller
+  Try( PrimitiveCAMERA_CONST_Afma6(eMc_pose) );
+
+  // get real joint min/max from the MotionBlox
+  Try( PrimitiveJOINT_MINMAX_Afma6(_joint_min, _joint_max) );
+
+  setToolType(tool);
+
+  CatchPrint();
 }
 
 /* ------------------------------------------------------------------------ */
@@ -528,7 +701,7 @@ vpRobotAfma6::powerOn(void)
             << "Check the emergency stop button and push the yellow button before continuing." << std::endl;
         firsttime = false;
       }
-      fprintf(stdout, "Remaining time %ds  \r", nitermax-i);
+      fprintf(stdout, "Remaining time %us  \r", nitermax-i);
       fflush(stdout);
       CAL_Wait(1);
     }
@@ -865,7 +1038,7 @@ int main()
   try {
     robot.setPosition(vpRobot::REFERENCE_FRAME, pose);
   }
-  catch (vpRobotException e) {
+  catch (vpRobotException &e) {
     if (e.getCode() == vpRobotException::positionOutOfRangeError) {
       std::cout << "The position is out of range" << std::endl;
     }
@@ -969,7 +1142,7 @@ int main()
   try {
     robot.setPosition(vpRobot::CAMERA_FRAME, position);
   }
-  catch (vpRobotException e) {
+  catch (vpRobotException &e) {
     if (e.getCode() == vpRobotException::positionOutOfRangeError) {
       std::cout << "The position is out of range" << std::endl;
     }
@@ -1084,8 +1257,7 @@ vpRobotAfma6::setPosition (const vpRobot::vpControlFrameType frame,
       vpERROR_TRACE ("Positionning error. Mixt frame not implemented");
       throw vpRobotException (vpRobotException::lowLevelError,
 			      "Positionning error: "
-			      "Mixt frame not implemented.");
-      break ;
+            "Mixt frame not implemented.");
     }
   }
 
@@ -1240,7 +1412,7 @@ int main()
   \sa setPositioningVelocity()
 
 */
-void vpRobotAfma6::setPosition(const char *filename)
+void vpRobotAfma6::setPosition(const std::string &filename)
 {
   vpColVector q;
   bool ret;
@@ -1248,7 +1420,7 @@ void vpRobotAfma6::setPosition(const char *filename)
   ret = this->readPosFile(filename, q);
 
   if (ret == false) {
-    vpERROR_TRACE ("Bad position in \"%s\"", filename);
+    vpERROR_TRACE ("Bad position in \"%s\"", filename.c_str());
     throw vpRobotException (vpRobotException::lowLevelError,
 			    "Bad position in filename.");
   }
@@ -1360,8 +1532,7 @@ vpRobotAfma6::getPosition (const vpRobot::vpControlFrameType frame,
     vpERROR_TRACE ("Cannot get position in mixt frame: not implemented");
     throw vpRobotException (vpRobotException::lowLevelError,
 			    "Cannot get position in mixt frame: "
-			    "not implemented");
-    break ;
+          "not implemented");
   }
   }
 
@@ -1868,51 +2039,64 @@ robot.setPosition(vpRobot::ARTICULAR_FRAME, q); // Move to the joint position
 */
 
 bool
-vpRobotAfma6::readPosFile(const char *filename, vpColVector &q)
+vpRobotAfma6::readPosFile(const std::string &filename, vpColVector &q)
 {
+  std::ifstream fd(filename.c_str(), std::ios::in);
 
-  FILE * fd ;
-  fd = fopen(filename, "r") ;
-  if (fd == NULL)
+  if(! fd.is_open()) {
     return false;
+  }
 
-  char line[FILENAME_MAX];
-  char dummy[FILENAME_MAX];
-  char head[] = "R:";
-  bool sortie = false;
+  std::string line;
+  std::string key("R:");
+  std::string id("#AFMA6 - Position");
+  bool pos_found = false;
+  int lineNum = 0;
 
-  do {
-    // Saut des lignes commencant par #
-    if (fgets (line, FILENAME_MAX, fd) != NULL) {
-      if ( strncmp (line, "#", 1) != 0) {
-	// La ligne n'est pas un commentaire
-	if ( strncmp (line, head, sizeof(head)-1) == 0) {
-	  sortie = true; 	// Position robot trouvee.
-	}
-// 	else
-// 	  return (false); // fin fichier sans position robot.
+  q.resize(njoint);
+
+  while(std::getline(fd, line)) {
+    lineNum ++;
+    if (lineNum == 1) {
+      if(! (line.compare(0, id.size(), id) == 0)) { // check if Afma6 position file
+        std::cout << "Error: this position file " << filename << " is not for Afma6 robot" << std::endl;
+        return false;
       }
     }
-    else {
-      return (false);		/* fin fichier 	*/
+    if((line.compare(0, 1, "#") == 0)) { // skip comment
+      continue;
     }
+    if((line.compare(0, key.size(), key) == 0)) { // decode position
+      // check if there are at least njoint values in the line
+      std::vector<std::string> chain = vpIoTools::splitChain(line, std::string(" "));
+      if (chain.size() < njoint+1) // try to split with tab separator
+        chain = vpIoTools::splitChain(line, std::string("\t"));
+      if(chain.size() < njoint+1)
+        continue;
 
+      std::istringstream ss(line);
+      std::string key_;
+      ss >> key_;
+      for (unsigned int i=0; i< njoint; i++)
+        ss >> q[i];
+      pos_found = true;
+      break;
+    }
   }
-  while ( sortie != true );
-
-  // Lecture des positions
-  q.resize(njoint);
-  sscanf(line, "%s %lf %lf %lf %lf %lf %lf",
-	 dummy,
-	 &q[0], &q[1], &q[2],
-	 &q[3], &q[4], &q[5]);
 
   // converts rotations from degrees into radians
-  for (unsigned int i=3; i < njoint; i ++)
-    q[i] = vpMath::rad(q[i]) ;
+  q[3] = vpMath::rad(q[3]);
+  q[4] = vpMath::rad(q[4]);
+  q[5] = vpMath::rad(q[5]);
 
-  fclose(fd) ;
-  return (true);
+  fd.close();
+
+  if (!pos_found) {
+    std::cout << "Error: unable to find a position for Afma6 robot in " << filename << std::endl;
+    return false;
+  }
+
+  return true;
 }
 
 /*!
@@ -1940,11 +2124,11 @@ vpRobotAfma6::readPosFile(const char *filename, vpColVector &q)
 */
 
 bool
-vpRobotAfma6::savePosFile(const char *filename, const vpColVector &q)
+vpRobotAfma6::savePosFile(const std::string &filename, const vpColVector &q)
 {
 
   FILE * fd ;
-  fd = fopen(filename, "w") ;
+  fd = fopen(filename.c_str(), "w") ;
   if (fd == NULL)
     return false;
 
@@ -1981,7 +2165,7 @@ vpRobotAfma6::savePosFile(const char *filename, const vpColVector &q)
 
 */
 void
-vpRobotAfma6::move(const char *filename)
+vpRobotAfma6::move(const std::string &filename)
 {
   vpColVector q;
 
@@ -2004,7 +2188,7 @@ vpRobotAfma6::move(const char *filename)
 
 */
 void
-vpRobotAfma6::move(const char *filename, const double velocity)
+vpRobotAfma6::move(const std::string &filename, const double velocity)
 {
   vpColVector q;
 
@@ -2162,13 +2346,11 @@ vpRobotAfma6::getDisplacement(vpRobot::vpControlFrameType frame,
     case vpRobot::REFERENCE_FRAME: {
       std::cout << "getDisplacement() REFERENCE_FRAME not implemented\n";
       return;
-      break ;
     }
 
     case vpRobot::MIXT_FRAME: {
       std::cout << "getDisplacement() MIXT_FRAME not implemented\n";
       return;
-      break ;
     }
     }
   }

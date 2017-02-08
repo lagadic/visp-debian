@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -192,17 +192,6 @@ vpForceTwistMatrix::vpForceTwistMatrix(const double tx, const double ty, const d
 }
 
 /*!
-  Set the twist transformation matrix to identity.
-  \sa eye()
-*/
-void
-vpForceTwistMatrix::setIdentity()
-{
-  eye() ;
-}
-
-
-/*!
 
   Operator that allows to multiply a skew transformation matrix by an
   other skew transformation matrix.
@@ -287,12 +276,9 @@ vpForceTwistMatrix::operator*(const vpMatrix &M) const
 
 int main()
 {
-  // Get the force/torque measures from the sensor
-  vpColVector sH(6); // Force/torque measures given by the sensor
-
 #ifdef VISP_HAVE_VIPER850
   vpRobotViper850 robot;
-  robot.getForceTorque(sH); // Get the force/torque measures 
+  vpColVector sH = robot.getForceTorque(sH); // Get the force/torque measures
 #endif  
 
   // Set the transformation from sensor frame to the probe frame
@@ -511,3 +497,19 @@ vpForceTwistMatrix::print(std::ostream& s, unsigned int length, char const* intr
 
   return (int)(maxBefore+maxAfter);
 }
+
+#if defined(VISP_BUILD_DEPRECATED_FUNCTIONS)
+
+/*!
+  \deprecated You should rather use eye().
+
+  Set the twist transformation matrix to identity.
+  \sa eye()
+*/
+void
+vpForceTwistMatrix::setIdentity()
+{
+  eye() ;
+}
+
+#endif //#if defined(VISP_BUILD_DEPRECATED_FUNCTIONS)

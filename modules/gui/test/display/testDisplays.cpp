@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -84,10 +84,8 @@ void usage(const char *name, const char *badparam)
 Test video devices or display.\n\
 \n\
 SYNOPSIS\n\
-  %s [-t <type of video device>] [-l] [-c] [-d] [-h]\n\
+  %s [-l] [-c] [-d] [-h]\n\
 ", name);
-
-  std::string display;
 
   fprintf(stdout, "\n\
 OPTIONS:                                               Default\n\
@@ -124,7 +122,6 @@ bool getOptions(int argc, const char **argv, bool &list, bool &click_allowed, bo
 {
   const char *optarg_;
   int	c;
-  std::string sDisplayType;
   while ((c = vpParseArgv::parse(argc, argv, GETOPTARGS, &optarg_)) > 1) {
 
     switch (c) {
@@ -241,7 +238,6 @@ main(int argc, const char ** argv)
     bool opt_list = false; // To print the list of video devices
     bool opt_click_allowed = true;
     bool opt_display = true;
-
 
     // Read the command line options
     if (getOptions(argc, argv, opt_list,
@@ -366,8 +362,6 @@ main(int argc, const char ** argv)
     }
 #endif
 
-
-
 #if defined VISP_HAVE_X11
     delete displayX;
 #endif
@@ -388,9 +382,9 @@ main(int argc, const char ** argv)
     delete displayD3d;
 #endif
   }
-  catch(...) {
-    vpERROR_TRACE("Error while displaying the image") ;
-    exit(-1);
+  catch(const vpException &e) {
+    std::cout << "Catch an exception: " << e.getMessage() << std::endl;
+    return(-1);
   }
 }
 
@@ -398,7 +392,7 @@ main(int argc, const char ** argv)
 int
 main()
 {
-  vpERROR_TRACE("You do not have display functionalities...");
+  std::cout << "You do not have display functionalities..." << std::endl;
 }
 
 #endif

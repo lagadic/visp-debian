@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -65,7 +65,7 @@ vpPose::poseVirtualVS(vpHomogeneousMatrix & cMo)
 
     int iter = 0 ;
 
-    unsigned int nb = (unsigned int)listP.size() ;
+    unsigned int nb = (unsigned int) listP.size() ;
     vpMatrix L(2*nb,6) ;
     vpColVector err(2*nb) ;
     vpColVector sd(2*nb),s(2*nb) ;
@@ -86,7 +86,8 @@ vpPose::poseVirtualVS(vpHomogeneousMatrix & cMo)
     }
 
     vpHomogeneousMatrix cMoPrev = cMo;
-    while((int)((residu_1 - r)*1e12) !=0)
+    //while((int)((residu_1 - r)*1e12) !=0)
+    while(std::fabs((residu_1 - r)*1e12) > std::numeric_limits<double>::epsilon())
     {      
       residu_1 = r ;
 
@@ -171,7 +172,7 @@ vpPose::poseVirtualVSrobust(vpHomogeneousMatrix & cMo)
     robust.setThreshold(0.0000) ;
     vpColVector w,res ;
 
-    unsigned int nb = (unsigned int)listP.size() ;
+    unsigned int nb = (unsigned int) listP.size() ;
     vpMatrix L(2*nb,6) ;
     vpColVector error(2*nb) ;
     vpColVector sd(2*nb),s(2*nb) ;
@@ -197,7 +198,8 @@ vpPose::poseVirtualVSrobust(vpHomogeneousMatrix & cMo)
     W.resize(s.getRows(), s.getRows()) ;
     w =1 ;
 
-    while((int)((residu_1 - r)*1e12) !=0)
+    //while((int)((residu_1 - r)*1e12) !=0)
+    while(std::fabs((residu_1 - r)*1e12) > std::numeric_limits<double>::epsilon())
     {
       residu_1 = r ;
 

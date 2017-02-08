@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -92,6 +92,17 @@ vpRxyzVector::vpRxyzVector(const vpThetaUVector& tu)
   buildFrom(tu) ;
 }
 
+/*! Copy constructor from a 3-dimension vector. */
+vpRxyzVector::vpRxyzVector(const vpColVector &rxyz)
+  : vpRotationVector (3)
+{
+  if (rxyz.size() != 3) {
+    throw(vpException(vpException::dimensionError, "Cannot construct a R-xyz vector from a %d-dimension col vector", rxyz.size()));
+  }
+  for (unsigned int i=0; i< 3; i++)
+    data[i] = rxyz[i];
+}
+
 /*! 
   Convert a rotation matrix into a \f$R_{xyz}=(\varphi,\theta,\psi)\f$ Euler
   angles vector.
@@ -172,6 +183,39 @@ vpRxyzVector &vpRxyzVector::operator=(double v)
 {
   for (unsigned int i=0; i< dsize; i++)
     data[i] = v;
+
+  return *this;
+}
+
+/*!
+
+  Copy operator that initializes a \f$R_{xyz}=(\varphi,\theta,\psi)\f$
+  Euler angles vector from a 3-dimension column vector.
+
+  \param rxyz : 3-dimension vector containing the values of the rotation vector.
+
+\code
+#include <visp3/core/vpRxyzVector.h>
+
+int main()
+{
+  vpColVector v(3);
+  v[0] = 0.1;
+  v[1] = 0.2;
+  v[2] = 0.3;
+  vpRxyzVector rxyz;
+  rxyz = v;
+  // rxyz is now equal to v : 0.1, 0.2, 0.3
+}
+\endcode
+*/
+vpRxyzVector &vpRxyzVector::operator=(const vpColVector &rxyz)
+{
+  if (rxyz.size() != 3) {
+    throw(vpException(vpException::dimensionError, "Cannot set a R-xyz vector from a %d-dimension col vector", rxyz.size()));
+  }
+  for (unsigned int i=0; i< 3; i++)
+    data[i] = rxyz[i];
 
   return *this;
 }

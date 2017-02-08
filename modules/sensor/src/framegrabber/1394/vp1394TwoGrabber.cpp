@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -503,24 +503,19 @@ vp1394TwoGrabber::setVideoMode(vp1394TwoVideoModeType videomode)
   open();
   if (! num_cameras) {
     close();
-    vpERROR_TRACE("No camera found");
     throw (vpFrameGrabberException(vpFrameGrabberException::initializationError,
                                    "No camera found") );
   }
   if (!isVideoModeSupported(videomode)){
-    vpERROR_TRACE("Video mode not supported by camera %d",camera_id);
     throw (vpFrameGrabberException(vpFrameGrabberException::settingError,
-                                   "Video mode not supported") );
-    return ;
+                                   "Video mode not supported by camera %d",camera_id) );
   }
   // Stop dma capture if started
   setTransmission(DC1394_OFF);
   setCapture(DC1394_OFF);
 
   if (dc1394_video_set_mode(camera, (dc1394video_mode_t) videomode) != DC1394_SUCCESS) {
-
     close();
-    vpERROR_TRACE("Can't set video mode");
     throw (vpFrameGrabberException(vpFrameGrabberException::settingError,
                                    "Can't set video mode") );
   }
@@ -535,11 +530,9 @@ vp1394TwoGrabber::setVideoMode(vp1394TwoVideoModeType videomode)
       != DC1394_SUCCESS) {
 
     close();
-    vpERROR_TRACE("Can't set video mode");
     throw (vpFrameGrabberException(vpFrameGrabberException::settingError,
                                    "Can't get image size") );
   }
-
 }
 
 /*!
@@ -765,7 +758,6 @@ vp1394TwoGrabber::setFramerate(vp1394TwoFramerateType fps)
   open();
   if (! num_cameras) {
     close();
-    vpERROR_TRACE("No camera found");
     throw (vpFrameGrabberException(vpFrameGrabberException::initializationError,
                                    "No camera found") );
   }
@@ -776,10 +768,8 @@ vp1394TwoGrabber::setFramerate(vp1394TwoFramerateType fps)
     return;
 
   if (!isFramerateSupported(cur_videomode,fps)){
-    vpERROR_TRACE("Framerate not supported by camera %d",camera_id);
     throw (vpFrameGrabberException(vpFrameGrabberException::settingError,
-                                   "Framerate not supported") );
-    return ;
+                                   "Framerate not supported by camera %d",camera_id) );
   }
 
   // Stop dma capture if started
@@ -789,7 +779,6 @@ vp1394TwoGrabber::setFramerate(vp1394TwoFramerateType fps)
   if (dc1394_video_set_framerate(camera, (dc1394framerate_t) fps) != DC1394_SUCCESS) {
 
     close();
-    vpERROR_TRACE("Can't set framerate");
     throw (vpFrameGrabberException(vpFrameGrabberException::settingError,
                                    "Can't set framerate") );
   }
@@ -1056,7 +1045,6 @@ vp1394TwoGrabber::setColorCoding(vp1394TwoColorCodingType coding)
 {
   if (! num_cameras) {
     close();
-    vpERROR_TRACE("No camera found");
     throw (vpFrameGrabberException(vpFrameGrabberException::initializationError,
                                    "No camera found") );
   }
@@ -1065,16 +1053,13 @@ vp1394TwoGrabber::setColorCoding(vp1394TwoColorCodingType coding)
   if (dc1394_video_get_mode(camera, &_videomode) != DC1394_SUCCESS) {
 
     close();
-    vpERROR_TRACE("Can't get current video mode");
     throw (vpFrameGrabberException(vpFrameGrabberException::settingError,
                                    "Can't get current video mode") );
   }
 
   if (!isColorCodingSupported((vp1394TwoVideoModeType)_videomode,coding)){
-    vpERROR_TRACE("Color coding not supported by camera %d",camera_id);
     throw (vpFrameGrabberException(vpFrameGrabberException::settingError,
-                                   "Color coding not supported") );
-    return ;
+                                   "Color coding not supported by camera %d", camera_id) );
   }
 
   // Format 7 video mode
@@ -1087,7 +1072,6 @@ vp1394TwoGrabber::setColorCoding(vp1394TwoColorCodingType coding)
         != DC1394_SUCCESS) {
 
       close();
-      vpERROR_TRACE("Can't set color coding");
       throw (vpFrameGrabberException(vpFrameGrabberException::settingError,
                                      "Can't set color coding") );
     }
@@ -3658,6 +3642,50 @@ vp1394TwoGrabber::updateDataStructToCam()
   setParameterValue(vpFEATURE_SHUTTER, dataCam[camera_id].shutter);
   setParameterValue(vpFEATURE_GAIN, dataCam[camera_id].gain);
   setParameterValue(vpFEATURE_IRIS, dataCam[camera_id].iris);
+}
+
+/*!
+
+   Operator that allows to capture a grey level image.
+   \param I : The captured image.
+
+   \code
+#include <visp3/sensor/vp1394TwoGrabber.h>
+
+int main()
+{
+  vpImage<unsigned char> I;
+  vp1394TwoGrabber g;
+  g >> I;
+}
+   \endcode
+ */
+vp1394TwoGrabber &vp1394TwoGrabber::operator>>(vpImage<unsigned char> &I)
+{
+  this->acquire(I);
+  return *this;
+}
+
+/*!
+
+   Operator that allows to capture a grey level image.
+   \param I : The captured image.
+
+   \code
+#include <visp3/sensor/vp1394TwoGrabber.h>
+
+int main()
+{
+  vpImage<vpRGBa> I;
+  vp1394TwoGrabber g;
+  g >> I;
+}
+   \endcode
+ */
+vp1394TwoGrabber &vp1394TwoGrabber::operator>>(vpImage<vpRGBa> &I)
+{
+  this->acquire(I);
+  return *this;
 }
 
 #elif !defined(VISP_BUILD_SHARED_LIBS)

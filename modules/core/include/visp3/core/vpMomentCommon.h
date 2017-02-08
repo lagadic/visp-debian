@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -119,12 +119,12 @@ private:
 
 public:
   vpMomentCommon(double dstSurface,std::vector<double> ref,double refAlpha,double dstZ=1.0, bool flg_sxsyfromnormalized=false);
+  virtual ~vpMomentCommon();
 
   static double getAlpha(vpMomentObject& object);
   static std::vector<double> getMu3(vpMomentObject& object);
   static double getSurface(vpMomentObject& object);
 
   void updateAll(vpMomentObject& object);
-  ~vpMomentCommon();
 };
 #endif // VPCOMMONMOMENTS_H

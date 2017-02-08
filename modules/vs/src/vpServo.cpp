@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -71,9 +71,12 @@ vpServo::vpServo()
     interactionMatrixType(DESIRED), inversionType(PSEUDO_INVERSE), cVe(), init_cVe(false),
     cVf(), init_cVf(false), fVe(), init_fVe(false), eJe(), init_eJe(false), fJe(), init_fJe(false),
     errorComputed(false), interactionMatrixComputed(false), dim_task(0), taskWasKilled(false),
-    forceInteractionMatrixComputation(false), WpW(), I_WpW(), P(), sv(), mu(4.), e1_initial()
+    forceInteractionMatrixComputation(false), WpW(), I_WpW(), P(), sv(), mu(4.), e1_initial(),
+    iscJcIdentity(true), cJc(6,6)
 {
+  cJc.eye();
 }
+
 /*!
   Constructor that allows to choose the visual servoing control law.
   \param servo_type : Visual servoing control law.
@@ -93,8 +96,10 @@ vpServo::vpServo(vpServoType servo_type)
     interactionMatrixType(DESIRED), inversionType(PSEUDO_INVERSE), cVe(), init_cVe(false),
     cVf(), init_cVf(false), fVe(), init_fVe(false), eJe(), init_eJe(false), fJe(), init_fJe(false),
     errorComputed(false), interactionMatrixComputed(false), dim_task(0), taskWasKilled(false),
-    forceInteractionMatrixComputation(false), WpW(), I_WpW(), P(), sv(), mu(4), e1_initial()
+    forceInteractionMatrixComputation(false), WpW(), I_WpW(), P(), sv(), mu(4), e1_initial(),
+    iscJcIdentity(true), cJc(6,6)
 {
+  cJc.eye();
 }
 
 /*!
@@ -235,12 +240,73 @@ void vpServo::setServo(const vpServoType &servo_type)
   };
 }
 
+/*!
+  Set a 6-dim column vector representing the degrees of freedom that are controlled
+  in the camera frame. When set to 1, all the 6 dof are controlled.
+
+  \param dof : Degrees of freedom to control in the camera frame.
+  Below we give the correspondance between the index of the vector and the considered dof:
+  - dof[0] = 1 if translation along X is controled, 0 otherwise;
+  - dof[1] = 1 if translation along Y is controled, 0 otherwise;
+  - dof[2] = 1 if translation along Z is controled, 0 otherwise;
+  - dof[3] = 1 if rotation along X is controled, 0 otherwise;
+  - dof[4] = 1 if rotation along Y is controled, 0 otherwise;
+  - dof[5] = 1 if rotation along Z is controled, 0 otherwise;
+
+  The following example shows how to use this function to control only wx, wy like a pan/tilt:
+  \code
+#include <visp3/visual_features/vpFeaturePoint.h>
+#include <visp3/vs/vpServo.h>
+
+int main()
+{
+  vpServo servo;
+  servo.setServo(vpServo::EYEINHAND_CAMERA);
+  vpFeaturePoint s, sd;
+  servo.addFeature(s, sd);
+
+  vpColVector dof(6, 1);
+  dof[0] = 0; // turn off vx
+  dof[1] = 0; // turn off vy
+  dof[2] = 0; // turn off vz
+  dof[5] = 0; // turn off wz
+  servo.setCameraDoF(dof);
+
+  while(1) {
+    // vpFeatureBuilder::create(s, ...);       // update current feature
+
+    vpColVector v = servo.computeControlLaw(); // compute control law
+    // only v[3] and v[4] corresponding to wx and wy are different from 0
+  }
+
+  servo.kill();
+}
+  \endcode
+*/
+void
+vpServo::setCameraDoF(const vpColVector& dof)
+{
+  if(dof.size() == 6)
+  {
+    iscJcIdentity = true;
+    for(unsigned int i = 0 ; i < 6 ; i++) {
+      if(std::fabs(dof[i]) > std::numeric_limits<double>::epsilon()){
+        cJc[i][i] = 1.0;
+      }
+      else{
+        cJc[i][i] = 0.0;
+        iscJcIdentity = false;
+      }
+    }
+  }
+}
+
 
 /*!
 
   Prints on \e os stream information about the task:
 
-  \param displayLevel : Indicates which are the task informations to print. See vpServo::vpServoPrintType for more details.
+  \param displayLevel : Indicates which are the task information to print. See vpServo::vpServoPrintType for more details.
 
   \param os : Output stream.
 */
@@ -557,7 +623,6 @@ static void computeInteractionMatrixFromList  (const std::list<vpBasicFeature *>
   /* vectTmp is used to store the return values of functions get_s() and
    * error(). */
   vpMatrix matrixTmp;
-  unsigned int rowMatrixTmp, colMatrixTmp;
 
   /* The cursor are the number of the next case of the vector array to
    * be affected. A memory reallocation should be done when cursor
@@ -571,8 +636,8 @@ static void computeInteractionMatrixFromList  (const std::list<vpBasicFeature *>
   {
     /* Get s. */
     matrixTmp = (*it)->interaction( *it_select );
-    rowMatrixTmp = matrixTmp .getRows();
-    colMatrixTmp = matrixTmp .getCols();
+    unsigned int rowMatrixTmp = matrixTmp .getRows();
+    unsigned int colMatrixTmp = matrixTmp .getCols();
 
     /* Check the matrix L size, and realloc if needed. */
     while (rowMatrixTmp + cursorL > rowL) {
@@ -618,9 +683,8 @@ vpMatrix vpServo::computeInteractionMatrix()
         interactionMatrixComputed = true ;
       }
 
-      catch(vpException me)
+      catch(...)
       {
-        vpERROR_TRACE("Error caught") ;
         throw ;
       }
     }
@@ -639,9 +703,8 @@ vpMatrix vpServo::computeInteractionMatrix()
         }
 
       }
-      catch(vpException me)
+      catch(...)
       {
-        vpERROR_TRACE("Error caught") ;
         throw ;
       }
     }
@@ -656,9 +719,8 @@ vpMatrix vpServo::computeInteractionMatrix()
         computeInteractionMatrixFromList(this ->desiredFeatureList,
                                          this ->featureSelectionList, Lstar);
       }
-      catch(vpException me)
+      catch(...)
       {
-        vpERROR_TRACE("Error caught") ;
         throw ;
       }
       L = (L+Lstar)/2;
@@ -674,9 +736,8 @@ vpMatrix vpServo::computeInteractionMatrix()
     }
 
   }
-  catch(vpException me)
+  catch(...)
   {
-    vpERROR_TRACE("Error caught") ;
     throw ;
   }
   return L ;
@@ -733,7 +794,6 @@ vpColVector vpServo::computeError()
     /* vectTmp is used to store the return values of functions get_s() and
      * error(). */
     vpColVector vectTmp;
-    unsigned int dimVectTmp;
 
     /* The cursor are the number of the next case of the vector array to
      * be affected. A memory reallocation should be done when cursor
@@ -757,7 +817,7 @@ vpColVector vpServo::computeError()
 
       /* Get s, and store it in the s vector. */
       vectTmp = current_s->get_s(select);
-      dimVectTmp = vectTmp .getRows();
+      unsigned int dimVectTmp = vectTmp .getRows();
       while (dimVectTmp + cursorS > dimS)
       { dimS *= 2; s .resize (dimS,false); vpDEBUG_TRACE(15,"Realloc!"); }
       for (unsigned int k = 0; k <  dimVectTmp; ++k) { s[cursorS++] = vectTmp[k]; }
@@ -793,11 +853,6 @@ vpColVector vpServo::computeError()
     /* Final modifications. */
     dim_task = error.getRows() ;
     errorComputed = true ;
-  }
-  catch(vpException me)
-  {
-    vpERROR_TRACE("Error caught") ;
-    throw ;
   }
   catch(...)
   {
@@ -954,7 +1009,10 @@ vpColVector vpServo::computeControlLaw()
     computeError() ;
 
     // compute  task Jacobian
-    J1 = L*cVa*aJe ;
+    if(iscJcIdentity)
+      J1 = L*cVa*aJe ;
+    else
+      J1 = L*cJc*cVa*aJe ;
 
     // handle the eye-in-hand eye-to-hand case
     J1 *= signInteractionMatrix ;
@@ -992,7 +1050,6 @@ vpColVector vpServo::computeControlLaw()
         // image of J1 is computed to allows the computation
         // of the projection operator
         rankJ1 = J1.pseudoInverse(Jtmp, sv, 1e-6, imJ1, imJ1t) ;
-        imageComputed = true ;
       }
       WpW = imJ1t*imJ1t.t() ;
 
@@ -1149,7 +1206,6 @@ vpColVector vpServo::computeControlLaw(double t)
         // image of J1 is computed to allows the computation
         // of the projection operator
         rankJ1 = J1.pseudoInverse(Jtmp, sv, 1e-6, imJ1, imJ1t) ;
-        imageComputed = true ;
       }
       WpW = imJ1t*imJ1t.t() ;
 
@@ -1313,7 +1369,6 @@ vpColVector vpServo::computeControlLaw(double t, const vpColVector &e_dot_init)
         // image of J1 is computed to allows the computation
         // of the projection operator
         rankJ1 = J1.pseudoInverse(Jtmp, sv, 1e-6, imJ1, imJ1t) ;
-        imageComputed = true ;
       }
       WpW = imJ1t*imJ1t.t() ;
 

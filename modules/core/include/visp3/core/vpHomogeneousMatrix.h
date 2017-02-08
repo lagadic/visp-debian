@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -124,9 +124,9 @@ class VISP_EXPORT vpHomogeneousMatrix : public vpArray2D<double>
   void eye();
 
   vpColVector getCol(const unsigned int j) const;
-  vpRotationMatrix getRotationMatrix();
-  vpThetaUVector getThetaUVector();
-  vpTranslationVector getTranslationVector();
+  vpRotationMatrix getRotationMatrix() const;
+  vpThetaUVector getThetaUVector() const ;
+  vpTranslationVector getTranslationVector() const;
 
   // Invert the homogeneous matrix.
   vpHomogeneousMatrix inverse() const ;
@@ -153,8 +153,11 @@ class VISP_EXPORT vpHomogeneousMatrix : public vpArray2D<double>
 
   vpHomogeneousMatrix &operator=(const vpHomogeneousMatrix &M);
   vpHomogeneousMatrix operator*(const vpHomogeneousMatrix &M) const;
+  vpHomogeneousMatrix &operator*=(const vpHomogeneousMatrix &M);
 
   vpColVector operator*(const vpColVector &v) const;
+  vpTranslationVector operator*(const vpTranslationVector &t) const;
+
   // Multiply by a point
   vpPoint operator*(const vpPoint &bP) const;
 

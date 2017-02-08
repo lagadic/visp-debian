@@ -1,7 +1,7 @@
 #############################################################################
 #
 # This file is part of the ViSP software.
-# Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+# Copyright (C) 2005 - 2017 by Inria. All rights reserved.
 #
 # This software is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -35,6 +35,7 @@
 #
 # LAPACK_C_FOUND
 # LAPACK_C_LIBRARIES
+# LAPACK_C_VERSION
 #
 # Authors:
 # Filip Novotny
@@ -44,6 +45,7 @@
 
 set(LAPACK_C_FOUND FALSE)
 set(LAPACK_C_LIBRARIES "")
+set(LAPACK_C_VERSION "n/a")
 if(WIN32)
   set(LAPACK_C_LIB_SEARCH_PATH
     $ENV{LAPACK_C_HOME}
@@ -128,6 +130,10 @@ else(WIN32)
   if((LAPACK_C_LIBRARY_LAPACK AND LAPACK_C_LIBRARY_BLAS))
     set(LAPACK_C_LIBRARIES ${LAPACK_C_LIBRARY_LAPACK} ${LAPACK_C_LIBRARY_BLAS})
     set(LAPACK_C_FOUND TRUE)
+
+    get_filename_component(LAPACK_C_LIB_DIR ${LAPACK_C_LIBRARY_LAPACK} PATH)
+    vp_get_version_from_pkg("lapack" "${LAPACK_C_LIB_DIR}/pkgconfig" LAPACK_C_VERSION)
+
   endif()
 endif(WIN32)
 

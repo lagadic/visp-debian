@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -106,6 +106,9 @@ public:
     rowNum = colNum = dsize = 0;
   }
 
+  std::ostream & cppPrint(std::ostream & os, const std::string &matrixName="A", bool octet = false) const;
+  std::ostream & csvPrint(std::ostream & os) const;
+
   /*!
     Convert a column vector containing angles in degrees into radians.
     \sa rad2deg()
@@ -145,6 +148,9 @@ public:
 
   void init(const vpRowVector &v, unsigned int c, unsigned int ncols);
   void insert(unsigned int i, const vpRowVector &v);
+
+  std::ostream & maplePrint(std::ostream & os) const;
+  std::ostream & matlabPrint(std::ostream & os) const;
 
   vpRowVector &normalize() ;
   vpRowVector &normalize(vpRowVector &x) const ;
@@ -223,6 +229,7 @@ public:
   void stack(const double &d);
   void stack(const vpRowVector &v);
 
+  double sum() const;
   double sumSquare() const;
   vpColVector t() const;
   vpColVector transpose() const;

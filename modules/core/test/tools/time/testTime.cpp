@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -52,12 +52,15 @@
 #endif
 #include <stdlib.h>
 #include <stdio.h>
-#include <iostream>
 #include <time.h>
+#include <cmath>
+#include <iostream>
+
 #include <visp3/core/vpTime.h>
 
 int main()
 {
+#if !defined(WINRT)
   try {
     double v = 0;
 
@@ -106,6 +109,7 @@ int main()
     double t8 = vpTime::measureTimeMs();
 
     std::cout << "t1-t0: computation time: " << t1 - t0 << std::endl;
+
     std::cout << "t2-t1: wait(t1, 40 ms): " << t2 - t1 << std::endl;
     std::cout << "t3-t2: sleep(10 ms): " << t3 - t2 << std::endl;
     std::cout << "t4-t3: sleep(2 ms): " << t4 - t3 << std::endl;
@@ -116,8 +120,11 @@ int main()
 
     return 0;
   }
-  catch(vpException e) {
+  catch(vpException &e) {
     std::cout << "Catch an exception: " << e << std::endl;
     return 1;
   }
+#  else
+  std::cout << "vpTime is not implemented on Universal Windows Platform" << std::endl;
+#  endif
 }

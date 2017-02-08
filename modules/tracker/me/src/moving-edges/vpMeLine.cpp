@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -935,7 +935,6 @@ vpMeLine::computeRhoTheta(const vpImage<unsigned char>& I)
     int  end = false ;
     int incr = 10 ;
 
-
     int i1=0,i2=0,j1=0,j2=0 ;
     unsigned char v1=0,v2=0 ;
 
@@ -973,13 +972,12 @@ vpMeLine::computeRhoTheta(const vpImage<unsigned char>& I)
       v2=I[i2_][j2_];
       if (abs(v1-v2) < 1)
       {
-
         incr-- ;
         end = false ;
         if (incr==1)
         {
-          std::cout << "In CStraightLine::GetParameters() " ;
-          std::cout << " Error Tracking " << abs(v1-v2) << std::endl ;
+          throw(vpException(vpException::fatalError,
+                            "In vpMeLine cannot determine rho sign, since there is no gray level difference between both sides of the line"));
         }
       }
       update_indices(theta,i,j,incr,i1,i2,j1,j2);
@@ -1093,16 +1091,16 @@ bool
 vpMeLine::intersection(const vpMeLine &line1, const vpMeLine &line2, 
                        vpImagePoint &ip)
 {
-  double denom = 0;
   double a1 = line1.a;
   double b1 = line1.b;
   double c1 = line1.c;
   double a2 = line2.a;
   double b2 = line2.b;
   double c2 = line2.c;
-  double i=0, j=0;
 
   try{
+    double i=0, j=0;
+    double denom = 0;
 
     if (a1 > 0.1)
     {

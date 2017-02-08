@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -149,7 +149,7 @@ void vpTemplateTrackerWarp::findWarp(const double *ut0,const double *vt0,const d
 
     vpMatrix::computeHLM(H, lambda, HLM);
     try{
-      p+=(vpColVector)(HLM.inverseByLU()*G, 0);
+      p+=(vpColVector)(HLM.inverseByLU()*G, 0u);
     }
     catch(vpException &e) {
       //std::cout<<"Cannot inverse the matrix by LU " << std::endl;

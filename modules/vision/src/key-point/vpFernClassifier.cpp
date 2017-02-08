@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -243,7 +243,7 @@ vpFernClassifier::buildReference(const vpImage<unsigned char> &_I,
   }
     
   vpImage<unsigned char> subImage;
-  vpImageTools::createSubImage(_I,
+  vpImageTools::crop(_I,
 			       (unsigned int)_iP.get_i(),
 			       (unsigned int)_iP.get_j(),
 			       _height, _width, subImage);
@@ -394,7 +394,7 @@ vpFernClassifier::matchPoint(const vpImage<unsigned char> &_I,
 
   vpImage<unsigned char> subImage;
 
-  vpImageTools::createSubImage(_I,
+  vpImageTools::crop(_I,
 			       (unsigned int)_iP.get_i(),
 			       (unsigned int)_iP.get_j(),
 			       _height, _width, subImage);

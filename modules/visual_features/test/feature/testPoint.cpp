@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -135,8 +135,8 @@ int main()
       e = p.error(pd,vpFeaturePoint::selectAll() ) ;
       std::cout << e << std::endl ;
     }
-    catch(vpFeatureException me){ std::cout << me << std::endl ; }
-    catch(vpException me){ std::cout << me << std::endl ; }
+    catch(vpFeatureException &me){ std::cout << me << std::endl ; }
+    catch(vpException &me){ std::cout << me << std::endl ; }
     std::cout <<"------------------------------------------------------"<<std::endl ;
     vpTRACE("test the  dimension") ;
     unsigned int dim ;
@@ -161,7 +161,7 @@ int main()
     std::cout << "Dimension = " << dim << std::endl ;
     return 0;
   }
-  catch(vpException e) {
+  catch(vpException &e) {
     std::cout << "Catch an exception: " << e << std::endl;
     return 1;
   }

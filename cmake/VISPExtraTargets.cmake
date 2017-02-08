@@ -1,7 +1,7 @@
 #############################################################################
 #
 # This file is part of the ViSP software.
-# Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+# Copyright (C) 2005 - 2017 by Inria. All rights reserved.
 #
 # This software is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -107,3 +107,38 @@ if(ENABLE_SOLUTION_FOLDERS)
   set_target_properties(visp_modules PROPERTIES FOLDER "extra")
 endif()
 
+# ----------------------------------------------------------------------------
+#   Coverage
+# ----------------------------------------------------------------------------
+
+if(BUILD_TESTS AND BUILD_COVERAGE)
+  # needed for coverage
+  find_program(GCOVR_COMMAND gcovr)
+  find_program(LCOV_COMMAND lcov)
+  find_program(GENHTML_COMMAND genhtml)
+
+  if(GCOVR_COMMAND AND LCOV_COMMAND AND GENHTML_COMMAND)
+    add_custom_target(visp_coverage
+
+      # Cleanup lcov
+      COMMAND ${LCOV_COMMAND} --zerocounters --directory .
+
+      # Build
+      COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target all
+
+      # Run tests
+      COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target test
+
+      # Capturing lcov counters and generating report
+      COMMAND ${LCOV_COMMAND} --directory . --capture --output-file visp-coverage.info
+      COMMAND ${LCOV_COMMAND} --remove visp-coverage.info '/usr/*' --output-file visp-coverage.cleaned
+      COMMAND ${GENHTML_COMMAND} -o coverage visp-coverage.cleaned --demangle-cpp --num-spaces 2 --sort --title "ViSP coverage test" --function-coverage --legend
+      COMMAND ${CMAKE_COMMAND} -E remove visp-coverage.info visp-coverage.cleaned
+
+      COMMAND ${GCOVR_COMMAND} --xml --root=${CMAKE_SOURCE_DIR} -o coverage.xml
+
+      WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+      COMMENT "Run code coverage"
+    )
+  endif()
+endif()

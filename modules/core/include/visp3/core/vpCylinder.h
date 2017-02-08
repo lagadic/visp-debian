@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -110,6 +110,8 @@ public:
 
   void changeFrame(const vpHomogeneousMatrix &cMo, vpColVector &cP) ;
   void changeFrame(const vpHomogeneousMatrix &cMo) ;
+
+  double computeZ(const double x, const double y) const;
 
   void display(const vpImage<unsigned char> &I,
                const vpCameraParameters &cam,

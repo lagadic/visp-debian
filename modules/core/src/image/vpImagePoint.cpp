@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -208,6 +208,31 @@ int main()
 VISP_EXPORT vpImagePoint operator+( const vpImagePoint &ip1, const int offset ) {
   return ( vpImagePoint(ip1.get_i()+offset, ip1.get_j()+offset));
 }
+
+/*!
+
+  \relates vpImagePoint
+
+  Returns a vpImagePoint with an offset added to the two coordinates.
+
+  \code
+#include <iostream>
+#include <visp3/core/vpImagePoint.h>
+
+int main()
+{
+  vpImagePoint ip(100, 200); // Create an image point with coordinates i=100, j=200
+  std::cout << "ip: " << ip << std::endl; // coordinates (100, 200)
+  std::cout << "ip+10u: " << ip+10u << std::endl; // new coordinates (110, 210)
+
+  return 0;
+}
+  \endcode
+*/
+VISP_EXPORT vpImagePoint operator+( const vpImagePoint &ip1, const unsigned int offset ) {
+  return ( vpImagePoint(ip1.get_i()+offset, ip1.get_j()+offset));
+}
+
 /*!
 
   \relates vpImagePoint
@@ -265,6 +290,30 @@ int main()
 VISP_EXPORT vpImagePoint operator-( const vpImagePoint &ip1, const int offset ) {
   return ( vpImagePoint(ip1.get_i()-offset, ip1.get_j()-offset));
 }
+/*!
+
+  \relates vpImagePoint
+
+  Returns a vpImagePoint with an offset substracted to the two coordinates.
+
+  \code
+#include <iostream>
+#include <visp3/core/vpImagePoint.h>
+
+int main()
+{
+  vpImagePoint ip(100, 200); // Create an image point with coordinates i=100, j=200
+  std::cout << "ip: " << ip << std::endl; // coordinates (100, 200)
+  std::cout << "ip-10u: " << ip-10u << std::endl; // new coordinates (90, 190)
+
+  return 0;
+}
+  \endcode
+*/
+VISP_EXPORT vpImagePoint operator-( const vpImagePoint &ip1, const unsigned int offset ) {
+  return ( vpImagePoint(ip1.get_i()-offset, ip1.get_j()-offset));
+}
+
 /*!
 
   \relates vpImagePoint
@@ -362,7 +411,7 @@ int main()
 }
   \endcode
 
-  The previous sample code produces the output:
+  produces the output:
   \verbatim
 Image point with coordinates: 10, 11.1
   \endverbatim

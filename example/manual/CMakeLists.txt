@@ -1,7 +1,7 @@
 #############################################################################
 #
 # This file is part of the ViSP software.
-# Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+# Copyright (C) 2005 - 2017 by Inria. All rights reserved.
 #
 # This software is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -56,6 +56,12 @@ set(example_cpp
   simulation/manSimu4Points.cpp
   moments/manServoMomentsSimple.cpp
 )
+
+if(VISP_HAVE_OGRE)
+  # Add specific build flag to turn off warnings coming from libogre and libois 3rd party
+  visp_set_source_file_compile_flag(ogre/HelloWorldOgre.cpp -Wno-unused-parameter -Wno-unused-but-set-parameter)
+  visp_set_source_file_compile_flag(ogre/HelloWorldOgreAdvanced.cpp -Wno-unused-parameter -Wno-unused-but-set-parameter)
+endif()
 
 foreach(cpp ${example_cpp})
   visp_add_target(${cpp})

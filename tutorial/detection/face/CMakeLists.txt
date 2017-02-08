@@ -2,12 +2,13 @@ project(tutorial-detection-face)
 
 cmake_minimum_required(VERSION 2.6)
 
-find_package(VISP REQUIRED visp_detection visp_io visp_gui)
+find_package(VISP REQUIRED visp_detection visp_io visp_gui visp_sensor)
 
 # set the list of source files
 set(tutorial_cpp
   tutorial-face-detector.cpp
-  tutorial-face-detector-live.cpp)
+  tutorial-face-detector-live.cpp
+  tutorial-face-detector-live-threaded.cpp)
 
 list(APPEND tutorial_data "${CMAKE_CURRENT_SOURCE_DIR}/haarcascade_frontalface_alt.xml" )
 list(APPEND tutorial_data "${CMAKE_CURRENT_SOURCE_DIR}/video.mpeg" )

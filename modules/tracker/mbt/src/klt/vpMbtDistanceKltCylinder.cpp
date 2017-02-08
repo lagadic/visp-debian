@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -41,6 +41,10 @@
 
 
 #if defined(VISP_HAVE_MODULE_KLT) && (defined(VISP_HAVE_OPENCV) && (VISP_HAVE_OPENCV_VERSION >= 0x020100))
+
+#if defined(__APPLE__) && defined(__MACH__) // Apple OSX and iOS (Darwin)
+#  include <TargetConditionals.h> // To detect OSX or IOS using TARGET_OS_IPHONE or TARGET_OS_IOS macro
+#endif
 
 /*!
   Basic constructor.
@@ -114,7 +118,7 @@ vpMbtDistanceKltCylinder::init(const vpKltOpencv& _tracker, const vpHomogeneousM
   curPointsInd = std::map<int, int>();
 
   for (unsigned int i = 0; i < static_cast<unsigned int>(_tracker.getNbFeatures()); i ++){
-    int id;
+    long id;
     float x_tmp, y_tmp;
     _tracker.getFeature((int)i, id, x_tmp, y_tmp);
 
@@ -138,7 +142,7 @@ vpMbtDistanceKltCylinder::init(const vpKltOpencv& _tracker, const vpHomogeneousM
       std::vector<vpImagePoint> roi;
       for(unsigned int kc = 0 ; kc < listIndicesCylinderBBox.size() ; kc++)
       {
-        hiddenface->getPolygon()[listIndicesCylinderBBox[kc]]->getRoiClipped(cam, roi);
+        hiddenface->getPolygon()[(size_t) listIndicesCylinderBBox[kc]]->getRoiClipped(cam, roi);
         if(vpPolygon::isInside(roi, y_tmp, x_tmp))
         {
           add = true;
@@ -154,16 +158,25 @@ vpMbtDistanceKltCylinder::init(const vpKltOpencv& _tracker, const vpHomogeneousM
       vpPixelMeterConversion::convertPoint(cam, x_tmp, y_tmp, xm, ym);
       double Z = computeZ(xm,ym);
       if(!vpMath::isNaN(Z)){
+#if TARGET_OS_IPHONE
+        initPoints[(int)id] = vpImagePoint(y_tmp, x_tmp);
+        curPoints[(int)id] = vpImagePoint(y_tmp, x_tmp);
+        curPointsInd[(int)id] = (int)i;
+#else
         initPoints[id] = vpImagePoint(y_tmp, x_tmp);
         curPoints[id] = vpImagePoint(y_tmp, x_tmp);
         curPointsInd[id] = (int)i;
+#endif
         nbPointsInit++;
         nbPointsCur++;
 
-
         vpPoint p;
         p.setWorldCoordinates(xm * Z, ym * Z, Z);
+#if TARGET_OS_IPHONE
+        initPoints3D[(int)id] = p;
+#else
         initPoints3D[id] = p;
+#endif
         //std::cout << "Computed Z for : " << xm << "," << ym << " : " << computeZ(xm,ym) << std::endl;
       }
     }
@@ -185,7 +198,7 @@ vpMbtDistanceKltCylinder::init(const vpKltOpencv& _tracker, const vpHomogeneousM
 unsigned int
 vpMbtDistanceKltCylinder::computeNbDetectedCurrent(const vpKltOpencv& _tracker)
 {
-  int id;
+  long id;
   float x, y;
   nbPointsCur = 0;
   curPoints = std::map<int, vpImagePoint>();
@@ -193,9 +206,14 @@ vpMbtDistanceKltCylinder::computeNbDetectedCurrent(const vpKltOpencv& _tracker)
 
   for (unsigned int i = 0; i < static_cast<unsigned int>(_tracker.getNbFeatures()); i++){
     _tracker.getFeature((int)i, id, x, y);
-    if(isTrackedFeature(id)){
+    if(isTrackedFeature((int)id)){
+#if TARGET_OS_IPHONE
+      curPoints[(int)id] = vpImagePoint(static_cast<double>(y),static_cast<double>(x));
+      curPointsInd[(int)id] = (int)i;
+#else
       curPoints[id] = vpImagePoint(static_cast<double>(y),static_cast<double>(x));
       curPointsInd[id] = (int)i;
+#endif
       nbPointsCur++;
     }
   }
@@ -374,11 +392,12 @@ vpMbtDistanceKltCylinder::updateMask(
 
   for(unsigned int kc = 0 ; kc < listIndicesCylinderBBox.size() ; kc++)
   {
-      if((*hiddenface)[listIndicesCylinderBBox[kc]]->isVisible() && (*hiddenface)[listIndicesCylinderBBox[kc]]->getNbPoint() > 2)
+      if((*hiddenface)[(unsigned int) listIndicesCylinderBBox[kc]]->isVisible() &&
+          (*hiddenface)[(unsigned int) listIndicesCylinderBBox[kc]]->getNbPoint() > 2)
       {
           int i_min, i_max, j_min, j_max;
           std::vector<vpImagePoint> roi;
-          (*hiddenface)[listIndicesCylinderBBox[kc]]->getRoiClipped(cam, roi);
+          (*hiddenface)[(unsigned int) listIndicesCylinderBBox[kc]]->getRoiClipped(cam, roi);
           vpPolygon3D::getMinMaxRoi(roi, i_min, i_max, j_min,j_max);
 
           /* check image boundaries */
@@ -611,11 +630,13 @@ vpMbtDistanceKltCylinder::display(const vpImage<vpRGBa> &I, const vpHomogeneousM
 double
 vpMbtDistanceKltCylinder::computeZ(const double &x, const double &y)
 {
-  double A = x*x + y*y + 1 - ((cylinder.getA()*x+cylinder.getB()*y+cylinder.getC()) * (cylinder.getA()*x+cylinder.getB()*y+cylinder.getC()));
-  double B = (x * cylinder.getX() + y * cylinder.getY() + cylinder.getZ());
-  double C = cylinder.getX() * cylinder.getX() + cylinder.getY() * cylinder.getY() + cylinder.getZ() * cylinder.getZ() - cylinder.getR() * cylinder.getR();
+//  double A = x*x + y*y + 1 - ((cylinder.getA()*x+cylinder.getB()*y+cylinder.getC()) * (cylinder.getA()*x+cylinder.getB()*y+cylinder.getC()));
+//  double B = (x * cylinder.getX() + y * cylinder.getY() + cylinder.getZ());
+//  double C = cylinder.getX() * cylinder.getX() + cylinder.getY() * cylinder.getY() + cylinder.getZ() * cylinder.getZ() - cylinder.getR() * cylinder.getR();
+//
+//  return (B - std::sqrt(B*B - A*C))/A;
 
-  return (B - std::sqrt(B*B - A*C))/A;
+  return cylinder.computeZ(x, y);
 }
 #elif !defined(VISP_BUILD_SHARED_LIBS)
 // Work arround to avoid warning: libvisp_mbt.a(vpMbtDistanceKltCylinder.cpp.o) has no symbols

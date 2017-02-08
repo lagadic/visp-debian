@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -545,7 +545,7 @@ vpVideoReader::vpVideoFormatType
     return FORMAT_DIB;
   else if (ext.compare(".PBM") == 0)
     return FORMAT_PBM;
-  else if (ext.compare(".PBM") == 0)
+  else if (ext.compare(".pbm") == 0)
     return FORMAT_PBM;
   else if (ext.compare(".SR") == 0)
     return FORMAT_PBM;
@@ -626,13 +626,13 @@ void vpVideoReader::findLastFrameIndex()
   if (imSequence != NULL) {
     if (! lastFrameIndexIsSet) {
       char name[FILENAME_MAX];
-      int image_number = firstFrame;
+      long image_number = firstFrame;
       bool failed;
       do {
-	std::fstream file;
-	sprintf(name,fileName,image_number) ;
-	file.open(name, std::ios::in);
-	failed = file.fail();
+        std::fstream file;
+        sprintf(name,fileName,image_number) ;
+        file.open(name, std::ios::in);
+        failed = file.fail();
         if (!failed) {
           file.close();
           image_number++;
@@ -774,4 +774,64 @@ bool vpVideoReader::isVideoExtensionSupported()
 		formatType == FORMAT_WMV ||
 		formatType == FORMAT_FLV ||
 		formatType == FORMAT_MKV);
+}
+
+/*!
+
+   Operator that allows to capture a grey level image.
+   \param I : The captured image.
+
+   \code
+#include <visp3/io/vpVideoReader.h>
+
+int main()
+{
+  vpImage<unsigned char> I;
+  vpVideoReader reader;
+
+  // Initialize the reader.
+  reader.setFileName("./image/image%04d.jpeg");
+  reader.setFirstFrameIndex(10);
+  reader.setLastFrameIndex(20);
+  reader.open(I);
+
+  while (! reader.end() )
+    reader >> I;
+}
+   \endcode
+ */
+vpVideoReader &vpVideoReader::operator>>(vpImage<unsigned char> &I)
+{
+  this->acquire(I);
+  return *this;
+}
+
+/*!
+
+   Operator that allows to capture a grey level image.
+   \param I : The captured image.
+
+   \code
+#include <visp3/io/vpVideoReader.h>
+
+int main()
+{
+  vpImage<vpRGBa> I;
+  vpVideoReader reader;
+
+  // Initialize the reader.
+  reader.setFileName("./image/image%04d.jpeg");
+  reader.setFirstFrameIndex(10);
+  reader.setLastFrameIndex(20);
+  reader.open(I);
+
+  while (! reader.end() )
+    reader >> I;
+}
+   \endcode
+ */
+vpVideoReader &vpVideoReader::operator>>(vpImage<vpRGBa> &I)
+{
+  this->acquire(I);
+  return *this;
 }

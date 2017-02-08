@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -153,7 +153,7 @@ void *laser_display_and_save_loop(void *)
 
       if (save) {
         // Set the scan data filename to store the measures
-        sprintf(filename, "%s/scan%04d-layer%d.txt",
+        sprintf(filename, "%s/scan%04u-layer%d.txt",
                 output_path.c_str(), iter, layer+1);
         fdscan.open(filename);
 
@@ -272,20 +272,18 @@ void *camera_acq_and_display_loop(void *)
       fdimage_ts.open( filename.c_str() );
       fdimage_ts << "# [image name] [time stamp in second]" << std::endl;
     }
-    dc1394video_frame_t *frame;
     unsigned iter = 0;
     char filename[FILENAME_MAX];
     uint64_t timestamp;
     uint32_t id;
-    double image_timestamp;
     for ( ; ; ) {
-      frame = g.dequeue(I, timestamp, id); // Acquire an image
+      dc1394video_frame_t *frame = g.dequeue(I, timestamp, id); // Acquire an image
       I.quarterSizeImage(Q);
-      image_timestamp = timestamp/1000000. - time_offset;
+      double image_timestamp = timestamp/1000000. - time_offset;
       std::cout << "camera timestamp: " << image_timestamp << " s " << std::endl;
       if (save) {
         // Set the image filename
-        sprintf(filename, "%s/image%04d.png", output_path.c_str(), iter);
+        sprintf(filename, "%s/image%04u.png", output_path.c_str(), iter);
         vpImageIo::write(Q, filename);
         fdimage_ts << filename << " " << image_timestamp << std::endl;
       }
@@ -368,7 +366,7 @@ int main(int argc, const char ** argv)
 
     return 0;
   }
-  catch(vpException e) {
+  catch(vpException &e) {
     std::cout << "Catch an exception: " << e << std::endl;
     return 1;
   }

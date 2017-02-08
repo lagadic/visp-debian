@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -54,26 +54,67 @@
 
   \brief Modelisation of the ADEPT Viper 850 robot. 
 
+  The model of the robot is the following:
+  \image html model-viper.png Model of the Viper 850 robot.
+
+  The non modified Denavit-Hartenberg representation of the robot is
+  given in the table below, where \f$q_1^*, \ldots, q_6^*\f$
+  are the variable joint positions.
+
+  \f[
+  \begin{tabular}{|c|c|c|c|c|}
+  \hline
+  Joint & $a_i$ & $d_i$ & $\alpha_i$ & $\theta_i$ \\
+  \hline
+  1 & $a_1$ & $d_1$ & $-\pi/2$ & $q_1^*$ \\
+  2 & $a_2$ & 0     & 0        & $q_2^*$ \\
+  3 & $a_3$ & 0     & $-\pi/2$ & $q_3^* - \pi$ \\
+  4 & 0     & $d_4$ & $\pi/2$  & $q_4^*$ \\
+  5 & 0     & 0     & $-\pi/2$ & $q_5^*$ \\
+  6 & 0     & 0     & 0        & $q_6^*-\pi$ \\
+  7 & 0     & $d_6$ & 0        & 0 \\
+  \hline
+  \end{tabular}
+  \f]
+
+  In this modelisation, different frames have to be considered.
+
+  - \f$ {\cal F}_f \f$: the reference frame, also called world frame
+
+  - \f$ {\cal F}_w \f$: the wrist frame located at the intersection of
+    the last three rotations, with \f$ ^f{\bf M}_w = ^0{\bf M}_6 \f$
+
+  - \f$ {\cal F}_e \f$: the end-effector frame located at the interface of the
+    two tool changers, with \f$^f{\bf M}_e = 0{\bf M}_7 \f$
+
+  - \f$ {\cal F}_c \f$: the camera or tool frame, with \f$^f{\bf M}_c = ^f{\bf
+    M}_e \; ^e{\bf M}_c \f$ where \f$ ^e{\bf M}_c \f$ is the result of
+    a calibration stage. We can also consider a custom tool TOOL_CUSTOM and set this
+    during robot initialisation or using set_eMc().
+
+  - \f$ {\cal F}_s \f$: the force/torque sensor frame, with \f$d7=0.0666\f$.
+
 */
 
+#include <visp3/core/vpConfig.h>
 #include <visp3/robot/vpViper.h>
 
 
 class VISP_EXPORT vpViper850: public vpViper
 {
  public:
-#ifdef VISP_HAVE_ACCESS_TO_NAS
+#ifdef VISP_HAVE_VIPER850_DATA
   //! Files where constant tranformation between end-effector and camera frame
   //! are stored.
-  static const char * const CONST_EMC_MARLIN_F033C_WITHOUT_DISTORTION_FILENAME;
-  static const char * const CONST_EMC_MARLIN_F033C_WITH_DISTORTION_FILENAME;
-  static const char * const CONST_EMC_PTGREY_FLEA2_WITHOUT_DISTORTION_FILENAME;
-  static const char * const CONST_EMC_PTGREY_FLEA2_WITH_DISTORTION_FILENAME;
-  static const char * const CONST_EMC_SCHUNK_GRIPPER_WITHOUT_DISTORTION_FILENAME;
-  static const char * const CONST_EMC_SCHUNK_GRIPPER_WITH_DISTORTION_FILENAME;
-  static const char * const CONST_EMC_GENERIC_WITHOUT_DISTORTION_FILENAME;
-  static const char * const CONST_EMC_GENERIC_WITH_DISTORTION_FILENAME;
-  static const char * const CONST_CAMERA_FILENAME;
+  static const std::string CONST_EMC_MARLIN_F033C_WITHOUT_DISTORTION_FILENAME;
+  static const std::string CONST_EMC_MARLIN_F033C_WITH_DISTORTION_FILENAME;
+  static const std::string CONST_EMC_PTGREY_FLEA2_WITHOUT_DISTORTION_FILENAME;
+  static const std::string CONST_EMC_PTGREY_FLEA2_WITH_DISTORTION_FILENAME;
+  static const std::string CONST_EMC_SCHUNK_GRIPPER_WITHOUT_DISTORTION_FILENAME;
+  static const std::string CONST_EMC_SCHUNK_GRIPPER_WITH_DISTORTION_FILENAME;
+  static const std::string CONST_EMC_GENERIC_WITHOUT_DISTORTION_FILENAME;
+  static const std::string CONST_EMC_GENERIC_WITH_DISTORTION_FILENAME;
+  static const std::string CONST_CAMERA_FILENAME;
 #endif
   /*!
     Name of the camera attached to the end-effector.
@@ -88,7 +129,8 @@ class VISP_EXPORT vpViper850: public vpViper
     TOOL_MARLIN_F033C_CAMERA,   /*!< Marlin F033C camera. */
     TOOL_PTGREY_FLEA2_CAMERA,   /*!< Point Grey Flea 2 camera. */
     TOOL_SCHUNK_GRIPPER_CAMERA, /*!< Camera attached to the Schunk gripper. */
-    TOOL_GENERIC_CAMERA         /*!< A generic camera. */
+    TOOL_GENERIC_CAMERA,        /*!< A generic camera. */
+    TOOL_CUSTOM                 /*!< A user defined tool. */
   } vpToolType;
 
   //! Default tool attached to the robot end effector
@@ -97,14 +139,15 @@ class VISP_EXPORT vpViper850: public vpViper
   vpViper850();
   virtual ~vpViper850() {};
 
+  /** @name Inherited functionalities from vpViper850 */
+  //@{
   void init (void);
-#ifdef VISP_HAVE_ACCESS_TO_NAS
-  void init(const char *camera_extrinsic_parameters);
-#endif
-  void init (vpViper850::vpToolType tool,
-	     vpCameraParameters::vpCameraParametersProjType projModel =
-	     vpCameraParameters::perspectiveProjWithoutDistortion);
-
+  void init(const std::string &camera_extrinsic_parameters);
+  void init(vpViper850::vpToolType tool,
+            vpCameraParameters::vpCameraParametersProjType projModel =
+            vpCameraParameters::perspectiveProjWithoutDistortion);
+  void init(vpViper850::vpToolType tool, const std::string &filename);
+  void init(vpViper850::vpToolType tool, const vpHomogeneousMatrix &eMc_);
 
   //! Get the current camera model projection type
   vpCameraParameters::vpCameraParametersProjType getCameraParametersProjType() const{
@@ -123,15 +166,17 @@ class VISP_EXPORT vpViper850: public vpViper
     return tool_current;
   };
 
-#ifdef VISP_HAVE_ACCESS_TO_NAS
-  void parseConfigFile (const char * filename);
-#endif
+  void parseConfigFile (const std::string &filename);
+  //@}
 
  protected:
+  /** @name Protected Member Functions Inherited from vpViper650 */
+  //@{
   //! Set the current tool type
   void setToolType(vpViper850::vpToolType tool){
     tool_current = tool;
   };
+  //@}
 
  protected:
   //! Current tool in use
@@ -140,12 +185,6 @@ class VISP_EXPORT vpViper850: public vpViper
   vpCameraParameters::vpCameraParametersProjType projModel;
 
 };
-
-/*
- * Local variables:
- * c-basic-offset: 2
- * End:
- */
 
 #endif
 

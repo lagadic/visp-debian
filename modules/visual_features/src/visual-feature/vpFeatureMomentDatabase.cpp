@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -76,17 +76,16 @@ void vpFeatureMomentDatabase::updateAll(double A, double B, double C)
 #ifdef VISP_HAVE_OPENMP
   std::vector<vpFeatureMoment*> values;
   values.reserve(featureMomentsDataBase.size());
-  for(itr = featureMomentsDataBase.begin(); itr != featureMomentsDataBase.end(); itr++){
+  for(itr = featureMomentsDataBase.begin(); itr != featureMomentsDataBase.end(); ++itr){
     values.push_back((*itr).second);
   }
-  unsigned int i_;
   #pragma omp parallel for shared(A,B,C)
   for(int i=0;i<(int)values.size();i++){
-    i_ = static_cast<unsigned int>(i);
+    unsigned int i_ = static_cast<unsigned int>(i);
     values[i_]->update(A,B,C);
   }
 #else
-  for(itr = featureMomentsDataBase.begin(); itr != featureMomentsDataBase.end(); itr++){
+  for(itr = featureMomentsDataBase.begin(); itr != featureMomentsDataBase.end(); ++itr){
 		(*itr).second->update(A,B,C);
 	}
 #endif

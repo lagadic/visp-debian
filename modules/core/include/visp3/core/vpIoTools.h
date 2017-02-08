@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -152,6 +152,7 @@ class VISP_EXPORT vpIoTools
 {
 
 public:
+  static const std::string& getBuildInformation();
   static void getUserName(std::string &username);
   static std::string getUserName();
   static std::string getenv(const char *env);
@@ -184,12 +185,14 @@ public:
   	'/';
   #endif
 
+  static std::string getAbsolutePathname(const std::string &pathname);
   static std::string getFileExtension(const std::string &pathname, const bool checkFile=false);
   static std::string getName(const std::string &pathname);
   static std::string getNameWE(const std::string &pathname);
   static std::string getParent(const std::string& pathname);
   static std::string createFilePath(const std::string& parent, const std::string child);
   static bool isAbsolutePathname(const std::string& pathname);
+  static bool isSamePathname(const std::string& pathname1, const std::string& pathname2);
   static std::pair<std::string, std::string> splitDrive(const std::string& pathname);
   static std::vector<std::string> splitChain(const std::string & chain, const std::string & sep);
 

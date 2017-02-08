@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -59,49 +59,49 @@
 
   \return moment value
 */
-double vpMomentObject::calc_mom_polygon(unsigned int p, unsigned int q, const std::vector<vpPoint>& points){
-    unsigned int i,k,l;
-    double den,mom,s;
-    double x_k;
-    double x_p_k;
-    double y_l;
-    double y_q_l;
+double vpMomentObject::calc_mom_polygon(unsigned int p, unsigned int q, const std::vector<vpPoint>& points)
+{
+  unsigned int i,k,l;
+  double den,mom;
+  double x_p_k;
+  double y_l;
+  double y_q_l;
 
-    den = static_cast<double>( (p+q+2)*(p+q+1)*vpMath::comb(p+q,p) );
+  den = static_cast<double>( (p+q+2)*(p+q+1)*vpMath::comb(p+q,p) );
 
-    mom = 0.0;
-    for (i=1;i<=points.size()-1;i++)
+  mom = 0.0;
+  for (i=1;i<=points.size()-1;i++)
+  {
+    double s = 0.0;
+    double x_k=1;
+    for (k=0;k<=p;k++)
     {
-      s = 0.0;
-        x_k=1;
-      for (k=0;k<=p;k++)
+      y_l=1;
+      x_p_k = pow(points[i-1].get_x(), (int)(p-k));
+      for (l=0;l<=q;l++)
       {
-        y_l=1;
-        x_p_k = pow(points[i-1].get_x(), (int)(p-k));
-        for (l=0;l<=q;l++)
-        {
-            y_q_l=pow(points[i-1].get_y(), (int)(q-l));
+        y_q_l=pow(points[i-1].get_y(), (int)(q-l));
 
-          s += static_cast<double>(
-            vpMath::comb(k+l,l)
-            *vpMath::comb(p+q-k-l,q-l)
-            *x_k
-            *x_p_k
-            *y_l
-            *y_q_l );
+        s += static_cast<double>(
+              vpMath::comb(k+l,l)
+              *vpMath::comb(p+q-k-l,q-l)
+              *x_k
+              *x_p_k
+              *y_l
+              *y_q_l );
 
-            y_l*=points[i].get_y();
-
-        }
-        x_k*=points[i].get_x();
+        y_l*=points[i].get_y();
 
       }
+      x_k*=points[i].get_x();
 
-      s *= ((points[i-1].get_x())*(points[i].get_y())-(points[i].get_x())*(points[i-1].get_y()));
-      mom += s;
     }
-    mom /= den;
-    return(mom);
+
+    s *= ((points[i-1].get_x())*(points[i].get_y())-(points[i].get_x())*(points[i-1].get_y()));
+    mom += s;
+  }
+  mom /= den;
+  return(mom);
 }
 
 /*!
@@ -120,14 +120,14 @@ double vpMomentObject::calc_mom_polygon(unsigned int p, unsigned int q, const st
 void vpMomentObject::cacheValues(std::vector<double>& cache,double x, double y){
     cache[0]=1;
 
-    for(register unsigned int i=1;i<order;i++)
+    for(unsigned int i=1;i<order;i++)
         cache[i]=cache[i-1]*x;
 
-    for(register unsigned int j=order;j<order*order;j+=order)
+    for(unsigned int j=order;j<order*order;j+=order)
         cache[j]=cache[j-order]*y;
 
-    for(register unsigned int j=1;j<order;j++){
-        for(register unsigned int i=1;i<order-j;i++){
+    for(unsigned int j=1;j<order;j++){
+        for(unsigned int i=1;i<order-j;i++){
             cache[j*order+i] = cache[j*order]*cache[i];
         }
     }
@@ -145,14 +145,14 @@ void vpMomentObject::cacheValues(std::vector<double>& cache,double x, double y, 
     if (std::fabs(IntensityNormalized)>=std::numeric_limits<double>::epsilon())
          invIntensityNormalized = 1.0/IntensityNormalized;
 
-    for(register unsigned int i=1;i<order;i++)
+    for(unsigned int i=1;i<order;i++)
         cache[i]=cache[i-1]*x;
 
-    for(register unsigned int j=order;j<order*order;j+=order)
+    for(unsigned int j=order;j<order*order;j+=order)
         cache[j]=cache[j-order]*y;
 
-    for(register unsigned int j=1;j<order;j++){
-        for(register unsigned int i=1;i<order-j;i++){
+    for(unsigned int j=1;j<order;j++){
+        for(unsigned int i=1;i<order-j;i++){
             cache[j*order+i] = cache[j*order]*cache[i]*invIntensityNormalized;
         }
     }
@@ -232,29 +232,27 @@ int main()
   \endcode
 */
 void vpMomentObject::fromVector(std::vector<vpPoint>& points){
-    if(type==vpMomentObject::DENSE_POLYGON){
-        if(
-                std::abs(points.rbegin()->get_x()-points.begin()->get_x())>std::numeric_limits<double>::epsilon() ||
-                std::abs(points.rbegin()->get_y()-points.begin()->get_y())>std::numeric_limits<double>::epsilon()
-                ){
-            points.resize(points.size()+1);
-            points[points.size()-1] = points[0];
-        }
-        for(register unsigned int j=0;j<order*order;j++){
-            values[j]=calc_mom_polygon(j%order,j/order,points);
-        }
-    }else{
-      std::vector<double> cache(order*order,0.);
-        values.assign(order*order,0);
-        for(register unsigned int i=0;i<points.size();i++){
-            cacheValues(cache,points[i].get_x(),points[i].get_y());
-            for(register unsigned int j=0;j<order;j++){
-                for(register unsigned int k=0;k<order-j;k++){
-                    values[j*order+k]+=cache[j*order+k];
-                }
-            }
-        }
+  if(type==vpMomentObject::DENSE_POLYGON){
+    if(std::fabs(points.rbegin()->get_x()-points.begin()->get_x())>std::numeric_limits<double>::epsilon() ||
+       std::fabs(points.rbegin()->get_y()-points.begin()->get_y())>std::numeric_limits<double>::epsilon()){
+      points.resize(points.size()+1);
+      points[points.size()-1] = points[0];
     }
+    for(unsigned int j=0;j<order*order;j++){
+      values[j]=calc_mom_polygon(j%order,j/order,points);
+    }
+  } else {
+    std::vector<double> cache(order*order,0.);
+    values.assign(order*order,0);
+    for(unsigned int i=0;i<points.size();i++){
+      cacheValues(cache,points[i].get_x(),points[i].get_y());
+      for(unsigned int j=0;j<order;j++){
+        for(unsigned int k=0;k<order-j;k++){
+          values[j*order+k]+=cache[j*order+k];
+        }
+      }
+    }
+  }
 }
 
 /*!
@@ -292,23 +290,21 @@ void vpMomentObject::fromImage(const vpImage<unsigned char>& image, unsigned cha
   {
     std::vector<double> curvals(order*order);
     curvals.assign(order*order,0.);
-    unsigned int i_, j_;
 
     #pragma omp for nowait//automatically organize loop counter between threads
     for(int i=0;i<(int)image.getCols();i++){
       for(int j=0;j<(int)image.getRows();j++){
-        i_ = static_cast<unsigned int>(i);
-        j_ = static_cast<unsigned int>(j);
+        unsigned int i_ = static_cast<unsigned int>(i);
+        unsigned int j_ = static_cast<unsigned int>(j);
         if(image[j_][i_]>threshold){
           double x=0;
           double y=0;
           vpPixelMeterConversion::convertPoint(cam,i_,j_,x,y);
 
-          double xval=1.;
           double yval=1.;
-          for(register unsigned int k=0;k<order;k++){
-            xval=1.;
-            for(register unsigned int l=0;l<order-k;l++){
+          for(unsigned int k=0;k<order;k++){
+            double xval=1.;
+            for(unsigned int l=0;l<order-k;l++){
               curvals[(k*order+l)]+=(xval*yval);
               xval*=x;
             }
@@ -324,10 +320,9 @@ void vpMomentObject::fromImage(const vpImage<unsigned char>& image, unsigned cha
     }
 
     #pragma omp barrier
-
-    for(register unsigned int k=0;k<order;k++){
-      for(register unsigned int l=0;l<order-k;l++){
-        //#pragma omp atomic // Removed since causes a build issue with msvc14 2015
+    for(unsigned int k=0;k<order;k++){
+      for(unsigned int l=0;l<order-k;l++){
+        #pragma omp atomic
         values[k*order+l]+= curvals[k*order+l];
       }
     }
@@ -336,15 +331,15 @@ void vpMomentObject::fromImage(const vpImage<unsigned char>& image, unsigned cha
 #else
     std::vector<double> cache(order*order,0.);
     values.assign(order*order,0);
-    for(register unsigned int i=0;i<image.getCols();i++){
-        for(register unsigned int j=0;j<image.getRows();j++){
+    for(unsigned int i=0;i<image.getCols();i++){
+        for(unsigned int j=0;j<image.getRows();j++){
             if(image[j][i]>threshold){
                 double x=0;
                 double y=0;
                 vpPixelMeterConversion::convertPoint(cam,i,j,x,y);
                 cacheValues(cache,x,y);
-                for(register unsigned int k=0;k<order;k++){
-                    for(register unsigned int l=0;l<order-k;l++){
+                for(unsigned int k=0;k<order;k++){
+                    for(unsigned int l=0;l<order-k;l++){
                         values[k*order+l]+=cache[k*order+l];
                     }
                 }
@@ -355,7 +350,7 @@ void vpMomentObject::fromImage(const vpImage<unsigned char>& image, unsigned cha
 
     //Normalisation equivalent to sampling interval/pixel size delX x delY
     double norm_factor = 1./(cam.get_px()*cam.get_py());
-    for (std::vector<double>::iterator it = values.begin(); it!=values.end(); it++) {
+    for (std::vector<double>::iterator it = values.begin(); it!=values.end(); ++it) {
         *it = (*it) * norm_factor;
     }
 }
@@ -384,31 +379,31 @@ void vpMomentObject::fromImage(const vpImage<unsigned char>& image, const vpCame
   unsigned int kidx = 0;
 
   double intensity = 0;
-  double intensity_white = 0;
 
   //double Imax = static_cast<double>(image.getMaxValue());
-  double Imax = 255.;                                                     // To check the effect of gray level change. ISR Coimbra
 
   double iscale = 1.0;
-  if (flg_normalize_intensity)                                            // This makes the image a probability density function
+  if (flg_normalize_intensity) {                                            // This makes the image a probability density function
+    double Imax = 255.;                                                     // To check the effect of gray level change. ISR Coimbra
     iscale = 1.0/Imax;
+  }
 
   if (bg_type == vpMomentObject::WHITE) {
       /////////// WHITE BACKGROUND ///////////
-      for(register unsigned int j=0;j<image.getRows();j++){
-          for(register unsigned int i=0;i<image.getCols();i++){
+      for(unsigned int j=0;j<image.getRows();j++){
+          for(unsigned int i=0;i<image.getCols();i++){
               x = 0;
               y = 0;
               intensity = (double)(image[j][i])*iscale;
-              intensity_white = 1. - intensity;
+              double intensity_white = 1. - intensity;
 
               vpPixelMeterConversion::convertPoint(cam,i,j,x,y);
               cacheValues(cache,x,y, intensity_white);			// Modify 'cache' which has x^p*y^q to x^p*y^q*(1 - I(x,y))
 
               // Copy to "values"
-              for(register unsigned int k=0;k<order;k++){
+              for(unsigned int k=0;k<order;k++){
                   kidx = k*order;
-                  for(register unsigned int l=0;l<order-k;l++){
+                  for(unsigned int l=0;l<order-k;l++){
                       idx = kidx+l;
                       values[idx]+= cache[idx];
                   }
@@ -418,8 +413,8 @@ void vpMomentObject::fromImage(const vpImage<unsigned char>& image, const vpCame
   }
   else {
       /////////// BLACK BACKGROUND	///////////
-      for(register unsigned int j=0;j<image.getRows();j++){
-          for(register unsigned int i=0;i<image.getCols();i++){
+      for(unsigned int j=0;j<image.getRows();j++){
+          for(unsigned int i=0;i<image.getCols();i++){
               x = 0;
               y = 0;
               intensity = (double)(image[j][i])*iscale;
@@ -429,9 +424,9 @@ void vpMomentObject::fromImage(const vpImage<unsigned char>& image, const vpCame
               cacheValues(cache,x,y, intensity);					// Modify 'cache' which has x^p*y^q to x^p*y^q*I(x,y)
 
               // Copy to moments array 'values'
-              for(register unsigned int k=0;k<order;k++){
+              for(unsigned int k=0;k<order;k++){
                   kidx = k*order;
-                  for(register unsigned int l=0;l<order-k;l++){
+                  for(unsigned int l=0;l<order-k;l++){
                       idx = kidx+l;
                       values[idx]+= cache[idx];
                   }
@@ -444,7 +439,7 @@ void vpMomentObject::fromImage(const vpImage<unsigned char>& image, const vpCame
   if (normalize_with_pix_size){
       // Normalisation equivalent to sampling interval/pixel size delX x delY
       double norm_factor = 1./(cam.get_px()*cam.get_py());
-      for (std::vector<double>::iterator it = values.begin(); it!=values.end(); it++) {
+      for (std::vector<double>::iterator it = values.begin(); it!=values.end(); ++it) {
           *it = (*it) * norm_factor;
       }
   }

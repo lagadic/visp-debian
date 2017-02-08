@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -62,7 +62,7 @@
 
   \brief Generic class defining intrinsic camera parameters.
 
-  Let us define the pinhole camera model implemented in ViSP. In this model, a scene view is formed
+  Let us define the pinhole camera model implemented in ViSP. In this model \cite Marchand16a, a scene view is formed
   by projecting 3D points into the image plane using a perspective transformation.
 
   \f[
@@ -87,8 +87,11 @@
 
   - \f$(X_c,Y_c,Z_c)\f$ are the coordinates of a 3D point in the camera frame
   - \f$(u,v)\f$ are the coordinates in pixels of the projected 3D point
-  - \f$(u_0,v_0)\f$ is a principal point that is usually near the image center
-  - \f$(p_x,p_y)\f$ are the focal lengths expressed in pixel units.
+  - \f$(u_0,v_0)\f$ are the coordinates of the principal point (the intersection of the optical
+    axes with the image plane) that is usually near the image center
+  - \f$p_x\f$ (resp \f$p_y\f$) is the ratio between the focal length of the lens \f$f\f$
+    in meters and the size of the pixel \f$l_x\f$ in meters: \f$p_x=f/l_x\f$ (resp, \f$l_y\f$
+    being the height of a pixel, \f$p_y=f/l_y\f$).
 
   When \f$Z_c \neq 0\f$, the previous equation si equivalent to the following:
   \f[
@@ -143,7 +146,7 @@
   distortion can also be considered by two additional parameters
   \f$(k_{ud}, k_{du})\f$.
 
-  \note \ref tutorial-calibration shows how to calibrate a camera
+  \note The \ref tutorial-calibration shows how to calibrate a camera
   to estimate the parameters corresponding to the model implemented in this class.
 
   \note Note also that \ref tutorial-bridge-opencv gives the correspondance between
@@ -314,7 +317,7 @@ public :
   vpMatrix get_K_inverse() const;
 
   void printParameters() ;
-  friend VISP_EXPORT std::ostream & operator << (std::ostream & os, const vpCameraParameters &cam);
+  friend VISP_EXPORT std::ostream &operator<<(std::ostream &os, const vpCameraParameters &cam);
 
 private:
   static const double DEFAULT_U0_PARAMETER;

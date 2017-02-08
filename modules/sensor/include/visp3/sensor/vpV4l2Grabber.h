@@ -1,7 +1,7 @@
 /****************************************************************************
  *
  * This file is part of the ViSP software.
- * Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+ * Copyright (C) 2005 - 2017 by Inria. All rights reserved.
  *
  * This software is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -57,20 +57,24 @@
 #include <visp3/core/vpImage.h>
 #include <visp3/core/vpFrameGrabber.h>
 #include <visp3/core/vpRGBa.h>
+#include <visp3/core/vpRect.h>
 
 /*!
   \class vpV4l2Grabber
 
   \ingroup group_sensor_camera
 
-  \brief Class for the Video4Linux2 video device.
+  \brief Class that is a wrapper over the Video4Linux2 (V4L2) driver.
+
+  Thus to be enabled, this class needs the optional V4L2 3rd party. Installation instruction
+  are provided here https://visp.inria.fr/3rd_v4l2.
 
   Information about Video4Linux can be found on
   http://linuxtv.org/v4lwiki/index.php/Main_Page
 
   This class was tested with a Pinnacle PCTV Studio/Rave board but
   also with the following webcams (Logitech QuickCam Vision Pro 9000,
-  Logitech QuickCam Orbit AF, Dell latitude E6400 internal webcam).
+  Logitech QuickCam Orbit AF, Logitech QuickCam IM (V-USB39), Dell latitude E6400 internal webcam).
 
   If the grabbing fail with a webcam, it means probably that you don't
   have the read/write permission on the /dev/video%%d device. You can
@@ -100,8 +104,6 @@
   This other example shows how to use this grabber with an analogic camera
   attached to a bttv PCI card.
   \code
-#include <visp3/core/vpConfig.h>
-#include <visp3/core/vpImage.h>
 #include <visp3/sensor/vpV4l2Grabber.h>
 #include <visp3/io/vpImageIo.h>
 
@@ -192,7 +194,7 @@ public:
 //#ifndef DOXYGEN_SHOULD_SKIP_THIS
 //  vpV4l2Grabber(const vpV4l2Grabber &)
 //    : fd(-1), device(), cap(), streamparm(), inp(NULL), std(NULL), fmt(NULL), ctl(NULL),
-//      fps(0), fmt_v4l2(), fmt_me(), reqbufs(), buf_v4l2(NULL), buf_me(NULL), queue(0),
+//      fmt_v4l2(), fmt_me(), reqbufs(), buf_v4l2(NULL), buf_me(NULL), queue(0),
 //      waiton_cpt(0), index_buffer(0), m_verbose(false), m_nbuffers(3), field(0), streaming(false),
 //      m_input(vpV4l2Grabber::DEFAULT_INPUT),
 //      m_framerate(vpV4l2Grabber::framerate_25fps),
@@ -221,10 +223,12 @@ public:
   void open(vpImage<unsigned char> &I) ;
   void open(vpImage<vpRGBa> &I) ;
 
-  void acquire(vpImage<unsigned char> &I) ;
-  void acquire(vpImage<unsigned char> &I, struct timeval &timestamp) ;
-  void acquire(vpImage<vpRGBa> &I) ;
-  void acquire(vpImage<vpRGBa> &I, struct timeval &timestamp) ;
+  void acquire(vpImage<unsigned char> &I);
+  void acquire(vpImage<unsigned char> &I, const vpRect &roi);
+  void acquire(vpImage<unsigned char> &I, struct timeval &timestamp, const vpRect &roi=vpRect());
+  void acquire(vpImage<vpRGBa> &I);
+  void acquire(vpImage<vpRGBa> &I, const vpRect &roi);
+  void acquire(vpImage<vpRGBa> &I, struct timeval &timestamp, const vpRect &roi=vpRect());
   bool getField();
   vpV4l2FramerateType getFramerate();
   /*!
@@ -238,6 +242,10 @@ public:
   {
     return (this->m_pixelformat);
   }
+
+  vpV4l2Grabber & operator>>(vpImage<unsigned char> &I);
+  vpV4l2Grabber & operator>>(vpImage<vpRGBa> &I);
+
   /*!
     Activates the verbose mode to print additional information on stdout.
     \param verbose : If true activates the verbose mode.
@@ -334,7 +342,6 @@ private:
   void queueAll();
   void printBufInfo(struct v4l2_buffer buf);
 
-
   int				fd;
   char				device[FILENAME_MAX];
   /* device descriptions */
@@ -346,7 +353,6 @@ private:
   struct v4l2_queryctrl		*ctl; //[vpV4l2Grabber::MAX_CTRL*2];
 
   /* capture */
-  int                           fps;
   struct v4l2_format            fmt_v4l2;
   struct ng_video_fmt           fmt_me;
   struct v4l2_requestbuffers    reqbufs;

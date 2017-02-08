@@ -11,11 +11,11 @@ servoing applications. ViSP is developed and maintained by the Inria
 <a href="http://team.inria.fr/lagadic" target="_parent">Lagadic</a> team located at <a
 href="http://www.inria.fr/en/centre/rennes" target="_parent">Inria Rennes</a>.</p>
 
-<p>ViSP official site is <a href="http://visp.inria.fr" target="_parent">http://visp.inria.fr</a></p>
+<p>ViSP official site is <a href="https://visp.inria.fr" target="_parent">https://visp.inria.fr</a></p>
 
 <p>ViSP wiki is <a href="https://github.com/lagadic/visp/wiki" target="_parent">https://github.com/lagadic/visp/wiki</a></p>
 
-<p>ViSP source code is now available on GitHub <a href="http://github.org/lagadic/visp" target="_parent">http://github.org/lagadic/visp</a></p>
+<p>ViSP source code is now available on GitHub <a href="https://github.com/lagadic/visp" target="_parent">https://github.com/lagadic/visp</a></p>
  
 <p>If you have any problems or find any bugs, please report them in 
 <a href="https://github.com/lagadic/visp/issues">the bug tracker</a>. If you may need help, please use the available <a href="http://gforge.inria.fr/forum/?group_id=397" target="_parent">forums</a>.<p> 
@@ -25,7 +25,7 @@ It is also possible to contact ViSP main developers using: <a href="mailto:visp@
 \section download_sec Download
 
 <p>From <a
-href="http://visp.inria.fr/download" target="_parent">http://visp.inria.fr/download</a>
+href="https://visp.inria.fr/download" target="_parent">https://visp.inria.fr/download</a>
 you can either download the latest stable release, a daily snapshot or the current
 development distribution using git.</p>
 
@@ -38,10 +38,10 @@ href="http://www.cmake.org" target="_parent">http://www.cmake.org</a>. Furthermo
 depending on your operation system and the capabilities (framegrabber,
 display, simulation, ...) you need, prior to install ViSP you may
 install third party libraries <a
-href="http://visp.inria.fr/software-architecture" target="_parent">http://visp.inria.fr/software-architecture</a>.</p>
+href="https://visp.inria.fr/software-architecture" target="_parent">https://visp.inria.fr/software-architecture</a>.</p>
 
 <p>ViSP full installation procedure using CMake is detailed in the \ref tuto_install_sdk "Installation from prebuild SDK tutorials" and \ref tuto_install_src "Installation from source tutorials". \ref tuto_started "Getting started tutorials" and documents in pdf are also available from <a
-href="http://visp.inria.fr/publications" target="_parent">http://visp.inria.fr/publications</a>.</p>
+href="https://visp.inria.fr/publications" target="_parent">https://visp.inria.fr/publications</a>.</p>
  
 \section tutorial Tutorials
 
@@ -49,7 +49,11 @@ href="http://visp.inria.fr/publications" target="_parent">http://visp.inria.fr/p
 
 \subsection tuto_install_sdk Installation from prebuild SDK
 
-- \ref tutorial-install-ubuntu-package <br>In this first tutorial you will learn how to install ViSP prebuilt library from Ubuntu packages.
+- \ref tutorial-install-ubuntu-package <br>In this first tutorial you will learn how to install ViSP prebuilt SDK from Ubuntu or Debian packages.
+- \ref tutorial-install-archlinux-package <br>In this tutorial you will learn how to install ViSP prebuilt SDK for Arch Linux.
+- \ref tutorial-install-osx-homebrew-package <br>In this tutorial you will learn how to install ViSP prebuilt SDK on OSX with Homebrew.
+- \ref tutorial-install-ros-package <br>In this tutorial you will learn how to install ViSP prebuilt SDK for ROS.
+- \ref tutorial-install-ios-package <br>In this tutorial you will learn how to install ViSP prebuilt framework for iOS devices.
 
 \subsection tuto_install_src Installation from source
 
@@ -61,20 +65,29 @@ href="http://visp.inria.fr/publications" target="_parent">http://visp.inria.fr/p
 - \ref tutorial-install-win7 <br>In this tutorial you will learn how to install ViSP from source on Windows 7 with Visual C++ 2012.
 - \ref tutorial-install-win81-msvc <br>In this tutorial you will learn how to install ViSP from source on Windows 8.1 with Visual C++ 2013.
 - \ref tutorial-install-win10-msvc14 <br>In this tutorial you will learn how to install ViSP from source on Windows 10 with Visual C++ 2015.
-- \ref tutorial-install-win81-mingw64 <br>In this tutorial you will learn how to install ViSP from source on Windows 8.1 with Mingw-w64.
+- \ref tutorial-install-win10-msvc14-uwp <br>In this tutorial you will learn how to install ViSP from source on Windows 10 for Universal Windows Platform apps with Visual C++ 2015.
+- \ref tutorial-install-win81-mingw64 <br>In this tutorial you will learn how to install ViSP from source on Windows 8.1 or Windows 10 with Mingw-w64.
 - \ref tutorial-install-osx-homebrew <br>In this tutorial you will learn how to install ViSP from source on OSX with Homebrew.
 - \ref tutorial-install-iOS <br>In this tutorial you will learn how to install ViSP from source on OSX for iOS project.
+
+\subsection tuto_install_crosscompiling Installation from cross-compiling
+
+- \ref tutorial-install-crosscompiling-raspberry <br>In this tutorial you will learn how to cross-compile ViSP on Ubuntu host for Raspberry Pi target.
+- \ref tutorial-install-crosscompiling-naoqi <br>In this tutorial you will learn how to cross-compile ViSP on Ubuntu host for NAOqi targets (NAO, Romeo, Pepper).
 
 \subsection tuto_started Getting started
 
 - \ref tutorial-getting-started <br>This tutorial shows how to build a project that uses ViSP to read and display an image.
 - \ref tutorial-getting-started-iOS <br>This tutorial shows how to build a project that uses ViSP on iOS devices.
+- \ref tutorial-getting-started-naoqi <br>This tutorial shows how to build a project that uses ViSP on NAOqi OS running on NAO, Romeo or Pepper humanoid robots.
 
 \subsection tuto_image Image manipulation
 
+- \ref tutorial-image-display <br>In this tutorial you will learn how to display an image in a window and how to down scale the window size to be able to display images that are larger than the screen resolution.
 - \ref tutorial-grabber <br>This tutorial shows how to acquire images from a camera.
 - \ref tutorial-image-filtering <br>This tutorial shows how to filter an image with ViSP.
 - \ref tutorial-simu-image <br>This tutorial shows how to project the image of a planar scene to a given camera position. 
+- \ref tutorial-image-ios <br>This tutorial shows how to do simple image processing on iOS devices. 
 
 \subsection tuto_calib Camera calibration
 
@@ -85,20 +98,22 @@ href="http://visp.inria.fr/publications" target="_parent">http://visp.inria.fr/p
 - \ref tutorial-tracking-blob <br>This tutorial introduces blob tracking and detection.
 - \ref tutorial-tracking-keypoint <br>This tutorial focuses on keypoint tracking using Kanade-Lucas-Tomasi feature tracker.
 - \ref tutorial-tracking-me <br>This tutorial focuses on line and ellipse tracking using moving-edges. 
-- \ref tutorial-tracking-mb <br>This tutorial focuses on model-based trackers using either edges, keypoints or and hybrid scheme that uses edges and keypoints. 
+- \ref tutorial-tracking-mb <br>This tutorial focuses on model-based trackers using either edges, keypoints or and hybrid scheme that uses edges and keypoints.
+- \ref tutorial-tracking-mb-stereo <br>This tutorial focuses on model-based trackers with stereo cameras.
 - \ref tutorial-tracking-tt <br>This tutorial focuses on template trackers based on image registration approaches.
 
 \subsection tuto_detection Detection 
 
-- \ref tutorial-matching <br>This tutorial shows how to detect and match keypoints. New since ViSP 2.10.0.
+- \ref tutorial-matching <br>This tutorial shows how to detect and match keypoints.
 - \ref tutorial-matching-deprecated <br>This tutorial shows how to detect and match SURF keypoints. It will be deprecated if you use an OpenCV version equal to 2.8.0 or a more recent version.
-- \ref tutorial-detection-barcode <br>This tutorial focuses on bar code (QR code, Data Matrix code) detection. New since ViSP 2.10.0.
-- \ref tutorial-detection-face <br>This tutorial focuses on face detection thanks to OpenCV Haar cascade classifier. New since ViSP 2.10.0.
-- \ref tutorial-detection-object <br>This tutorial shows how to learn keypoints detected on a known object and how to use the matched correspondences to detect and estimate the pose of the object. New since ViSP 2.10.0.
+- \ref tutorial-detection-barcode <br>This tutorial focuses on bar code (QR code, Data Matrix code) detection.
+- \ref tutorial-detection-face <br>This tutorial focuses on face detection thanks to OpenCV Haar cascade classifier.
+- \ref tutorial-detection-object <br>This tutorial shows how to learn keypoints detected on a known object and how to use the matched correspondences to detect and estimate the pose of the object.
 
 \subsection tuto_computer_vision Computer vision
 
-- \ref tutorial-pose-estimation <br>This tutorial focuses on pose estimation from planar or non planar points. New since ViSP 2.10.0.
+- \ref tutorial-pose-estimation <br>This tutorial focuses on pose estimation from planar or non planar points.
+- \ref tutorial-pose-estimation-qrcode <br>This tutorial focuses on pose estimation of a QRcode using it's four corners location.
 - \ref tutorial-homography <br>Here we explain how to estimate an homography from couples of matched points.
 - \ref tutorial-homography-deprecated <br>Here we explain how to estimate an homography from couples of matched points. It will be deprecated if you use an OpenCV version equal to 2.8.0 or a more recent version.
 
@@ -116,6 +131,10 @@ href="http://visp.inria.fr/publications" target="_parent">http://visp.inria.fr/p
 
 - \ref tutorial-plotter <br>This tutorial explains how to plot curves in real-time during a visual servo.
 - \ref tutorial-trace <br>This tutorial explains how to introduce trace in the code that could be enabled for debugging or disabled.
+- \ref tutorial-multi-threading <br>This tutorial explains how to implement multi-threaded applications to capture images from a camera
+in one thread and display these images in an other thread.
+
+@VISP_MAINPAGE_EXTENSION@
 
 \section Examples_sec Using ViSP
 
@@ -230,8 +249,8 @@ scheme, ...</p>
 */
 /*!
   \ingroup group_core_tools
-  \defgroup group_core_mutex Mutex
-  Mutex.
+  \defgroup group_core_threading Multi threading
+  Capabilities to execute multiple threads concurrently and protect shared data thanks to mutexes.
 */
 /*!
   \ingroup group_core_tools
@@ -389,7 +408,9 @@ scheme, ...</p>
 /*!
   \ingroup module_mbt
   \defgroup group_mbt_trackers Trackers
-  Model-based trackers.
+  Model-based trackers. Two group of classes may be used:
+  - the one that allows to track an object on a single image: vpMbEdgeTracker, vpMbKltTracker, vpMbEdgeKltTracker;
+  - the one that allows to track an object seen in two (stereo) or more images: vpMbEdgeMultiTracker, vpMbKltMultiTracker, vpMbEdgeKltMultiTracker.
 */
 /*!
   \ingroup module_mbt
@@ -450,6 +471,11 @@ scheme, ...</p>
 */
 /*!
   \ingroup module_robot
+  \defgroup group_robot_haptic Haptic devices
+  Haptic devices interfaces.
+*/
+/*!
+  \ingroup module_robot
   \defgroup group_robot_simu Robot simulation
   Simulated robots interfaces.
 */
@@ -500,6 +526,11 @@ scheme, ...</p>
   \ingroup module_sensor
   \defgroup group_sensor_rgbd RGB-D sensor
   RGB-D sensor interfaces.
+*/
+/*!  
+  \ingroup module_sensor
+  \defgroup group_sensor_ft Force/Torque sensor
+  Force/Torque sensor interfaces.
 */
 /*******************************************
  * Module tt

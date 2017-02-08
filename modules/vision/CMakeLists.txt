@@ -1,7 +1,7 @@
 #############################################################################
 #
 # This file is part of the ViSP software.
-# Copyright (C) 2005 - 2015 by Inria. All rights reserved.
+# Copyright (C) 2005 - 2017 by Inria. All rights reserved.
 #
 # This software is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -48,4 +48,9 @@ if (CMAKE_VERSION VERSION_LESS 2.8.12)
     DEPENDS_ON visp_mbt visp_gui visp_io)
 else()
   vp_add_tests(DEPENDS_ON visp_mbt visp_gui visp_io)
+  if(USE_OGRE)
+    # Add specific build flag to turn off warnings coming from libogre and libois 3rd party
+    vp_set_source_file_compile_flag(test/key-point/testKeyPoint-2.cpp -Wno-unused-parameter -Wno-unused-but-set-parameter)
+    vp_set_source_file_compile_flag(test/key-point/testKeyPoint-4.cpp -Wno-unused-parameter -Wno-unused-but-set-parameter)
+ endif()
 endif()
