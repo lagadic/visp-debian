@@ -100,9 +100,12 @@ endif
 
 override_dh_auto_test-indep:
 
+# On armel, armhf, i386, mips64el "make -j4 test" fails.
+# This is due to the fact that the 4 first tests are trying to create simultaneously
+# /usr/$username folder
 override_dh_auto_test-arch:
 	export VISP_INPUT_IMAGE_PATH=/usr/share/visp-images-data/ \
-	 && dh_auto_test || ${DH_AUTOTEST_CAN_FAIL}
+	 && dh_auto_test --max-parallel=1 || ${DH_AUTOTEST_CAN_FAIL}
 
 # Since Ogre removal no more useful
 #override_dh_install:
